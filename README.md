@@ -1,12 +1,18 @@
 What is Ladybug?
+
 Ladybug is a free and open source environmental plugin for Grasshopper to help designers create an environmentally-conscious architectural design.  The initial step in the design process should be the weather data analysis; a thorough understanding of the weather data will, more likely, lead designers to high-performance design decisions.
 Ladybug imports standard EnergyPlus Weather files (.EPW) in Grasshopper and provides a variety of 2D and 3D designer-friendly interactive graphics to support the decision-making process during the initial stages of design. The tool also provides further support for designers to test their initial design options for implications from radiation and sunlight-hours analyses results. Integration with Grasshopper allows for an almost instantaneous feedback on design modifications, and as it runs within the design environment, the information and analysis is interactive.
+
 So much information but… What does it do, put simply?
+
 Ladybug allows you to: import and analyze standard weather data in Grasshopper; draw diagrams like Sun-path, wind-rose, radiation-rose, etc; customize the diagrams in several ways; run radiation analysis, shadow studies, and view analysis for your design inside Grasshopper!
 Here is Ladybug in a less than 5-minute video!
 
+
 Ok! I like it. How do I start?
+
 1.  Download Ladybug:
+
 You can download the components from one of the links below. There are two key points that you should be aware of before you download the ‘bug.
 a) Due to the current limitations of Python in Grasshopper there is no simple way to make GHA files from Python scripts so for now I decided to distribute it as UserObjects. For the majority of the time it doesn’t make a big difference for you, as a user. The only problem that you might face, in case you are not a frequent user of Grasshopper, is to have the Python Editor window open, in case you double click on the component. I made a locked version for non-frequent users. However, I suggest that everyone download the unlocked version. The locked version components don’t change color for warnings and errors. You should always have a panel connected to the report output.
 b) Ladybug only works on Rhino 5.0. Unfortunately, there is no version for Rhino 4. You can download an evaluation version of Rhino 5 for free. You also need to have GHPython 5.0. 1.0 and Grasshopper 0.9.0014 or higher installed on your system.
@@ -36,4 +42,6 @@ Acknowledgments:
 I want to thank my friends at Adrian Smith + Gordon Gill Architecture, who helped me so much during the process with their support and comments. Special thanks to Michelle Pak for proofreading much of the text.
 I also want to thank Darren Robinson and Christoph Reinhart for their generosity in sharing the latest version of GenCumulativeSky with Ladybug users.
 Last, but definitely not least, I want to thank all the amazing Grasshopper community that produced and shared the amazing body of knowledge at Grasshopper3D.com. I learned so much from you guys! Thanks and have fun with the ‘bug! :)
+
+
 Best, Mostapha
