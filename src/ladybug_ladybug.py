@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.35\nJAN_15_2013'
 
 
 import rhinoscriptsyntax as rs
@@ -1144,12 +1144,16 @@ class RunAnalysisInsideGH(object):
                     if bldgMesh!=None:
                         for bldg in bldgMesh: # bldgMesh is all joined as one mesh
                             #if rc.Geometry.Intersect.Intersection.MeshRay(bldg, ray) >= 0.0: check = 0; return 0; break
-                            if rc.Geometry.Intersect.Intersection.MeshLine(bldg, line)[1] >= 0.0: check = 0; return 0; break
+                            if rc.Geometry.Intersect.Intersection.MeshLine(bldg, line)[1] != None:
+                                # I need to also check the distance
+                                check = 0; return 0; break
                             
                     if check != 0 and contextMesh!=None: #and testPts[i].Z < contextHeight:
                         for bldg in contextMesh:
                             #if rc.Geometry.Intersect.Intersection.MeshRay(bldg,ray) >= 0.0: check = 0; return 0; break
-                            if rc.Geometry.Intersect.Intersection.MeshLine(bldg, line)[1] >= 0.0: check = 0; return 0; break
+                            # print rc.Geometry.Intersect.Intersection.MeshLine(bldg, line)
+                            if rc.Geometry.Intersect.Intersection.MeshLine(bldg, line)[1] != None:
+                                check = 0; return 0; break
                             
                     if check != 0: return 1 * math.cos(vecAngle)
                     return 0

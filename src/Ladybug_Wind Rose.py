@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.35\nJAN_16_2013'
 
 import scriptcontext as sc
 import rhinoscriptsyntax as rs
@@ -242,7 +242,7 @@ def main(legendPar, scale, numOfDirections, conditionalStatements, annualHourlyD
             # find the study hours based on wind direction data
             startHour = lb_preparation.date2Hour(*listInfo[0][5])
             endHour =  lb_preparation.date2Hour(*listInfo[0][6])
-            if startHour<=endHour: studyHours = range(startHour-1, endHour)
+            if startHour<=endHour: studyHours = range(startHour-1, endHour + 1)
             else: studyHours = range(endHour-1, 8760) + range(0, startHour)
             
             calmHour = [] # count hours with no wind
