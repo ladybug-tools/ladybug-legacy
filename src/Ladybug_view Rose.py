@@ -323,10 +323,10 @@ def main(mesh, testPlane, radius):
 if _context and _radius:
     if _plane_ == None: _plane_= rc.Geometry.Plane.WorldXY
     viewRose, blocked, blockedRange = main(_context, _plane_, _radius)
-    viewAngle = 360
+    visibleAngle = 360
     if len(blockedRange)!=0: print "Blocked Angles:"
     for dom in blockedRange:
         print dom
-        viewAngle -= dom.length()
+        visibleAngle -= dom.length()
 else:
     print "At least one of the inputs is missing!"
