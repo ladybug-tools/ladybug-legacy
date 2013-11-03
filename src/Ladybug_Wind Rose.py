@@ -8,26 +8,27 @@
 Draws windRose
 
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        north: Input a number or a vector to set north; default is set to the Y-axis
-        hourlyWindDirection: A list of hourly wind direction data
-        hourlyWindSpeed: A list of hourly wind speed data
-        annualHourlyData: Connect a list of annual hourly data to be overlaid on sunpath
-        conditionalStatement: The Conditional Statement Input allows users to filter data for specific conditions. Specific hourly data, such as temperature or humidity, can be filtered and overlaid with the Sun Path. The conditional statement should be a valid condition statement in Python such as a>25 and b<80.
+        _north_: Input a number or a vector to set north; default is set to the Y-axis
+        _hourlyWindDirection: A list of hourly wind direction data
+        _hourlyWindSpeed: A list of hourly wind speed data
+        annualHourlyData_: Connect a list of annual hourly data to be overlaid on sunpath
+        _analysisPeriod_: Analysis period from Analysis Period component; may be used to override hour of  the year
+        conditionalStatement_: The Conditional Statement Input allows users to filter data for specific conditions. Specific hourly data, such as temperature or humidity, can be filtered and overlaid with the Sun Path. The conditional statement should be a valid condition statement in Python such as a>25 and b<80.
                               The current version accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" represents the 2nd list, etc.
                               For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list, and you want to plot the data for the time period when temperature is between 18 and 23, and humidity is less than 80%, the statement should be written as “18<a<23 and b<80” (without quotation marks)
                               In windRose component "a" always represents windSpeed as the first list.
-        numOfDirections: Input a number to set the number of directions for wind rose. Minimum is 4
-        centerPoint: Input a point to locate the center point of the wind rose 
-        scale: Input a number to set the scale of the radiation rose
-        legendPar: Input legend parameters from the Ladybug Legend Parameters component
-        runIt: Set Boolean to True to run the component 
-        bakeIt: Set Boolean to True to bake the radiation rose
+        _numOfDirections_: Input a number to set the number of directions for wind rose. Minimum is 4
+        _centerPoint_: Input a point to locate the center point of the wind rose 
+        _scale_: Input a number to set the scale of the radiation rose
+        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
+        _runIt: Set Boolean to True to run the component 
+        bakeIt_: Set Boolean to True to bake the radiation rose
     
     Returns:
-        report: Report!!!
+        readMe!: ...
         calmRoseMesh: Frequency during the calm hours as a joined mesh
         windRoseMesh: Wind rose as a joined mesh
         windRoseCrvs: Wind rose guide curves
@@ -38,7 +39,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_16_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import scriptcontext as sc
 import rhinoscriptsyntax as rs
@@ -122,7 +123,9 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         return titleStatement, patternList
 
 
-def main(legendPar, scale, numOfDirections, conditionalStatements, annualHourlyData):
+def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
+                  analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
+                  scale, legendPar, bakeIt):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -239,16 +242,24 @@ def main(legendPar, scale, numOfDirections, conditionalStatements, annualHourlyD
                 northVector2.Rotate(-float(math.radians(angle + (segAngle/2))), rc.Geometry.Vector3d.ZAxis)
                 sideVectors.append(northVector2)
             
+            
+            selectedWindDir = lb_preparation.selectHourlyData(windDir, analysisPeriod)[7:]
+            # read analysis period
+            stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, False)
+
             # find the study hours based on wind direction data
-            startHour = lb_preparation.date2Hour(*listInfo[0][5])
-            endHour =  lb_preparation.date2Hour(*listInfo[0][6])
-            if startHour<=endHour: studyHours = range(startHour-1, endHour + 1)
-            else: studyHours = range(endHour-1, 8760) + range(0, startHour)
+            startHour = lb_preparation.date2Hour(stMonth, stDay, stHour)
+            endingHour =  lb_preparation.date2Hour(endMonth, endDay, endHour)
+            if startHour <= endingHour: studyHours = range(startHour-1, endingHour)
+            else: studyHours = range(startHour - 1, 8760) + range(0, endingHour)
             
             calmHour = [] # count hours with no wind
             separatedBasedOnAngle = []
             [separatedBasedOnAngle.append([]) for i in range(len(roseAngles))]
-            for hour, windDirection in enumerate(windDir):
+            #print len(studyHours)
+            #print len(selectedWindDir)
+            
+            for hour, windDirection in enumerate(selectedWindDir):
                 h = studyHours[hour]
                 if patternList[h]: # if the hour pass the conditional statement
                     # check if windSpeed is 0 so collect it in center
@@ -357,7 +368,10 @@ def main(legendPar, scale, numOfDirections, conditionalStatements, annualHourlyD
                         # color legend surfaces
                         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
                         
-                        customHeading = customHeading + listInfo[i][1] +'\nHourly Data: ' + listInfo[i][2] + ' (' + listInfo[i][3] + ')\n'
+                        customHeading = customHeading + listInfo[i][1] + \
+                                        '\n'+lb_preparation.hour2Date(lb_preparation.date2Hour(stMonth, stDay, stHour)) + ' - ' + \
+                                        lb_preparation.hour2Date(lb_preparation.date2Hour(endMonth, endDay, endHour)) + \
+                                        '\nHourly Data: ' + listInfo[i][2] + ' (' + listInfo[i][3] + ')\n'
                         
                         customHeading = customHeading + comment1 + '\n' + comment2 + '\n'
                         
@@ -487,42 +501,50 @@ def main(legendPar, scale, numOfDirections, conditionalStatements, annualHourlyD
                     
                     # let's move it move it move it!
                     if legendScale > 1: movingVector = legendScale * movingVector
-                    
-                    segments.Translate(movingVector); allWindRoseMesh.append(segments)
-                    if centerMesh!=-1:
-                        centerMesh.Translate(movingVector); allWindCenMesh.append(centerMesh)
-                    
-                    textPt = movePointList(textPt, movingVector)
-                    
-                    newCenPt = movePointList([cenPt], movingVector)[0];
-                    cenPts.append(newCenPt)
-                    
-                    if legendBasePoint == None:
-                        nlegendBasePoint = lb_visualization.BoundingBoxPar[0]
-                        movedLegendBasePoint = movePointList([nlegendBasePoint], movingVector)[0];
-                    else:
-                        movedLegendBasePoint = movePointList([legendBasePoint], movingVector)[0];
-                        
-                    legendBasePoints.append(movedLegendBasePoint)
-                    
-                    for crv in legendTextCrv:
-                        for c in crv: c.Translate(movingVector)
-                    for crv in titleTextCurve:
-                        for c in crv: c.Translate(movingVector)
                     crvsTemp = []
-                    for c in freqCrvs + compassCrvs:
-                        cDuplicate = c.Duplicate()
-                        cDuplicate.Translate(movingVector)
-                        crvsTemp.append(cDuplicate)
-                    allWindRoseCrvs.append(crvsTemp)
-                    
-                    legendSrfs.Translate(movingVector)
-                    allLegend.append(lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]]))
-                    
-                    #allSunPosInfo.append(modifiedsunPosInfo)
-                    #allValues.append(values)
-                    
-                    if bakeIt: bakePlease(listInfo[i], [segments, centerMesh], legendSrfs, legendText, textPt, textSize, crvsTemp)
+                    try:
+                        segments.Translate(movingVector); allWindRoseMesh.append(segments)
+                        if centerMesh!=-1:
+                            centerMesh.Translate(movingVector); allWindCenMesh.append(centerMesh)
+                        
+                        textPt = movePointList(textPt, movingVector)
+                        
+                        newCenPt = movePointList([cenPt], movingVector)[0];
+                        cenPts.append(newCenPt)
+                        
+                        if legendBasePoint == None:
+                            nlegendBasePoint = lb_visualization.BoundingBoxPar[0]
+                            movedLegendBasePoint = movePointList([nlegendBasePoint], movingVector)[0];
+                        else:
+                            movedLegendBasePoint = movePointList([legendBasePoint], movingVector)[0];
+                            
+                        legendBasePoints.append(movedLegendBasePoint)
+                        
+                        for crv in legendTextCrv:
+                            for c in crv: c.Translate(movingVector)
+                        for crv in titleTextCurve:
+                            for c in crv: c.Translate(movingVector)
+                        
+                        for c in freqCrvs + compassCrvs:
+                            cDuplicate = c.Duplicate()
+                            cDuplicate.Translate(movingVector)
+                            crvsTemp.append(cDuplicate)
+                        allWindRoseCrvs.append(crvsTemp)
+                        
+                        legendSrfs.Translate(movingVector)
+                        allLegend.append(lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]]))
+                        
+                        #allSunPosInfo.append(modifiedsunPosInfo)
+                        #allValues.append(values)
+                    except Exception, e:
+                        print `e`
+                        
+                    if bakeIt:
+                        try:
+                            bakePlease(listInfo[i], [segments, centerMesh], legendSrfs, legendText, textPt, textSize, crvsTemp)
+                        except Exception, e:
+                            print `e`
+                            
         
             return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints
 
@@ -533,8 +555,10 @@ def main(legendPar, scale, numOfDirections, conditionalStatements, annualHourlyD
         return -1
 
 
-if runIt:
-    result = main(legendPar, scale, numOfDirections, conditionalStatement, annualHourlyData)
+if _runIt:
+    result = main(_north_, _hourlyWindDirection, _hourlyWindSpeed, annualHourlyData_,
+                  _analysisPeriod_, conditionalStatement_, _numOfDirections_, _centerPoint_,
+                  _scale_, legendPar_, bakeIt_)
     
     if result!= -1:
         allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints = result
@@ -559,6 +583,8 @@ if runIt:
             windRoseCenPts.Add(cenPts[i],p)
             #sunPositionsInfo.AddRange(sunPosInfoList[i], p)
             legendBasePts.Add(legendBasePoints[i],p)
-            
+        
+        ghenv.Component.Params.Output[4].Hidden = True
+        ghenv.Component.Params.Output[6].Hidden = True
 else:
     print 'Set runIt to True!'

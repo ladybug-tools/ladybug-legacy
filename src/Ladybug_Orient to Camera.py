@@ -8,19 +8,18 @@
 This component return a list of planes which are oriented to camera and centered at initPosition for a better presentation.
 Connect a timer to the component for real time update.
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        initPosition: A list of initial base points
-        
+        _initPosition: A list of initial base points
+        refresh_: Connect a button to refresh the component
     Returns:
-        report: Report!!!
         orientedToCam: a list of planes which are oriented to camera and centered at initPosition
 """
 
 ghenv.Component.Name = "Ladybug_Orient to Camera"
 ghenv.Component.NickName = 'Orient2Camera'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import scriptcontext as sc
 import Rhino as rc
@@ -31,4 +30,6 @@ def main(initPosition):
     orientedToCam = rc.Geometry.Plane(initPosition, cameraX, cameraY)
     return orientedToCam
 
-if initPosition: orientedToCam = main(initPosition)
+if _initPosition:
+    orientedToCam = main(_initPosition)
+    ghenv.Component.Params.Output[0].Hidden = True

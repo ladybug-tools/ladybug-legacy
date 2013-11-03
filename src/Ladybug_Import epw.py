@@ -12,13 +12,13 @@ All the output definitions are borrowed from the same document.
 The document is available online at this address:
 "http://apps1.eere.energy.gov/buildings/energyplus/pdfs/auxiliaryprograms.pdf"
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        epw_file: epw file location on your system as a string
+        _epwFile: epw file location on your system as a string
         
     Returns:
-        report: Report
+        readMe!: ...
         latitude: Latitude of the location. Useful to draw the sunpath.
         location: Summary of location data
         dryBulbTemperature: "This is the dry bulb temperature, in C, at the time indicated. Note that this is a full numeric field (i.e. 23.6) and not an integer representation with tenths. Valid values range from –70 °C to 70 °C. Missing value for this field is 99.9."
@@ -34,24 +34,26 @@ Provided by Ladybug 0.0.35
         globalHorizontalIlluminance: "This is the Global Horizontal Illuminance in lux. (Average total amount of direct and diffuse illuminance in hundreds of lux received on a horizontal surface during the number of minutes preceding the time indicated.) It is not currently used in EnergyPlus calculations. It should have a minimum value of 0; missing value for this field is 999999 and will be considered missing of >= 999900."
         totalSkyCover: "This is the value for total sky cover (tenths of coverage). (i.e. 1 is 1/10 covered. 10 is total coverage). (Amount of sky dome in tenths covered by clouds or obscuring phenomena at the hour indicated at the time indicated.) Minimum value is 0; maximum value is 10; missing value is 99."
         liquidPrecipitationDepth: "The amount of liquid precipitation(mm) observed at the indicated time for the period indicated in the liquid precipitation quantity field. If this value is not missing, then it is used and overrides the “precipitation” flag as rainfall.  Conversely, if the precipitation flag shows rain and this field is missing or zero, it is set to 1.5 (mm)."
+        barometricPressure: "This is the station pressure in Pa at the time indicated. Valid values range from 31,000 to 120,000... Missing value for this field is 999999."
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
-
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "0|Ladybug"
 
 import scriptcontext as sc
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
-def main():
+def main(_epw_file):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         
-        locationData = lb_preparation.epwLocation(epw_file)
-        weatherData = lb_preparation.epwDataReader(epw_file, locationData[0])
+        locationData = lb_preparation.epwLocation(_epw_file)
+        weatherData = lb_preparation.epwDataReader(_epw_file, locationData[0])
         
         return locationData, weatherData
     
@@ -65,13 +67,13 @@ def main():
 
 
 # Collecting Data
-if epw_file and epw_file.endswith('.epw'):
-    result = main()
+if _epwFile and _epwFile.endswith('.epw'):
+    result = main(_epwFile)
     if result!= -1:
         location, locName, latitude = result[0][-1], result[0][0], result[0][1]
-        dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, liquidPrecipitationDepth= result[1][:]
+        dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, liquidPrecipitationDepth, barometricPressure = result[1][:]
         print 'Hourly weather data for ' + locName + ' is imported successfully!'
 else:
-    print "Please connect a valid epw file address to epw_file input..."
+    print "Please connect a valid epw file address to _epw_file input..."
     w = gh.GH_RuntimeMessageLevel.Warning
-    ghenv.Component.AddRuntimeMessage(w, "Please connect a valid epw file address to epw_file input...")
+    ghenv.Component.AddRuntimeMessage(w, "Please connect a valid epw file address to _epw_file input...")

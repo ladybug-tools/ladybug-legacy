@@ -11,26 +11,26 @@ Since view is a qualitative measure you can manipulate the effective view field 
 using view parameters component.
 
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        geometry: Input the test geometries as a Brep or Mesh
-        context: Input the context as a Brep or Mesh
-        gridSize: Input a number to set the test points grid size
-        disFromBase: Input a number to set the distance between the test points grid and the base geometry
-        OrientationStudyP: Input result from Orientation Study Parameter component
-        viewPoints: Points of the interest to be checked for analyses
-        viewFields_Angles_D: Input vFiels from view study parameters component
+        _geometry: Input the test geometries as a Brep or Mesh
+        context_: Input the context as a Brep or Mesh
+        _gridSize_: Input a number to set the test points grid size
+        _disFromBase: Input a number to set the distance between the test points grid and the base geometry
+        orientationStudyP_: Input result from Orientation Study Parameter component
+        _viewPoints: Points of the interest to be checked for analyses
+        viewPtsWeights_: List of numbers between 0 and 1 that shows the importance of the view point. Default value is 0 for all the points which means they have equal importance.
         _____________________: This is just for graphical purpose. I appreciate your curiosity though
-        legendPar: Input legend parameters from the Ladybug Legend Parameters component
-        parallel: Set Boolean to True to use multiple CPUs
-        runIt: Set Boolean to True to run the analysis
-        bakeIt: Set Boolean to True to bake the analysis result
-        workingDir: Working directory on your system. Default is set to C:\Ladybug
-        projectName: Input the project name as a string. The result will be baked in a layer with project name.
+        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
+        parallel_: Set Boolean to True to use multiple CPUs
+        _runIt: Set Boolean to True to run the analysis
+        bakeIt_: Set Boolean to True to bake the analysis result
+        workingDir_: Working directory on your system. Default is set to C:\Ladybug
+        projectName_: Input the project name as a string. The result will be baked in a layer with project name.
     
     Returns:
-        report: Report!!!
+        readMe!: ...
         contextMesh: Connect to Mesh to check the test mesh for the context
         analysisMesh: Connect to Mesh to check the test mesh for the test geometries
         testPts: Connect to point to check the test points
@@ -40,12 +40,12 @@ Provided by Ladybug 0.0.35
         viewStudyMesh: The result of the study as a joined mesh
         viewStudyLegend: Legend of the study. Connect to Geo for preview
         legendBasePt: Legend base point, mainly for presentation purposes
-        totalView: Mass addition of view result multiplied by the area of the surface for all the surfaces
+        averageView: Average percentage of veiw for all the test points
 """
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 
 import rhinoscriptsyntax as rs
@@ -59,12 +59,17 @@ import scriptcontext as sc
 import System.Threading.Tasks as tasks
 import System
 import time
+from Grasshopper import DataTree
+from Grasshopper.Kernel.Data import GH_Path
 
 northVector = []
-if len(viewPoints)!=0: viewPoints_viewStudy = viewPoints
+if len(_viewPoints)!=0: viewPoints_viewStudy = _viewPoints
 else: viewPoints_viewStudy = []
 
-def main(bakeIt):
+
+def main(geometry, context, gridSize, disFromBase, orientationStudyP,
+            viewPoints_viewStudy, viewPtsWeights, legendPar, parallel,
+            bakeIt, workingDir, projectName):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -88,9 +93,17 @@ def main(bakeIt):
     runOrientation, rotateContext, rotationBasePt, angles = lb_preparation.readOrientationParameters(orientationStudyP)
     
     # mesh the test buildings
-    if len(geometry)!=0 and gridSize and disFromBase:
+    if (len(geometry)!=0 and disFromBase):
         ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
         analysisMesh, analysisBrep = lb_preparation.cleanAndCoerceList(geometry)
+        
+        # if len(analysisBrep)!=0 and gridSize == None: return -1
+        
+        if gridSize == None:
+            gridSize = 4/conversionFac
+            originalTestPoints = []
+            
+        
         ## mesh Brep
         analysisMeshedBrep = lb_mesh.parallel_makeSurfaceMesh(analysisBrep, float(gridSize))
         
@@ -101,6 +114,7 @@ def main(bakeIt):
         ## extract test points
         #if not testPts or testPts[0] == None:
         testPoints, ptsNormals, meshSrfAreas = lb_mesh.parallel_testPointCalculator(analysisSrfs, float(disFromBase), parallel)
+        originalTestPoints = testPoints
         testPoints = lb_preparation.flattenList(testPoints)
         ptsNormals = lb_preparation.flattenList(ptsNormals)
         meshSrfAreas = lb_preparation.flattenList(meshSrfAreas)
@@ -127,12 +141,12 @@ def main(bakeIt):
     else: contextSrfs = []
 
 
-    def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, viewPoints_viewStudy, viewFields_Angles_D, sunVectors_sunlightHour, conversionFac):
+    def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, viewPoints_viewStudy, viewPtsWeights, sunVectors_sunlightHour, conversionFac):
         RADIANCE_radiationStudy =[]
         if len(RADIANCE_radiationStudy)!=0:
             pass
         elif cumSky_radiationStudy != None and len(cumSky_radiationStudy) == 146:
-            radResults, totalRadResults = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
+            radResults, totalRadResults = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
                                         parallel, cumSky_radiationStudy, lb_preparation.TregenzaPatchesNormalVectors, conversionFac, 2200000000000000, northVector)
         else:
             #print "No radiation study!"
@@ -146,11 +160,16 @@ def main(bakeIt):
                 except:
                     pass
             
-            viewResults, totalViewResults = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewFields_Angles_D, conversionFac)
+            # join the meshes
+            joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
+            if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
+            else: joinedContext = None
+            
+            viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac)
         else:
             print "View points should be provided... No view study!"
             viewResults = totalViewResults = None
-            return [contextSrfs, analysisSrfs, testPoints, ptsNormals], -1, -1
+            return [contextSrfs, analysisSrfs, testPoints, ptsNormals], -1, -1, -1
         
         if len(sunVectors_sunlightHour)!= 0:
             hoursResults, totalHoursResults = lb_runStudy_GH.parallel_sunlightHoursCalculator(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
@@ -161,9 +180,9 @@ def main(bakeIt):
             
         #results = range(len(testPoints))
         results = radResults, hoursResults, viewResults
-        totalResults = totalRadResults, totalHoursResults, totalViewResults
+        totalResults = totalRadResults, totalHoursResults, averageViewResults
         
-        return results, totalResults, listInfo
+        return results, totalResults, listInfo, ptVisibility
     
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
         
@@ -176,7 +195,8 @@ def main(bakeIt):
         
         ## generate legend
         # calculate the boundingbox to find the legendPosition
-        lb_visualization.calculateBB([analysisSrfs, contextSrfs])
+        if not (runOrientation and legendBasePoint==None):
+            lb_visualization.calculateBB([analysisSrfs, contextSrfs])
         # legend geometry
         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
         
@@ -212,13 +232,32 @@ def main(bakeIt):
     resV = 0 # Result visualization
     ## check for orientation Study
     l = [0, 0, 0] # layer name indicator
-    if runOrientation:
-        # check if rotation base point is provided
-        if rotationBasePt == 'set2center'and rotateContext:
-            # find the bounding box for the test geometry
-            lb_visualization.calculateBB([analysisSrfs, contextSrfs])
+    if runOrientation and (len(viewPoints_viewStudy)!= 0 and viewPoints_viewStudy!=[]):
+        if not isinstance(rotateContext, System.Boolean):
+            #inputs are geometries and should be set as the context to be rotated
+            rContextMesh, rContextBrep = rotateContext
+            
+            ## mesh Brep
+            rContextMeshedBrep = lb_mesh.parallel_makeContextMesh(rContextBrep)
+            
+            ## Flatten the list of surfaces
+            rContextMeshedBrep = lb_preparation.flattenList(rContextMeshedBrep)
+            rContextSrfs = rContextMesh + rContextMeshedBrep
+            rotateContext = "Partial"
+        elif rotateContext == True:
+            rContextSrfs = contextSrfs
+        else:
+            rContextSrfs = None
+            
+        # create rotation base point
+        if rotationBasePt == 'set2center'and rotateContext=="Partial":
+            # find the bounding box for the test geometry and context
+            lb_visualization.calculateBB([analysisSrfs, rContextSrfs])
             rotationBasePt = rc.Geometry.Point3d(lb_visualization.BoundingBoxPar[4])
-        
+        elif rotationBasePt == 'set2center'and rotateContext:
+            # find the bounding box for the test geometry and context
+            lb_visualization.calculateBB([analysisSrfs, rContextSrfs])
+            rotationBasePt = rc.Geometry.Point3d(lb_visualization.BoundingBoxPar[4])
         elif rotationBasePt == 'set2center'and not rotateContext:
             lb_visualization.calculateBB(analysisSrfs)
             rotationBasePt = rc.Geometry.Point3d(lb_visualization.BoundingBoxPar[4])
@@ -226,6 +265,7 @@ def main(bakeIt):
             lb_visualization.calculateBB([analysisSrfs, contextSrfs])
             
         # total result is a list of lists
+        orirntationStudyRes = {}
         totalResults = []
         angleCount = 0
         for angle in range(len(angles) - 1):
@@ -235,43 +275,106 @@ def main(bakeIt):
             [srf.Transform(rotationT) for srf in analysisSrfs]
             [p.Transform(rotationT) for p in testPoints]
             [n.Transform(rotationT) for n in  ptsNormals]
-            if rotateContext: [msh.Transform(rotationT) for msh in contextSrfs]
+            if rotateContext == "Partial":
+                [msh.Transform(rotationT) for msh in rContextSrfs]
+                # put the rotated mesh next to the rest of the context
+                mergedContextSrfs = rContextSrfs + contextSrfs
+            elif rotateContext:
+                [msh.Transform(rotationT) for msh in rContextSrfs]
+                mergedContextSrfs = rContextSrfs
+            else:
+                mergedContextSrfs = contextSrfs
+                        
             ## run the analysis
             cumSky_radiationStudy = []
             sunVectors_sunlightHour = []
-            results, eachTotalResult, listInfo = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                        analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy,
-                                        viewPoints_viewStudy, viewFields_Angles_D,
-                                        sunVectors_sunlightHour, conversionFac)
-            # print 
-            totalResults.append(eachTotalResult)
             
+            results, eachTotalResult, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
+                                        analysisSrfs, mergedContextSrfs, parallel, cumSky_radiationStudy,
+                                        viewPoints_viewStudy, viewPtsWeights,
+                                        sunVectors_sunlightHour, conversionFac)
+            
+            #collect surfaces, results, and values
+            orirntationStudyRes[angle] = {"angle" : angle,
+                                          "totalResult": eachTotalResult,
+                                          "results": results,
+                                          "listInfo": listInfo,
+                                          "contextSrf" : lb_mesh.joinMesh(mergedContextSrfs),
+                                          "analysisSrf": lb_mesh.joinMesh(analysisSrfs)
+                                          }
+            
+            # print
+            totalResults.append(eachTotalResult)
+            angleCount += 1
+            
+        if legendPar== [] or (legendPar[0] == None and legendPar[1] == None):
+            # find max and min for the legend
+            minValue = float("inf") 
+            maxValue = 0
+            allBuildingsAndContext = []
+            for key in orirntationStudyRes.keys():
+                # results is a nested list because the component used to be all in one
+                # I should re-write this component at some point
+                listMin = min(orirntationStudyRes[key]["results"][2])
+                listMax = max(orirntationStudyRes[key]["results"][2])
+                if  listMin < minValue: minValue = listMin
+                if  listMax > maxValue: maxValue = listMax
+                
+                if legendPar== [] or legendPar[4] == None:
+                    allBuildingsAndContext.extend([orirntationStudyRes[key]["analysisSrf"], orirntationStudyRes[key]["contextSrf"]])
+            
+            # find the collective bounding box
+            if legendPar== [] or legendPar[4] == None:
+                lb_visualization.calculateBB(allBuildingsAndContext)
+            
+            # preset the legen parameters if it is not set by the user
+            if legendPar== []:
+                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, None]
+            else:
+                if legendPar[0] == None: legendPar[0] = [minValue]
+                if legendPar[1] == None: legenPar[1] = maxValue
+                if legendPar[4] == None: legendPar[4] = lb_visualization.BoundingBoxPar
+                
+        
+        for angleCount, angle in enumerate(range(len(angles) - 1)):
             if (bakeIt or angles[angle + 1] == angles[-1]) and results!=-1:
+                
+                # read the values for each angle from the dictionary
+                eachTotalResult = orirntationStudyRes[angle]["totalResult"]
+                mergedContextSrfs = orirntationStudyRes[angle]["contextSrf"]
+                analysisSrfs = orirntationStudyRes[angle]["analysisSrf"]
+                listInfo = orirntationStudyRes[angle]["listInfo"]
+                results = orirntationStudyRes[angle]["results"]
+                
+                
                 resultColored = [[] for x in range(len(results))]
                 legendColored = [[] for x in range(len(results))]
+                if angleCount > 0: CheckTheName = False
+                
                 for i in range(len(results)):
-                    #print len(results)
-                    if results[0]!=[] and results[i]!= None and len(results)!=4:
+                    if results[0]!=[] and results[i]!= None:
                         # Add an option for orientation study
-                        resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(contextSrfs, analysisSrfs,
+                        # The i is a reminder from the time that all the analysis components was a single component
+                        # so confusing!
+                        eachTotalResult = [[],[],[]]
+                        resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(mergedContextSrfs, analysisSrfs,
                                           results[i], eachTotalResult[i], legendPar, legendTitles[i],
                                           studyLayerNames[i], bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo)
                         resV += 1
-            angleCount += 1
-            if angleCount > 0: CheckTheName = False
+    
     else:
         # no orientation study
         angle = 0; l = [0, 0, 0]
         cumSky_radiationStudy = []
         sunVectors_sunlightHour = []
-        results, totalResults, listInfo = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
+        results, totalResults, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
                                 analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy,
-                                viewPoints_viewStudy, viewFields_Angles_D,
+                                viewPoints_viewStudy, viewPtsWeights,
                                 sunVectors_sunlightHour, conversionFac)
                                 
     if results!=-1 and len(results) == 4:
         contextSrfs, analysisSrfs, testPoints, ptsNormals = results
-        return contextSrfs, analysisSrfs, testPoints, ptsNormals
+        return contextSrfs, analysisSrfs, testPoints, ptsNormals, originalTestPoints
     elif results != -1:
         if not runOrientation:
             totalResults = [totalResults] # make a list of the list so the same process can be applied to orientation study and normal run
@@ -282,6 +385,7 @@ def main(bakeIt):
         legendColored = []
         [resultColored.append([]) for x in range(len(results))]
         [legendColored.append([]) for x in range(len(results))]
+        
         for i in range(len(results)):
             if results[i]!= None:
                 # Add an option for orientation study
@@ -291,16 +395,20 @@ def main(bakeIt):
                 resV += 1
     
         # return outputs
-        if resV != 0: return contextSrfs, analysisSrfs, testPoints, ptsNormals, results, resultColored, legendColored, totalResults, legendBasePoint
+        if runOrientation: contextSrfs = mergedContextSrfs
+        if resV != 0: return contextSrfs, analysisSrfs, testPoints, ptsNormals, results, resultColored, legendColored, totalResults, legendBasePoint, originalTestPoints, pointVisiblity
         else: return -1
     else:
         return -1
 
 
-if runIt:
-    if (len(geometry)!=0 and geometry[0] != None and gridSize and disFromBase):
-        result = main(bakeIt)
-        if result!= -1 and len(result) > 4:
+if _runIt:
+    if (len(_geometry)!=0 and _geometry[0] != None and _disFromBase):
+        result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_,
+                        viewPoints_viewStudy, viewPtsWeights_, legendPar_, parallel_,
+                        bakeIt_, workingDir_, projectName_)
+        
+        if result!= -1 and len(result) > 5:
             def openLegend(legendRes):
                 if len(legendRes)!=0:
                     meshAndCrv = []
@@ -310,7 +418,7 @@ if runIt:
                 else: return
             
             # Assign the result to GH component outputs
-            contextMesh, analysisMesh, testPts, testVec = result[0], result[1], result[2], result[3]
+            contextMesh, analysisMesh, testPts_flatten, testVec_flatten = result[0], result[1], result[2], result[3]
             
             # radiation
             radiationResult = result[4][0]
@@ -323,23 +431,55 @@ if runIt:
             sunlightHoursLegend = openLegend(result[6][1])
             
             # sunlightHours
-            viewStudyResult = result[4][2]
+            viewStudyResult_flatten = result[4][2]
             viewStudyMesh = result[5][2]
             viewStudyLegend = openLegend(result[6][2])
             
             # total results
-            totalRadiation = []; totalSunlightHours = []; totalView = []
+            totalRadiation = []; totalSunlightHours = []; averageView = []
             for res in result[7]:
                 totalRadiation.append(res[0])
                 totalSunlightHours.append(res[1])
-                totalView.append(res[2])
+                averageView.append(res[2])
             
-            legendBasePt = result[-1]
+            legendBasePt = result[-3]
+            originalTestPoints = result[-2]
+            pointsVisibility = result[-1]
             
-        elif result!= -1 and len(result) == 4:
-            contextMesh, analysisMesh, testPts, testVec = result
-    
+        elif result!= -1 and len(result) == 5:
+            contextMesh, analysisMesh, testPts_flatten, testVec_flatten, originalTestPoints = result
+        
+        testPts = DataTree[System.Object]()
+        testVec = DataTree[System.Object]() 
+        ptIsVisible = DataTree[System.Object]()
+        
+        if result!= -1: viewStudyResult = DataTree[System.Object]()
+        
+        # graft test points
+        ptCount = 0
+        for i, ptList in enumerate(originalTestPoints):
+            p = GH_Path(i)
+            for pCount, pt in enumerate(ptList):
+                testPts.Add(pt, p)
+                testVec.Add(testVec_flatten[ptCount], p)
+                if result!= -1 and len(result) != 5:
+                    #try:
+                    q = GH_Path(i, pCount)
+                    viewStudyResult.Add(viewStudyResult_flatten[ptCount], p)
+                    ptIsVisible.AddRange(pointsVisibility[ptCount], q)
+                    #except: pass
+                ptCount += 1
+                
+        ghenv.Component.Params.Output[1].Hidden = True
+        ghenv.Component.Params.Output[2].Hidden = True
+        ghenv.Component.Params.Output[3].Hidden = True
+        ghenv.Component.Params.Output[9].Hidden = True
+        
+        
     else:
+        result = -1
+        
+    if result == -1:
         warnM = "Please connect the geometry or the context and set up both the gridSize and the distance from base surface..."
         print warnM
         w = gh.GH_RuntimeMessageLevel.Warning

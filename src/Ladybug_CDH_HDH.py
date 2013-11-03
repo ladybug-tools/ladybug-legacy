@@ -5,17 +5,17 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Heating and cooling degree hours
+Heating and cooling degree hours.
 Degree hour for each hour is the difference between the base temperature and the average ambient outside air temperature.
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
-        coolingBaseTemperature: Base temperature for cooling (in degrees Celsius)
-        heatingBaseTemperature: Base temperature for heating (in degrees Celsius)
+        _hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
+        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius)
+        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius)
     Returns:
-        report: Summary of the input for double check
+        readMe!: Summary of the input for double check
         hourly_coolingDegHours: Hourly cooling degree hours data. For visualization connect to the chart/graph component(s) 
         hourly_heatingDegHours: Hourly heating degree hours data. For visualization connect to the chart/graph component(s)
         daily_coolingDegHours: Daily cooling degree hours data. For visualization connect to the chart/graph component(s)
@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.35
 """
 
 ghenv.Component.Name = "Ladybug_CDH_HDH"
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import scriptcontext as sc
 from clr import AddReference
@@ -35,7 +35,7 @@ AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
 # provide inputs
-try: coolingSetPoint = float(coolingBaseTemperature)
+try: coolingSetPoint = float(_coolingBaseTemperature_)
 except: coolingSetPoint = 23.3
 print 'Cooling base temperature: ' + `coolingSetPoint` + ' C.'
 coolingSetBack = coolingSetPoint
@@ -44,7 +44,7 @@ coolingSetBack = coolingSetPoint
 #except: coolingSetBack = 26.7
 #print 'Cooling setback is: ' + `coolingSetBack` + ' C.'
 
-try: heatingSetPoint = float(heatingBaseTemperature)
+try: heatingSetPoint = float(_heatingBaseTemperature_)
 except: heatingSetPoint = 18.3
 print 'Heating base temperature is: ' + `heatingSetPoint` + ' C.'
 
@@ -71,7 +71,7 @@ def main(coolingSetPoint, heatingSetPoint, coolingSetBack, heatingSetBack, start
         # copy the custom code here
         # check the input data
         try:
-            hourlyDBTemp = hourlyDryBulbTemperature
+            hourlyDBTemp = _hourlyDryBulbTemperature
             if hourlyDBTemp[2] == 'Dry Bulb Temperature' and hourlyDBTemp[4] == 'Hourly': checkData = True
             else: checkData = False
         except: checkData = False
@@ -182,8 +182,6 @@ def main(coolingSetPoint, heatingSetPoint, coolingSetBack, heatingSetBack, start
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
-    
-    conversionFac = lb_preparation.checkUnits()
 
 
 if 1 > 0: #(geometry and geometry[0]!=None):

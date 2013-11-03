@@ -7,20 +7,20 @@
 """
 Convert from C to F 
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        C: Input temperatures in C
+        _C: Input temperatures in C
     Returns:
         F: Output temperatures in F
 """
 
 ghenv.Component.Name = "Ladybug_C2F"
 ghenv.Component.NickName = 'C2F'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 F = []
-for num in C:
+for num in _C:
    if num == '°C': F.append('°F')
    else:
        try: F.append(float(num)*9/5 + 32)

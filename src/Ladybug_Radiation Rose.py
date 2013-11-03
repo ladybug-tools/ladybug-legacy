@@ -5,23 +5,25 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component uses GenCumulativeSky result to draw radiation rose.
+Draw radiation rose.
 
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        genCumSkyResult: GenCumulativeSky component result
-        numOfArrows: Input a number to set the number of arrows in the radiation rose. Default is set to 36
-        surfaceTiltAngle: Input a number to set the tilt angle of the surface. Defult is set to 90 (0 = roof, 90 = vertical wall)
-        centerPoint: Input a point to locate the center point of the radiation rose 
-        scale: Input a number to set the scale of the radiation rose
-        legendPar: Input legend parameters from the Ladybug Legend Parameters component
-        showTotalOnly: Set Boolean to True to show the total radiation only
-        runIt: Set Boolean to True to run the component 
-        bakeIt: Set Boolean to True to bake the radiation rose
+        _selectedSkyMtx: SelectSkyMtx component result
+        context_: Optional context as Brep or Mesh
+        _numOfArrows_: Input a number to set the number of arrows in the radiation rose. Default is set to 36
+        _surfaceTiltAngle_: Input a number to set the tilt angle of the surface. Defult is set to 90 (0 = roof, 90 = vertical wall)
+        _centerPoint_: Input a point to locate the center point of the radiation rose 
+        _scale_: Input a number to set the scale of the radiation rose
+        _arrowHeadScale_: Input a number to set the scale of the arrow heads of the radiation rose
+        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
+        showTotalOnly_: Set Boolean to True to show the total radiation only
+        _runIt: Set Boolean to True to run the component 
+        bakeIt_: Set Boolean to True to bake the radiation rose
     Returns:
-        report: Report!!!
+        readMe!: ...
         radiationArrowsMesh: Radiation roses as a joined mesh
         radRoseBaseCrvs: Base curves of the graph
         legend: Legend of the study. Connect to Geo for preview
@@ -32,7 +34,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import scriptcontext as sc
 import rhinoscriptsyntax as rs
@@ -44,16 +46,15 @@ import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 
-
-def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
+def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, scale, arrowHeadScale, legendPar, showTotalOnly, bakeIt):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
+        lb_mesh = sc.sticky["ladybug_Mesh"]()
         lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         conversionFac = lb_preparation.checkUnits()
-        TregenzaPatchesNormalVectors = lb_preparation.TregenzaPatchesNormalVectors
         
         # copy the custom code here
         # check the input data
@@ -65,6 +66,9 @@ def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
         if checkData:
             # separate the data
             indexList, listInfo = lb_preparation.separateList(genCumSkyResult, lb_preparation.strToBeFound)
+            
+            if indexList[-1] == 456: patchesNormalVectors = lb_preparation.TregenzaPatchesNormalVectors
+            elif indexList[-1] == 1752: patchesNormalVectors = lb_preparation.getReinhartPatchesNormalVectors()
             
             # check num of arrows
             if not numOfArrows or int(numOfArrows) < 4: numOfArrows = 36
@@ -80,10 +84,10 @@ def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
             # check the scale
             try:
                 if float(scale)!=0:
-                    try:scale = float(scale)/conversionFac
-                    except: scale = 0.4/conversionFac
-                else: scale = 0.4/conversionFac
-            except: scale = 0.4/conversionFac
+                    try:scale = 0.5 * float(scale)/conversionFac
+                    except: scale = 0.5/conversionFac
+                else: scale = 0.5/conversionFac
+            except: scale = 0.5/conversionFac
             
             # check vertical surface angle
             if surfaceTiltAngle == None: surfaceTiltAngle = 90
@@ -105,7 +109,7 @@ def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
             
             # generate the legend
             legendTitles = [listInfo[0][3], listInfo[1][3], listInfo[2][3]]
-            customHeading = ['Total Radiation(kWh/m2)', 'Diffuse Radiation(kWh/m2)', 'Direct Radiation(kWh/m2)']
+            customHeading = ['Total Radiation('+ listInfo[0][3]+')', 'Diffuse Radiation(' + listInfo[1][3] + ')', 'Direct Radiation(' + listInfo[2][3] + ')']
             
             def visualizeData(i, results, arrows, legendTitle, legendPar, bakeIt, cenPt):
                 
@@ -206,9 +210,31 @@ def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
             for angle in roseAngles:
                 movingVectors.append(rs.VectorRotate(northVector, float(angle), (0,0,1)))
                 tiltedRoseVectors.append(rs.VectorRotate(NVecTilted, float(angle), (0,0,1)))
+            
+            
+            ## mesh the context geometires
+            if len(context)!=0:
+                ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
+                contextMesh, contextBrep = lb_preparation.cleanAndCoerceList(context)
+                
+                ## mesh Brep
+                contextMeshedBrep = lb_mesh.parallel_makeContextMesh(contextBrep)
+                
+                ## Flatten the list of surfaces
+                contextMeshedBrep = lb_preparation.flattenList(contextMeshedBrep)
+                contextSrfs = contextMesh + contextMeshedBrep
+                
+                # join the mesh
+                if contextSrfs: contextSrfs = lb_mesh.joinMesh(contextSrfs)
+                
+            else: contextSrfs = []
+            
 
             radResult = []
-            for i in range(skyTypes): radResult.append(lb_runStudy_GH.calRadRoseRes(tiltedRoseVectors, TregenzaPatchesNormalVectors, separatedLists[i]))
+            for i in range(skyTypes):
+                if centerPoint == None: cenPt = rc.Geometry.Point3d.Origin
+                else: cenPt = centerPoint
+                radResult.append(lb_runStudy_GH.calRadRoseRes(tiltedRoseVectors, patchesNormalVectors, separatedLists[i], cenPt, contextSrfs))
             
             normLegend = False; res = [[], [], [], [], [], []];
             if not showTotalOnly:
@@ -232,15 +258,22 @@ def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
                     legendPar[0] = legendMin[i]
                     normLegend = True
                 
+                internalScale = 0.3
                 # generate arrows
                 cenPt = lb_preparation.getCenPt(centerPoint)
-                arrows = lb_preparation.genRadRoseArrows(movingVectors, radResult[i], cenPt, float(scale), 0.3)
+                arrows = lb_preparation.genRadRoseArrows(movingVectors, radResult[i], cenPt, float(scale), internalScale, arrowHeadScale)
                 
-                tempCircle = rc.Geometry.Circle(cenPt, 0.35 * float(scale)*max(radResult[i])).ToNurbsCurve()
+                tempCircle = rc.Geometry.Circle(cenPt, 1.2 * internalScale * float(scale)*max(radResult[i])).ToNurbsCurve()
                 # calculate the bounding box for the skyDome
                 if i == 0:
-                    lb_visualization.calculateBB([tempCircle]) #arrows)
-                    movingDist = 1.5 * lb_visualization.BoundingBoxPar[1] # moving distance for radiation rose
+                    try:
+                        lb_visualization.calculateBB([tempCircle]) #arrows)
+                        movingDist = 1.5 * lb_visualization.BoundingBoxPar[1] # moving distance for radiation rose
+                    except:
+                        print "Input Radiation values are all 0"
+                        w = gh.GH_RuntimeMessageLevel.Warning
+                        ghenv.Component.AddRuntimeMessage(w, "Input Radiation values are all 0")
+                        return -1
                 
                 arrowsColored, leg, compassCrvs, arrowsEndPts, legendBsePt= visualizeData(i, radResult[i], arrows, legendTitles[i], legendPar, bakeIt, cenPt)
                 
@@ -257,9 +290,9 @@ def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
             
             return res
         else:
-            print "Please provide valid genCumSkyResult!"
+            print "Please provide valid selctedSkyMtx!"
             w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "Please provide valid genCumSkyResult!")
+            ghenv.Component.AddRuntimeMessage(w, "Please provide valid selctedSkyMtx!")
             return -1
     else:
         print "You should first let the Ladybug fly..."
@@ -268,8 +301,9 @@ def main(legendPar, scale, numOfArrows, surfaceTiltAngle):
         return -1
 
 
-if runIt:
-    result = main(legendPar, scale, numOfArrows, surfaceTiltAngle)
+if _runIt:
+    result = main(_selectedSkyMtx, context_, _numOfArrows_, _surfaceTiltAngle_, _centerPoint_,
+                   _scale_, _arrowHeadScale_, legendPar_, showTotalOnly_, bakeIt_)
     
     if result!= -1:
         legend = DataTree[Object]()
@@ -287,3 +321,5 @@ if runIt:
             legendBasePts.Add(result[3][i], p)
             radRoseEndPts.AddRange(result[4][i], p)
             radRoseValues.AddRange(result[5][i], p)
+        ghenv.Component.Params.Output[4].Hidden = True       
+        ghenv.Component.Params.Output[5].Hidden = True

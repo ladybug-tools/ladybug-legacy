@@ -11,15 +11,15 @@ This component uses a more accurate calculation method based on min and max temp
 You may check the formulas in this page: "http://www.vesma.com/ddd/ddcalcs.htm"
 If you rather to use the traditional method set useDailyAvrMethod to True.
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
-        coolingBaseTemperature: Base temperature for cooling (in degrees Celsius)
-        heatingBaseTemperature: Base temperature for heating (in degrees Celsius)
-        useDailyAvrMethod: set it to True to use the traditional method of degree days calculation
+        _hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
+        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius)
+        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius)
+        useDailyAvrMethod_: set it to True to use the traditional method of degree days calculation
     Returns:
-        report: summary of the input for double check
+        readMe!: summary of the input for double check
         daily_coolingDegDays: Daily cooling degree days data. For visualization connect to the chart/graph component(s) 
         daily_heatingDegDays: Heating degree days. For visualization connect to the chart/graph component(s) 
         monthly_coolingDegDays: Monthly cooling degree days data
@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.35
 """
 
 ghenv.Component.Name = "Ladybug_CDD_HDD"
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import scriptcontext as sc
 from clr import AddReference
@@ -37,16 +37,16 @@ AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
 # provide inputs
-try: coolingSetPoint = float(coolingBaseTemperature)
+try: coolingSetPoint = float(_coolingBaseTemperature_)
 except: coolingSetPoint = 23.3
 print 'Cooling setpoint is: ' + `coolingSetPoint` + ' C.'
 
-try: heatingSetPoint = float(heatingBaseTemperature)
+try: heatingSetPoint = float(_heatingBaseTemperature_)
 except: heatingSetPoint = 18.3
 print 'Heating setpoint is: ' + `heatingSetPoint` + ' C.'
 
 
-def main(coolingSetPoint, heatingSetPoint):
+def main(coolingSetPoint, heatingSetPoint, hourlyDryBulbTemperature, useDailyAvrMethod):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -166,10 +166,8 @@ def main(coolingSetPoint, heatingSetPoint):
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
-    
-    conversionFac = lb_preparation.checkUnits()
 
 
-result = main(coolingSetPoint, heatingSetPoint)
+result = main(coolingSetPoint, heatingSetPoint, _hourlyDryBulbTemperature, useDailyAvrMethod_)
 if result!= -1:
     daily_coolingDegDays, daily_heatingDegDays, monthly_coolingDegDays, monthly_heatingDegDays, annual_coolingDegDays, annual_heatingDegDays = result

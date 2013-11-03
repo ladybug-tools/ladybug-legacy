@@ -7,23 +7,26 @@
 """
 Open an epw weather file from a location on your computer
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        open: Set Boolean to True to open a browser window
+        _open: Set Boolean to True to open a browser window
     Returns:
-        report: Report!
+        readMe!: ...
         fileAddress: epw file address as output
 """
 ghenv.Component.Name = "Ladybug_Open EPW Weather File"
-ghenv.Component.NickName = 'Open Weather File'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.NickName = 'Open weather file'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "0|Ladybug"
+
 
 import rhinoscriptsyntax as rs
 
-if open == True:
+if _open == True:
     filter = "EPW file (*.epw)|*.epw|All Files (*.*)|*.*||"
-    fileAddress = rs.OpenFileName("Open .epw Weather File", filter)
+    epwFile = rs.OpenFileName("Open .epw Weather File", filter)
     print 'Done!'
 else:
     print 'Please set open to True'

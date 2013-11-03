@@ -7,24 +7,26 @@
 """
 Analysis period 
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        fromMonth: Default starting month is set to 1, if not provided [1-12]
-        fromDay: Default starting day is set to 1, if not provided [1-31]
-        fromHour: Default starting hour is set to 1, if not provided [1-24]
-        toMonth: Default end month is set to 12, if not provided [1-12]
-        toDay: Default end day is set to 31, if not provided [1-31]
-        toHour: Default end hour is set to 24, if not provided [1-24]
+        _fromMonth_: Default starting month is set to 1, if not provided [1-12]
+        _fromDay_: Default starting day is set to 1, if not provided [1-31]
+        _fromHour_: Default starting hour is set to 1, if not provided [1-24]
+        _toMonth_: Default end month is set to 12, if not provided [1-12]
+        _toDay_: Default end day is set to 31, if not provided [1-31]
+        _toHour_: Default end hour is set to 24, if not provided [1-24]
     Returns:
-        report: Simulation period
+        readMe!: Analysis period
         analysisPeriod: Two tuples that represent the running period
                         (fromMonth, fromDay, fromHour) to (toMonth, toDay, toHour)
 """
 
 ghenv.Component.Name = "Ladybug_Analysis Period"
 ghenv.Component.NickName = 'analysisPeriod'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "1|AnalyseWeatherData"
 
 import scriptcontext as sc
 import clr
@@ -32,16 +34,6 @@ clr.AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 we = gh.GH_RuntimeMessageLevel.Error
 ww = gh.GH_RuntimeMessageLevel.Warning
-
-if fromMonth==None: fromMonth = 1;
-if fromDay==None: fromDay = 1;
-if fromHour==None: fromHour = 1;
-if toMonth==None: toMonth = 12;
-if toDay==None: toDay = 31;
-if toHour==None: toHour = 24;
-if fromHour==0: fromHour = 1;
-if toHour==0: toHour = 1
-
 
 def main(fromMonth, fromDay, fromHour, toMonth, toDay, toHour):
     if not sc.sticky.has_key('ladybug_release'):
@@ -105,6 +97,14 @@ def main(fromMonth, fromDay, fromHour, toMonth, toDay, toHour):
     
     return analysisPeriod
 
-result = main(fromMonth, fromDay, fromHour, toMonth, toDay, toHour)
+if _fromMonth_==None: _fromMonth_ = 1;
+if _fromDay_==None: _fromDay_ = 1;
+if _fromHour_==None: _fromHour_ = 1;
+if _toMonth_==None: _toMonth_ = 12;
+if _toDay_==None: _toDay_ = 31;
+if _fromHour_==None: _fromHour_ = 1;
+if _toHour_==None: _toHour_ = 24;
+
+result = main(_fromMonth_, _fromDay_, _fromHour_, _toMonth_, _toDay_, _toHour_)
 if result!= -1: analysisPeriod = result
 else: pass

@@ -10,35 +10,30 @@ The sun-path Class is a Python version of RADIANCE sun-path script by Greg Ward.
 http://www.radiance-online.org/download-install/CVS%20source%20code
 
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        north: Input a number or a vector to set north; default is set to the Y-axis
-        latitude: Input latitude from Import .epw component
-        longtitude:  Input longtitude. You can find it from location output from Import .epw component
-                     longtitude and timeZone will be used for time correction.
-        timeZone:  Input timeZone. You can find it from location output from Import .epw component
-                     longtitude and timeZone will be used for time correction.
-        hour: Input a list of numbers to indicate hours; default is 12:00 [1-24]
-        day: Input a list of numbers to indicate days; default is 21 [1-31]
-        month: Input a list of numbers to indicate months; default is 12 [1-12]
-        timeStep: Number of timesteps per hour. The number should be smaller than 60 and divisible into 60. Default is 1
+        north_: Input a number or a vector to set north; default is set to the Y-axis
+        _location: Input location from Import .epw component or constructLocation
+        _hour_: Input a list of numbers to indicate hours; default is 12:00 [1-24]
+        _day_: Input a list of numbers to indicate days; default is 21 [1-31]
+        _month_: Input a list of numbers to indicate months; default is 12 [1-12]
+        _timeStep_: Number of timesteps per hour. The number should be smaller than 60 and divisible into 60. Default is 1
                   A linear interpolation for data overlay will be applied for timeSteps more than 1
-        analysisPeriod: [optional] Analysis period from Analysis Period component; may be used to override hour, day and month input
-        centerPt: Input a point to locate the center point of the sun-path
-        sunPathScale: Input a number to set the scale of the sun-path
-        sunScale: Input a number to set the scale of sun spheres
+        analysisPeriod_: [optional] Analysis period from Analysis Period component; may be used to override hour, day and month input
+        _centerPt_: Input a point to locate the center point of the sun-path
+        _sunPathScale_: Input a number to set the scale of the sun-path
+        _sunScale_: Input a number to set the scale of sun spheres
         ---------------- : This is just for graphical purpose. I appreciate your curiosity though!
-        annualHourlyData: Connect a list of annual hourly data to be overlaid on sunpath
-        conditionalStatement: The Conditional Statement Input allows users to filter data for specific conditions. Specific hourly data, such as temperature or humidity, can be filtered and overlaid with the Sun Path. The conditional statement should be a valid condition statement in Python such as a>25 and b<80.
+        annualHourlyData_: Connect a list of annual hourly data to be overlaid on sunpath
+        conditionalStatement_: The Conditional Statement Input allows users to filter data for specific conditions. Specific hourly data, such as temperature or humidity, can be filtered and overlaid with the Sun Path. The conditional statement should be a valid condition statement in Python such as a>25 and b<80.
                               The current version accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" represents the 2nd list, etc.
                               For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list, and you want to plot the data for the time period when temperature is between 18 and 23, and humidity is less than 80%, the statement should be written as “18<a<23 and b<80” (without quotation marks)
-        legendPar: Input legend parameters from the Ladybug Legend Parameters component
-        dailySunPath: Set Boolean to True to visualize the daily sun-path
-        annualSunPath: Set Boolean to True to visualize the annual sun-path
-        bakeIt: Set to True to bake the sunpath
+        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
+        _dailyOrAnnualSunPath_: Set to 0 or False for daily sunpath and 1 or True for annual sunpath
+        bakeIt_: Set to True to bake the sunpath
     Returns:
-        report: Report!!!
+        readMe!: ...
         sunSpheresMesh: Colored sun mesh spheres as a joined mesh
         sunPositions: A list of points for sun positions
         sunVectors: Sun vectors
@@ -55,7 +50,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import math
 import System
@@ -107,7 +102,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         statement = conditionalStatement.split(' ')
         finalStatement = 'pattern = '
         titleStatement = '...                         ...                         ...\n' +\
-                         'Conditiontional Selection Applied:\n'
+                         'Conditional Selection Applied:\n'
         
         for statemntPart in statement:
             statementCopy = str.Copy(statemntPart) # a copy to make a meaningful string
@@ -142,7 +137,31 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         
         return titleStatement, patternList
 
-def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, hour, day, month):
+
+def readLocation(location):
+    locationStr = location.split('\n')
+    newLocStr = ""
+    #clean the idf file
+    for line in locationStr:
+        if '!' in line:
+            line = line.split('!')[0]
+            newLocStr  = newLocStr + line.replace(" ", "")
+        else:
+            newLocStr  = newLocStr + line
+    
+    newLocStr = newLocStr.replace(';', "")
+    
+    site, locationName, latitude, longitude, timeZone, elevation = newLocStr.split(',')
+    
+    return float(latitude), float(longitude), float(timeZone), float(elevation)
+
+def main(latitude, longitude, timeZone, elevation, north, hour, day, month, timeStep, analysisPeriod, centerPt, sunPathScale, sunScale, annualHourlyData, conditionalStatement, legendPar, dailyOrAnnualSunPath, bakeIt):
+    
+    if dailyOrAnnualSunPath:
+        dailySunPath, annualSunPath = False, True
+    else:
+        dailySunPath, annualSunPath = True, False
+        
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -150,6 +169,7 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
         lb_sunpath = sc.sticky["ladybug_SunPath"]()
         
         conversionFac = lb_preparation.checkUnits()
+        
         def colorSun(spheres, colors):
             sunS = rc.Geometry.Mesh()
             repeatedColors = []
@@ -202,20 +222,20 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
                 print 'Time-step is set to ' + `timeStep`
         except: timeStep = 1; print 'Time-step is set to 1'
         
-        if longtitude!=None and timeZone != None:
-            try: longtitude = float(longtitude); timeZone = float(timeZone)
-            except: longtitude = 0; timeZone = 0
-        else: longtitude = 0; timeZone = 0
+        if longitude!=None and timeZone != None:
+            try: longitude = float(longitude); timeZone = float(timeZone)
+            except: longitude = 0; timeZone = 0
+        else: longitude = 0; timeZone = 0
         
-        # look for analysisPeriod
+        # check for analysisPeriod
         if len(analysisPeriod)!=0 and analysisPeriod[0]!=None:
             stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, True, False)
+
+            days = range(stDay, endDay + 1)
             
-            days = range(32)
-            
-            if stMonth > endMonth: months = orange(stMonth, 13) + range(1, endMonth + 1)
+            if stMonth > endMonth: months = range(stMonth, 13) + range(1, endMonth + 1)
             else: months = range(stMonth, endMonth + 1)
-            hour  = range(stHour, endHour)
+            hour  = range(stHour, endHour + 1)
         else:
             days = day
             months = month
@@ -232,7 +252,7 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
                 # send all data and statement to a function and return back
                 # True, False Pattern and condition statement
                 titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement)
-            
+                
             if titleStatement == -1:
                 patternList = [[True]] * 8760
                 titleStatement = False
@@ -247,7 +267,7 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
                 ghenv.Component.AddRuntimeMessage(w, 'Latitude should be between -90 and 90')
             
             
-            lb_sunpath.initTheClass(float(latitude), northAngle, cenPt, scale, longtitude, timeZone)
+            lb_sunpath.initTheClass(float(latitude), northAngle, cenPt, scale, longitude, timeZone)
             # count total sun up hours
             SUH = 0
             for m in months:
@@ -268,9 +288,11 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
                             sunVectors.append(sunVector)
                             sunAlt.append(math.degrees(lb_sunpath.solAlt))
                             sunAzm.append(math.degrees(lb_sunpath.solAz))
-            # create sun-path geometry
-            #if annualSunPath!=False: dailySunPath=False
-            #if dailySunPath!=False: annualSunPath=False
+            
+            if len(sunVectors)== 0:
+                warning = 'None of the hours meet the conditional statement'
+                #print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             
             dailySunPathCrvs = []
             annualSunPathCrvs = []
@@ -303,6 +325,7 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
             allSunPathCrvs = []; allLegend = []; allValues = []
             allSunAlt = []; allSunAzm = []; cenPts = []; allSunPosInfo = []
             legendBasePoints = []
+            
             # hourly data
             if len(annualHourlyData)!=0 and annualHourlyData[0]!=None:
                 try: movingDist = 1.5 * lb_visualization.BoundingBoxPar[1] # moving distance for sky domes
@@ -318,16 +341,17 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
                     modifiedsunPosInfo = []
                     [selList.append(float(x)) for x in annualHourlyData[indexList[i]+7:indexList[i+1]]]
                     if listInfo[i][4]!='Hourly' or listInfo[i][5]!=(1,1,1) or  listInfo[i][6]!=(12,31,24) or len(selList)!=8760:
-                        warning = 'At least one of the input data lists is not a valis ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
+                        warning = 'At least one of the input data lists is not a valid ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
                         print warning
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                         return -1
                     else:
                         #find the numbers
                         for h, hr in enumerate(sunUpHours):
-                            value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
+                            value = selList[int(math.floor(hr-1))] + (selList[int(math.ceil(hr-1))] - selList[int(math.floor(hr-1))])* (hr - math.floor(hr))
                             values.append(value)
                             modifiedsunPosInfo.append(sunPosInfo[h] + '\n' + ("%.2f" % value) + ' ' + listInfo[i][3])
+                    
                     if values!=[] and sunPathCrvs!=[]:
                         # mesh colors
                         colors = lb_visualization.gradientColor(values, lowB, highB, customColors)
@@ -423,7 +447,10 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
                     customHeading = customHeading + '\n' + lb_preparation.hour2Date(lb_preparation.date2Hour(m, d, h)) + \
                                    ', ALT = ' + ("%.2f" % sunAlt[0]) + ', AZM = ' + ("%.2f" % sunAzm[0]) + '\n'
                 elif len(months) == 1 and len(days) == 1:
-                    customHeading = customHeading + '\n' + `days[0]` + ' ' + lb_preparation.monthList[months[0] -1]
+                    #h = lb_preparation.checkHour(float(h))
+                    m  = lb_preparation.checkMonth(int(months[0]))
+                    d = lb_preparation.checkDay(int(days[0]), m)
+                    customHeading = customHeading + '\n' + `d` + ' ' + lb_preparation.monthList[ m -1]
                     
                 textSize = legendScale * 0.5 * lb_visualization.BoundingBoxPar[2]/20
                 titlebasePt = lb_visualization.BoundingBoxPar[-2]
@@ -455,34 +482,44 @@ def main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, 
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
         
-        
-result = main(latitude, longtitude, timeZone, dailySunPath, annualSunPath, timeStep, hour, day, month)
 
-if result!= -1:
-    sunPositionsList, sunSpheres, sunVectors, sunPathCrvsList, legendCrvs, selHourlyDataList, sunAltitudes, sunAzimuths, centerPoints, sunPosInfoList,  legendBasePtList= result
-    
-    # graft the data
-    # I added this at the last minute! There should be a cleaner way
-    legend = DataTree[System.Object]()
-    sunSpheresMesh = DataTree[System.Object]()
-    sunPathCrvs = DataTree[System.Object]()
-    selHourlyData = DataTree[System.Object]()
-    sunPositions = DataTree[System.Object]()
-    sunPathCenPts = DataTree[System.Object]()
-    sunPositionsInfo = DataTree[System.Object]()
-    legendBasePts = DataTree[System.Object]()
-    for i, leg in enumerate(legendCrvs):
-        p = GH_Path(i)
-        legend.Add(leg[0], p)
-        legend.AddRange(leg[1], p)
-        sunSpheresMesh.Add(sunSpheres[i],p)
-        sunPathCrvs.AddRange(sunPathCrvsList[i],p)
-        selHourlyData.AddRange(selHourlyDataList[i],p)
-        sunPositions.AddRange(sunPositionsList[i],p)
-        sunPathCenPts.Add(centerPoints[i],p)
-        sunPositionsInfo.AddRange(sunPosInfoList[i], p)
-        legendBasePts.Add(legendBasePtList[i],p)
+if _location:
+    latitude, longitude, timeZone, elevation = readLocation(_location)
+    result = main(latitude, longitude, timeZone, elevation, north_, _hour_, _day_,
+                  _month_, _timeStep_, analysisPeriod_, _centerPt_, _sunPathScale_,
+                  _sunScale_, annualHourlyData_, conditionalStatement_, legendPar_,
+                  _dailyOrAnnualSunPath_, bakeIt_)
+
+    if result!= -1:
+        sunPositionsList, sunSpheres, sunVectors, sunPathCrvsList, legendCrvs, selHourlyDataList, sunAltitudes, sunAzimuths, centerPoints, sunPosInfoList,  legendBasePtList= result
+        
+        # graft the data
+        # I added this at the last minute! There should be a cleaner way
+        legend = DataTree[System.Object]()
+        sunSpheresMesh = DataTree[System.Object]()
+        sunPathCrvs = DataTree[System.Object]()
+        selHourlyData = DataTree[System.Object]()
+        sunPositions = DataTree[System.Object]()
+        sunPathCenPts = DataTree[System.Object]()
+        sunPositionsInfo = DataTree[System.Object]()
+        legendBasePts = DataTree[System.Object]()
+        for i, leg in enumerate(legendCrvs):
+            p = GH_Path(i)
+            legend.Add(leg[0], p)
+            legend.AddRange(leg[1], p)
+            sunSpheresMesh.Add(sunSpheres[i],p)
+            sunPathCrvs.AddRange(sunPathCrvsList[i],p)
+            selHourlyData.AddRange(selHourlyDataList[i],p)
+            sunPositions.AddRange(sunPositionsList[i],p)
+            sunPathCenPts.Add(centerPoints[i],p)
+            sunPositionsInfo.AddRange(sunPosInfoList[i], p)
+            legendBasePts.Add(legendBasePtList[i],p)
+        
+        # hide preview of sunCnterpoints and legendBasePts
+        ghenv.Component.Params.Output[8].Hidden = True      #legend base point
+        ghenv.Component.Params.Output[10].Hidden = True     #sunPath center
+        ghenv.Component.Params.Output[11].Hidden = True     #sun position
+    else:
+        pass
 else:
-    print 'Set dailySunPath or annualSunPath to True'
-    w = gh.GH_RuntimeMessageLevel.Warning
-    ghenv.Component.AddRuntimeMessage(w, "Set dailySunPath or annualSunPath to True")
+    print "You need to provide the location data."

@@ -7,19 +7,19 @@
 """
 Re-color Mesh
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        analysisResult: The result of the analysis
-        inputMesh: Already colored mesh for the analysis
-        legendPar: Input legend parameters from the Ladybug Legend Parameters component
-        analysisTitle: Custom title for the study as a string
-        legendTitle: Custom title for the legend. It is usually the unit of the analysis result.
-        bakeIt: Set Boolean to True to bake the result
-        layerName: Layer name
+        _analysisResult: The result of the analysis
+        _inputMesh: Already colored mesh for the analysis
+        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
+        analysisTitle_: Custom title for the study as a string
+        legendTitle_: Custom title for the legend. It is usually the unit of the analysis result.
+        bakeIt_: Set Boolean to True to bake the result
+        layerName_: Layer name
         
     Returns:
-        report: Report!!!
+        readMe!: ...
         newMesh: A new re-colored mesh based on the new setting
         newLegend: Legend of the study. Connect to Geo for preview
         legendBasePt: Legend base point, mainly for presentation purposes
@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import scriptcontext as sc
 import Rhino as rc
@@ -39,7 +39,7 @@ AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
 
-def main(analysisTitle, legendTitle, layerName):
+def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeIt, layerName):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -106,7 +106,7 @@ def main(analysisTitle, legendTitle, layerName):
     conversionFac = lb_preparation.checkUnits()
 
 
-if inputMesh and len(analysisResult)!=0:
+if _inputMesh and len(_analysisResult)!=0:
     
     def openLegend(legendRes):
         if len(legendRes)!=0:
@@ -117,9 +117,12 @@ if inputMesh and len(analysisResult)!=0:
             return meshAndCrv
         else: return
     
-    result = main(analysisTitle, legendTitle, layerName)
+    result = main(_analysisResult, _inputMesh, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_)
     if result!= -1:
         newLegend= []
         newMesh = result[0]
         [newLegend.append(item) for item in openLegend(result[1])]
         legendBasePt = result[2]
+        
+        # Hide output
+        ghenv.Component.Params.Output[2].Hidden = True

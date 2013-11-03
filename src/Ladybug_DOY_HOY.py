@@ -6,30 +6,29 @@
 """
 Calculate day of the year and hour of the year based on day, month and hour
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        day: Days of the month [1-31]
-        month: Months of the year [1-12]
-        hour: Hours of the day [1-24]
+        _day_: Days of the month [1-31]
+        _month_: Months of the year [1-12]
+        _hour_: Hours of the day [1-24]
     
     Returns:
-        report: Report!!!
         DOY: Days of the year
         HOY: Hours of the year
-        date: Date! 
+        date: Date 
 """
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import scriptcontext as sc
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
-def main():
+def main(days, months, hours):
     DOY = []
     HOY = []
     date = []
@@ -52,5 +51,5 @@ def main():
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
 
-result = main()
+result = main(_days_, _months_, _hours_)
 if result!= -1: HOY, DOY, date = result

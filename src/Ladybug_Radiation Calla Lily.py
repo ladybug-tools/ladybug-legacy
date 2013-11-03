@@ -5,23 +5,22 @@
 
 """
 Draw Radiation Calla Lily
-Radiation calla lily shows radiation 
+Radiation calla lily is a 3d presentation of radiation rose.
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        north: Input a number or a vector to set north; default is set to the Y-axis
-        genCumSkyResult: GenCumulativeSky component result
-        horAngleStep: Angle step for horizontal rotation between 0 and 360. The number should be smaller than 360 and divisible into 360.
-        verAngleStep: Angle step for vertical rotation between 0 and 90. The number should be smaller than 90 and divisible into 90.
-        centerPoint: Input a point to locate the center point of the Calla Lily Graph
-        horScale: Input a number to change horizontal scale of the graph
-        verScale: Input a number to change vertical scale of the graph 
-        legendPar: Input legend parameters from the Ladybug Legend Parameters component
-        runIt: Set Boolean to True to run
-        bakeIt: Set Boolean to True to bake the graph
+        _selectedSkyMtx: selectSkyMtx component result
+        _horAngleStep_: Angle step for horizontal rotation between 0 and 360. The number should be smaller than 360 and divisible into 360.
+        _verAngleStep_: Angle step for vertical rotation between 0 and 90. The number should be smaller than 90 and divisible into 90.
+        _centerPoint: Input a point to locate the center point of the Calla Lily Graph
+        _horScale_: Input a number to change horizontal scale of the graph
+        _verScale_: Input a number to change vertical scale of the graph 
+        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
+        _runIt: Set Boolean to True to run
+        bakeIt_: Set Boolean to True to bake the graph
     Returns:
-        report: Report!!!
+        readMe!: ...
         radiationLilyMesh: Radiation Calla Lily as a joined mesh
         baseCrvs: Base curves of the graph
         legend: Legend of the study. Connect to Geo for preview
@@ -32,7 +31,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Lily"
 ghenv.Component.NickName = 'radiationCallaLily'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 import System
 import scriptcontext as sc
@@ -43,7 +42,8 @@ from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
-def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
+def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
+                   north, centerPoint, legendPar, bakeIt):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -52,18 +52,21 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
         conversionFac = lb_preparation.checkUnits()
         
         # check the input data
+        warn = "Please provide a valid selctedSkyMtx!"
         try:
             if genCumSkyResult[2][:11] == 'Sky Patches':
                 checkData = True
             else:
                 checkData = False
                 w = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(w, "Please provide a valid genCumSkyResult!")
+                ghenv.Component.AddRuntimeMessage(w, warn)
+                print warn
                 return -1
         except Exception, e:
             w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "Please provide a valid genCumSkyResult!")
+            ghenv.Component.AddRuntimeMessage(w, warn)
             checkData = False
+            print warn
             return -1
             
         
@@ -73,6 +76,11 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
             selList = []
             [selList.append(float(x)) for x in genCumSkyResult[indexList[0]+7:indexList[1]]]
             genCumSkyResult = selList
+            
+            if indexList[-1] == 456: patchesNormalVectors = lb_preparation.TregenzaPatchesNormalVectors
+            elif indexList[-1] == 1752: patchesNormalVectors = lb_preparation.getReinhartPatchesNormalVectors()
+            
+            
             # check the scale
             try:
                 if float(horScale)!=0:
@@ -152,7 +160,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
                     hVector.Rotate(-math.radians(hAngle), rc.Geometry.Vector3d.ZAxis)
                     
                     # calculate radiation for each vector
-                    radiation = radiationForVector(hVector, genCumSkyResult)
+                    radiation = radiationForVector(hVector, genCumSkyResult, patchesNormalVectors)
                     radResult[angleCount].append(radiation)
                     resultsFlatten.append(radiation)
                     
@@ -171,7 +179,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
                     pts[angleCount].append(pt)
                     ptsClean.append(pt)
                     
-                    testPtsInfo = "%.2f"%radiation + ' kWh/m2\nHRA='+ `hAngle` + '; VRA=' + `90-angle`
+                    testPtsInfo = "%.2f"%radiation + ' ' + listInfo[0][3] + '\nHRA='+ `hAngle` + '; VRA=' + `90-angle`
                     testPtsInfos.append(testPtsInfo)
                     
                 radResult[angleCount].append(radResult[angleCount][0])
@@ -232,7 +240,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
             
             # get the legend done
             legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(resultsFlatten
-                    , lowB, highB, numSeg, 'kWh/m2', lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+                    , lowB, highB, numSeg, listInfo[0][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
             
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -241,7 +249,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             
             # title
-            customHeading = '\n\nRadiation Calla Lily (kWh/m2)'
+            customHeading = '\n\nRadiation Calla Lily (' + listInfo[0][3] + ')'
             titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle(listInfo, lb_visualization.BoundingBoxPar, legendScale, customHeading)
             
             cenPtMoved = rc.Geometry.Point3d.Add(cenPt, 0.9*lb_visualization.BoundingBoxPar[3]*rc.Geometry.Vector3d.ZAxis)
@@ -273,8 +281,11 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale):
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
 
-if runIt:
-    result = main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale)
+if _runIt:
+    north_ = 0
+    result = main(_selectedSkyMtx, _horAngleStep_, _verAngleStep_, _horScale_, _verScale_,
+                   north_, _centerPoint_, legendPar_, bakeIt_)
+    maxPtAndValue = []
     if result!= -1:
        radiationLilyMesh = result[1]       
        testPts = result [0]
@@ -282,3 +293,11 @@ if runIt:
        values = result[3]
        testPtsInfo = result[4]
        baseCrvs = result[5]
+       
+       maxValue = max(values)
+       i = values.IndexOf(maxValue)
+       maxPtAndValue = [testPts[i], testPtsInfo[i]]
+    ghenv.Component.Params.Output[4].Hidden = True
+    
+else:
+    print "Set runIt to True!"

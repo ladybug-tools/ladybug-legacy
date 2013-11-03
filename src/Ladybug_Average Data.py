@@ -7,13 +7,13 @@
 """
 Select and average hourly data
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        annualHourlyData: Hourly data from import EPW component
-        analysisPeriod: Analysis period from Analysis Period component. Default is set to the whole year
+        _annualHourlyData: Hourly data from import EPW component
+        _analysisPeriod_: Analysis period from Analysis Period component. Default is set to the whole year
     Returns:
-        report: Simulation period
+        readMe!: Analysis period
         selHourlyData: Selected hourly data
         averagedDaily: Averaged data for each day during the analysis period
         averagedMonthly: Averaged data for each month during the analysis period
@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.35
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 
 import scriptcontext as sc
@@ -30,7 +30,7 @@ from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
-def main():
+def main(annualHourlyData, analysisPeriod):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -81,7 +81,7 @@ def main():
                 else:
                     for i, item in enumerate(separatedLists[l][stAnnualHour-1:]):
                         if stHour-1 <= (i + stHour - 1)%24 <= endHour-1: selHourlyData.append(item)
-                    for i, item in enumerate(separatedLists[l][:endAnnualHour + 1]):
+                    for i, item in enumerate(separatedLists[l][:endAnnualHour]):
                         if stHour-1 <= i %24 <= endHour-1: selHourlyData.append(item)
                     type = False
                 
@@ -185,6 +185,6 @@ def main():
         return -1
 
 
-result = main()
+result = main(_annualHourlyData, _analysisPeriod_)
 if result!= -1:
             selHourlyData, averagedDaily, avrDailyPerHour, avrWeeklyPerHour, avrMonthlyPerHour, averagedMonthly = result

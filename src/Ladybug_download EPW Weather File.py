@@ -7,19 +7,21 @@
 """
 Open DOE website to download .epw weather file.
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
 
     Args:
-        download: Set Boolean to True to open the website
+        _download: Set Boolean to True to open the website
     Returns:
-        report : 'Happy downloading...' in case of success
+        readMe! : 'Happy downloading...' in case of success
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "0|Ladybug"
 
 import webbrowser as wb
-if download:
+if _download:
     url = 'http://apps1.eere.energy.gov/buildings/energyplus/cfm/weather_data.cfm'
     wb.open(url,2,True)
     print 'Happy downloading!'

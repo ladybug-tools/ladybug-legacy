@@ -7,25 +7,24 @@
 """
 Separates numbers from strings
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        inputList: List of input data
+        _inputList: List of input data
     Returns:
-        report: Report!!!
         numbers: List of numbers
         strings: List of strings
 """
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 
 num = []
 str = []
 
-for item in inputList:
+for item in _inputList:
     try: num.append(float(item))
     except: str.append(item)
 

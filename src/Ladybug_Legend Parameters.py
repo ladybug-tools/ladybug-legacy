@@ -7,23 +7,22 @@
 """
 This component sets up the parameters to customize legends and presentation
 -
-Provided by Ladybug 0.0.35
+Provided by Ladybug 0.0.52
     
     Args:
-        lowBound: Low bound of the legend
-        highBound: High bound of the legend
-        numSegments: Number of segments
-        customColors: A list of colors to customize the presentation color set
-        legendLocation: A point to locate base point of the legend
-        legendScale: A number to change the scale of the legend
+        lowBound_: Low bound of the legend
+        highBound_: High bound of the legend
+        numSegments_: Number of segments
+        customColors_: A list of colors to customize the presentation color set
+        legendLocation_: A point to locate base point of the legend
+        legendScale_: A number to change the scale of the legend
     Returns:
-        report: Report!!!
         legendPar: Legend parameters
 """
 
 ghenv.Component.Name = "Ladybug_Legend Parameters"
 ghenv.Component.NickName = 'legendPar'
-ghenv.Component.Message = 'VER 0.0.35\nJAN_03_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
 
 
 from clr import AddReference
@@ -47,7 +46,8 @@ def main(lowBound, highBound, numSegments, customColors, legendLocation, legendS
     else:
         return -1
 
-legendPar = main(lowBound, highBound, numSegments, customColors, legendLocation, legendScale)
+legendPar = main(lowBound_, highBound_, numSegments_, customColors_, legendLocation_, legendScale_)
+ghenv.Component.Params.Output[0].Hidden = True
 if legendPar == -1:
     warning = "You should connect at least two colors to customColors input."
     print warning
