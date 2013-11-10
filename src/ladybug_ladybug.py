@@ -265,7 +265,7 @@ class Preparation(object):
             
             # check it goes from the end of the year to the start of the year
             if stAnnualHour < endAnnualHour:
-                for i, item in enumerate(separatedLists[l][stAnnualHour-1:endAnnualHour+1]):
+                for i, item in enumerate(separatedLists[l][stAnnualHour-1:endAnnualHour]):
                     if stHour-1 <= (i + stHour - 1)%24 <= endHour-1: selHourlyData.append(item)
                 type = True
             else:
