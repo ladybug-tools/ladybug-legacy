@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_15_2013'
 
 
 import scriptcontext as sc
@@ -75,7 +75,7 @@ def main(annualHourlyData, analysisPeriod):
                 
                 # check it goes from the end of the year to the start of the year
                 if stAnnualHour < endAnnualHour:
-                    for i, item in enumerate(separatedLists[l][stAnnualHour-1:endAnnualHour+1]):
+                    for i, item in enumerate(separatedLists[l][stAnnualHour-1:endAnnualHour]):
                         if stHour-1 <= (i + stHour - 1)%24 <= endHour-1: selHourlyData.append(item)
                     type = True
                 else:

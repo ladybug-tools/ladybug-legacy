@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_15_2013'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0|Ladybug"
 
