@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_21_2013'
 
 
 import rhinoscriptsyntax as rs
@@ -205,7 +205,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
         # color legend surfaces
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         
-        customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(viewPoints)`
+        customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(_viewPoints)`
         if runOrientation:
             try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
             except: pass

@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_15_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_17_2013'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0|Ladybug"
 
@@ -105,6 +105,18 @@ class Preparation(object):
         except: scale = 1/conversionFac
         return scale
     
+    def nukedir(self, dir, rmdir = True):
+        # copied from 
+        if dir[-1] == os.sep: dir = dir[:-1]
+        files = os.listdir(dir)
+        for file in files:
+            if file == '.' or file == '..': continue
+            path = dir + os.sep + file
+            if os.path.isdir(path):
+                self.nukedir(path)
+            else:
+                os.unlink(path)
+        if rmdir: os.rmdir(dir)
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
         if not runningPeriod or runningPeriod[0]==None:

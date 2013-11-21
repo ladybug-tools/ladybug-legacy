@@ -24,9 +24,9 @@ Provided by Ladybug 0.0.52
         readMe!:...
         shadingCrvs: Shading geometries as a list of curves
 """
-ghenv.Component.Name = 'Ladybug_ShdingDesigner'
+ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'Proof of concept\nNOV_01_2013'
+ghenv.Component.Message = 'Proof of concept\nNOV_20_2013'
 
 import Rhino as rc
 import rhinoscriptsyntax as rs
