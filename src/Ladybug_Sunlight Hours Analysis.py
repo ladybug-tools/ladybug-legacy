@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.52\nNOV_28_2013'
 
 
 import rhinoscriptsyntax as rs
@@ -403,6 +403,10 @@ if _runIt:
     if (len(_geometry)!=0 and _geometry[0] != None and _disFromBase):
         if sunVectors_sunlightHour:
             for vector in sunVectors_sunlightHour: vector.Reverse()
+        
+        #check the input for timeStep
+        try: _timeStep_ = int(_timeStep_)
+        except: _timeStep_ = 1
         
         result = main(north_, _geometry, context_, _gridSize_, _disFromBase, orientationStudyP_,
                     sunVectors_sunlightHour, _timeStep_, legendPar_, parallel_, bakeIt_,
