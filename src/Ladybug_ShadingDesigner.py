@@ -12,21 +12,24 @@ Warning: WIP!
 Provided by Ladybug 0.0.52
     
     Args:
-        _glzSrf: Base glazing surface for shading design
-        optionalShdSrf_: Optional shading form as a surface
-        optionalPlanes_: Optional planes for shading design
-        _depthOrVector: Depth of the shading or sun vector
-        mergeVectors_: Merge all the shadings into a single shade
-        _numOfShds: Number of shades for each test surface
-        _distBetween: Alternate option for _numOfShds
-        _runIt: Set to true to run the study
+        _glzSrf: A base glazed surface to be used for shading design or a list of glazed surfaces.
+        _depthOrVector: Depth of the shade or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input.
+        _numOfShds: The number of shades to generate for each glazed surface.
+        _distBetween: An alternate option for _numOfShds.
+        optionalShdSrf_: Optional shade surface to draw shading curves on (this input can only be used with the sun vector method).
+        optionalPlanes_: Optional planes to draw shading curves on (this input can only be used with the sun vector method).
+        mergeVectors_: Set to "True" to merge all the shades generated from a list of sun vectors into a single shade.
+        _horOrVertical_: Set to "True" to generate horizontal shades or "False" to generate vertical shades (this input can only be used with the depth method). You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction.
+        _shdAngle_: If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  (This input can only be used with the depth method).  You an also put in lists of angles to assign different shade angles to different directions.
+        north_: Input a vector to set north; default is set to the Y-axis.
+        _runIt: Set to true to run the study.
     Returns:
         readMe!:...
         shadingCrvs: Shading geometries as a list of curves
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'Proof of concept\nNOV_20_2013'
+ghenv.Component.Message = 'Proof of concept\nJAN_08_2014'
 
 import Rhino as rc
 import rhinoscriptsyntax as rs
@@ -34,8 +37,49 @@ import scriptcontext as sc
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
-
 import math
+
+inputsDict = {
+     
+0 : ["_glzSrf", "A base glazed surface to be used for shading design or a list of glazed surfaces."],
+1: ["_depthOrVector", "Depth of the shade or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input."],
+2: ["_numOfShds", "The number of shades to generate for each glazed surface."],
+3: ["_distBetween:", "An alternate option for _numOfShds."],
+4: ["---------------", "---------------"],
+5: ["optionalShdSrf_", "Optional shade surface to draw shading curves on (this input can only be used with the sun vector method)."],
+6: ["optionalPlanes_", "Optional planes to draw shading curves on (this input can only be used with the sun vector method)."],
+7: ["mergeVectors_", "Set to True to merge all the shades generated from a list of sun vectors into a single shade."],
+8: ["---------------", "---------------"],
+9: ["_horOrVertical_", "Set to True to generate horizontal shades or False to generate vertical shades (this input can only be used with the depth method). You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction."],
+10: ["_shdAngle_", "If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  (This input can only be used with the depth method).  You an also put in lists of angles to assign different shade angles to different directions."],
+11: ["---------------", "---------------"],
+12: ["north_", "Input a vector to set north; default is set to the Y-axis"],
+13: ["_runIt", "Set to true to run the study."]
+}
+
+# manage component inputs
+
+numInputs = ghenv.Component.Params.Input.Count
+try:
+    depthTest = float(_depthOrVector[0])
+    method = 0
+    
+except:
+ method = 1
+
+if method == 1:
+    if input == 12:
+        ghenv.Component.Params.Input[input].NickName = "............................"
+        ghenv.Component.Params.Input[input].Name = "............................"
+        ghenv.Component.Params.Input[input].Description = " "
+else:
+    ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+    ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+    ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+    
+    
+ghenv.Component.Attributes.Owner.OnPingDocument()
+
 
 def checkTheInputs():
     
@@ -50,11 +94,13 @@ def checkTheInputs():
         return False, [], [], []
     
     try:
-        depth = float(_depthOrVector[0])
-        # shading based on depth and not vectors
-        # this method only works when there is no optional shaidng geometries
+        depthTest = float(_depthOrVector[0])
+        # If this works, shading is based on depth and not vectors
+        # This method only works when there is no optional shading geometries
+        depth = _depthOrVector
         method = 0
         sunVectors = []
+        
     except:
         # vector are provided
         sunVectors = []
@@ -179,14 +225,19 @@ def isSrfFacingTheVector(sunV, normalVector):
     else: return False
 #mesh the input glazing
 
-def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization):
-    
+def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, normalVector):
     # find the bounding box
     bbox = glzSrf.GetBoundingBox(True)
-    if horOrVertical == 1:
-        # horizontal
+    
+    if numOfShds == 0 or distBetween == 0:
+        sortedPlanes = []
+    
+    elif horOrVertical == True:
+        # Horizontal
+        #Define a bounding box for use in calculating the number of shades to generate
         minZPt = bbox.Corner(False, True, True)
         maxZPt = bbox.Corner(False, True, False)
+        maxZPt = rc.Geometry.Point3d(maxZPt.X, maxZPt.Y, maxZPt.Z - sc.doc.ModelAbsoluteTolerance)
         centerPt = bbox.Center 
         #glazing hieghts
         glzHeight = minZPt.DistanceTo(maxZPt)
@@ -194,7 +245,6 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization):
         # find number of shadings
         try: numOfShd = int(numOfShds)
         except: numOfShd = math.ceil(glzHeight/distBetween)
-        
         shadingHeight = glzHeight/numOfShd
         
         # find shading base planes
@@ -207,9 +257,46 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization):
         except:
             # single shading
             planes.append(rc.Geometry.Plane(rc.Geometry.Point3d(maxZPt), rc.Geometry.Vector3d.ZAxis))
-            
-    # sort the planes
-    sortedPlanes = sorted(planes, key=lambda a: a.Origin.Z)
+        # sort the planes
+        sortedPlanes = sorted(planes, key=lambda a: a.Origin.Z)
+    
+    elif horOrVertical == False:
+        # Vertical
+        # Define a vector to be used to generate the planes
+        planeVec = rc.Geometry.Vector3d(normalVector.X, normalVector.Y, 0)
+        planeVec.Rotate(1.570796, rc.Geometry.Vector3d.ZAxis)
+        
+        #Define a bounding box for use in calculating the number of shades to generate
+        minXYPt = bbox.Corner(True, True, True)
+        maxXYPt = bbox.Corner(False, False, True)
+        centerPt = bbox.Center 
+        #glazing distance
+        glzHeight = minXYPt.DistanceTo(maxXYPt)
+        
+        # find number of shadings
+        try: numOfShd = int(numOfShds)
+        except: numOfShd = math.ceil(glzHeight/distBetween)
+        
+        shadingHeight = glzHeight/numOfShd
+        # find shading base planes
+        planeOrigins = []
+        planes = []
+        pointCurve = rc.Geometry.Curve.CreateControlPointCurve([minXYPt, maxXYPt])
+        divisionParams = pointCurve.DivideByLength(shadingHeight, True)
+        divisionPoints = []
+        for param in divisionParams:
+            divisionPoints.append(pointCurve.PointAt(param))
+        planePoints = divisionPoints[1:]
+        try:
+            for point in planePoints:
+                planes.append(rc.Geometry.Plane(point, planeVec))
+        except:
+            # single shading
+            planes.append(rc.Geometry.Plane(rc.Geometry.Point3d(maxXYPt), planeVec))
+        # sort the planes
+        try: sortedPlanes = sorted(planes, key=lambda a: a.Origin.X)
+        except: sortedPlanes = sorted(planes, key=lambda a: a.Origin.Y)
+    
     # return planes
     return sortedPlanes
     
@@ -367,10 +454,9 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, rotationAngle_, lb_p
     
     return unionedProjectedCrvsCollection
 
-def main(method, depth, sunVectors):
+def main(method, depth, sunVectors, numShds, distBtwn):
     # for now horizontal shadings are automated
     # for vertical shadings the user can use optional planes
-    _horOrVertical_ = True
     # for now there is no rotation Option
     # I will apply this later
     rotationAngle_ = 0
@@ -403,9 +489,50 @@ def main(method, depth, sunVectors):
         unionedProjectedCrvs =[]
         
         if method == 0:
-            # depth method
+            #Depth method
+            #Define a function that can get the angle to North of any surface.
+            def getAngle2North(normalVector):
+                if north_ != None and north_.IsValid():
+                    northVector = north_
+                else:northVector = rc.Geometry.Vector3d.YAxis
+                angle =  rc.Geometry.Vector3d.VectorAngle(northVector, normalVector, rc.Geometry.Plane.WorldXY)
+                finalAngle = math.degrees(angle)
+                return finalAngle
+            
+            # Define a function that can split up a list of values and assign it to different cardinal directions.
+            def getValueBasedOnOrientation(valueList):
+                angles = []
+                if valueList == None or len(valueList) == 0: value = None
+                if len(valueList) == 1:
+                    value = valueList[0]
+                elif len(valueList) > 1:
+                    initAngles = rs.frange(0, 360, 360/len(valueList))
+                    for an in initAngles: angles.append(an-(360/(2*len(valueList))))
+                    angles.append(360)
+                    for angleCount in range(len(angles)-1):
+                        if angles[angleCount] <= (getAngle2North(normalVector))%360 <= angles[angleCount +1]:
+                            targetValue = valueList[angleCount%len(valueList)]
+                    value = targetValue
+                return value
+            
+            # If multiple shading depths are given, use it to split up the glazing by cardinal direction and assign different depths to different directions.
+            depth = getValueBasedOnOrientation(depth)
+            
+            # If multiple number of shade inputs are given, use it to split up the glazing by cardinal direction and assign different numbers of shades to different directions.
+            numShds = getValueBasedOnOrientation(numShds)
+            
+            # If multiple distances between shade inputs are given, use it to split up the glazing by cardinal direction and assign different distances of shades to different directions.
+            distBtwn = getValueBasedOnOrientation(distBtwn)
+            
+            # If multiple horizontal or vertical inputs are given, use it to split up the glazing by cardinal direction and assign different horizontal or vertical to different directions.
+            horOrVertical = getValueBasedOnOrientation(_horOrVertical_)
+            
+            # If multiple _shdAngle_ inputs are given, use it to split up the glazing by cardinal direction and assign different _shdAngle_ to different directions.
+            shdAngle = getValueBasedOnOrientation(_shdAngle_)
+            
             # generate the planes
-            planes = analyzeGlz(_glzSrf, _distBetween, _numOfShds, _horOrVertical_, lb_visualization)
+            planes = analyzeGlz(_glzSrf, distBtwn, numShds, horOrVertical, lb_visualization, normalVector)
+            
             # find the intersection crvs as the base for shadings
             intCrvs =[]
             for plane in planes:
@@ -413,14 +540,30 @@ def main(method, depth, sunVectors):
                 except: print "one intersection failed"
             
             if normalVector != rc.Geometry.Vector3d.ZAxis:
-                normalVector = rc.Geometry.Vector3d(normalVector.X, normalVector.Y, 0)
+                normalVectorPerp = rc.Geometry.Vector3d(normalVector.X, normalVector.Y, 0)
             
+            #If an shdAngle is provided, use it to rotate the planes by that angle
+            if shdAngle != None:
+                if horOrVertical == True:
+                    planeVec = rc.Geometry.Vector3d(normalVector.X, normalVector.Y, 0)
+                    planeVec.Rotate(1.570796, rc.Geometry.Vector3d.ZAxis)
+                    normalVectorPerp.Rotate((shdAngle*0.01745329), planeVec)
+                elif horOrVertical == False:
+                    planeVec = rc.Geometry.Vector3d.ZAxis
+                    if getAngle2North(normalVectorPerp) < 180:
+                        normalVectorPerp.Rotate((shdAngle*0.01745329), planeVec)
+                    else: normalVectorPerp.Rotate((shdAngle*-0.01745329), planeVec)
+            
+            #Generate the shade curves based on the planes and extrusion vectors
             if intCrvs !=[]:
                 for c in intCrvs:
-                    shdSrf = rc.Geometry.Surface.CreateExtrusion(c, depth * normalVector).ToBrep()
-                    edges = shdSrf.DuplicateEdgeCurves(True)
-                    border = rc.Geometry.Curve.JoinCurves(edges)[0]
-                    unionedProjectedCrvs.append(border)
+                    try:
+                        shdSrf = rc.Geometry.Surface.CreateExtrusion(c, float(depth) * normalVectorPerp).ToBrep()
+                        edges = shdSrf.DuplicateEdgeCurves(True)
+                        border = rc.Geometry.Curve.JoinCurves(edges)[0]
+                        unionedProjectedCrvs.append(border)
+                    except:
+                        pass
                 return unionedProjectedCrvs
         elif method == 1:
             # there are two cases for method 1. There is a geometry or there is not a geometrty
@@ -515,13 +658,13 @@ def main(method, depth, sunVectors):
                 #case 1: there is no geometry so it should be generated
                 # generate the planes
                 if len(optionalPlanes_)!=0: planes = optionalPlanes_
-                else: planes = analyzeGlz(_glzSrf, _distBetween, _numOfShds, _horOrVertical_, lb_visualization)
+                else: planes = analyzeGlz(_glzSrf, _distBetween, _numOfShds, _horOrVertical_, lb_visualization, normalVector)
                 # return planes
                 # split base surface with planes
                 baseSrfs = splitSrf(_glzSrf, planes)
                 #print len(baseSrfs), len(planes)
                 # create shading surfaces
-                shadingCrvs = createShadings(baseSrfs, planes, sunVectors, mergeVectors_, rotationAngle_, lb_preparation)
+                shadingCrvs = createShadings(baseSrfs, planes, sunVectors, mergeVectors_, rotationAngle_, lb_preparation, normalVector)
                 
                 return shadingCrvs
                 
@@ -546,6 +689,6 @@ else:
     checkList = False
 
 if checkList:
-    shadingCrvs = main(method, depth, sunVectors)
+    shadingCrvs = main(method, depth, sunVectors, _numOfShds, _distBetween)
     if shadingCrvs!=-1:
         print "Shading Calculation is done!"
