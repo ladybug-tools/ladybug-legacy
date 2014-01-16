@@ -44,7 +44,7 @@ inputsDict = {
 0 : ["_glzSrf", "A base glazed surface to be used for shading design or a list of glazed surfaces."],
 1: ["_depthOrVector", "Depth of the shade or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input."],
 2: ["_numOfShds", "The number of shades to generate for each glazed surface."],
-3: ["_distBetween:", "An alternate option for _numOfShds."],
+3: ["_distBetween", "An alternate option for _numOfShds."],
 4: ["---------------", "---------------"],
 5: ["optionalShdSrf_", "Optional shade surface to draw shading curves on (this input can only be used with the sun vector method)."],
 6: ["optionalPlanes_", "Optional planes to draw shading curves on (this input can only be used with the sun vector method)."],
@@ -68,15 +68,20 @@ except:
  method = 1
 
 if method == 1:
-    if input == 12:
-        ghenv.Component.Params.Input[input].NickName = "............................"
-        ghenv.Component.Params.Input[input].Name = "............................"
-        ghenv.Component.Params.Input[input].Description = " "
+    for input in range(numInputs):
+        if input == 12:
+            ghenv.Component.Params.Input[input].NickName = "............................"
+            ghenv.Component.Params.Input[input].Name = "............................"
+            ghenv.Component.Params.Input[input].Description = " "
+        else:
+            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 else:
-    ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
-    ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
-    ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
-    
+    for input in range(numInputs):
+        ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
     
 ghenv.Component.Attributes.Owner.OnPingDocument()
 
