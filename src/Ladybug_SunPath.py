@@ -1,4 +1,4 @@
-﻿# this script is based on RADIANCE sun.c script
+# this script is based on RADIANCE sun.c script
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -10,7 +10,7 @@ The sun-path Class is a Python version of RADIANCE sun-path script by Greg Ward.
 http://www.radiance-online.org/download-install/CVS%20source%20code
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         north_: Input a number or a vector to set north; default is set to the Y-axis
@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.52
         annualHourlyData_: Connect a list of annual hourly data to be overlaid on sunpath
         conditionalStatement_: The Conditional Statement Input allows users to filter data for specific conditions. Specific hourly data, such as temperature or humidity, can be filtered and overlaid with the Sun Path. The conditional statement should be a valid condition statement in Python such as a>25 and b<80.
                               The current version accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" represents the 2nd list, etc.
-                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list, and you want to plot the data for the time period when temperature is between 18 and 23, and humidity is less than 80%, the statement should be written as “18<a<23 and b<80” (without quotation marks)
+                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list, and you want to plot the data for the time period when temperature is between 18 and 23, and humidity is less than 80%, the statement should be written as 18<a<23 and b<80 (without quotation marks)
         legendPar_: Input legend parameters from the Ladybug Legend Parameters component
         _dailyOrAnnualSunPath_: Set to 0 or False for daily sunpath and 1 or True for annual sunpath
         bakeIt_: Set to True to bake the sunpath
@@ -50,7 +50,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import math
 import System

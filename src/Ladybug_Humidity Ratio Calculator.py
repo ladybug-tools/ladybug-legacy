@@ -1,20 +1,20 @@
-﻿# This component calculates the humidity ratio from the ladybug weather file import parameters
+# This component calculates the humidity ratio from the ladybug weather file import parameters
 # By Chris Mackey
 # chris@mackeyarchitecture.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 #Conversion formulas are taken from the following publications:
 #Vaisala. (2013) Humidity Conversion Formulas: Calculation Formulas for Humidity. www.vaisala.com/Vaisala%20Documents/Application%20notes/Humidity_Conversion_Formulas_B210973EN-F.pdf
-#W. Wagner and A. Pruß:" The IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use ", Journal of Physical and Chemical Reference Data, June 2002 ,Volume 31, Issue 2, pp. 387535
+#W. Wagner and A. Pru:" The IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use ", Journal of Physical and Chemical Reference Data, June 2002 ,Volume 31, Issue 2, pp. 387535
 
 """
 Calculates the humidity ratio from the ladybug weather file import parameters
 Conversion formulas are taken from the following publications:
 Vaisala. (2013) Humidity Conversion Formulas: Calculation Formulas for Humidity. www.vaisala.com/Vaisala%20Documents/Application%20notes/Humidity_Conversion_Formulas_B210973EN-F.pdf
-W. Wagner and A. Pruß:" The IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use ", Journal of Physical and Chemical Reference Data, June 2002 ,Volume 31, Issue 2, pp. 387535
+W. Wagner and A. Pru:" The IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use ", Journal of Physical and Chemical Reference Data, June 2002 ,Volume 31, Issue 2, pp. 387535
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _dryBulbTemperature: The dry bulb temperature from the Import EPW component
@@ -30,7 +30,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Humidity Ratio Calculator"
 ghenv.Component.NickName = 'CalcHumidityRatio'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "2"
 
 import math
 

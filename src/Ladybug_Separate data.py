@@ -1,4 +1,4 @@
-﻿# This component separates numbers and strings from an input list
+# This component separates numbers and strings from an input list
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Separates numbers from strings
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _inputList: List of input data
@@ -18,15 +18,38 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
+from System import Object
+from Grasshopper import DataTree
+from Grasshopper.Kernel.Data import GH_Path
 
 num = []
 str = []
+lastOne = None
+
+strPath = 0
+numPath = 0
+
+numbers = DataTree[Object]()
+strings = DataTree[Object]()
 
 for item in _inputList:
-    try: num.append(float(item))
-    except: str.append(item)
-
-numbers = num
-strings = str
+    try:
+        item = float(item)
+        if lastOne == None: lastOne = "float"
+        if lastOne!= "float":
+            lastOne = "float"
+            numPath += 1
+        p = GH_Path(numPath)
+        numbers.Add(item, p)
+    except:
+        if lastOne == None: lastOne = "str"
+        if lastOne!= "str":
+            lastOne = "str"
+            strPath += 1
+        p = GH_Path(strPath)
+        strings.Add(item, p)

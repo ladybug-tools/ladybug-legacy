@@ -1,4 +1,4 @@
-﻿# By Mostapha Sadeghipour Roudsari
+# By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -6,7 +6,7 @@
 """
 This component [removes | updates] Ladybug components from [grasshopper | a source folder]
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _sourceDirectory: A local folder that you have the newer version of Ladybug
@@ -18,7 +18,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "6 | Developers"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 from clr import AddReference
 AddReference ('Grasshopper')
@@ -63,3 +66,5 @@ def main(sourceDirectory, update, removeOldVer):
 if _update or removeOldVer_:
     up = main(_sourceDirectory, _update, removeOldVer_)
     if up == 1: print 'Done!'
+else:
+    print "At the minimum one of the components are missing!"

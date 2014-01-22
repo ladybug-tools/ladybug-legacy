@@ -1,4 +1,4 @@
-﻿# This component return a list of planes which are oriented to camera and centered at initPosition
+# This component return a list of planes which are oriented to camera and centered at initPosition
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -8,7 +8,7 @@
 This component return a list of planes which are oriented to camera and centered at initPosition for a better presentation.
 Connect a timer to the component for real time update.
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _initPosition: A list of initial base points
@@ -19,7 +19,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Orient to Camera"
 ghenv.Component.NickName = 'Orient2Camera'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import scriptcontext as sc
 import Rhino as rc

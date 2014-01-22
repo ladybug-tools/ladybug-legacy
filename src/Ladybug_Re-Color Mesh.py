@@ -1,4 +1,4 @@
-﻿# This component re-color the mesh based on new parameters
+# This component re-color the mesh based on new parameters
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Re-color Mesh
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _analysisResult: The result of the analysis
@@ -27,7 +27,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.AdditionalHelpFromDocStrings = "2"
 
 import scriptcontext as sc
 import Rhino as rc

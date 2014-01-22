@@ -1,4 +1,4 @@
-﻿# Select and average hourly data
+# Select and average hourly data
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Select and average hourly data
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _annualHourlyData: Hourly data from import EPW component
@@ -22,7 +22,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_15_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 
 import scriptcontext as sc

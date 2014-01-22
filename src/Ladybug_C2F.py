@@ -1,4 +1,4 @@
-﻿#C to F
+#C to F
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Convert from C to F 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _C: Input temperatures in C
@@ -17,11 +17,14 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_C2F"
 ghenv.Component.NickName = 'C2F'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.AdditionalHelpFromDocStrings = "4"
 
 F = []
 for num in _C:
-   if num == '°C': F.append('°F')
+   if num == 'C': F.append('F')
    else:
        try: F.append(float(num)*9/5 + 32)
        except: F.append(num)

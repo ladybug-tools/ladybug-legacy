@@ -1,4 +1,4 @@
-﻿# Wind Rose
+# Wind Rose
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -8,7 +8,7 @@
 Draws windRose
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _north_: Input a number or a vector to set north; default is set to the Y-axis
@@ -18,7 +18,7 @@ Provided by Ladybug 0.0.52
         _analysisPeriod_: Analysis period from Analysis Period component; may be used to override hour of  the year
         conditionalStatement_: The Conditional Statement Input allows users to filter data for specific conditions. Specific hourly data, such as temperature or humidity, can be filtered and overlaid with the Sun Path. The conditional statement should be a valid condition statement in Python such as a>25 and b<80.
                               The current version accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" represents the 2nd list, etc.
-                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list, and you want to plot the data for the time period when temperature is between 18 and 23, and humidity is less than 80%, the statement should be written as “18<a<23 and b<80” (without quotation marks)
+                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list, and you want to plot the data for the time period when temperature is between 18 and 23, and humidity is less than 80%, the statement should be written as 18<a<23 and b<80 (without quotation marks)
                               In windRose component "a" always represents windSpeed as the first list.
         _numOfDirections_: Input a number to set the number of directions for wind rose. Minimum is 4
         _centerPoint_: Input a point to locate the center point of the wind rose 
@@ -39,7 +39,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 import scriptcontext as sc
 import rhinoscriptsyntax as rs

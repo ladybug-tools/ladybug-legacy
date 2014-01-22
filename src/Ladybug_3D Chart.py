@@ -1,4 +1,4 @@
-﻿# This component separates numbers and strings from an input list
+# This component separates numbers and strings from an input list
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Draw 3D Charts
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _inputData: List of input data for plot
@@ -25,11 +25,15 @@ Provided by Ladybug 0.0.52
         legend: Legend(s) of the chart(s). Connect to Geo for preview
         legendBasePts: Legend base point, mainly for presentation purposes
         conditionalPts: A list of 3D points which represent the time steps that conditional statement is correct
+        HOY: List of hours of the year that pass the conditional statement
 """
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 import scriptcontext as sc
 import Rhino as rc
@@ -137,8 +141,13 @@ def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condSt
                 # True, False Pattern and condition statement
                 titleStatement, patternList = checkConditionalStatement(inputData, condStatement)
             if titleStatement == -1:
-                patternList = [False] * 8760
+                patternList = [False] * 8759
                 titleStatement = False
+            
+            hoursOfYear = []
+            for hoy, pattern in enumerate(patternList):
+                if pattern: hoursOfYear.append(hoy + 1)
+                
             
             
             # separate the data
@@ -152,7 +161,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condSt
                 separatedLists.append(selList)
             
             
-            res = [[],[], [], []]
+            res = [[],[], [], [], []]
             # legendBasePoints = []
             for i, results in enumerate(separatedLists):
                 
@@ -283,6 +292,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condSt
                 res[1].append([legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)])
                 res[2].append(movedLegendBasePoint)
                 res[3].append(conditionalPoints)
+                res[4].append(hoursOfYear)
             return res
         else:
             warning = 'Connect inputData!'
@@ -306,6 +316,8 @@ if result!= -1:
     graphMesh = DataTree[System.Object]()
     legendBasePts = DataTree[System.Object]()
     conditionalPts = DataTree[System.Object]()
+    HOY = DataTree[System.Object]()
+    
     for i, leg in enumerate(result[1]):
         p = GH_Path(i)
         graphMesh.Add(result[0][i], p)
@@ -313,4 +325,5 @@ if result!= -1:
         legend.AddRange(leg[1], p)
         legendBasePts.Add(result[2][i], p)
         conditionalPts.AddRange(result[3][i], p)
+        HOY.AddRange(result[4][i], p)
     ghenv.Component.Params.Output[3].Hidden = True

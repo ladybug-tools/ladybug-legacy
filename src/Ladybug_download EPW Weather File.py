@@ -1,4 +1,4 @@
-﻿# Open DOE website
+# Open DOE website
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Open DOE website to download .epw weather file.
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
 
     Args:
         _download: Set Boolean to True to open the website
@@ -16,9 +16,10 @@ Provided by Ladybug 0.0.52
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "0|Ladybug"
+ghenv.Component.SubCategory = "0 | Ladybug"
+ghenv.Component.AdditionalHelpFromDocStrings = "2"
 
 import webbrowser as wb
 if _download:

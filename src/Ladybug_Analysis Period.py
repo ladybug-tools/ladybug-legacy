@@ -1,4 +1,4 @@
-﻿# This component provides a tuple that represents the running period
+# This component provides a tuple that represents the running period
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Analysis period 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _fromMonth_: Default starting month is set to 1, if not provided [1-12]
@@ -24,9 +24,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Analysis Period"
 ghenv.Component.NickName = 'analysisPeriod'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "1|AnalyseWeatherData"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 import scriptcontext as sc
 import clr

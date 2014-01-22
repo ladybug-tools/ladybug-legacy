@@ -1,4 +1,4 @@
-﻿# This script used to be ladybug all in one
+# This script used to be ladybug all in one
 # I separated them into three parts before distribution which made it such a mess
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
@@ -13,7 +13,7 @@ I'm testing a more sophisticated component that uses RADIANCE for calculations. 
 one of the alternative plugins for more advanced studies. 
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         north_: Input a vector to set north
@@ -47,7 +47,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 
 import rhinoscriptsyntax as rs

@@ -1,4 +1,4 @@
-﻿# This is the heart of the Ladybug
+# This is the heart of the Ladybug
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 This component carries all of Ladybug's main classes. Other components refer to these
 classes to run the studies. Therefore, you need to let her fly before running the studies so the
-classes will be copied to Rhino’s shared space. So let her fly!
+classes will be copied to Rhinos shared space. So let her fly!
 -
 Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -19,7 +19,7 @@ http://creativecommons.org/licenses/by-sa/3.0/deed.en_US
 Source code is available at:
 https://github.com/mostaphaRoudsari/ladybug
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         letItFly: Set Boolean to True to let the Ladybug fly!
@@ -29,9 +29,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_17_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "0|Ladybug"
+ghenv.Component.SubCategory = "0 | Ladybug"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 import rhinoscriptsyntax as rs
 import Rhino as rc
@@ -136,7 +137,7 @@ class Preparation(object):
             
             if full:
                 print 'Analysis period is from', startDate, 'to', endingDate
-                print 'Between hours ' + startHour + ' and ' + endingHour
+                print 'Between hours ' + startHour + ' to ' + endingHour
             
             else: print startDay, ' - ', endingDay
              
@@ -200,7 +201,8 @@ class Preparation(object):
         numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
         numOfHours = [24 * numOfDay for numOfDay in numOfDays]
         #print hour/24
-        if hour%8760==0: return `31`+ ' ' + 'DEC' + ' 24:00'
+        if hour%8760==0 and not alternate: return `31`+ ' ' + 'DEC' + ' 24:00'
+        elif hour%8760==0: return 31, 11, 24
     
         for h in range(len(numOfHours)-1):
             if hour <= numOfHours[h+1]: month = self.monthList[h]; break
@@ -493,8 +495,8 @@ class Preparation(object):
     
     def epwDataReader(self, epw_file, location = 'Somewhere!'):
         # weather data
-        dbTemp = [self.strToBeFound, location, 'Dry Bulb Temperature', '°C', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dewPoint = [self.strToBeFound, location, 'Dew Point Temperature', '°C', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dbTemp = [self.strToBeFound, location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dewPoint = [self.strToBeFound, location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
         RH = [self.strToBeFound, location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)]
         windSpeed = [self.strToBeFound, location, 'Wind Speed', 'm/s', 'Hourly', (1, 1, 1), (12, 31, 24)];
         windDir = [self.strToBeFound, location, 'Wind Direction', 'degrees', 'Hourly', (1, 1, 1), (12, 31, 24)];
@@ -559,7 +561,7 @@ class Preparation(object):
         # sun modes: +s1 is "smeared sun" approach, and +s2 use "binned sun" approach
         # read this paper for more information:
         # http://plea-arch.net/PLEA/ConferenceResources/PLEA2004/Proceedings/p1153final.pdf
-        sunModes = ['+s1', '+s2']
+        sunModes = ['+s1']
         batchStr = workingDir[0:2] + "\ncd " + subWorkingDir + "\n"
         for sunMode in sunModes:
             calFileName = subWorkingDir + "\\" + newLocName + '_' + sunMode[-1] + '.cal'

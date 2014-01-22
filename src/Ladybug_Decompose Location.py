@@ -1,4 +1,4 @@
-﻿# Explode Location
+# Explode Location
 # By Mostapha Sadeghipour Roudsari - based on a wish from Brian Timothy Ringley
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 Decompose location
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
 
     Args:
         _location: Location data as a string [Output from importEPW or constructLocation]
@@ -21,9 +21,10 @@ Provided by Ladybug 0.0.52
 """
 ghenv.Component.Name = "Ladybug_Decompose Location"
 ghenv.Component.NickName = 'explodeLocation'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "0|Ladybug"
+ghenv.Component.SubCategory = "0 | Ladybug"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 
 if _location:

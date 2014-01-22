@@ -1,4 +1,4 @@
-﻿# By Mostapha Sadeghipour Roudsari
+# By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -7,7 +7,7 @@
 Shadow Study [Proof of Concept]
 Warning: The component doesn't calculate self-shading and is not able to calculate shadow for geometries which are passing each other.
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _geometry: Test geometries
@@ -20,7 +20,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Shadow Study"
 ghenv.Component.NickName = 'shadowStudy'
-ghenv.Component.Message = 'Proof of concept\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import Rhino as rc
 import scriptcontext as sc

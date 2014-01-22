@@ -1,4 +1,4 @@
-﻿# This is a revision for shading designer
+# This is a revision for shading designer
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -9,7 +9,7 @@ Shading Designer
 Warning: WIP!
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _glzSrf: A base glazed surface to be used for shading design or a list of glazed surfaces.
@@ -29,7 +29,10 @@ Provided by Ladybug 0.0.52
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'Proof of concept\nJAN_08_2014'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import Rhino as rc
 import rhinoscriptsyntax as rs

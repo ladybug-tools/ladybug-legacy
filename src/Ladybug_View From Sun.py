@@ -1,4 +1,4 @@
-﻿# This component opens a new viewport that shows the view from sun.
+# This component opens a new viewport that shows the view from sun.
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -7,7 +7,7 @@
 """
 This component opens a new viewport that shows the view from sun.
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _sunVector: Sun vector as a vector3D
@@ -21,7 +21,10 @@ Provided by Ladybug 0.0.52
 """
 ghenv.Component.Name = "Ladybug_View From Sun"
 ghenv.Component.NickName = 'viewFromSun'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.AdditionalHelpFromDocStrings = "2"
 
 import scriptcontext as sc
 import Rhino as rc

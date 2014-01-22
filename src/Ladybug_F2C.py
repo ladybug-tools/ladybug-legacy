@@ -1,4 +1,4 @@
-﻿# By Mostapha Sadeghipour Roudsari
+# By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -7,7 +7,7 @@
 """
 Convert from F to C 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _F: Input temperatures in F
@@ -17,11 +17,14 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_F2C"
 ghenv.Component.NickName = 'F2C'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.AdditionalHelpFromDocStrings = "4"
 
 C = []
 for num in _F:
-    if num == '°F': F.append('°C')
+    if num == 'F': F.append('C')
     else:
         try: C.append((float(num)-32) * 5 / 9)
         except: C.append(num)

@@ -1,4 +1,4 @@
-﻿# This script used to be ladybug all in one
+# This script used to be ladybug all in one
 # I separated them into three parts before distribution which made it such a mess
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
@@ -11,7 +11,7 @@ Since view is a qualitative measure you can manipulate the effective view field 
 using view parameters component.
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _geometry: Input the test geometries as a Brep or Mesh
@@ -45,7 +45,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_21_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 
 import rhinoscriptsyntax as rs

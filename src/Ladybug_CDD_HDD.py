@@ -1,4 +1,4 @@
-﻿# This component calculates heating and cooling degree days
+# This component calculates heating and cooling degree days
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -11,7 +11,7 @@ This component uses a more accurate calculation method based on min and max temp
 You may check the formulas in this page: "http://www.vesma.com/ddd/ddcalcs.htm"
 If you rather to use the traditional method set useDailyAvrMethod to True.
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
@@ -29,7 +29,11 @@ Provided by Ladybug 0.0.52
 """
 
 ghenv.Component.Name = "Ladybug_CDD_HDD"
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.NickName = "CDD_HDD"
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "2"
 
 import scriptcontext as sc
 from clr import AddReference

@@ -1,4 +1,4 @@
-﻿# GenCumulativeSkyMtx
+# GenCumulativeSkyMtx
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -13,7 +13,7 @@ http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymt
 The first time you use this component, you need to be connected to the internet so the component can download gendaymtx.exe
 to the working directory.
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _epwFile: epw weather file address on your system
@@ -28,7 +28,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "2"
 
 import os
 import scriptcontext as sc

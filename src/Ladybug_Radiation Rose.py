@@ -1,4 +1,4 @@
-﻿# Radiation Rose
+# Radiation Rose
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -8,7 +8,7 @@
 Draw radiation rose.
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.53
     
     Args:
         _selectedSkyMtx: SelectSkyMtx component result
@@ -34,7 +34,10 @@ Provided by Ladybug 0.0.52
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.52\nNOV_01_2013'
+ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import scriptcontext as sc
 import rhinoscriptsyntax as rs
