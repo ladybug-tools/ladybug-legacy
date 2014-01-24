@@ -1,31 +1,30 @@
-# This is a revision for shading designer
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
+﻿# This is a revision for shading designer as of January 22 2014
+# By Mostapha Sadeghipour Roudsari and Chris Mackey
+# Sadeghipour@gmail.com and Chris@MackeyArchitecture.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Shading Designer
-Warning: WIP!
+Use this component to generate shading breps for any glazed surface or list of glazed surfaces.  The component supports two methods for shading generation.  The first is a simple depth method, which will generate an overhang of the speficied depth (or multiple overhangs if the _numOfShds is increased).  The second method is to input solar vectors from the Sunpath component that should be blocked by the shade.
 
 -
 Provided by Ladybug 0.0.53
     
     Args:
-        _glzSrf: A base glazed surface to be used for shading design or a list of glazed surfaces.
-        _depthOrVector: Depth of the shade or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input.
+        _glzSrf: A surface representing a window to be used for shading design.  This can also be a list of glazed surfaces.
+        _depthOrVector: The depth of the shade to be genrated or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input.
         _numOfShds: The number of shades to generate for each glazed surface.
         _distBetween: An alternate option for _numOfShds.
-        optionalShdSrf_: Optional shade surface to draw shading curves on (this input can only be used with the sun vector method).
-        optionalPlanes_: Optional planes to draw shading curves on (this input can only be used with the sun vector method).
-        mergeVectors_: Set to "True" to merge all the shades generated from a list of sun vectors into a single shade.
-        _horOrVertical_: Set to "True" to generate horizontal shades or "False" to generate vertical shades (this input can only be used with the depth method). You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction.
-        _shdAngle_: If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  (This input can only be used with the depth method).  You an also put in lists of angles to assign different shade angles to different directions.
-        north_: Input a vector to set north; default is set to the Y-axis.
+        optionalShdSrf_: Optional shade surface to draw shading curves on. This input can only be used with the sun vector method.
+        optionalPlanes_: Optional planes to draw shading curves on.  This input can only be used with the sun vector method.
+        mergeVectors_: Set to "True" to merge all the shades generated from a list of sun vectors into a single shade. This input can only be used with the sun vector method.
+        _horOrVertical_: Set to "True" to generate horizontal shades or "False" to generate vertical shades. You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction.
+        _shdAngle_: If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  This input can only be used with the depth method.  You can also put in lists of angles to assign different shade angles to different directions.
+        north_: Input a vector to set north; default is set to the Y-axis.  This can only be used with the depth method since you should set the north with the Sunpath component if using the vector method.
         _runIt: Set to true to run the study.
     Returns:
         readMe!:...
-        shadingCrvs: Shading geometries as a list of curves
+        shadingSrfs: Shading surfaces generated based on inputs.
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
@@ -44,19 +43,19 @@ import math
 
 inputsDict = {
      
-0 : ["_glzSrf", "A base glazed surface to be used for shading design or a list of glazed surfaces."],
+0 : ["_glzSrf", "A surface representing a window to be used for shading design.  This can also be a list of glazed surfaces."],
 1: ["_depthOrVector", "Depth of the shade or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input."],
 2: ["_numOfShds", "The number of shades to generate for each glazed surface."],
 3: ["_distBetween", "An alternate option for _numOfShds."],
 4: ["---------------", "---------------"],
-5: ["optionalShdSrf_", "Optional shade surface to draw shading curves on (this input can only be used with the sun vector method)."],
-6: ["optionalPlanes_", "Optional planes to draw shading curves on (this input can only be used with the sun vector method)."],
-7: ["mergeVectors_", "Set to True to merge all the shades generated from a list of sun vectors into a single shade."],
+5: ["optionalShdSrf_", "Optional shade surface to draw shading curves on.  This input can only be used with the sun vector method."],
+6: ["optionalPlanes_", "Optional planes to draw shading curves on. This input can only be used with the sun vector method."],
+7: ["mergeVectors_", "Set to True to merge all the shades generated from a list of sun vectors into a single shade. This input can only be used with the sun vector method."],
 8: ["---------------", "---------------"],
-9: ["_horOrVertical_", "Set to True to generate horizontal shades or False to generate vertical shades (this input can only be used with the depth method). You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction."],
-10: ["_shdAngle_", "If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  (This input can only be used with the depth method).  You an also put in lists of angles to assign different shade angles to different directions."],
-11: ["---------------", "---------------"],
-12: ["north_", "Input a vector to set north; default is set to the Y-axis"],
+9: ["_horOrVertical_", "Set to True to generate horizontal shades or False to generate vertical shades. You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction."],
+10: ["_shdAngle_", "If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  This input can only be used with the depth method.  You can also put in lists of angles to assign different shade angles to different directions."],
+11: ["north_", "Input a vector to set north; default is set to the Y-axis.  This can only be used with the depth method since you should set the north with the Sun Path component if using the vector method."],
+12: ["---------------", "---------------"],
 13: ["_runIt", "Set to true to run the study."]
 }
 
@@ -70,9 +69,17 @@ try:
 except:
  method = 1
 
-if method == 1:
+if method == 0:
     for input in range(numInputs):
-        if input == 12:
+        if input == 5:
+            ghenv.Component.Params.Input[input].NickName = "............................"
+            ghenv.Component.Params.Input[input].Name = "............................"
+            ghenv.Component.Params.Input[input].Description = " "
+        elif input == 6:
+            ghenv.Component.Params.Input[input].NickName = "............................"
+            ghenv.Component.Params.Input[input].Name = "............................"
+            ghenv.Component.Params.Input[input].Description = " "
+        elif input == 7:
             ghenv.Component.Params.Input[input].NickName = "............................"
             ghenv.Component.Params.Input[input].Name = "............................"
             ghenv.Component.Params.Input[input].Description = " "
@@ -82,9 +89,18 @@ if method == 1:
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 else:
     for input in range(numInputs):
-        ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
-        ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
-        ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+        if input == 10:
+            ghenv.Component.Params.Input[input].NickName = "............................"
+            ghenv.Component.Params.Input[input].Name = "............................"
+            ghenv.Component.Params.Input[input].Description = " "
+        elif input == 11:
+            ghenv.Component.Params.Input[input].NickName = "............................"
+            ghenv.Component.Params.Input[input].Name = "............................"
+            ghenv.Component.Params.Input[input].Description = " "
+        else:
+            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
     
 ghenv.Component.Attributes.Owner.OnPingDocument()
 
@@ -120,13 +136,7 @@ def checkTheInputs():
         method = 1
         depth = None
     
-    if optionalShdSrf_ and method == 0:
-        print "You need to provide the sun vector to generate the shadings on an optional shading surface"
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "You need to provide the sun vector to generate the shadings on an optional shading surface")
-        return False, [], [], []
-    
-    
-    # additional check for method 0
+    # check for method 0
     if method == 0 or optionalShdSrf_ or (not optionalShdSrf_ and len(optionalPlanes_)==0) :
         if _distBetween == None and _numOfShds == None:
             print "You need to either provide the distance between the shadings or number of the shadings."
@@ -236,6 +246,10 @@ def isSrfFacingTheVector(sunV, normalVector):
 def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, normalVector):
     # find the bounding box
     bbox = glzSrf.GetBoundingBox(True)
+    if horOrVertical == None:
+        horOrVertical = True
+    if numOfShds == None and distBetween == None:
+        numOfShds = 1
     
     if numOfShds == 0 or distBetween == 0:
         sortedPlanes = []
@@ -454,19 +468,22 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, rotationAngle_, lb_p
         # find the union the curves with the boundary of the shading
         if mergeVectors_ == True:
             unionedProjectedCrvs =rc.Geometry.Curve.CreateBooleanUnion(projectedCrvs)
-            if unionedProjectedCrvs == []: unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
+            if len(unionedProjectedCrvs) == 0:
+                unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
+                print "Merging of vectors into a single shade failed (most likely due to issues of model tolerance). Try increasing model tolerance or using fewer input sun vectors."
         else:
             unionedProjectedCrvs = projectedCrvs
         
         unionedProjectedCrvsCollection.extend(unionedProjectedCrvs)
+        
+        finalShdSrfs = []
+        for curve in unionedProjectedCrvsCollection:
+            try: finalShdSrfs.extend(rc.Geometry.Brep.CreatePlanarBreps(curve))
+            except: finalShdSrfs.extend(curve)
     
-    return unionedProjectedCrvsCollection
+    return finalShdSrfs
 
-def main(method, depth, sunVectors, numShds, distBtwn):
-    # for now horizontal shadings are automated
-    # for vertical shadings the user can use optional planes
-    # for now there is no rotation Option
-    # I will apply this later
+def main(method, depth, sunVectors, numShds, distBtwn, horOrVert):
     rotationAngle_ = 0
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
@@ -494,7 +511,7 @@ def main(method, depth, sunVectors, numShds, distBtwn):
         # mesh the glazing surface
         _glzSrfMeshed = rc.Geometry.Mesh.CreateFromBrep(_glzSrf, rc.Geometry.MeshingParameters.Smooth)[0]
         
-        unionedProjectedCrvs =[]
+        shadingSurfaces =[]
         
         if method == 0:
             #Depth method
@@ -567,12 +584,10 @@ def main(method, depth, sunVectors, numShds, distBtwn):
                 for c in intCrvs:
                     try:
                         shdSrf = rc.Geometry.Surface.CreateExtrusion(c, float(depth) * normalVectorPerp).ToBrep()
-                        edges = shdSrf.DuplicateEdgeCurves(True)
-                        border = rc.Geometry.Curve.JoinCurves(edges)[0]
-                        unionedProjectedCrvs.append(border)
+                        shadingSurfaces.append(shdSrf)
                     except:
                         pass
-                return unionedProjectedCrvs
+                return shadingSurfaces
         elif method == 1:
             # there are two cases for method 1. There is a geometry or there is not a geometrty
             if optionalShdSrf_:
@@ -621,9 +636,10 @@ def main(method, depth, sunVectors, numShds, distBtwn):
                     # find the union the curves with the boundary of the shading
                     if mergeVectors_ == True:
                         unionedProjectedCrvs =rc.Geometry.Curve.CreateBooleanUnion(projectedCrvs)
-                        if unionedProjectedCrvs == []: unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
+                        if len(unionedProjectedCrvs) == 0:
+                            unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
+                            print "Merging of vectors into a single shade failed (most likely due to issues of model tolerance). Try increasing model tolerance or using fewer input sun vectors."
                     else:
-                        #unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
                         unionedProjectedCrvs = projectedCrvs
                 elif not isShdPlanar:
                     if mergeVectors_ == True:
@@ -644,7 +660,7 @@ def main(method, depth, sunVectors, numShds, distBtwn):
                             try:
                                 projectedCrv = rc.Geometry.Curve.CreateBooleanIntersection(pShadingBorder, c)[0]
                             except:
-                                print "Merging the vectors failed. The component will output the curves. You may want to set mergeVectors_ to False!"
+                                print "Merging of vectors into a single shade failed (most likely due to issues of model tolerance). Try increasing model tolerance or using fewer input sun vectors."
                                 projectedCrv = None
                             if projectedCrv: pProjectedCrvs.append(projectedCrv)
                             
@@ -652,7 +668,7 @@ def main(method, depth, sunVectors, numShds, distBtwn):
                             pUnionedProjectedCrvs =rc.Geometry.Curve.CreateBooleanUnion(pProjectedCrvs)[0]
                             unionedProjectedCrvs = rc.Geometry.Curve.ProjectToBrep(pUnionedProjectedCrvs, optionalShdSrf_, rc.Geometry.Vector3d.ZAxis, sc.doc.ModelAbsoluteTolerance)
                         except:
-                            print "Merging the vectors failed. The component will output the curves so you can take care of the rest!"
+                            print "Merging of vectors into a single shade failed (most likely due to issues of model tolerance). Try increasing model tolerance or using fewer input sun vectors."
                             pass
                         if unionedProjectedCrvs == []:
                             unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(pProjectedCrvs)
@@ -660,21 +676,47 @@ def main(method, depth, sunVectors, numShds, distBtwn):
                         # join the curves and return
                         unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
                 
-                return unionedProjectedCrvs
+                for curve in unionedProjectedCrvs:
+                    try:
+                        splitShades = rc.Geometry.Brep.Split(optionalShdSrf_, rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(curve, rc.Geometry.Vector3d.ZAxis)), sc.doc.ModelAbsoluteTolerance)
+                        for shade in splitShades:
+                            brepCurves = shade.DuplicateEdgeCurves()
+                            brepPerimComp = []
+                            for edge in brepCurves:
+                                brepPerimComp.append(edge.GetLength())
+                            brepPerim = sum(brepPerimComp)
+                            if curve.GetLength() + sc.doc.ModelAbsoluteTolerance > brepPerim and curve.GetLength() - sc.doc.ModelAbsoluteTolerance < brepPerim:
+                                shadingSurfaces.append(shade)
+                            else:
+                                pass
+                    except:
+                        shadingSurfaces.append(curve)
+                
+                return shadingSurfaces
             
             else:
                 #case 1: there is no geometry so it should be generated
                 # generate the planes
                 if len(optionalPlanes_)!=0: planes = optionalPlanes_
-                else: planes = analyzeGlz(_glzSrf, _distBetween, _numOfShds, _horOrVertical_, lb_visualization, normalVector)
+                else:
+                    if len(distBtwn) == 0:
+                        distBtwn = None
+                    else: distBtwn = distBtwn[0]
+                    if len(numShds) == 0:
+                        numShds = None
+                    else: numShds = numShds[0]
+                    if len(horOrVert) == 0:
+                        horOrVert = True
+                    else: horOrVert = horOrVert[0]
+                    planes = analyzeGlz(_glzSrf, distBtwn, numShds, horOrVert, lb_visualization, normalVector)
                 # return planes
                 # split base surface with planes
                 baseSrfs = splitSrf(_glzSrf, planes)
                 #print len(baseSrfs), len(planes)
                 # create shading surfaces
-                shadingCrvs = createShadings(baseSrfs, planes, sunVectors, mergeVectors_, rotationAngle_, lb_preparation, normalVector)
+                shadingSrfs = createShadings(baseSrfs, planes, sunVectors, mergeVectors_, rotationAngle_, lb_preparation)
                 
-                return shadingCrvs
+                return shadingSrfs
                 
                 pass
     else:
@@ -697,6 +739,6 @@ else:
     checkList = False
 
 if checkList:
-    shadingCrvs = main(method, depth, sunVectors, _numOfShds, _distBetween)
-    if shadingCrvs!=-1:
+    shadingSrfs = main(method, depth, sunVectors, _numOfShds, _distBetween, _horOrVertical_)
+    if shadingSrfs!=-1:
         print "Shading Calculation is done!"
