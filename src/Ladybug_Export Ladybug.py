@@ -19,7 +19,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.53\nJan_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -279,8 +279,7 @@ def main(components, targetFolder):
     if not sc.sticky.has_key('ladybug_release'): return "you need to let Ladybug fly first!"
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     
-    if not os.path.isdir(targetFolder):
-        return "targetFolder is not a valid address!"
+    if not os.path.isdir(targetFolder): os.mkdir(targetFolder)
         
     if components[0] == "*":
         ghComps = getAllTheComponents()
