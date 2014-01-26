@@ -19,7 +19,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.53\nJan_24_2014'
+ghenv.Component.Message = 'VER 0.0.53\nJan_25_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -87,21 +87,24 @@ def exportToUserObject(component, targetFolder, lb_preparation):
                 break
         
         # check if the version of the code is newer
-        if int(ghYear.strip()) > int(UOYear[:-1].strip()):
+        try:
+            if int(ghYear.strip()) > int(UOYear[:-1].strip()):
+                    return True
+            elif ghCompDate > UODate:
                 return True
-        elif ghCompDate > UODate:
+            elif ghCompDate == UODate:
+                for ghVer, UOVer in zip(UOVersion, UOVersion):
+                    if ghVer < UOVer: return False
+                return True
+            else:
+                print "\nThere is a newer userObject in Grasshopper folder that will be copied: " + currentUO.Path + "." + \
+                      "\nUserObject version is: " +  version + " " + date + \
+                      "\nThe component version is: "  +  ghVersion + " " + ghDate + ".\n"
+                
+                return False
+        except:
             return True
-        elif ghCompDate == UODate:
-            for ghVer, UOVer in zip(UOVersion, UOVersion):
-                if ghVer < UOVer: return False
-            return True
-        else:
-            print "\nThere is a newer userObject in Grasshopper folder that will be copied: " + currentUO.Path + "." + \
-                  "\nUserObject version is: " +  version + " " + date + \
-                  "\nThe component version is: "  +  ghVersion + " " + ghDate + ".\n"
             
-            return False
-    
     # check if the userObject is already existed in the folder
     try:
         filePath = os.path.join(UOFolder, component.Name + ".ghuser")

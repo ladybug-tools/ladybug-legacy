@@ -18,7 +18,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.53\nJan_24_2014'
+ghenv.Component.Message = 'VER 0.0.53\nJan_25_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -29,6 +29,8 @@ import os
 import shutil
 import zipfile
 import time
+import urllib
+
 
 def downloadSourceAndUnzip():
     """
@@ -164,7 +166,7 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         userObjectsFolder = downloadSourceAndUnzip()
         if userObjectsFolder==None: return "Download failed! Read component output for more information!", False
     else:
-        userObjectsFolder = userObjectsFolder
+        userObjectsFolder = sourceDirectory
     
     destinationDirectory = 'c:/Users/' + os.getenv("USERNAME") + '/AppData/Roaming/Grasshopper/UserObjects'
     
