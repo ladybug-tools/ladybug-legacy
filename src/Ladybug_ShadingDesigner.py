@@ -1,4 +1,4 @@
-﻿# This is a revision for shading designer as of January 22 2014
+# This is a revision for shading designer as of January 22 2014
 # By Mostapha Sadeghipour Roudsari and Chris Mackey
 # Sadeghipour@gmail.com and Chris@MackeyArchitecture.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.53
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nJan_27_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -299,7 +299,7 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
         try: numOfShd = int(numOfShds)
         except: numOfShd = math.ceil(glzHeight/distBetween)
         
-        shadingHeight = glzHeight/numOfShd
+        shadingHeight = glzHeight/numOfShd - sc.doc.ModelAbsoluteTolerance
         # find shading base planes
         planeOrigins = []
         planes = []
