@@ -1,4 +1,4 @@
-﻿# Solar Fan
+# Solar Fan
 # By Mostapha Sadeghipour Roudsari and Chris Mackey
 # Sadeghipour@gmail.com and Chris@MackeyArchitecture.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -221,6 +221,38 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, lb_preparation):
     
     return unionedProjectedCrvsCollection
 
+def unionAllFans(solarFans):
+    res = []
+    for fanCount in range(0, len(solarFans), 2):
+        try:
+            sc.doc = rc.RhinoDoc.ActiveDoc #change target document
+            rs.EnableRedraw(False)
+            
+            guid1 = sc.doc.Objects.AddBrep(solarFans[fanCount])
+            guid2 = sc.doc.Objects.AddBrep(solarFans[fanCount + 1])
+            all = rs.BooleanUnion([guid1, guid2], True)
+            
+            if all:
+                a = [rs.coercegeometry(a) for a in all]
+                for g in a: g.EnsurePrivateCopy() #must ensure copy if we delete from doc
+            
+            rs.DeleteObjects(all)
+            
+            sc.doc = ghdoc #put back document
+            rs.EnableRedraw()
+            
+            if a == None:
+                a = [solarFans[fanCount], solarFans[fanCount + 1]]
+        except:
+            rs.DeleteObjects(guid1)
+            sc.doc = ghdoc #put back document
+            rs.EnableRedraw()
+            a = [solarFans[fanCount]]
+        
+        if a:
+            res.extend(a)
+    return res
+
 def main(sunVectors):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
@@ -295,8 +327,13 @@ def main(sunVectors):
         
         # if more than one solar fan solids have been produced, resulting from multiple shading curves being produced, try to boolean union them together into one solar fan.
         if len(solarFanInit) > 1:
-            solarFanInit.reverse()
-            solarFanFinal = rc.Geometry.Brep.CreateBooleanUnion(solarFanInit, sc.doc.ModelAbsoluteTolerance)
+            listLength = len(solarFanInit)
+            solarFanFinal = solarFanInit
+            count  = 0
+            while len(solarFanFinal) > 1 and count < int(listLength/2) + 1:
+                solarFanFinal = unionAllFans(solarFanFinal)
+                count += 1
+            
             if solarFanFinal == None:
                 solarFanFinal = solarFanInit
                 print "Attempt to Boolean Union multiple solar fans into one failed.  Component will return multiple solar fans.  Try decreasing the '_adjustScale' parameter or using a greater timestep of solar vectors if a single solar fan is desired." 
@@ -320,7 +357,6 @@ if _runIt:
     checkList, sunVectors = checkTheInputs()
 else:
     print "Set _runIt to True!"
-    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "Set _runIt to True!")
     checkList = False
 
 if checkList:

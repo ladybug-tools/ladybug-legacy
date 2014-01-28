@@ -1,4 +1,4 @@
-﻿# Solar Envelope
+# Solar Envelope
 # By Mostapha Sadeghipour Roudsari and Chris Mackey
 # Sadeghipour@gmail.com and Chris@MackeyArchitecture.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
@@ -20,7 +20,7 @@ Provided by Ladybug 0.0.53
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelope'
 ghenv.Component.NickName = 'SolarEnvelope'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nJan_27_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -218,11 +218,32 @@ def intersectAllFans(solarFans):
     res = []
     for fanCount in range(0, len(solarFans), 2):
         try:
-            inters = rc.Geometry.Brep.CreateBooleanIntersection(solarFans[fanCount], solarFans[fanCount + 1], sc.doc.ModelAbsoluteTolerance)
+            sc.doc = rc.RhinoDoc.ActiveDoc #change target document
+            rs.EnableRedraw(False)
+            
+            guid1 = sc.doc.Objects.AddBrep(solarFans[fanCount])
+            guid2 = sc.doc.Objects.AddBrep(solarFans[fanCount + 1])
+            all = rs.BooleanIntersection(guid1, guid2, True)
+            
+            if all:
+                a = [rs.coercegeometry(a) for a in all]
+                for g in a: g.EnsurePrivateCopy() #must ensure copy if we delete from doc
+            
+            rs.DeleteObjects(all)
+            
+            sc.doc = ghdoc #put back document
+            rs.EnableRedraw()
+            
+            if a == None:
+                a = [solarFans[fanCount], solarFans[fanCount + 1]]
         except:
-            inters = [solarFans[fanCount]]
-        if inters:
-            res.append(inters[0])
+            rs.DeleteObjects(guid1)
+            sc.doc = ghdoc #put back document
+            rs.EnableRedraw()
+            
+            a = [solarFans[fanCount]]
+        if a:
+            res.extend(a)
     return res
 
 def main(sunVectors):
@@ -245,8 +266,8 @@ def main(sunVectors):
         # from the bounding box dimnesions, deriva a point to be used to generate the intersection plane.
         X = baseSrfBox.X[1] - baseSrfBox.X[0]
         Y = baseSrfBox.Y[1] - baseSrfBox.Y[0]
-        if X>Y:planeHeight = 1.5*X
-        else: planeHeight = 1.5*Y
+        if X>Y:planeHeight = 5*X
+        else: planeHeight = 5*Y
         try: Z = ((float(_size_))*planeHeight) + baseSrfBox.Z[1]
         except: Z = planeHeight + baseSrfBox.Z[1]
         planePt = rc.Geometry.Point3d(baseSrfCenPt.X, baseSrfCenPt.Y, Z)
@@ -320,7 +341,7 @@ def main(sunVectors):
         listLength = len(solarFans)
         solarEnvelope = solarFans
         count  = 0
-        while len(solarEnvelope) > 1 or count> int(listLength/2) + 1:
+        while len(solarEnvelope) > 1 and count < int(listLength/2) + 1:
             solarEnvelope = intersectAllFans(solarEnvelope)
             count += 1
         
@@ -341,7 +362,6 @@ if _runIt:
     checkList, sunVectors = checkTheInputs()
 else:
     print "Set _runIt to True!"
-    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "Set _runIt to True!")
     checkList = False
 
 if checkList:
