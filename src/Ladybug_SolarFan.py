@@ -244,7 +244,13 @@ def unionAllFans(solarFans):
             if a == None:
                 a = [solarFans[fanCount], solarFans[fanCount + 1]]
         except:
-            rs.DeleteObjects(guid1)
+            if guid1:
+                rs.DeleteObjects(guid1)
+            if guid2:
+                rs.DeleteObjects(guid2)
+            if all:
+                rs.DeleteObjects(all)
+            
             sc.doc = ghdoc #put back document
             rs.EnableRedraw()
             a = [solarFans[fanCount]]
