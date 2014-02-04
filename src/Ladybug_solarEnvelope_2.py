@@ -1,4 +1,4 @@
-# By Saeran Vasanthakumar
+﻿# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -262,7 +262,7 @@ if sc.sticky.has_key('ladybug_release'):
     # solar noon
     
     if _location:
-        latitude,longitude,timeZone,elevation = FL.readLocation(_location)
+        latitude,longitude,timeZone,elevation = readLocation(_location)
         year = datetime.datetime.now().year
         s_snoon = get_solarnoon(6,year,timeZone,22,latitude,longitude)
         e_snoon = get_solarnoon(9,year,timeZone,22,latitude,longitude)
