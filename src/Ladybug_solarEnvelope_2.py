@@ -1,4 +1,4 @@
-﻿# By Saeran Vasanthakumar
+# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -31,13 +31,17 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_solarEnvelope_2"
 ghenv.Component.NickName = 'solarEnvelope'
-ghenv.Component.Message = 'VER 0.0.53\nJAN_28_2014'
+ghenv.Component.Message = 'VER 0.0.53\nFEB_03_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import math
 import rhinoscriptsyntax as rs
 import Rhino
 import scriptcontext as sc
 import datetime
+import Grasshopper.Kernel as gh
 
 class SunCalculation:
     """ 
@@ -240,48 +244,49 @@ def get_sunpt(lat,cpt,month,day,hourlst,north_=0,lon=0,tZ=0,scale_=100):
 if sc.sticky.has_key('ladybug_release'):
     lb_sunpath = sc.sticky["ladybug_SunPath"]()
     lb_preparation = sc.sticky["ladybug_Preparation"]()
+
+    north = north_
+    boundary = _boundary
+    timeperiod = _timeperiod
+    
+    
+    # clean curve
+    rs.SimplifyCurve(boundary)
+    # reverse curve direction
+    boundarybrep = rs.coercecurve(boundary)
+    Rhino.Geometry.Curve.Reverse(boundarybrep)
+    sc.doc.Objects.Replace(boundary,boundarybrep)
+    if not rs.IsCurveClosed(boundary):
+        print "Curve is not closed"
+    
+    # solar noon
+    
+    if _location:
+        latitude,longitude,timeZone,elevation = FL.readLocation(_location)
+        year = datetime.datetime.now().year
+        s_snoon = get_solarnoon(6,year,timeZone,22,latitude,longitude)
+        e_snoon = get_solarnoon(9,year,timeZone,22,latitude,longitude)
+    else:
+        latitude = float(_latitude);longitude=0;timeZone=0;elevation=0;
+        s_snoon = 12.0
+        e_snoon = 12.0
+        print "Add the _location input for increased precision"
+    
+    # variables
+    t = timeperiod/2.0
+    shourlst = [s_snoon-t,s_snoon+t]
+    ehourlst = [e_snoon-t,e_snoon+t]
+    day = 22
+    centerPt = rs.CurveAreaCentroid(boundary)[0]
+    
+    s_sun_pts = get_sunpt(latitude,centerPt,6,day,shourlst,north_=north,lon=longitude,tZ=timeZone,scale_=100)
+    e_sun_pts = get_sunpt(latitude,centerPt,9,day,ehourlst,north_=north,lon=longitude,tZ=timeZone,scale_=100)
+    
+    szone = make_zone(s_sun_pts,boundary)
+    ezone = make_zone(e_sun_pts,boundary)
+    solarEnvelope = rs.BooleanIntersection(szone,ezone)
+
 else:
     print "You should first let the Ladybug fly..."
     w = gh.GH_RuntimeMessageLevel.Warning
     ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-
-north = north_
-boundary = _boundary
-timeperiod = _timeperiod
-
-
-# clean curve
-rs.SimplifyCurve(boundary)
-# reverse curve direction
-boundarybrep = rs.coercecurve(boundary)
-Rhino.Geometry.Curve.Reverse(boundarybrep)
-sc.doc.Objects.Replace(boundary,boundarybrep)
-if not rs.IsCurveClosed(boundary):
-    print "Curve is not closed"
-
-# solar noon
-
-if _location:
-    latitude,longitude,timeZone,elevation = FL.readLocation(_location)
-    year = datetime.datetime.now().year
-    s_snoon = get_solarnoon(6,year,timeZone,22,latitude,longitude)
-    e_snoon = get_solarnoon(9,year,timeZone,22,latitude,longitude)
-else:
-    latitude = float(_latitude);longitude=0;timeZone=0;elevation=0;
-    s_snoon = 12.0
-    e_snoon = 12.0
-    print "Add the _location input for increased precision"
-
-# variables
-t = timeperiod/2.0
-shourlst = [s_snoon-t,s_snoon+t]
-ehourlst = [e_snoon-t,e_snoon+t]
-day = 22
-centerPt = rs.CurveAreaCentroid(boundary)[0]
-
-s_sun_pts = get_sunpt(latitude,centerPt,6,day,shourlst,north_=north,lon=longitude,tZ=timeZone,scale_=100)
-e_sun_pts = get_sunpt(latitude,centerPt,9,day,ehourlst,north_=north,lon=longitude,tZ=timeZone,scale_=100)
-
-szone = make_zone(s_sun_pts,boundary)
-ezone = make_zone(e_sun_pts,boundary)
-solarEnvelope = rs.BooleanIntersection(szone,ezone) 

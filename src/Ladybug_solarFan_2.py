@@ -1,4 +1,4 @@
-﻿# By Saeran Vasanthakumar
+# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -33,7 +33,10 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_solarFan_2"
 ghenv.Component.NickName = 'solarFan'
-ghenv.Component.Message = 'VER 0.0.53\nJAN_28_2013'
+ghenv.Component.Message = 'VER 0.0.53\nFEB_03_2014'
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import math
 import rhinoscriptsyntax as rs
@@ -42,6 +45,7 @@ import scriptcontext as sc
 import datetime
 import random
 from decimal import Decimal as D
+import Grasshopper.Kernel as gh
 
 
 """ --------------------------3D CONVEX HULL CLASSES------------------------------"""
@@ -965,51 +969,54 @@ def checkConcaveConvex(curve):
 if sc.sticky.has_key('ladybug_release'):
     lb_sunpath = sc.sticky["ladybug_SunPath"]()
     lb_preparation = sc.sticky["ladybug_Preparation"]()
+    
+    north = north_
+    timeperiod = _timeperiod
+    height = _height
+    if _location:
+        latitude,longitude,timeZone,elevation = readLocation(_location)
+        year = datetime.datetime.now().year
+        s_snoon = get_solarnoon(6,year,timeZone,22,latitude,longitude)
+        e_snoon = get_solarnoon(9,year,timeZone,22,latitude,longitude)
+    else:
+        latitude = float(_latitude);longitude=0;timeZone=0;elevation=0;
+        s_snoon = 12.0
+        e_snoon = 12.0
+        print "Add the _location input for increased precision"
+    
+    """solar variables"""
+    shourlst,ehourlst,day = getSolarData()
+    
+    """work with curves"""
+    CH = ConvexHull2d()
+    curve_ = rs.coercecurve(_boundary, -1, True)
+    boundary_lst = checkConcaveConvex(curve_)
+    
+    chull_lst = []
+    top_lst = [] # for testing purposes
+    if type(boundary_lst) != type([]):
+        boundary_lst = [_boundary]
+    
+    for boundary_ in boundary_lst:
+        boundary = cleanCurve(boundary_)
+        bcurve,tc = getSolarGeom(boundary)
+        chull_lst.append(bcurve)
+        top_lst.extend(tc)
+    
+    b2ch = Curve2ConvexHull3d()
+    breplst,ptlst = b2ch.get_convexhull(chull_lst)
+    
+    tol = sc.doc.ModelAbsoluteTolerance
+    L = map(lambda m: rs.coercebrep(m),breplst)
+    CB = CleanBrep(tol,L)
+    map(lambda id: sc.doc.Objects.Delete(id,True), breplst) #delete breplst
+    solarFan = CB.cleanBrep()
+    ##bcurve = boundary_lst ## for testing purposes
+    ##top_curves = top_lst ## for testing purposes
+    
+    
+    
 else:
     print "You should first let the Ladybug fly..."
     w = gh.GH_RuntimeMessageLevel.Warning
     ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-
-north = north_
-timeperiod = _timeperiod
-height = _height
-if _location:
-    latitude,longitude,timeZone,elevation = readLocation(_location)
-    year = datetime.datetime.now().year
-    s_snoon = get_solarnoon(6,year,timeZone,22,latitude,longitude)
-    e_snoon = get_solarnoon(9,year,timeZone,22,latitude,longitude)
-else:
-    latitude = float(_latitude);longitude=0;timeZone=0;elevation=0;
-    s_snoon = 12.0
-    e_snoon = 12.0
-    print "Add the _location input for increased precision"
-
-"""solar variables"""
-shourlst,ehourlst,day = getSolarData()
-
-"""work with curves"""
-CH = ConvexHull2d()
-curve_ = rs.coercecurve(_boundary, -1, True)
-boundary_lst = checkConcaveConvex(curve_)
-
-chull_lst = []
-top_lst = [] # for testing purposes
-if type(boundary_lst) != type([]):
-    boundary_lst = [_boundary]
-
-for boundary_ in boundary_lst:
-    boundary = cleanCurve(boundary_)
-    bcurve,tc = getSolarGeom(boundary)
-    chull_lst.append(bcurve)
-    top_lst.extend(tc)
-
-b2ch = Curve2ConvexHull3d()
-breplst,ptlst = b2ch.get_convexhull(chull_lst)
-
-tol = sc.doc.ModelAbsoluteTolerance
-L = map(lambda m: rs.coercebrep(m),breplst)
-CB = CleanBrep(tol,L)
-map(lambda id: sc.doc.Objects.Delete(id,True), breplst) #delete breplst
-solarFan = CB.cleanBrep()
-##bcurve = boundary_lst ## for testing purposes
-##top_curves = top_lst ## for testing purposes
