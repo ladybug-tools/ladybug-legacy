@@ -35,8 +35,8 @@ ghenv.Component.Name = "Ladybug_solarFan_2"
 ghenv.Component.NickName = 'solarFan'
 ghenv.Component.Message = 'VER 0.0.53\nFEB_03_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.AdditionalHelpFromDocStrings = "1"
 
 import math
 import rhinoscriptsyntax as rs
