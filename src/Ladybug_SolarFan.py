@@ -21,7 +21,7 @@ Provided by Ladybug 0.0.53
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -225,34 +225,14 @@ def unionAllFans(solarFans):
     res = []
     for fanCount in range(0, len(solarFans), 2):
         try:
-            sc.doc = rc.RhinoDoc.ActiveDoc #change target document
-            rs.EnableRedraw(False)
-            
-            guid1 = sc.doc.Objects.AddBrep(solarFans[fanCount])
-            guid2 = sc.doc.Objects.AddBrep(solarFans[fanCount + 1])
-            all = rs.BooleanUnion([guid1, guid2], True)
-            
-            if all:
-                a = [rs.coercegeometry(a) for a in all]
-                for g in a: g.EnsurePrivateCopy() #must ensure copy if we delete from doc
-            
-            rs.DeleteObjects(all)
-            
-            sc.doc = ghdoc #put back document
-            rs.EnableRedraw()
-            
+            x = solarFans[fanCount]
+            y = solarFans[fanCount + 1]
+            x.Faces.SplitKinkyFaces(rc.RhinoMath.DefaultAngleTolerance, False)
+            y.Faces.SplitKinkyFaces(rc.RhinoMath.DefaultAngleTolerance, False)
+            a = rc.Geometry.Brep.CreateBooleanUnion([x, y], sc.doc.ModelAbsoluteTolerance)
             if a == None:
                 a = [solarFans[fanCount], solarFans[fanCount + 1]]
         except:
-            if guid1:
-                rs.DeleteObjects(guid1)
-            if guid2:
-                rs.DeleteObjects(guid2)
-            if all:
-                rs.DeleteObjects(all)
-            
-            sc.doc = ghdoc #put back document
-            rs.EnableRedraw()
             a = [solarFans[fanCount]]
         
         if a:
