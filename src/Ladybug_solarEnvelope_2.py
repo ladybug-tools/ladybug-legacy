@@ -34,7 +34,7 @@ ghenv.Component.NickName = 'solarEnvelope'
 ghenv.Component.Message = 'VER 0.0.53\nFEB_03_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+#ghenv.Component.AdditionalHelpFromDocStrings = "3"
 
 import math
 import rhinoscriptsyntax as rs
@@ -251,6 +251,10 @@ if sc.sticky.has_key('ladybug_release'):
     
     
     # clean curve
+    if type(boundary) == type(rs.AddPoint(0,0,0)): # already guid
+        pass
+    else:
+        boundary = sc.doc.Objects.AddCurve(boundary)
     rs.SimplifyCurve(boundary)
     # reverse curve direction
     boundarybrep = rs.coercecurve(boundary)

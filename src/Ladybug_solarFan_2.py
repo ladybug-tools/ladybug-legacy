@@ -1,4 +1,4 @@
-# By Saeran Vasanthakumar
+﻿# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -998,6 +998,10 @@ if sc.sticky.has_key('ladybug_release'):
         boundary_lst = [_boundary]
     
     for boundary_ in boundary_lst:
+        if type(boundary_) == type(rs.AddPoint(0,0,0)): # already guid
+            pass
+        else:
+            boundary_ = sc.doc.Objects.AddCurve(boundary_)
         boundary = cleanCurve(boundary_)
         bcurve,tc = getSolarGeom(boundary)
         chull_lst.append(bcurve)
