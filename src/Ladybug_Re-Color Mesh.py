@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.53\nFeb_07_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -53,9 +53,9 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
         # check inputs
         if inputMesh and len(analysisResult)!=0:
             if inputMesh.Faces.Count != len(analysisResult):
-                warning = 'length of the results should be equal to the number of mesh faces'
+                warning = 'length of the results [=' + str(len(analysisResult)) + '] is not equal to the number of mesh faces [=' + str(inputMesh.Faces.Count) + '].'
                 print warning
-                w = gh.GH_RuntimeMessageLevel.Error
+                w = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(w, warning)
                 return -1
             
@@ -128,4 +128,4 @@ if _inputMesh and len(_analysisResult)!=0:
         legendBasePt = result[2]
         
         # Hide output
-        ghenv.Component.Params.Output[2].Hidden = True
+        ghenv.Component.Params.Output[3].Hidden = True
