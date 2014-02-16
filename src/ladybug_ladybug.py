@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.53\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -58,6 +58,7 @@ class Preparation(object):
     def __init__(self):
         self.monthList = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
         self.numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
+        self.numOfDaysEachMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         self.numOfHours = [24 * numOfDay for numOfDay in self.numOfDays]
     
     def giveWarning(self, warningMsg, GHComponent):
