@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.53\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -234,11 +234,12 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
         if len(analysisPeriod)!=0 and analysisPeriod[0]!=None:
             stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, True, False)
 
-            days = range(stDay, endDay + 1)
+            days = range(32) #range(stDay, endDay + 1)
             
             if stMonth > endMonth: months = range(stMonth, 13) + range(1, endMonth + 1)
             else: months = range(stMonth, endMonth + 1)
-            hour  = range(stHour, endHour + 1)
+            # end hour shouldn't be included
+            hour  = range(stHour, endHour)
         else:
             days = day
             months = month
@@ -351,7 +352,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     else:
                         #find the numbers
                         for h, hr in enumerate(sunUpHours):
-                            value = selList[int(math.floor(hr-1))] + (selList[int(math.ceil(hr-1))] - selList[int(math.floor(hr-1))])* (hr - math.floor(hr))
+                            value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
                             values.append(value)
                             modifiedsunPosInfo.append(sunPosInfo[h] + '\n' + ("%.2f" % value) + ' ' + listInfo[i][3])
                     
