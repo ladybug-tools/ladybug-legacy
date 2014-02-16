@@ -254,7 +254,14 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 textPt[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
             return textPt
 
-
+        def getAzimuth(sunVector, northVector):
+            # this function is a temporary fix and should be removed
+            # calculate azimuth based on sun vector
+            newSunVector = rc.Geometry.Vector3d(sunVector)
+            newSunVector.Reverse()
+            
+            return 360 - math.degrees(rc.Geometry.Vector3d.VectorAngle(northVector, newSunVector, rc.Geometry.Plane.WorldXY))
+            
         # define sun positions based on altitude and azimuth [this one should have a bug]
         sunPositions = []; sunVectors = []; sunUpHours = []; sunSpheres = []
         sunAlt = []; sunAzm = []; sunPosInfo = []
@@ -335,8 +342,9 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     sunSpheres.append(sunSphere)
                     sunVectors.append(sunVector)
                     sunAlt.append(math.degrees(lb_sunpath.solAlt))
-                    sunAzm.append(math.degrees(lb_sunpath.solAz))
-    
+                    solAz = getAzimuth(sunVector, northVector)
+                    sunAzm.append(solAz)
+            
             if len(sunVectors)== 0:
                 if conditionalStatement!=None:
                     warning = 'None of the hours meet the conditional statement'
