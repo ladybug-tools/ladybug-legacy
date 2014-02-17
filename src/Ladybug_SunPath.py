@@ -10,7 +10,7 @@ The sun-path Class is a Python version of RADIANCE sun-path script by Greg Ward.
 http://www.radiance-online.org/download-install/CVS%20source%20code
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         north_: Input a number or a vector to set north; default is set to the Y-axis
@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -158,6 +158,57 @@ def readLocation(location):
     
     return float(latitude), float(longitude), float(timeZone), float(elevation)
 
+
+
+def getHOYs(hours, days, months, timeStep, lb_preparation, method = 0):
+    
+    if method == 1: stDay, endDay = days
+        
+    numberOfDaysEachMonth = lb_preparation.numOfDaysEachMonth
+    
+    if timeStep != 1: hours = rs.frange(hours[0], hours[-1] + 1 - 1/timeStep, 1/timeStep)
+    
+    HOYS = []
+        
+    for monthCount, m in enumerate(months):
+        if method == 1:
+            #based on analysis period
+            if monthCount == 0: days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
+            elif monthCount == len(months) - 1: days = range(1, lb_preparation.checkDay(endDay, m) + 1)
+            else: days = range(1, numberOfDaysEachMonth[monthCount] + 1)
+            
+        for d in days:
+            for h in hours:
+                h = lb_preparation.checkHour(float(h))
+                m  = lb_preparation.checkMonth(int(m))
+                d = lb_preparation.checkDay(int(d), m)
+                HOY = lb_preparation.date2Hour(m, d, h)
+                if HOY not in HOYS: HOYS.append(HOY)
+    
+    return HOYS
+
+
+def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
+    
+    stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, True, False)
+    
+    # print stMonth, stDay, stHour, endMonth, endDay, endHour
+    
+    if stMonth > endMonth:
+        months = range(stMonth, 13) + range(1, endMonth + 1)
+    else:
+        months = range(stMonth, endMonth + 1)
+    
+    # end hour shouldn't be included
+    hours  = range(stHour, endHour)
+    
+    days = stDay, endDay
+    
+    HOYS = getHOYs(hours, days, months, timeStep, lb_preparation, method = 1)
+    
+    return HOYS, months
+    
+    
 def main(latitude, longitude, timeZone, elevation, north, hour, day, month, timeStep, analysisPeriod, centerPt, sunPathScale, sunScale, annualHourlyData, conditionalStatement, legendPar, dailyOrAnnualSunPath, bakeIt):
     
     if dailyOrAnnualSunPath:
@@ -203,7 +254,14 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 textPt[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
             return textPt
 
-
+        def getAzimuth(sunVector, northVector):
+            # this function is a temporary fix and should be removed
+            # calculate azimuth based on sun vector
+            newSunVector = rc.Geometry.Vector3d(sunVector)
+            newSunVector.Reverse()
+            
+            return 360 - math.degrees(rc.Geometry.Vector3d.VectorAngle(northVector, newSunVector, rc.Geometry.Plane.WorldXY))
+            
         # define sun positions based on altitude and azimuth [this one should have a bug]
         sunPositions = []; sunVectors = []; sunUpHours = []; sunSpheres = []
         sunAlt = []; sunAzm = []; sunPosInfo = []
@@ -232,20 +290,15 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
         
         # check for analysisPeriod
         if len(analysisPeriod)!=0 and analysisPeriod[0]!=None:
-            stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, True, False)
-
-            days = range(stDay, endDay + 1)
             
-            if stMonth > endMonth: months = range(stMonth, 13) + range(1, endMonth + 1)
-            else: months = range(stMonth, endMonth + 1)
-            hour  = range(stHour, endHour + 1)
+            HOYs, months = getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation)
+            
         else:
             days = day
             months = month
+            hours = hour
             
-        if timeStep != 1: hours = rs.frange(hour[0], hour[-1] + 1 - 1/timeStep, 1/timeStep)
-        else: hours = hour
-        
+            HOYs = getHOYs(hours, days, months, timeStep, lb_preparation)
         
         if latitude!=None:
             # check conditional statement for the whole year
@@ -273,28 +326,31 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             lb_sunpath.initTheClass(float(latitude), northAngle, cenPt, scale, longitude, timeZone)
             # count total sun up hours
             SUH = 0
-            for m in months:
-                for d in days:
-                    for h in hours:
-                        h = lb_preparation.checkHour(float(h))
-                        m  = lb_preparation.checkMonth(int(m))
-                        d = lb_preparation.checkDay(int(d), m)
-                        lb_sunpath.solInitOutput(m, d, h)
-                        if lb_sunpath.solAlt >= 0: SUH += 1
-                        if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))]:
-                            sunSphere, sunVector, sunPoint = lb_sunpath.sunPosPt(sunSc)
-                            # find the hour of the year
-                            sunUpHours.append(lb_preparation.date2Hour(m, d, h))
-                            sunPosInfo.append(lb_preparation.hour2Date(lb_preparation.date2Hour(m, d, h)))
-                            sunPositions.append(sunPoint)
-                            sunSpheres.append(sunSphere)
-                            sunVectors.append(sunVector)
-                            sunAlt.append(math.degrees(lb_sunpath.solAlt))
-                            sunAzm.append(math.degrees(lb_sunpath.solAz))
+            
+            for HOY in HOYs:
+                d, m, h = lb_preparation.hour2Date(HOY, True)
+                m += 1
+                lb_sunpath.solInitOutput(m, d, h)
+                
+                if lb_sunpath.solAlt >= 0: SUH += 1
+                if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))]:
+                    sunSphere, sunVector, sunPoint = lb_sunpath.sunPosPt(sunSc)
+                    # find the hour of the year
+                    sunUpHours.append(lb_preparation.date2Hour(m, d, h))
+                    sunPosInfo.append(lb_preparation.hour2Date(lb_preparation.date2Hour(m, d, h)))
+                    sunPositions.append(sunPoint)
+                    sunSpheres.append(sunSphere)
+                    sunVectors.append(sunVector)
+                    sunAlt.append(math.degrees(lb_sunpath.solAlt))
+                    solAz = getAzimuth(sunVector, northVector)
+                    sunAzm.append(solAz)
             
             if len(sunVectors)== 0:
-                warning = 'None of the hours meet the conditional statement'
-                #print warning
+                if conditionalStatement!=None:
+                    warning = 'None of the hours meet the conditional statement'
+                else:
+                    warning = 'Night time!'
+                    
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             
             dailySunPathCrvs = []
@@ -302,12 +358,17 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             baseCrvs = []
             if annualSunPath!=False:
                 annualSunPathCrvs = [item.ToNurbsCurve() for sublist in lb_sunpath.drawSunPath() for item in sublist]
-            if dailySunPath: dailySunPathCrvs = lb_sunpath.drawDailyPath(m, d).ToNurbsCurve()
+            if dailySunPath:
+                dailySunPathCrvs = []
+                for HOY in HOYs:
+                    d, m, h = lb_preparation.hour2Date(HOY, True)
+                    m += 1
+                    dailySunPathCrvs.append(lb_sunpath.drawDailyPath(m, d).ToNurbsCurve())
             if annualSunPath or dailySunPath: baseCrvs = [rc.Geometry.Circle(cenPt, 1.08*scale).ToNurbsCurve()] #lb_sunpath.drawBaseLines()
         
             sunPathCrvs = []
             if annualSunPathCrvs: sunPathCrvs = sunPathCrvs + annualSunPathCrvs
-            if dailySunPathCrvs: sunPathCrvs = sunPathCrvs + [dailySunPathCrvs]
+            if dailySunPathCrvs: sunPathCrvs = sunPathCrvs + dailySunPathCrvs
             if baseCrvs: sunPathCrvs = sunPathCrvs + baseCrvs
             if sunPathCrvs!=[]: lb_visualization.calculateBB(sunPathCrvs, True)
             # sunPathCrvs = sunPathCrvs - baseCrvs
@@ -351,7 +412,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     else:
                         #find the numbers
                         for h, hr in enumerate(sunUpHours):
-                            value = selList[int(math.floor(hr-1))] + (selList[int(math.ceil(hr-1))] - selList[int(math.floor(hr-1))])* (hr - math.floor(hr))
+                            value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
                             values.append(value)
                             modifiedsunPosInfo.append(sunPosInfo[h] + '\n' + ("%.2f" % value) + ' ' + listInfo[i][3])
                     
@@ -372,6 +433,8 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         # list info should be provided in case there is no hourly input data
                         
                         if len(sunSpheres) == 1:
+                            d, m, h = lb_preparation.hour2Date(HOYs[0], True)
+                            m += 1
                             customHeading = customHeading + '\n' + lb_preparation.hour2Date(lb_preparation.date2Hour(m, d, h)) + \
                                            ', ALT = ' + ("%.2f" % sunAlt[0]) + ', AZM = ' + ("%.2f" % sunAzm[0]) + '\n'
                         elif len(months) == 1 and len(days) == 1:
@@ -447,6 +510,9 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             elif dailySunPath or annualSunPath:
                 values = []
                 if len(sunSpheres) == 1:
+                    d, m, h = lb_preparation.hour2Date(HOYs[0], True)
+                    m += 1
+                    
                     customHeading = customHeading + '\n' + lb_preparation.hour2Date(lb_preparation.date2Hour(m, d, h)) + \
                                    ', ALT = ' + ("%.2f" % sunAlt[0]) + ', AZM = ' + ("%.2f" % sunAzm[0]) + '\n'
                 elif len(months) == 1 and len(days) == 1:

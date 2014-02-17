@@ -23,7 +23,7 @@ Provided by Ladybug 0.0.53
 """
 ghenv.Component.Name = "Ladybug_Construct Location"
 ghenv.Component.NickName = 'constructLocation'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -32,7 +32,7 @@ from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
-if _locationName and _latitude:
+if _locationName and _latitude!=None:
     location = "Site:Location,\n" + \
             _locationName + ',\n' + \
             str(_latitude)+',      !Latitude\n' + \
