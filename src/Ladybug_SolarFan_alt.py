@@ -1,4 +1,4 @@
-﻿# By Saeran Vasanthakumar
+# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -12,7 +12,7 @@ user-specfied amount of time. The autumn equinox is used as the solar cutoff poi
 Warning: Extremely complicated concave shapes will take a long time.
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _boundary: Input the boundary geometry as a closed, planar Curve(s).
@@ -43,7 +43,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_SolarFan_alt"
 ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.53\nFEB_13_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"

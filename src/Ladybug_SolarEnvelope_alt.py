@@ -1,4 +1,4 @@
-﻿# By Saeran Vasanthakumar
+# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -17,7 +17,7 @@ Reference: Niemasz, J., Sargent, J., Reinhart D.F., "Solar Zoning and Energy in
 Detached Residential Dwellings," Proceedings of SIMAUD 2011, Boston, April 2011.
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _boundary: Input the base geometry as a closed Curve(s)
@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_SolarEnvelope_alt"
 ghenv.Component.NickName = 'SolarEnvelope Alternative'
-ghenv.Component.Message = 'VER 0.0.53\nFEB_13_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
