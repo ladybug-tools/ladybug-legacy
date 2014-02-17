@@ -8,7 +8,7 @@
 Use this component to generate a solar fan for a given test surface and set of solar vectors.  Solar fans essentially illustrate the volume that should be clear of shading in order to provide solar access for the given set of sun vectors.
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _baseSrf: A surface representing a piece of land (such as a park) or a window for which solar access is desired.
@@ -21,7 +21,7 @@ Provided by Ladybug 0.0.53
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_05_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"

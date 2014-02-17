@@ -6,7 +6,7 @@
 """
 This component [removes | updates] Ladybug components from [grasshopper | a source folder]
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         sourceDirectory_: Optional address to a folder that contains Ladybug updated userObjects. If None the component will download the latest version from GitHUB.
@@ -18,7 +18,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.53\nJan_25_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -37,19 +37,26 @@ def downloadSourceAndUnzip():
     Download the source code from github and unzip it in temp folder
     """
     url = "https://github.com/mostaphaRoudsari/ladybug/archive/master.zip"
-    targetDirectory = "c:/ladybug/temp"
+    targetDirectory = "c:/ladybugSrc"
     
-    # create the target directory
-    if not os.path.isdir(targetDirectory): os.mkdir(targetDirectory)
+
     
     # download the zip file
     print "Downloading the source code..."
     zipFile = os.path.join(targetDirectory, os.path.basename(url))
     
     # if the source file is just downloded then just use the available file
-    if os.path.isfile(zipFile) and time.time() - os.stat(zipFile).st_mtime < 10000: download = False
-    else: download = True
+    if os.path.isfile(zipFile) and time.time() - os.stat(zipFile).st_mtime < 1000: download = False
+    else:
+        download = True
+        try:
+            os.rmdir(targetDirectory)
+        except:
+            pass
     
+    # create the target directory
+    if not os.path.isdir(targetDirectory): os.mkdir(targetDirectory)
+
     if download:
         webFile = urllib.urlopen(url)
         localFile = open(zipFile, 'wb')

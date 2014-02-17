@@ -6,7 +6,7 @@
 """
 ViewRose
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _context: Context buildings as Brep or Mesh
@@ -21,7 +21,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_view Rose"
 ghenv.Component.NickName = 'viewRose'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"

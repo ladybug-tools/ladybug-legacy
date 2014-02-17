@@ -8,7 +8,7 @@
 Draw radiation rose.
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _selectedSkyMtx: SelectSkyMtx component result
@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -326,3 +326,4 @@ if _runIt:
             radRoseValues.AddRange(result[5][i], p)
         ghenv.Component.Params.Output[4].Hidden = True       
         ghenv.Component.Params.Output[5].Hidden = True
+

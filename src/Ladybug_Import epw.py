@@ -12,7 +12,7 @@ All the output definitions are borrowed from the same document.
 The document is available online at this address:
 "http://apps1.eere.energy.gov/buildings/energyplus/pdfs/auxiliaryprograms.pdf"
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _epwFile: epw file location on your system as a string
@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.53
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"

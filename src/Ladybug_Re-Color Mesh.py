@@ -7,7 +7,7 @@
 """
 Re-color Mesh
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _analysisResult: The result of the analysis
@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.53\nFeb_07_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"

@@ -7,7 +7,7 @@
 """
 Draw 3D Charts
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _inputData: List of input data for plot
@@ -30,7 +30,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"

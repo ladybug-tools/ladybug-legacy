@@ -6,7 +6,7 @@
 """
 Forward Raytracing
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _startPts: Start points for raytracing as Point3D
@@ -20,7 +20,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Forward Raytracing"
 ghenv.Component.NickName = 'forwardRaytracing'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"

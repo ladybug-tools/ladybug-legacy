@@ -6,7 +6,7 @@
 """
 Calculate day, month and hour for any day or hour of the year
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         HOY: Hour of the year
@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Day_Month_Hour"
 ghenv.Component.NickName = 'Day_Month_Hour_Calculator'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 ghenv.Component.AdditionalHelpFromDocStrings = "4"
@@ -56,3 +56,4 @@ def main(HOY):
 
 result = main(_HOY)
 if result!=-1: day, month, hour, date = result
+

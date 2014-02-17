@@ -7,7 +7,7 @@
 """
 Open DOE website to download .epw weather file.
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
 
     Args:
         _download: Set Boolean to True to open the website
@@ -16,7 +16,7 @@ Provided by Ladybug 0.0.53
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"

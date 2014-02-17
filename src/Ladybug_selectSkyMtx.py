@@ -8,7 +8,7 @@
 This component generates the selected skyMtx for an hour of the year or an analysis period 
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _cumulativeSkyMtx: Results of GenCumulativeSkyMtx 
@@ -24,7 +24,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"

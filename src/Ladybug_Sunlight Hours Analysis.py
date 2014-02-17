@@ -10,7 +10,7 @@ This component uses sun vectors to calculate sunlight hours on building surfaces
 You can use this component also for shadow studies.
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         north_: Input a vector to set north
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -491,3 +491,4 @@ if _runIt:
 
 else:
     print 'Set runIt to True!'
+

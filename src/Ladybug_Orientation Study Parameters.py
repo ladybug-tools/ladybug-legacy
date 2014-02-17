@@ -7,7 +7,7 @@
 """
 This component sets up the parameters for orientation study
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         divisionAngle: A number that indicates the division angle
@@ -24,7 +24,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Orientation Study Parameters"
 ghenv.Component.NickName = 'orientationStudyPar'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -78,3 +78,4 @@ else:
     print "You should first let the Ladybug fly..."
     w = gh.GH_RuntimeMessageLevel.Warning
     ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
+

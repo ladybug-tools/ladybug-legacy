@@ -7,7 +7,7 @@
 """
 Construct location
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
 
     Args:
         _locationName: Location name

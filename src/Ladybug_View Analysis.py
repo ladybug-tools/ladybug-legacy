@@ -11,7 +11,7 @@ Since view is a qualitative measure you can manipulate the effective view field 
 using view parameters component.
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _geometry: Input the test geometries as a Brep or Mesh
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"

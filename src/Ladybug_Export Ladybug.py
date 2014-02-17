@@ -7,7 +7,7 @@
 This component exports Ladybug/Honeybee components source code and create/update the userObjects
 Thanks to Giulio Piacentino for a really helpful example
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _components: Output of a series of Ladybug component or * to search all the components on canvas
@@ -19,7 +19,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.53\nJan_25_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -302,3 +302,10 @@ if _export and len(_components)!=0 and _targetFolder!=None:
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
 else:
     print "At the minimum one of the components are missing!"
+
+
+
+
+
+
+

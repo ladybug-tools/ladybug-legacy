@@ -1,4 +1,4 @@
-﻿# By Chris Mackey
+# By Chris Mackey
 # Chris@MackeyArchitecture.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -7,7 +7,7 @@
 Use this component to generate lists of shading depths, numbers of shades, horizontal or vertical values, and shade angles for different cardinal directions to be plugged into the _depthOrVector, _numOfShds, _horOrVertical_, and _shdAngle_ inputs of the "ShadingDesigner" component.
 
 -
-Provided by Ladybug 0.0.52
+Provided by Ladybug 0.0.54
 
     Args:
         _northDepth: Shading depth for north-facing glazing.
@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.52
 """
 ghenv.Component.Name = "Ladybug_Shading Parameters List"
 ghenv.Component.NickName = 'shdParamList'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 ghenv.Component.AdditionalHelpFromDocStrings = "2"

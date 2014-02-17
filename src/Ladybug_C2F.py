@@ -7,7 +7,7 @@
 """
 Convert from C to F 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         _C: Input temperatures in C
@@ -17,7 +17,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_C2F"
 ghenv.Component.NickName = 'C2F'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 ghenv.Component.AdditionalHelpFromDocStrings = "4"

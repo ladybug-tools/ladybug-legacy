@@ -13,7 +13,7 @@ I'm testing a more sophisticated component that uses RADIANCE for calculations. 
 one of the alternative plugins for more advanced studies. 
 
 -
-Provided by Ladybug 0.0.53
+Provided by Ladybug 0.0.54
     
     Args:
         north_: Input a vector to set north
@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.53
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.53\nJan_22_2014'
+ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -501,3 +501,4 @@ if _runIt:
         ghenv.Component.AddRuntimeMessage(w, "Please connect the geometry or the context and set up both the gridSize and the distance from base surface...")
 
 else: print 'Set runIt to True!'
+
