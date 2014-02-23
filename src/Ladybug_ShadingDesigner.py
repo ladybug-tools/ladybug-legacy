@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.54
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_23_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -321,7 +321,23 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
     
     # return planes
     return sortedPlanes
-    
+
+def unionAllCurves(Curves):
+    res = []
+    for curveCount in range(0, len(Curves), 2):
+        try:
+            x = Curves[curveCount]
+            y = Curves[curveCount + 1]
+            a = rc.Geometry.Curve.CreateBooleanUnion([x, y])
+            if a == None:
+                a = [Curves[curveCount], Curves[curveCount + 1]]
+        except:
+            a = [Curves[curveCount]]
+        
+        if a:
+            res.extend(a)
+    return res
+
 def splitSrf(brep, cuttingPlanes):
     # find the intersection crvs as the base for shadings
     intCrvs =[]
@@ -461,25 +477,61 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, rotationAngle_, lb_p
                     print "Number of planes doesn't match the number of surfaces." + \
                           "\nOne of the shadings won't be created. You can generate the planes manually" + \
                           "\nand use optionalPlanes option."
+            else:
+                projectedCrvs.extend("N")
             if projectedCrv:
                 try: projectedCrvs.extend(projectedCrv)
                 except: projectedCrvs.append(projectedCrv)
         
-        # find the union the curves with the boundary of the shading
+        #Calculate the number of vectors that are behind the glazing surface.
+        vecInFront = []
+        for curve in projectedCrvs:
+            if curve != "N": vecInFront.append(1)
+            else: pass
+        
+        # If merge vectors is true, find the union the curves with the boundary of the shading.
         if mergeVectors_ == True:
-            unionedProjectedCrvs =rc.Geometry.Curve.CreateBooleanUnion(projectedCrvs)
+            justVecShading = []
+            for curve in projectedCrvs:
+                if curve != "N":
+                    justVecShading.append(curve)
+                else: pass
+            
+            if len(justVecShading) > 1:
+                listLength = len(justVecShading)
+                mergedShadingFinal = justVecShading
+                count  = 0
+                while len(mergedShadingFinal) > 1 and count < int(listLength/2) + 1:
+                    mergedShadingFinal = unionAllCurves(mergedShadingFinal)
+                    count += 1
+                
+                if mergedShadingFinal == None:
+                    mergedShadingFinal = justVecShading
+                    print "Attempt to merge shadings failed.  Component will return multiple shadings." 
+            else:
+                mergedShadingFinal = justVecShading
+            
+            unionedProjectedCrvs = mergedShadingFinal
             if len(unionedProjectedCrvs) == 0:
-                unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
-                print "Merging of vectors into a single shade failed (most likely due to issues of model tolerance). Try increasing model tolerance or using fewer input sun vectors."
+                unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(justVecShading)
+                print "Merging of vectors into a single shade failed."
         else:
             unionedProjectedCrvs = projectedCrvs
         
+        #Collect all of the curves together and add them to the list.
         unionedProjectedCrvsCollection.extend(unionedProjectedCrvs)
         
         finalShdSrfs = []
         for curve in unionedProjectedCrvsCollection:
-            try: finalShdSrfs.extend(rc.Geometry.Brep.CreatePlanarBreps(curve))
-            except: finalShdSrfs.extend(curve)
+            if curve != "N":
+                try: finalShdSrfs.extend(rc.Geometry.Brep.CreatePlanarBreps(curve))
+                except: finalShdSrfs.extend(curve)
+            else: finalShdSrfs.append(None)
+    
+    #Give an output that states the number of sun vectors behind the glazing for which no shading was generated.
+    vecBehind = len(sunVectors) - len(vecInFront)
+    if vecBehind != 0:
+        print str(vecBehind) + " sun vectors were angled behind the _glzSrf for which no shading was generated."
     
     return finalShdSrfs
 
@@ -735,7 +787,6 @@ if _runIt:
     checkList, method, depth, sunVectors = checkTheInputs()
 else:
     print "Set _runIt to True!"
-    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "Set _runIt to True!")
     checkList = False
 
 if checkList:
