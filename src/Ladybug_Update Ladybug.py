@@ -6,7 +6,7 @@
 """
 This component [removes | updates] Ladybug components from [grasshopper | a source folder]
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         sourceDirectory_: Optional address to a folder that contains Ladybug updated userObjects. If None the component will download the latest version from GitHUB.
@@ -18,10 +18,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
-ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+except: pass
+
 
 import scriptcontext as sc
 import Grasshopper.Kernel as gh

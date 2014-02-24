@@ -8,7 +8,7 @@
 Use this component to generate a solar envelope for a given test surface and set of solar vectors.  Solar envelopes essentially illustrate the volume that can be built within in order to ensure that the test property does not shade the surrounding properties from the given set of sun vectors.
 
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _baseSrf: A surface representing a piece of land (such as a property to be developed) for which solar access of the surrounding land is desired.
@@ -20,10 +20,12 @@ Provided by Ladybug 0.0.54
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelope'
 ghenv.Component.NickName = 'SolarEnvelope'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+except: pass
+
 
 import Rhino as rc
 import rhinoscriptsyntax as rs

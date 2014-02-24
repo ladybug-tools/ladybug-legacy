@@ -17,7 +17,7 @@ Reference: Niemasz, J., Sargent, J., Reinhart D.F., "Solar Zoning and Energy in
 Detached Residential Dwellings," Proceedings of SIMAUD 2011, Boston, April 2011.
 
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _boundary: Input the base geometry as a closed Curve(s)
@@ -44,10 +44,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_SolarEnvelope_alt"
 ghenv.Component.NickName = 'SolarEnvelope Alternative'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+except: pass
+
 
 import math
 import rhinoscriptsyntax as rs

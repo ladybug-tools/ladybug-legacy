@@ -13,7 +13,7 @@ http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymt
 The first time you use this component, you need to be connected to the internet so the component can download gendaymtx.exe
 to the working directory.
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _epwFile: epw weather file address on your system
@@ -28,10 +28,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+except: pass
+
 
 import os
 import scriptcontext as sc

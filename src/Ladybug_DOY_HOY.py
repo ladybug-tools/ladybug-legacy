@@ -6,7 +6,7 @@
 """
 Calculate day of the year and hour of the year based on day, month and hour
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _day_: Days of the month [1-31]
@@ -21,10 +21,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-ghenv.Component.AdditionalHelpFromDocStrings = "4"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+except: pass
+
 
 import scriptcontext as sc
 from clr import AddReference

@@ -7,7 +7,7 @@
 """
 Open an epw weather file from a location on your computer
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _open: Set Boolean to True to open a browser window
@@ -17,10 +17,12 @@ Provided by Ladybug 0.0.54
 """
 ghenv.Component.Name = "Ladybug_Open EPW Weather File"
 ghenv.Component.NickName = 'Open weather file'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+except: pass
+
 
 
 import rhinoscriptsyntax as rs

@@ -7,7 +7,7 @@
 """
 Construct location
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
 
     Args:
         _locationName: Location name
@@ -23,10 +23,12 @@ Provided by Ladybug 0.0.54
 """
 ghenv.Component.Name = "Ladybug_Construct Location"
 ghenv.Component.NickName = 'constructLocation'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+except: pass
+
 
 from clr import AddReference
 AddReference('Grasshopper')

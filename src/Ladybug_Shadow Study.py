@@ -7,7 +7,7 @@
 Shadow Study [Proof of Concept]
 Warning: The component doesn't calculate self-shading and is not able to calculate shadow for geometries which are passing each other.
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _geometry: Test geometries
@@ -20,10 +20,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_Shadow Study"
 ghenv.Component.NickName = 'shadowStudy'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+except: pass
+
 
 import Rhino as rc
 import scriptcontext as sc

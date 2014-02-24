@@ -12,7 +12,7 @@ user-specfied amount of time. The autumn equinox is used as the solar cutoff poi
 Warning: Extremely complicated concave shapes will take a long time.
 
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _boundary: Input the boundary geometry as a closed, planar Curve(s).
@@ -43,10 +43,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_SolarFan_alt"
 ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+except: pass
+
 
 import math
 import rhinoscriptsyntax as rs

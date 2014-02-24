@@ -7,7 +7,7 @@
 """
 This component opens a new viewport that shows the view from sun.
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _sunVector: Sun vector as a vector3D
@@ -21,10 +21,12 @@ Provided by Ladybug 0.0.54
 """
 ghenv.Component.Name = "Ladybug_View From Sun"
 ghenv.Component.NickName = 'viewFromSun'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+except: pass
+
 
 import scriptcontext as sc
 import Rhino as rc

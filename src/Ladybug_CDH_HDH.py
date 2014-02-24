@@ -8,7 +8,7 @@
 Heating and cooling degree hours.
 Degree hour for each hour is the difference between the base temperature and the average ambient outside air temperature.
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
@@ -28,10 +28,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_CDH_HDH"
 ghenv.Component.NickName = "CDH_HDH"
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+except: pass
+
 
 import scriptcontext as sc
 from clr import AddReference

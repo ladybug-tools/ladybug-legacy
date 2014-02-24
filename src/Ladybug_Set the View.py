@@ -8,7 +8,7 @@
 Set the view
 Here is the video that shows how it works: http://www.youtube.com/watch?v=7Mmhz867zY8
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _cameraLocation: A Point3D for the location of camera
@@ -22,10 +22,12 @@ Provided by Ladybug 0.0.54
 """
 ghenv.Component.Name = "Ladybug_Set the View"
 ghenv.Component.NickName = 'setTheView'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+except: pass
+
 
 import scriptcontext as sc
 import Rhino as rc
