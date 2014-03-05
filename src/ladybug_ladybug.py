@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1966,35 +1966,39 @@ class ResultVisualization(object):
                 rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, True, False, attr)
                 # end of the script
 
-now = datetime.datetime.now()
-#if now.day + now.month + now.year < 2055 + 365: # should work until the end of 2013
-if letItFly:
-    if not sc.sticky.has_key("ladybug_release") or 1>0:
-        sc.sticky["ladybug_release"] = True
-        sc.sticky["ladybug_Preparation"] = Preparation
-        sc.sticky["ladybug_Mesh"] = MeshPreparation
-        sc.sticky["ladybug_RunAnalysis"] = RunAnalysisInsideGH
-        sc.sticky["ladybug_Export2Radiance"] = ExportAnalysis2Radiance
-        sc.sticky["ladybug_ResultVisualization"] = ResultVisualization
-        sc.sticky["ladybug_SunPath"] = Sunpath
-# sc.sticky.clear()
 
-if not sc.sticky.has_key("ladybug_release"):
-    w = gh.GH_RuntimeMessageLevel.Warning
-    try:
-        print "Hi " + os.getenv("USERNAME")+ "! \nPlease let me fly!..."
-        ghenv.Component.AddRuntimeMessage(w, "Hi " + os.getenv("USERNAME")+ "! \nPlease let me fly!...")
-        if 0 <= datetime.datetime.timetuple(now)[3] <= 6: print "Wait! This is after midnight... Time to go to bed! ;)"
-    except:
-        print "Please let me fly!..."
-        ghenv.Component.AddRuntimeMessage(w, "Please let me fly!...")
-elif sc.sticky.has_key("ladybug_release"):
-    print "Hi " + os.getenv("USERNAME")+ "!\n"\
-          "Ladybug is Flying! Vviiiiiiizzz..."
-#else:
-#    sc.sticky.clear()
-#    w = gh.GH_RuntimeMessageLevel.Warning
-#    warning = "Hi! You were using a test version of ladybug which is expired now\nPlease check the Grasshopper group page for a newer version"
-#    print warning
-#    ghenv.Component.AddRuntimeMessage(w, warning)
+now = datetime.datetime.now()
+
+def checkGHPythonVersion(target = "0.6.0.3"):
     
+    currentVersion = int(ghenv.Version.ToString().replace(".", ""))
+    targetVersion = int(target.replace(".", ""))
+    
+    if targetVersion > currentVersion: return False
+    else: return True
+
+GHPythonTargetVersion = "0.6.0.3"
+
+if not checkGHPythonVersion(GHPythonTargetVersion):
+    msg =  "Ladybug failed to fly! :(\n" + \
+           "You are using an old version of GHPython. " +\
+           "Please update to version: " + GHPythonTargetVersion
+    print msg
+    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+    letItFly = False
+    sc.sticky["ladybug_release"] = False
+
+if letItFly:
+    # let's just overwrite it every time
+    #if not sc.sticky.has_key("ladybug_release"):
+    sc.sticky["ladybug_release"] = True
+    sc.sticky["ladybug_Preparation"] = Preparation
+    sc.sticky["ladybug_Mesh"] = MeshPreparation
+    sc.sticky["ladybug_RunAnalysis"] = RunAnalysisInsideGH
+    sc.sticky["ladybug_Export2Radiance"] = ExportAnalysis2Radiance
+    sc.sticky["ladybug_ResultVisualization"] = ResultVisualization
+    sc.sticky["ladybug_SunPath"] = Sunpath
+        
+if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
+    print "Hi " + os.getenv("USERNAME")+ "!\n" + \
+          "Ladybug is Flying! Vviiiiiiizzz..."
