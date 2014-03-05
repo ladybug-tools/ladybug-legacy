@@ -1,32 +1,39 @@
-﻿# This is a component for visualizing the desirability of shading over a window by using the outdoor dry bulb temperature and an assumed building balance point.
+# This is a component for visualizing the desirability of shading over a window by using the outdoor dry bulb temperature and an assumed building balance point.
 # By Chris Mackey and Mostapha Sadeghipour Roudsari
 # Chris@MackeyArchitecture.com; Sadeghipour@gmail.com
 # HoneyBee started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This is a component for visualizing the desirability of shading over a window by using solar vectors, the outdoor dry bulb temperature, and an assumed building balance temperature.
+This is a component for visualizing the desirability of shading over a window by using solar vectors, the outdoor temperature, and an assumed balance temperature (representing either the median temperature of comfort for outdoor shade analysis or the outside temperature at which the energy passively flowing into a building is equal to that flowing out for window shading).
 
 Solar vectors for hours when the temperature is above the balance point contribute positively to shade desirability while solar vectors for hours when the temperature is below the balance point contribute negatively.
 
-The component outputs a colored mesh of the shade illistrating the net effect of shading each mesh face.  A higher saturation of blue indicates that shading the cell is very desirable.  A higher saturation of red indicates that shading the cell is harmful (blocking more winter sun than summer sun). Desaturated cells indicate that shading the cell will have relatively little effect on building performance. 
+The component outputs a colored mesh of the shade illistrating the net effect of shading each mesh face.  A higher saturation of blue indicates that shading the cell is very desirable.  A higher saturation of red indicates that shading the cell is harmful (blocking more winter sun than summer sun). Desaturated cells indicate that shading the cell will have relatively little effect on outdoor comfort or building performance.
 
-The method used by this component is based off of the Shaderade method developed by Christoph Reinhart, Jon Sargent, Jeffrey Niemasz.  A special thanks goes to them and their research.  A paper detailing the shaderade method is available at:
+The units for shade desriability are net cooling degree-days helped per unit area of shade if the test cell is blue.  If the test cell is red, the units are net heating degree-days harmed per unit area of shade.
+
+The method used by this component is based off of the Shaderade method developed by Christoph Reinhart, Jon Sargent, Jeffrey Niemasz.  This component uses Shaderade's method for evaluating shade and window geometry in terms of solar vectors but substitues Shaderade's energy simulation for an evaluation of heating and cooling degree-days about a balance temperature. 
+
+A special thanks goes to them and their research.  A paper detailing the shaderade method is available at:
 http://www.gsd.harvard.edu/research/gsdsquare/Publications/Shaderade_BS2011.pdf
+
+The heating/cooling degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the cooling-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or cooling degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive cooling degree-days to give a net effect for the cell.
 
 -
 Provided by Ladybug 0.0.55
     
     Args:
-        _sunVectors: The sunVectors output from the Ladybug_SunPath component.  Note that, for accurate use of this component, you should usually connect all sun vectors for the entire year (or perhaps all sun vectors above a certain radiation threshold).
-        _dryBulbTempForVec: The selHourlyData output of the Ladybug_SunPath component when dryBulbTemperature is connected to the annualHourlyData_ input.
-        bldgBalanceTemp_: An estimated building balance temperature (or the outside temperature at which the energy passively flowing into the building is equal to that flowing out).  Outdoor temperatures above this will contribute to shade benefit while those below it will contribute to shade harm.  Default is set to 18 C, which is sutiable for the case of an passive enclosed but uninsulated space with minimal heat gain.  A thickly-insulated passivhaus with 18" of insulation can have a very low balance point around 8 C. A mildly insulated residence (~4" of insulation) with a window to wall ratio of 0.4 might have a balance point around 12 C. A residence with an uninsulated stud wall house might be around 16 C.  A stud wall shack with single pane windows and no internal heat gain from appliances or lights might have a balance point around 20C.  An open air structure should be evaluated using an outdoor temperature around which people start to desire shade(24C).
+        _sunVectors: The sunVectors output from the Ladybug_SunPath component.  Note that, for accurate use of this component, you should usually connect all sun vectors for the entire year.  However, if you are only interested in evaluting comfort in an outdoor space for a few months on the year or when the outside is above a certain temperature, a restricted analysis period would be useful.  For a fast but less accurate simulation, evey other sun vector could be culled.
+        _temperatureForVec: The selHourlyData output of the Ladybug_SunPath component when dryBulbTemperature is connected to the SunPath's annualHourlyData_ input.
+        balanceTemperature_: An estimated balance temperature representing the median temperature that people find comfortable (if being used to evaluate a shade in an outdoor space) or the outside temperature at which the energy passively flowing into a building is equal to that flowing out (if being used to evluate a shade over a window).  Outdoor temperatures above this will contribute to shade benefit while those below it will contribute to shade harm.  Default is set to 18 C, which is sutiable for the case of an passive enclosed but uninsulated space with minimal heat gain.  A thickly-insulated passivhaus with 18" of insulation can have a very low balance point around 8 C. A mildly insulated residence (~4" of insulation) with a window to wall ratio of 0.4 might have a balance point around 12 C. A residence with an uninsulated stud wall house might be around 16 C.  A stud wall shack with single pane windows and no internal heat gain from appliances or lights might have a balance point around 20C.  An open air structure should be evaluated using an outdoor temperature around which people start to desire shade(24C).
         ============: ...
-        _testShade: A brep or list of breps representing shading to be evaluated in terms of its benefit. Note that, in the case that multiple shading breps are connected, this component does not account for the interaction between the different shading surfaces.
-        _testWindow: A brep representing the window affected by the shade.
-        gridSize_: The length of each of the cells to be evaluated in model units.  Please note that, as this value gets lower, simulation times will increase exponentially even though this will give a higher resolution of shade benefit.
+        _testShade: A brep or list of breps representing shading to be evaluated in terms of its benefit. Note that, in the case that multiple shading breps are connected, this component does not account for the interaction between the different shading surfaces. Note that only breps with a single surface are supported now and volumetric breps will be included at a later point.
+        _testRegion: A brep representing an outdoor area for which shading is being considered or the window of a building that would be affected by the shade. Note that only breps with a single surface are supported now and volumetric breps will be included at a later point.
+        gridSize_: The length of each of the shade's test cells in model units.  Please note that, as this value gets lower, simulation times will increase exponentially even though this will give a higher resolution of shade benefit.
         ============: ...
-        parallel_: Set to "True" to run the simulation with multiple cores.  This can increase the speed of the calculation substantially.
+        legendPar_: Legend parameters that can be used to re-color the shade, change the high and low boundary, or sync multiple evaluated shades with the same colors and legend parameters.
+        parallel_: Set to "True" to run the simulation with multiple cores.  This can increase the speed of the calculation substantially and is recommended if you are not running other big or important processes.
         _runIt: Set to 'True' to run the simulation.
     Returns:
         readMe!: ...
@@ -35,14 +42,14 @@ Provided by Ladybug 0.0.55
         shadeMesh: A colored mesh of the _testShades showing where shading is helpful (in satuated blue), harmful (in saturated red), or does not make much of a difference (white or desaturated colors).
         legend: Legend showing the numeric values of degree-days that correspond to the colors in the shade mesh.
         ==========: ...
-        shadeHelpfulness: The cumulative cooling degree-days/square Rhino model unit eased by shading the given cell. (C-day/m2)*if your model units are meters.
-        shadeHarmfulness: The cumulative heating degree-days/square Rhino model unit intensified by shading the given cell. (C-day/m2)*if your model units are meters. Note that these values are all negative due to the fact that the shade is harmful. 
-        netEffect: The sum of the helpfulness and harmfullness for each cell.  This will be negative if the cell is harmful and positive if the shade is helpful.
+        shadeHelpfulness: The cumulative cooling degree-days/square Rhino model unit helped by shading the given cell. (C-day/m2)*if your model units are meters.
+        shadeHarmfulness: The cumulative heating degree-days/square Rhino model unit harmed by shading the given cell. (C-day/m2)*if your model units are meters. Note that these values are all negative due to the fact that the shade is harmful. 
+        netEffect: The sum of the helpfulness and harmfullness for each cell.  This will be negative if shading the cell has a net harmful effect and positive if the shade has a net helpful effect.
 """
 
 ghenv.Component.Name = "Ladybug_Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_02_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
@@ -63,20 +70,28 @@ import Grasshopper.Kernel as gh
 
 def checkTheInputs():
     #Check the lists of data to ensure that they are all the same length and all for sun-up hours
-    if len(_sunVectors) == len(_dryBulbTempForVec) and len(_sunVectors) > 0:
+    if len(_sunVectors) == len(_temperatureForVec) and len(_sunVectors) > 0:
         checkData1 = True
     else:
         checkData1 = False
         print 'Connect sunVectors and selHourlyData from a sun path component that has the dry bulb temperature plugged in as the annualHourlyData_.'
     
-    #Check that both a window brep and test shade brep are connected.
-    if _testShades and _testWindow:
-        checkData2 = True
+    #Check that both a window brep and test shade brep are connected and are a single surface.
+    if _testShades and _testRegion:
+        if _testShades.Faces.Count == 1:
+            if _testRegion.Faces.Count == 1:
+                checkData2 = True
+            else:
+                checkData2 = False
+                print 'The _testRegion must be a brep with a single surface.  Polysurface or volumetric Breps are not supported at this time. Try breaking your Brep up into single surfaces.'
+        else:
+            checkData2 = False
+            print 'The _testShades must each be a brep with a single surface.  Polysurface or volumetric Breps are not supported at this time. Try breaking your Brep up into single surfaces.'
     else:
         checkData2 = False
-        print 'Connect a brep for both the _testWindow and the _testShade.'
+        print 'Connect a brep for both the _testRegion and the _testShade.'
     
-    #Check to make see if users have connected a grid size and building balance point.  If not, assign a grid size based on a bounding box around the test shade and assign a default balance point of 24 C.
+    #Check to make see if users have connected a grid size and balance point.  If not, assign a grid size based on a bounding box around the test shade and assign a default balance point of 24 C.
     if gridSize_ and gridSize_ > 0:
         gridSize = gridSize_
     else:
@@ -90,11 +105,11 @@ def checkTheInputs():
         except: gridSize = 0
         print 'There is no positive value connected for gridSize_. A default value will be used based on the dimensions of the _testShades.'
     
-    if bldgBalanceTemp_:
-        balanceTemp = bldgBalanceTemp_
+    if balanceTemperature_:
+        balanceTemp = balanceTemperature_
     else:
         balanceTemp = 18
-        print 'No value is connected for bldgBalanceTemp_. A default value of 18 C will be used, which should be applicable to an enclosed but uninulated building.'
+        print 'No value is connected for balanceTemperature_. A default value of 18 C will be used, which should be applicable to an enclosed but uninulated building.'
     
     # If the user has connected an absurd balance temperature, give them a warning.
     if balanceTemp > 30:
@@ -109,7 +124,7 @@ def checkTheInputs():
         checkData3 = True
     else:
         checkData3 = False
-        print 'Set _runIt to True to perform the shade benefil calculation.'
+        print 'Set _runIt to True to perform the shade benefit calculation.'
     
     #Check if all of the above Checks are True
     if checkData1 == True and checkData2 == True and checkData3 == True:
@@ -123,7 +138,6 @@ def checkTheInputs():
 def meshTheShade(gridSize, testShade):
     #Generate Meshes for the Shade
     meshPar = rc.Geometry.MeshingParameters.Default
-    meshPar.GridAspectRatio = 1
     meshPar.MinimumEdgeLength = gridSize
     meshPar.MaximumEdgeLength = gridSize
     
@@ -146,22 +160,44 @@ def meshTheShade(gridSize, testShade):
     return analysisMesh, analysisBreps, analysisAreas
 
 
-def generateTestPoints(gridSize, testWindow):
+def generateTestPoints(gridSize, testRegion):
     #Generate a Grid of Points Along the Window
     winMeshPar = rc.Geometry.MeshingParameters.Default
-    winMeshPar.GridAspectRatio = 1
     winMeshPar.MinimumEdgeLength = (gridSize/1.75)
     winMeshPar.MaximumEdgeLength = (gridSize/1.75)
-    windowMesh = rc.Geometry.Mesh.CreateFromBrep(testWindow, winMeshPar)[0]
+    windowMesh = rc.Geometry.Mesh.CreateFromBrep(testRegion, winMeshPar)[0]
     
     vertices = windowMesh.Vertices
     
     # Convert window Point3f to Point3d
-    windowTestPts = []
+    windowTestPtsInit = []
     for item in vertices:
-        windowTestPts.append(rc.Geometry.Point3d(item))
+        windowTestPtsInit.append(rc.Geometry.Point3d(item))
     
-    return windowTestPts, windowMesh
+    #Get rid of the points that lie along the boundary of the shape.
+    windowTestPts = []
+    edges = testRegion.DuplicateEdgeCurves()
+    boundary = rc.Geometry.Curve.JoinCurves(edges)
+    for point in windowTestPtsInit:
+        closestPtInit =  rc.Geometry.Curve.ClosestPoint(boundary[0], point)
+        closestPt = boundary[0].PointAt(closestPtInit[1])
+        if point.DistanceTo(closestPt) < sc.doc.ModelAbsoluteTolerance: pass
+        else: windowTestPts.append(point)
+    
+    #If there is a dense collection of points that are too close to each other, get rid of it.
+    windowTestPtsFinal = []
+    for pointCount, point in enumerate(windowTestPts):
+        pointOK = True
+        testPtsWihtout = list(windowTestPts)
+        del testPtsWihtout[pointCount]
+        for othPt in testPtsWihtout:
+            if point.DistanceTo(othPt) < (gridSize/4):
+                pointOK = False
+            else:pass
+        if pointOK == True:
+            windowTestPtsFinal.append(point)
+    
+    return windowTestPtsFinal, windowMesh
 
 
 def nonparallel_projection(analysisMesh, sunLines):
@@ -172,8 +208,10 @@ def nonparallel_projection(analysisMesh, sunLines):
     for ptCount, pt in enumerate(windowTestPts):
         try:
             for hour, sunLine in enumerate(sunLines[ptCount]):
-                intPt, i = rc.Geometry.Intersect.Intersection.MeshLine(analysisMesh, sunLine)
-                if len(intPt)!=0: faceInt[i[0]].append(hour)
+                if sunLine != 0:
+                    intPt, i = rc.Geometry.Intersect.Intersection.MeshLine(analysisMesh, sunLine)
+                    if len(intPt)!=0: faceInt[i[0]].append(hour)
+                else: pass
         except Exception, e:
             print `e`
     
@@ -188,8 +226,10 @@ def parallel_projection(analysisMesh, sunLines):
     def intersect(i):
         try:
             for hour, sunLine in enumerate(sunLines[i]):
-                intPt, indx = rc.Geometry.Intersect.Intersection.MeshLine(analysisMesh, sunLine)
-                if len(intPt)!=0: faceInt[indx[0]].append(hour)
+                if sunLine != 0:
+                    intPt, indx = rc.Geometry.Intersect.Intersection.MeshLine(analysisMesh, sunLine)
+                    if len(intPt)!=0: faceInt[indx[0]].append(hour)
+                else: pass
         except Exception, e:
             print `e`
     
@@ -248,13 +288,25 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
         #Multiply the largest dimension of the bounding box by 2 to ensure that the lines are definitely long enough to intersect the shade.
         lineLength = (max(boundBox.Max - boundBox.Min)) * 2
         
-        #Generate the sun lines for intersection.
+        #Generate the sun lines for intersection and discount the vector if it intersects a context.
         sunLines = []
+        if context_:
+            contextMeshes = []
+            for brep in context_:
+                contextMeshes.append(rc.Geometry.Mesh.CreateFromBrep(brep, rc.Geometry.MeshingParameters.Default)[0])
+            contextMesh = joinMesh(contextMeshes)
+        else: pass
+        
         for pt in windowTestPts: sunLines.append([]) 
         
         for ptCount, pt in enumerate(windowTestPts):
             for vec in _sunVectors:
-                sunLines[ptCount].append(rc.Geometry.Line(pt, lineLength * vec))
+                if context_:
+                    if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh, rc.Geometry.Ray3d(pt, vec)) < 0:
+                        sunLines[ptCount].append(rc.Geometry.Line(pt, lineLength * vec))
+                    else: sunLines[ptCount].append(0)
+                else:
+                    sunLines[ptCount].append(rc.Geometry.Line(pt, lineLength * vec))
                 
         
         #If parallel is true, then run the intersection through the parallel function.  If not, run it through the normal function.
@@ -281,7 +333,7 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
         #Calculate how far the hourly temperatures are from the balance point, allowing for a range of +/- 2C in which people will be comfortable.
         comfortRange = 2
         deltaBal = []
-        for temp in _dryBulbTempForVec:
+        for temp in _temperatureForVec:
             if temp > (balanceTemp + comfortRange):
                 deltaBal.append(temp - (balanceTemp + comfortRange))
             elif temp < (balanceTemp - comfortRange):
@@ -315,8 +367,8 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
         else:
             lowB = -1 * legendVal
             highB = legendVal
-            numSeg = 10
-            customColors = [System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(255,24,24), System.Drawing.Color.FromArgb(255,88,88), System.Drawing.Color.FromArgb(255,167,167), System.Drawing.Color.FromArgb(255,231,231), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(231,239,255), System.Drawing.Color.FromArgb(167,198,255), System.Drawing.Color.FromArgb(88,146,255), System.Drawing.Color.FromArgb(24,105,255)]
+            numSeg = 11
+            customColors = [System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(255,51,51), System.Drawing.Color.FromArgb(255,102,102), System.Drawing.Color.FromArgb(255,153,153), System.Drawing.Color.FromArgb(255,204,204), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(204,204,255), System.Drawing.Color.FromArgb(153,153,255), System.Drawing.Color.FromArgb(102,102,255), System.Drawing.Color.FromArgb(51,51,255), System.Drawing.Color.FromArgb(0,0,255)]
             legendBasePoint = None
             legendScale = 1
         
@@ -370,13 +422,13 @@ def openLegend(legendRes):
 #Check the inputs and generate default values for grid size and balance temp if the user has given none.
 checkData, gridSize, balanceTemp = checkTheInputs()
 
-#If the user has connected any breps to _testShades or _testWindow, output the window test points and an initial uncolored shadeMesh such that users can get a sense of what to expect before running the whole simulation.
+#If the user has connected any breps to _testShades or _testRegion, output the window test points and an initial uncolored shadeMesh such that users can get a sense of what to expect before running the whole simulation.
 if gridSize > 0 and _testShades:
     analysisMesh, shadeMesh, analysisAreas = meshTheShade(gridSize, _testShades)
 else: pass
 
-if gridSize > 0 and shadeMesh and _testWindow:
-    windowTestPts, windowMesh = generateTestPoints(gridSize, _testWindow)
+if gridSize > 0 and shadeMesh and _testRegion:
+    windowTestPts, windowMesh = generateTestPoints(gridSize, _testRegion)
 else: pass
 
 #If all of the data is good, run the shade benefit calculation to generate all results.
