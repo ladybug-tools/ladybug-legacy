@@ -1,7 +1,7 @@
 # This is a component for visualizing the desirability of shading over a window by using the outdoor dry bulb temperature and an assumed building balance point.
-# By Chris Mackey and Mostapha Sadeghipour Roudsari
-# Chris@MackeyArchitecture.com; Sadeghipour@gmail.com
-# HoneyBee started by Mostapha Sadeghipour Roudsari is licensed
+# By Chris Mackey
+# Chris@MackeyArchitecture.com
+# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
