@@ -1,21 +1,21 @@
 # This is a component for visualizing the desirability of shading over a window by using the outdoor dry bulb temperature and an assumed building balance point.
-# By Chris Mackey
-# Chris@MackeyArchitecture.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
+# By Chris Mackey and Mostapha Sadeghipour Roudsari
+# Chris@MackeyArchitecture.com; Sadeghipour@gmail.com
+# HoneyBee started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This is a component for visualizing the desirability of shading over a window by using solar vectors, the outdoor temperature, and an assumed balance temperature (representing either the median temperature of comfort for outdoor shade analysis or the outside temperature at which the energy passively flowing into a building is equal to that flowing out for window shading).
+This is a component for visualizing the desirability of shade in terms of comfort temperature by using solar vectors, the outdoor temperature, and an assumed balance temperature.  The balance temperature represents either a median temperature of outdoor comfort if this component is being used to evaluate shade in an open space, or the outside temperature at which the energy passively flowing into a building is equal to that flowing out if the component is being used to evaluate shading over windows.
 
 Solar vectors for hours when the temperature is above the balance point contribute positively to shade desirability while solar vectors for hours when the temperature is below the balance point contribute negatively.
 
-The component outputs a colored mesh of the shade illistrating the net effect of shading each mesh face.  A higher saturation of blue indicates that shading the cell is very desirable.  A higher saturation of red indicates that shading the cell is harmful (blocking more winter sun than summer sun). Desaturated cells indicate that shading the cell will have relatively little effect on outdoor comfort or building performance.
+The component outputs a colored mesh of the shade illustrating the net effect of shading each mesh face.  A higher saturation of blue indicates that shading the cell is very desirable.  A higher saturation of red indicates that shading the cell is harmful (blocking more winter sun than summer sun). Desaturated cells indicate that shading the cell will have relatively little effect on outdoor comfort or building performance.
 
-The units for shade desriability are net cooling degree-days helped per unit area of shade if the test cell is blue.  If the test cell is red, the units are net heating degree-days harmed per unit area of shade.
+The units for shade desirability are net cooling degree-days helped per unit area of shade if the test cell is blue.  If the test cell is red, the units are net heating degree-days harmed per unit area of shade.
 
-The method used by this component is based off of the Shaderade method developed by Christoph Reinhart, Jon Sargent, Jeffrey Niemasz.  This component uses Shaderade's method for evaluating shade and window geometry in terms of solar vectors but substitues Shaderade's energy simulation for an evaluation of heating and cooling degree-days about a balance temperature. 
+The method used by this component is based off of the Shaderade method developed by Christoph Reinhart, Jon Sargent, Jeffrey Niemasz.  This component uses Shaderade's method for evaluating shade and window geometry in terms of solar vectors but substitutes Shaderade's energy simulation for an evaluation of heating and cooling degree-days about a balance temperature. 
 
-A special thanks goes to them and their research.  A paper detailing the shaderade method is available at:
+A special thanks goes to them and their research.  A paper detailing the Shaderade method is available at:
 http://www.gsd.harvard.edu/research/gsdsquare/Publications/Shaderade_BS2011.pdf
 
 The heating/cooling degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the cooling-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or cooling degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive cooling degree-days to give a net effect for the cell.
@@ -24,9 +24,9 @@ The heating/cooling degree-day calculation used here works by first getting the 
 Provided by Ladybug 0.0.55
     
     Args:
-        _sunVectors: The sunVectors output from the Ladybug_SunPath component.  Note that, for accurate use of this component, you should usually connect all sun vectors for the entire year.  However, if you are only interested in evaluting comfort in an outdoor space for a few months on the year or when the outside is above a certain temperature, a restricted analysis period would be useful.  For a fast but less accurate simulation, evey other sun vector could be culled.
+        _sunVectors: The sunVectors output from the Ladybug_SunPath component.  Note that you can adjust the analysis period of the sun vectors to look at shade benefit over an entire year or just for a few months (for example, when you have an outdoor space that you know will only be occupied for a few months of the year or when the outside is above a certain temperature).
         _temperatureForVec: The selHourlyData output of the Ladybug_SunPath component when dryBulbTemperature is connected to the SunPath's annualHourlyData_ input.
-        balanceTemperature_: An estimated balance temperature representing the median temperature that people find comfortable (if being used to evaluate a shade in an outdoor space) or the outside temperature at which the energy passively flowing into a building is equal to that flowing out (if being used to evluate a shade over a window).  Outdoor temperatures above this will contribute to shade benefit while those below it will contribute to shade harm.  Default is set to 18 C, which is sutiable for the case of an passive enclosed but uninsulated space with minimal heat gain.  A thickly-insulated passivhaus with 18" of insulation can have a very low balance point around 8 C. A mildly insulated residence (~4" of insulation) with a window to wall ratio of 0.4 might have a balance point around 12 C. A residence with an uninsulated stud wall house might be around 16 C.  A stud wall shack with single pane windows and no internal heat gain from appliances or lights might have a balance point around 20C.  An open air structure should be evaluated using an outdoor temperature around which people start to desire shade(24C).
+        _balanceTemperature: An estimated balance temperature representing either the median outside temperature that people find comfortable (if being used to evaluate a shade in an outdoor space) or the outside temperature at which the energy passively flowing into a building is equal to that flowing out (if being used to evaluate a shade over a window).  Outdoor temperatures above this balance temperature will contribute to shade benefit while those below it will contribute to shade harm.  For shades in outdoor spaces, balance points will usually range from 20C (for people acclimated to a cold climate or for a cold analysis period) to 24C (for people acclimated to a warm climate or a warm analysis period).  Building balance points can be much more difficult to estimate and can range from 6C (for a thickly insulated passivhaus in a cold climate) to 22C (for an open-air enclosure in the tropics). To use this component correctly for buildings, you should calculate your building balance point by solving a simple energy balance that accounts for heat losses/gains through the envelope, ventilation and infiltration as well as gains from solar radiation through the windows and gains from people, lights and equipment.  Alternatively, you can be patient and wait for a version of this component that will be released with Honeybee energy components, which will essentially calculate this balance point for you.
         ============: ...
         _testShade: A brep or list of breps representing shading to be evaluated in terms of its benefit. Note that, in the case that multiple shading breps are connected, this component does not account for the interaction between the different shading surfaces. Note that only breps with a single surface are supported now and volumetric breps will be included at a later point.
         _testRegion: A brep representing an outdoor area for which shading is being considered or the window of a building that would be affected by the shade. Note that only breps with a single surface are supported now and volumetric breps will be included at a later point.
@@ -44,12 +44,12 @@ Provided by Ladybug 0.0.55
         ==========: ...
         shadeHelpfulness: The cumulative cooling degree-days/square Rhino model unit helped by shading the given cell. (C-day/m2)*if your model units are meters.
         shadeHarmfulness: The cumulative heating degree-days/square Rhino model unit harmed by shading the given cell. (C-day/m2)*if your model units are meters. Note that these values are all negative due to the fact that the shade is harmful. 
-        netEffect: The sum of the helpfulness and harmfullness for each cell.  This will be negative if shading the cell has a net harmful effect and positive if the shade has a net helpful effect.
+        netEffect: The sum of the helpfulness and harmfulness for each cell.  This will be negative if shading the cell has a net harmful effect and positive if the shade has a net helpful effect.
 """
 
 ghenv.Component.Name = "Ladybug_Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_05_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
@@ -91,43 +91,70 @@ def checkTheInputs():
         checkData2 = False
         print 'Connect a brep for both the _testRegion and the _testShade.'
     
-    #Check to make see if users have connected a grid size and balance point.  If not, assign a grid size based on a bounding box around the test shade and assign a default balance point of 24 C.
-    if gridSize_ and gridSize_ > 0:
-        gridSize = gridSize_
-    else:
+    #Check to make see if users have connected a grid size and balance point.  If not, assign a grid size based on a bounding box around the test shade and altert the user that they should select a balance point.
+    if gridSize_:
         try:
-            boundBox = _testShades.GetBoundingBox(False)
-            box = rc.Geometry.Box(boundBox)
-            if box.X[1] - box.X[0] < box.Y[1] - box.Y[0]:
-                gridSize = (box.X[1] - box.X[0])/5
+            if gridSize_ > 0:
+                gridSize = float(gridSize_)
+                checkData3 = True
             else:
-                gridSize = (box.Y[1] - box.Y[0])/5
-        except: gridSize = 0
-        print 'There is no positive value connected for gridSize_. A default value will be used based on the dimensions of the _testShades.'
-    
-    if balanceTemperature_:
-        balanceTemp = balanceTemperature_
+                try:
+                    boundBox = _testShades.GetBoundingBox(False)
+                    box = rc.Geometry.Box(boundBox)
+                    if box.X[1] - box.X[0] < box.Y[1] - box.Y[0]:
+                        gridSize = (box.X[1] - box.X[0])/5
+                    else:
+                        gridSize = (box.Y[1] - box.Y[0])/5
+                    checkData3 = True
+                    print 'There is no positive value connected for gridSize_. A default value will be used based on the dimensions of the _testShades.'
+                except:
+                    gridSize = 0
+                    checkData3 = False
+                    print 'No value is connected for gridSize_.'
+        except:
+            gridSize = 0
+            checkData3 = False
+            print "An invalid value is connected for grid Size_.  The gridSize_ must be a number."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, "An invalid value is connected for grid Size_.  The gridSize_ must be a number.")
     else:
-        balanceTemp = 18
-        print 'No value is connected for balanceTemperature_. A default value of 18 C will be used, which should be applicable to an enclosed but uninulated building.'
+        gridSize = 0
+        checkData3 = False
+        print 'No value is connected for gridSize_.'
     
-    # If the user has connected an absurd balance temperature, give them a warning.
-    if balanceTemp > 30:
-        print "WARNING: The balance temperatureis very high.  It is strongly recommended that you lower it if you want your shade evaluation to be in terms of human comfort. Wouldn't you want shade if the air temperature is greater than 30C?"
-    else: pass
-    if balanceTemp < 0:
-        print "WARNING: The balance temperatureis very low.  Unless you are modelling a space ship with vacum sealed insulation, a building with several feet of inulation, or a building with a very high internal heat gain, it is strongly recommended that you raise it.  You are essentially saying that your unheated space is comfortable when the outside air is below freezing."
-    else: pass
+    
+    if _balanceTemperature == 0 and _runIt == True:
+        checkData4 = False
+        balanceTemp = 0
+        print 'No value is connected for _balanceTemperature. You must specify a numeric value for _balanceTemperature.'
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, "No value is connected for _balanceTemperature. You must specify a numeric value for _balanceTemperature.")
+    
+    elif _balanceTemperature == 0:
+        checkData4 = False
+        balanceTemp = 0
+        print 'No value is connected for _balanceTemperature.'
+        
+    elif _balanceTemperature:
+        balanceTemp = float(_balanceTemperature)
+        checkData4 = True
+    
+    else:
+        checkData4 = False
+        balanceTemp = 0
+        print 'No value is connected for _balanceTemperature. You must specify a numeric value for _balanceTemperature.'
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, "No value is connected for _balanceTemperature. You must specify a numeric value for _balanceTemperature.")
     
     #Check if runIt is set to true.
     if _runIt == True:
-        checkData3 = True
+        checkData5 = True
     else:
-        checkData3 = False
+        checkData5 = False
         print 'Set _runIt to True to perform the shade benefit calculation.'
     
     #Check if all of the above Checks are True
-    if checkData1 == True and checkData2 == True and checkData3 == True:
+    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True:
         checkData = True
     else:
         checkData = False
@@ -293,7 +320,7 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
         if context_:
             contextMeshes = []
             for brep in context_:
-                contextMeshes.append(rc.Geometry.Mesh.CreateFromBrep(brep, rc.Geometry.MeshingParameters.Default)[0])
+                contextMeshes.extend(rc.Geometry.Mesh.CreateFromBrep(brep, rc.Geometry.MeshingParameters.Default))
             contextMesh = joinMesh(contextMeshes)
         else: pass
         
