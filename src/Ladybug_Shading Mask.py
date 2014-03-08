@@ -5,7 +5,7 @@
 
 """
 This component draws shading mask for a test point
-The component is intented to be used with sunPath
+The component is intended to be used with sunPath
 -
 Provided by Ladybug 0.0.55
     
@@ -16,23 +16,23 @@ Provided by Ladybug 0.0.55
         
     Returns:
         masked: Shadow mask
+        unmasked: Unmasked portion of the sky
         percMasked: Percentage of the sky masked
 """
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import Rhino as rc
 import math
+import System
 import scriptcontext as sc
 import System.Threading.Tasks as tasks
 
@@ -158,6 +158,7 @@ def meshAndJoin(brepList):
         meshList = rc.Geometry.Mesh.CreateFromBrep(brep, rc.Geometry.MeshingParameters.Smooth)
         for m in meshList: joinedMesh.Append(m)
     return joinedMesh
+    
 
 def main(testPt, skyDensity, contextMesh, scale):
     
@@ -175,24 +176,32 @@ def main(testPt, skyDensity, contextMesh, scale):
     # filter breps based on the result
     # the reason I do it separately is to have the dome always on z = 0
     maskedSrfs = []
+    unmaskedSrfs = []
     testPtProjected = rc.Geometry.Point3d(testPt.X, testPt.Y, 0)
     skyPatches = generateSkyGeo(testPtProjected, skyDensity, scale)
     for i, isMasked in enumerate(masked):
         if isMasked==1:
             maskedSrfs.append(skyPatches[i])
+        else:
+            unmaskedSrfs.append(skyPatches[i])
     
     # mesh the patches and calculate the area
     skyMeshed = meshAndJoin(skyPatches)
     maskedMesh = meshAndJoin(maskedSrfs)
+    # change the color to black so the user don't get confused
+    maskedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+    
+    # unmasked area output is added by William Haviland
+    unmaskedMesh = meshAndJoin(unmaskedSrfs)
     
     maskedArea = rc.Geometry.AreaMassProperties.Compute(maskedMesh).Area
     skyArea = rc.Geometry.AreaMassProperties.Compute(skyMeshed).Area
     
     percentageArea = (maskedArea/skyArea) * 100
-    return maskedMesh, "%.2f"%percentageArea
+    return maskedMesh, "%.2f"%percentageArea, unmaskedMesh
 
 if _testPt and _context and scale_:
-    masked, percMasked = main(_testPt, _skyDensity_, _context, 200*scale_)
+    masked, percMasked, unmasked = main(_testPt, _skyDensity_, _context, 200*scale_)
 else:
     print "Either testPt or context is missing"
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "Either testPt or context is missing")
