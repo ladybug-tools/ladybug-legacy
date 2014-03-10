@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_08_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_09_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -189,7 +189,7 @@ def main(testPt, skyDensity, contextMesh, scale):
     skyMeshed = meshAndJoin(skyPatches)
     maskedMesh = meshAndJoin(maskedSrfs)
     # change the color to black so the user don't get confused
-    maskedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+    #maskedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
     
     # unmasked area output is added by William Haviland
     unmaskedMesh = meshAndJoin(unmaskedSrfs)
