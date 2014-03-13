@@ -32,6 +32,7 @@ Provided by Ladybug 0.0.55
         _testRegion: A brep representing an outdoor area for which shading is being considered or the window of a building that would be affected by the shade. Note that only breps with a single surface are supported now and volumetric breps will be included at a later point.
         gridSize_: The length of each of the shade's test cells in model units.  Please note that, as this value gets lower, simulation times will increase exponentially even though this will give a higher resolution of shade benefit.
         ============: ...
+        colorNonIntersect_: Set to "True" to color mesh cells with no intersection with sun vectors in grey.  Mesh cells where shading will have little effect because an equal amount of warm and cool temperature vectors intersect will still be left in white.
         legendPar_: Legend parameters that can be used to re-color the shade, change the high and low boundary, or sync multiple evaluated shades with the same colors and legend parameters.
         parallel_: Set to "True" to run the simulation with multiple cores.  This can increase the speed of the calculation substantially and is recommended if you are not running other big or important processes.
         _runIt: Set to 'True' to run the simulation.
@@ -49,7 +50,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_08_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_13_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
@@ -388,7 +389,7 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
         if abs(mostHelp) > abs(mostHarm): legendVal = abs(mostHelp)
         else: legendVal = abs(mostHarm)
         
-        #Color the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
+        #Get the colors for the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
         if legendPar:
             lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
         else:
@@ -400,7 +401,20 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
             legendScale = 1
         
         colors = lb_visualization.gradientColor(shadeNetEffect, lowB, highB, customColors)
-        shadeMesh = lb_visualization.colorMesh(colors, analysisMesh)
+        
+        # If the user has set "colorNonIntersect_" to True, color those values of the mesh with no intersections in grey.
+        colorsFinal = []
+        if colorNonIntersect_ == True:
+            for cellCount, color in enumerate(colors):
+                if shadeHelpfulness[cellCount] == 0.0 and shadeHarmfulness[cellCount] == 0.0:
+                    colorsFinal.append(System.Drawing.Color.FromArgb(225,225,225))
+                else:
+                    colorsFinal.append(color)
+        else:
+            colorsFinal = colors
+        
+        #Color the shade mesh based on the colors.
+        shadeMesh = lb_visualization.colorMesh(colorsFinal, analysisMesh)
         
         
         #Generate a legend for the mesh.
@@ -420,6 +434,9 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
         
         #Package the final legend together.
         legend = [legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]]
+        
+        
+        
         
         #If we have got all of the outputs, let the user know that the calculation has been successful.
         if shadeHelpfulness and shadeHarmfulness and shadeNetEffect and shadeMesh and legend and legendBasePoint:
