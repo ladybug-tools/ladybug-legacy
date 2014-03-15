@@ -18,7 +18,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -34,12 +34,12 @@ import time
 import urllib
 
 
-def downloadSourceAndUnzip():
+def downloadSourceAndUnzip(lb_preparation):
     """
     Download the source code from github and unzip it in temp folder
     """
     url = "https://github.com/mostaphaRoudsari/ladybug/archive/master.zip"
-    targetDirectory = "c:/ladybugSrc"
+    targetDirectory = "c:/ladybug/ladybugSrc"
     
 
     
@@ -52,7 +52,7 @@ def downloadSourceAndUnzip():
     else:
         download = True
         try:
-            os.rmdir(targetDirectory)
+            lb_preparation.nukedir(targetDirectory, True)
         except:
             pass
     
@@ -172,7 +172,7 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     
     if sourceDirectory == None:
-        userObjectsFolder = downloadSourceAndUnzip()
+        userObjectsFolder = downloadSourceAndUnzip(lb_preparation)
         if userObjectsFolder==None: return "Download failed! Read component output for more information!", False
     else:
         userObjectsFolder = sourceDirectory
