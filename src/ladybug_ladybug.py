@@ -19,17 +19,15 @@ http://creativecommons.org/licenses/by-sa/3.0/deed.en_US
 Source code is available at:
 https://github.com/mostaphaRoudsari/ladybug
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.56
     
-    Args:
-        letItFly: Set Boolean to True to let the Ladybug fly!
     Returns:
         report: Current Ladybug mood!!!
 """
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_05_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_17_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -385,7 +383,7 @@ class Preparation(object):
     def flattenList(self, l):
         return list(chain.from_iterable(l))
     
-    def makeWorkingDir(self, workingDir, default = "c:\\ladybug"):
+    def makeWorkingDir(self, workingDir, default = sc.sticky["Ladybug_DefaultFolder"]):
         if not workingDir: workingDir = default
         if not os.path.exists(workingDir):
             try:
@@ -1988,10 +1986,22 @@ if not checkGHPythonVersion(GHPythonTargetVersion):
     letItFly = False
     sc.sticky["ladybug_release"] = False
 
+
+#set up default pass
+if os.path.exists("c:\\ladybug\\"):
+    # folder already exists so it is all fine
+    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+elif os.access(os.path.dirname("c:\\"), os.W_OK):
+    #the folder does not exists but write privileges are given so it is fine
+    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+else:
+    # let's use the user folder
+    sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
+
 if letItFly:
     # let's just overwrite it every time
     #if not sc.sticky.has_key("ladybug_release"):
-    sc.sticky["ladybug_release"] = True
+    sc.sticky["ladybug_release"] = True        
     sc.sticky["ladybug_Preparation"] = Preparation
     sc.sticky["ladybug_Mesh"] = MeshPreparation
     sc.sticky["ladybug_RunAnalysis"] = RunAnalysisInsideGH
@@ -2001,4 +2011,5 @@ if letItFly:
         
 if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
     print "Hi " + os.getenv("USERNAME")+ "!\n" + \
-          "Ladybug is Flying! Vviiiiiiizzz..."
+          "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
+          "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]

@@ -6,7 +6,7 @@
 """
 This component [removes | updates] Ladybug components from [grasshopper | a source folder]
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.56
     
     Args:
         sourceDirectory_: Optional address to a folder that contains Ladybug updated userObjects. If None the component will download the latest version from GitHUB.
@@ -18,7 +18,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_15_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_17_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -39,7 +39,7 @@ def downloadSourceAndUnzip(lb_preparation):
     Download the source code from github and unzip it in temp folder
     """
     url = "https://github.com/mostaphaRoudsari/ladybug/archive/master.zip"
-    targetDirectory = "c:/ladybug/ladybugSrc"
+    targetDirectory = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "ladybugSrc")
     
 
     
