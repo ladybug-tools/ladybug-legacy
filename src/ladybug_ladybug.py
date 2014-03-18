@@ -53,6 +53,20 @@ PI = math.pi
 letItFly = True
 rc.Runtime.HostUtils.DisplayOleAlerts(False)
 
+
+
+#set up default pass
+if os.path.exists("c:\\ladybug\\"):
+    # folder already exists so it is all fine
+    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+elif os.access(os.path.dirname("c:\\"), os.W_OK):
+    #the folder does not exists but write privileges are given so it is fine
+    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+else:
+    # let's use the user folder
+    sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
+
+
 class Preparation(object):
     """ Set of functions to prepare the environment for running the studies"""
     def __init__(self):
@@ -1985,18 +1999,6 @@ if not checkGHPythonVersion(GHPythonTargetVersion):
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
     letItFly = False
     sc.sticky["ladybug_release"] = False
-
-
-#set up default pass
-if os.path.exists("c:\\ladybug\\"):
-    # folder already exists so it is all fine
-    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-elif os.access(os.path.dirname("c:\\"), os.W_OK):
-    #the folder does not exists but write privileges are given so it is fine
-    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-else:
-    # let's use the user folder
-    sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
 
 if letItFly:
     # let's just overwrite it every time
