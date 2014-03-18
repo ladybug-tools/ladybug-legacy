@@ -1369,6 +1369,10 @@ class RunAnalysisInsideGH(object):
             def srfRadCalculator(i):
                 patchNum = 0
                 for patchVec in TregenzaVectors:
+                    
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
                     vecAngle = rc.Geometry.Vector3d.VectorAngle(patchVec, testVec[i]) # calculate the angle between the surface and sky patch
                     
                     intersectionMtx[i][patchNum] = {'isIntersect' : 0,
@@ -1396,16 +1400,20 @@ class RunAnalysisInsideGH(object):
                 radResult[i] = (groundRadiation[i] + radiation[i]) #/sunUpHours
         
         except:
-            print 'Error in Radiation calculation...'
-            pass
+            #print 'Error in Radiation calculation...'
+            print "The calculation is terminated by user!"
+            assert False
         
         # calling the function
-        if parallel:
-            tasks.Parallel.ForEach(range(len(testPts)),srfRadCalculator)
-        else:
-            for i in range(len(testPts)):
-                srfRadCalculator(i)
-        
+        try:
+            if parallel:
+                tasks.Parallel.ForEach(range(len(testPts)),srfRadCalculator)
+            else:
+                for i in range(len(testPts)):
+                    srfRadCalculator(i)
+        except:
+            return None, None, None
+            
         intersectionEndTime = time.time()
         print 'Radiation study time = ', ("%.3f" % (intersectionEndTime - intersectionStTime)), 'Seconds...'
         
