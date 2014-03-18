@@ -1454,6 +1454,10 @@ class RunAnalysisInsideGH(object):
         try:
             def sunlightHoursCalculator(i):
                 for vectorCount, vector in enumerate(sunV):
+                    
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
                     vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and sun vector
                     check = 0
                     if vecAngle < (PI/2):
@@ -1472,16 +1476,21 @@ class RunAnalysisInsideGH(object):
                 
                 sunlightHoursResult[i] = sunlightHours[i] # This is stupid but I'm tired to change it now...
         except:
-            print 'Error in Sunligh Hours calculation...'
-            pass
+            #print 'Error in Sunligh Hours calculation...'
+            print "The calculation is terminated by user!"
+            assert False
         
         # calling the function
-        if parallel:
-            tasks.Parallel.ForEach(range(len(testPts)), sunlightHoursCalculator)
-        else:
-            for i in range(len(testPts)):
-                sunlightHoursCalculator(i)
-        
+        try:
+            # calling the function
+            if parallel:
+                tasks.Parallel.ForEach(range(len(testPts)), sunlightHoursCalculator)
+            else:
+                for i in range(len(testPts)):
+                    sunlightHoursCalculator(i)
+        except:
+            return None, None, None
+            
         intersectionEndTime = time.time()
         print 'Sunlight hours calculation time = ', ("%.3f" % (intersectionEndTime - intersectionStTime)), 'Seconds...'
         
@@ -1525,6 +1534,10 @@ class RunAnalysisInsideGH(object):
         try:
             def viewCalculator(i):
                 for ptCount, viewPt in enumerate(viewPoints):
+                    
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
                     vector = rc.Geometry.Vector3d(viewPt - testPts[i])
                     vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and sun vector
                     check = 0
@@ -1545,17 +1558,22 @@ class RunAnalysisInsideGH(object):
                 
                 if viewResult[i] > 100: viewResult[i] = 100
         except Exception, e:
-            print `e`
-            print 'Error in View calculation...'
-            pass
+            # print `e`
+            # print 'Error in View calculation...'
+            print "The calculation is terminated by user!"
+            assert False
         
         # calling the function
-        if parallel:
-            tasks.Parallel.ForEach(range(len(testPts)), viewCalculator)
-        else:
-            for i in range(len(testPts)):
-                viewCalculator(i)
-        
+        try:
+            # calling the function
+            if parallel:
+                tasks.Parallel.ForEach(range(len(testPts)), viewCalculator)
+            else:
+                for i in range(len(testPts)):
+                    viewCalculator(i)
+        except:
+            return None, None, None
+            
         intersectionEndTime = time.time()
         print 'View calculation time = ', ("%.3f" % (intersectionEndTime - intersectionStTime)), 'Seconds...'
         

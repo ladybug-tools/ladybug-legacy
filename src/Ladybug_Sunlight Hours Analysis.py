@@ -10,7 +10,7 @@ This component uses sun vectors to calculate sunlight hours on building surfaces
 You can use this component also for shadow studies.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.56
     
     Args:
         north_: Input a vector to set north
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -485,12 +485,14 @@ if _runIt:
     else:
         result = -1
     
-    if result == -1:
+    if result == -1 and not (len(_geometry)!=0 and _geometry[0] != None and _disFromBase):
         warnM = "Please connect the geometry or the context and set up both the gridSize and the distance from base surface..."
         print warnM
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, warnM)
-
+    elif result == -1:
+        print "Canceled by user!"
+    
 else:
     print 'Set runIt to True!'
 
