@@ -1,4 +1,4 @@
-# By Saeran Vasanthakumar
+﻿# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
@@ -12,7 +12,7 @@ user-specfied amount of time. The autumn equinox is used as the solar cutoff poi
 Warning: Extremely complicated concave shapes will take a long time.
 
 -
-Provided by Ladybug 0.0.54
+Provided by Ladybug 0.0.55
     
     Args:
         _boundary: Input the boundary geometry as a closed, planar Curve(s).
@@ -43,10 +43,12 @@ Provided by Ladybug 0.0.54
 
 ghenv.Component.Name = "Ladybug_SolarFan_alt"
 ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.54\nFEB_16_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMar_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.AdditionalHelpFromDocStrings = "3"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+except: pass
+
 
 import math
 import rhinoscriptsyntax as rs
@@ -762,29 +764,36 @@ class CleanBrep:
     def safeUnionMethod(self,solarFans):
         """From Ladybug"""
         res = []
-        for fanCount in range(0, len(solarFans), 2):
+        x = solarFans[0]
+        for fanCount in range(len(solarFans[1:])):
+            if gh.GH_Document.IsEscapeKeyDown():
+                    print "terminated!"
+                    break
             try:
                 rs.EnableRedraw(False)
-                x = solarFans[fanCount]
-                y = solarFans[fanCount + 1]
+                #x = solarFans[fanCount]
+                y = solarFans[fanCount]
                 x.Faces.SplitKinkyFaces(rc.RhinoMath.DefaultAngleTolerance, False)
                 y.Faces.SplitKinkyFaces(rc.RhinoMath.DefaultAngleTolerance, False)
                 a = rc.Geometry.Brep.CreateBooleanUnion([x, y], sc.doc.ModelAbsoluteTolerance)
                 if a == None:
-                    a = [solarFans[fanCount], solarFans[fanCount + 1]]
+                    a = [x,solarFans[fanCount]]
                 rs.EnableRedraw()
             except:
-                a = [solarFans[fanCount], solarFans[fanCount + 1]]
+                a = [x,solarFans[fanCount]]
         
             if a:
                 res.extend(a)
+                x = y
         return res
-
     
     def slowUnionMethod(self,solarFans):
         fanlst = [solarFans.pop(0)]
         rs.EnableRedraw(False)
-        for next_fan in self.L:
+        for next_fan in solarFans:
+            if gh.GH_Document.IsEscapeKeyDown():
+                print "terminated!"
+                break
             breplst = [fanlst[0],next_fan]
             boolean_result = Rhino.Geometry.Brep.CreateBooleanUnion(breplst,TOL)
             if boolean_result:
@@ -802,12 +811,13 @@ class CleanBrep:
         else:
             #print 'safeiunionmethod' ## for testing
             fanlst = self.safeUnionMethod(self.L)
+        
         if len(fanlst) > 1 and len(fanlst) < 10: # safeUnionMethod has failed
             #print 'slowunionmethod' ## for testing
             slowfanlst = self.slowUnionMethod(self.L)
             if slowfanlst != -1:
                 fanlst = slowfanlst
-        if len(fanlst)>1:
+        if len(fanlst) > 1: #final check
             error_union = \
             "Sorry your boundary geometry is too complicated for\n"\
             "this component too handle cleanly. If you boolean union\n"\
