@@ -1788,7 +1788,7 @@ class ResultVisualization(object):
             return meshAndCrv
         else: return -1
     
-    def chartGeometry(self, values, xSize, xScale, yScale, zScale, patternList, basePoint = rc.Geometry.Point3d.Origin):
+    def chartGeometry(self, values, xSize, xScale, yScale, zScale, patternList, basePoint = rc.Geometry.Point3d.Origin, condStatement = None, cullVertices = False):
         # make a monocolor mesh
         meshVertices = range(len(values))
         ySize = int(len(values)/xSize)
@@ -1811,12 +1811,23 @@ class ResultVisualization(object):
             if (i + 1) % xSize != 0 and i + 1 < xSize * (ySize - 1):
                 # draw each mesh surface
                 mesh = rc.Geometry.Mesh()
-                mesh.Vertices.Add(meshVertices[i]) #0
-                mesh.Vertices.Add(meshVertices[i + 1]) #1
-                mesh.Vertices.Add(meshVertices[i + xSize + 1]) #2
-                mesh.Vertices.Add(meshVertices[i + xSize]) #3
-                mesh.Faces.AddFace(0, 1, 2, 3)
-                joinedMesh.Append(mesh)
+                
+                verIDs = [i, i + 1, i + xSize + 1, i + xSize]
+                selVerIDs = []
+                if condStatement != None and cullVertices:
+                    for id in verIDs:
+                        #collect vertices that satisfy the conditional statement
+                        if patternList[id]: selVerIDs.append(id)
+                else:
+                    selVerIDs = verIDs
+                
+                if len(selVerIDs) > 2:
+                    for id in selVerIDs:
+                        mesh.Vertices.Add(meshVertices[id]) #0
+                    if len(selVerIDs) == 3: mesh.Faces.AddFace(0, 1, 2)
+                    elif len(selVerIDs) == 4: mesh.Faces.AddFace(0, 1, 2, 3)
+                    joinedMesh.Append(mesh)
+                    
         return joinedMesh, conditionalPoints
 
 
@@ -1825,11 +1836,17 @@ class ResultVisualization(object):
         joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.White)
     
         # Colors = [System.Drawing.Color.Green, System.Drawing.Color.Red, System.Drawing.Color.Blue]
+        # try except as some of the vertices might be removed because they couldn't meet the conditional statement
         for srfNum in range (joinedMesh.Faces.Count):
-            joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum + int(srfNum/(xSize -1))]
-            joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum + int(srfNum/(xSize -1)) + 1]
-            joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum + int(srfNum/(xSize -1)) + xSize + 1]
-            joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum + int(srfNum/(xSize -1)) + xSize]
+            try: joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum + int(srfNum/(xSize -1))]
+            except: pass
+            try: joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum + int(srfNum/(xSize -1)) + 1]
+            except: pass
+            try: joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum + int(srfNum/(xSize -1)) + xSize + 1]
+            except: pass
+            try: joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum + int(srfNum/(xSize -1)) + xSize]
+            except: pass
+            
     
         rotate90 = True
         if rotate90: joinedMesh.Rotate(-math.pi/2, rc.Geometry.Vector3d.ZAxis, basePoint)

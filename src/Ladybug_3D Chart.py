@@ -14,10 +14,11 @@ Provided by Ladybug 0.0.55
         _xScale_: Scale of the X axis of the graph. Connect a list for multiple graphs
         _yScale_: Scale of the Y axis of the graph. Connect a list for multiple graphs
         _zScale_: Scale of the Z axis of the graph. Connect a list for multiple graphs
-        _xCount_: Default is set to 24, as 24 hours. Change it in regard to your input data
+        _yCount_: Default is set to 24, as 24 hours. Change it in regard to your input data
         legendPar_: Input legend parameters from the Ladybug Legend Parameters component
         _basePoint_: Input a point to locate the 3D chart base point
         condStatement_ : Conditional statement (e.g. a > 25)
+        cullVertices_: If set to True the vertices that doesn't satisfy the conditional statement will be removed from the mesh
         bakeIt_ : Bake the chart as a colored mesh
     Returns:
         readMe!: ...
@@ -30,7 +31,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -124,7 +125,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         return titleStatement, patternList
 
 
-def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condStatement, bakeIt):
+def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condStatement, bakeIt, cullVertices):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -167,34 +168,54 @@ def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condSt
             # legendBasePoints = []
             for i, results in enumerate(separatedLists):
                 
-                if 'Month' in listInfo[i][4]: xExtraFactor = 10
-                else: xExtraFactor = 1
+                if 'Month' in listInfo[i][4]:
+                    # scale for the monthly data
+                    xExtraFactor = 10
+                else:
+                    xExtraFactor = 1
+                
+                    
                 try:
-                    if float(xScale[i])!=0:
-                        try:xSCC = 10 * float(xScale[i]) * xExtraFactor /conversionFac
-                        except: xSCC = 10 * xExtraFactor/conversionFac
-                    else: xSCC = 10 * xExtraFactor/conversionFac
-                except: xSCC = 10 * xExtraFactor/conversionFac
+                    # assuming there is a scale for this chart
+                    xSCC = 10 * float(xScale[i]) * xExtraFactor /conversionFac
+                except:
+                    try:
+                        # try the first item
+                        xSCC = 10 * float(xScale[0]) * xExtraFactor /conversionFac
+                    except:
+                        xSCC = 10 * xExtraFactor/conversionFac
+                
+                # make sure the scale is not 0
+                if xSCC == 0: xSCC = 10 * xExtraFactor/conversionFac
+                
                 # this is because I rotate the geometry 90 degrees!
                 ySC = abs(xSCC)
                 
                 try:
-                    if float(yScale[i])!=0:
-                        try:ySCC = 10 * float(yScale[i])/conversionFac
-                        except: ySCC = 10/conversionFac
-                    else: ySCC = 10/conversionFac
-                except: ySCC = 10/conversionFac
+                    ySCC = 10 * float(yScale[i])/conversionFac
+                except:
+                    try:
+                        ySCC = 10 * float(yScale[0])/conversionFac
+                    except:
+                        ySCC = 10/conversionFac
+                
+                if ySCC==0: ySCC = 10/conversionFac
+                
                 xSC = abs(ySCC)
                 
                 # read running period
                 stMonth, stDay, stHour, endMonth, endDay, endHour = lb_visualization.readRunPeriod((listInfo[i][5], listInfo[i][6]), False)
                 
+                
                 try:
-                    if float(xCount[i])!=0:
-                        try:xC = float(xCount[i])
-                        except: xC = abs(endHour - stHour) + 1
-                    else: xC = abs(endHour - stHour) + 1
-                except: xC = abs(endHour - stHour) + 1
+                    xC = float(yCount[i])
+                except:
+                    try:
+                        xC = float(yCount[0])
+                    except:
+                        xC = abs(endHour - stHour) + 1
+                        
+                if xC == 0: xC = abs(endHour - stHour) + 1
                 xC = int(xC)
                 
                 dataType = listInfo[i][2]
@@ -207,18 +228,25 @@ def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condSt
                 #if xExtraFactor !=1: extraFactor = extraFactor/3
                 
                 try:
-                    if float(zScale[i])>=0:
-                        try:zSC = 10 * float(zScale[i])/(conversionFac*extraFactor)
-                        except: zSC = 10/(conversionFac*extraFactor); print 'zScale is set to ' + ("%.2f" % (1/extraFactor)) + ' for ' + dataType
-                    else: zSC = 10/(conversionFac*extraFactor); print 'zScale is set to ' + ("%.2f" % (1/extraFactor)) + ' for ' + dataType
-                except: zSC = 10/(conversionFac*extraFactor); print 'zScale is set to ' +  ("%.2f" % (1/extraFactor)) + ' for ' + dataType
+                    zSC = 10 * float(zScale[i])/(conversionFac*extraFactor)
+                except:
+                    try:
+                        zSC = 10 * float(zScale[0])/(conversionFac*extraFactor)
+                    except:
+                        zSC = 10/(conversionFac*extraFactor)
+                
+                if float(zSC) == 0:
+                    zSC = 10/(conversionFac*extraFactor)
+                
+                print 'zScale is set to ' +  ("%.2f" % (1/extraFactor)) + ' for ' + dataType
+                    
                 zSC = abs(zSC)
                 
                 # read legend parameters
                 lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
                 
                 # draw the graph
-                mesh, conditionalPoints = lb_visualization.chartGeometry(results, xC, xSC, ySC, zSC, patternList, lb_preparation.getCenPt(basePoint))
+                mesh, conditionalPoints = lb_visualization.chartGeometry(results, xC, xSC, ySC, zSC, patternList, lb_preparation.getCenPt(basePoint), condStatement, cullVertices)
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
                 coloredChart = lb_visualization.colorMeshChart(mesh, xC, colors, lb_preparation.getCenPt(basePoint))
                 
@@ -268,7 +296,13 @@ def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condSt
                 
                 # color legend surfaces
                 legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-                legendSrfs.Translate(movingVector) # move it to the right place
+                try: legendSrfs.Translate(movingVector) # move it to the right place
+                except:
+                    msg = "0 hour meets the conditional statemnet."
+                    print msg
+                    w = gh.GH_RuntimeMessageLevel.Warning
+                    ghenv.Component.AddRuntimeMessage(w, msg)
+                    return -1
                 
                 if legendBasePoint == None:
                     nlegendBasePoint = lb_visualization.BoundingBoxPar[0]
@@ -312,7 +346,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, xCount, legendPar, condSt
 
 
 
-result = main(_inputData, _basePoint_, _xScale_, _yScale_, _zScale_, _xCount_, legendPar_, condStatement_, bakeIt_)
+result = main(_inputData, _basePoint_, _xScale_, _yScale_, _zScale_, _yCount_, legendPar_, condStatement_, bakeIt_, cullVertices_)
 if result!= -1:
     legend = DataTree[System.Object]()
     graphMesh = DataTree[System.Object]()
@@ -329,3 +363,4 @@ if result!= -1:
         conditionalPts.AddRange(result[3][i], p)
         HOY.AddRange(result[4][i], p)
     ghenv.Component.Params.Output[3].Hidden = True
+    ghenv.Component.Params.Output[4].Hidden = True
