@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.56
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_18_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_19_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -461,22 +461,23 @@ if _runIt:
         testVec = DataTree[System.Object]() 
         sunIsVisible = DataTree[System.Object]()
         
-        if result!= -1: sunlightHoursResult = DataTree[System.Object]()
+        if result!= -1:
+            sunlightHoursResult = DataTree[System.Object]()
         
-        # graft test points
-        ptCount = 0
-        for i, ptList in enumerate(originalTestPoints):
-            p = GH_Path(i)
-            for pCount, pt in enumerate(ptList):
-                testPts.Add(pt, p)
-                testVec.Add(testVec_flatten[ptCount], p)
-                if result!= -1 and len(result) != 5:
-                    #try:
-                    q = GH_Path(i, pCount)
-                    sunlightHoursResult.Add(sunlightHoursResult_flatten[ptCount], p)
-                    sunIsVisible.AddRange(sunVisibility[ptCount], q)
-                    #except: pass
-                ptCount += 1
+            # graft test points
+            ptCount = 0
+            for i, ptList in enumerate(originalTestPoints):
+                p = GH_Path(i)
+                for pCount, pt in enumerate(ptList):
+                    testPts.Add(pt, p)
+                    testVec.Add(testVec_flatten[ptCount], p)
+                    if result!= -1 and len(result) != 5:
+                        #try:
+                        q = GH_Path(i, pCount)
+                        sunlightHoursResult.Add(sunlightHoursResult_flatten[ptCount], p)
+                        sunIsVisible.AddRange(sunVisibility[ptCount], q)
+                        #except: pass
+                    ptCount += 1
         
         ghenv.Component.Params.Output[1].Hidden= True
         ghenv.Component.Params.Output[2].Hidden= True
@@ -490,7 +491,7 @@ if _runIt:
         print warnM
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, warnM)
-    elif result == -1:
+    elif result == -1 and sc.sticky.has_key('ladybug_release'):
         print "Canceled by user!"
     
 else:

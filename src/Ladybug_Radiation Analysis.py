@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.56
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_17_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_19_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -475,23 +475,24 @@ if _runIt:
         testPts = DataTree[System.Object]()
         testVec = DataTree[System.Object]() 
         
-        if result!= -1: radiationResult = DataTree[System.Object]()
+        if result!= -1:
+            radiationResult = DataTree[System.Object]()
         
-        # graft test points
-        ptCount = 0
-        for i, ptList in enumerate(originalTestPoints):
-            p = GH_Path(i)
-            for pt in ptList:
-                testPts.Add(pt, p)
-                testVec.Add(testVec_flatten[ptCount], p)
-                if result!= -1 and len(result) != 4:
-                    try: radiationResult.Add(radiationResult_flatten[ptCount], p)
-                    except: pass
-                ptCount += 1
-        ghenv.Component.Params.Output[1].Hidden= True
-        ghenv.Component.Params.Output[2].Hidden= True
-        ghenv.Component.Params.Output[3].Hidden= True
-        ghenv.Component.Params.Output[9].Hidden= True
+            # graft test points
+            ptCount = 0
+            for i, ptList in enumerate(originalTestPoints):
+                p = GH_Path(i)
+                for pt in ptList:
+                    testPts.Add(pt, p)
+                    testVec.Add(testVec_flatten[ptCount], p)
+                    if result!= -1 and len(result) != 4:
+                        try: radiationResult.Add(radiationResult_flatten[ptCount], p)
+                        except: pass
+                    ptCount += 1
+            ghenv.Component.Params.Output[1].Hidden= True
+            ghenv.Component.Params.Output[2].Hidden= True
+            ghenv.Component.Params.Output[3].Hidden= True
+            ghenv.Component.Params.Output[9].Hidden= True
         
     else:
         result = -1
@@ -501,7 +502,7 @@ if _runIt:
               " and set up both the gridSize and the distance from base surface..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "Please connect the geometry or the context and set up both the gridSize and the distance from base surface...")
-    elif result == -1:
+    elif result == -1 and sc.sticky.has_key('ladybug_release'):
         print "Canceled by user!"
         
 else: print 'Set runIt to True!'
