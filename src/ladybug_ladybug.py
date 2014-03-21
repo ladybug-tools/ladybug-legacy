@@ -1619,7 +1619,7 @@ class ResultVisualization(object):
         return stMonth, stDay, stHour, endMonth, endDay, endHour
     
     
-    def colorMesh(self, colors, meshList):
+    def colorMesh(self, colors, meshList, unweld = True):
         
         joinedMesh = rc.Geometry.Mesh()
         try:
@@ -1631,7 +1631,8 @@ class ResultVisualization(object):
             except:
                 joinedMesh.Append(meshList)
         
-        joinedMesh.Unweld(0, False)
+        if unweld: joinedMesh.Unweld(0, False)
+        
         
         if joinedMesh.Faces.Count == 0:
             print "Invalid Mesh!"

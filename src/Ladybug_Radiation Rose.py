@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_21_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -169,6 +169,7 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
                 cenPtMoved = rc.Geometry.Point3d.Add(cenPt, movingVector)
                 
                 colForMesh = []; arrowsEndPts = []
+                
                 for arrow in arrows:
                     newMesh = arrow.DuplicateMesh()
                     if newMesh:
@@ -181,7 +182,7 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
                         newMesh.Dispose() # delete the polysurface
                 
                 # color the meshed patches
-                domeMeshed = lb_visualization.colorMesh(totalRadiationColors, arrowsJoined)
+                domeMeshed = lb_visualization.colorMesh(totalRadiationColors, arrowsJoined, False)
                 
                 placeName = listInfo[i][1]
                 skyTypes = ['Total_Radiation' + placeName[:3], 'Diffuse_Radiation' + placeName[:3], 'Direct_Radiation' + placeName[:3]]
