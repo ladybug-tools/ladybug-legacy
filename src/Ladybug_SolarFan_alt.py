@@ -43,7 +43,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_SolarFan_alt"
 ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
