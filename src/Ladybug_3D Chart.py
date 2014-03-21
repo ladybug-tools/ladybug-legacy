@@ -18,7 +18,7 @@ Provided by Ladybug 0.0.55
         legendPar_: Input legend parameters from the Ladybug Legend Parameters component
         _basePoint_: Input a point to locate the 3D chart base point
         condStatement_ : Conditional statement (e.g. a > 25)
-        cullVertices_: If set to True the vertices that doesn't satisfy the conditional statement will be removed from the mesh
+        cullVertices_: If set to True the vertices that don't satisfy the conditional statement will be removed from the mesh
         bakeIt_ : Bake the chart as a colored mesh
     Returns:
         readMe!: ...
@@ -31,7 +31,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_18_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -121,7 +121,6 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1, -1
-        
         return titleStatement, patternList
 
 
@@ -144,7 +143,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 # True, False Pattern and condition statement
                 titleStatement, patternList = checkConditionalStatement(inputData, condStatement)
             if titleStatement == -1:
-                patternList = [False] * 8759
+                patternList = [False] * 8760
                 titleStatement = False
             
             hoursOfYear = []
@@ -246,9 +245,45 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
                 
                 # draw the graph
-                mesh, conditionalPoints = lb_visualization.chartGeometry(results, xC, xSC, ySC, zSC, patternList, lb_preparation.getCenPt(basePoint), condStatement, cullVertices)
+                mesh, conditionalPoints, duplicatedMeshPattern = lb_visualization.chartGeometry(results, xC, xSC, ySC, zSC, patternList, lb_preparation.getCenPt(basePoint))
+                
+                # print len(duplicatedMeshPattern)
+                
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
+                    
                 coloredChart = lb_visualization.colorMeshChart(mesh, xC, colors, lb_preparation.getCenPt(basePoint))
+                
+                # cull mesh vertices
+                # There should be a better way to do this. I should be able to generate the mesh in a smarter way
+                # and then the process of coloring will be more clear
+                if condStatement and cullVertices:
+                    culledMesh = rc.Geometry.Mesh()
+                    for faceCount in range (coloredChart.Faces.Count):
+                        # Find the vertices
+                        selVertices = []
+                        verCount = range(4 * faceCount, 4 * faceCount + 4) 
+                        for id in verCount:
+                            if duplicatedMeshPattern[id]: selVertices.append(id)
+                        
+                        if len(selVertices)>2:
+                            mesh = rc.Geometry.Mesh()
+                            for id in selVertices:
+                                mesh.Vertices.Add(coloredChart.Vertices[id])
+                        
+                            if len(selVertices) == 3:
+                                mesh.Faces.AddFace(0, 1, 2)
+                            else:
+                                mesh.Faces.AddFace(0, 1, 2, 3)
+                            
+                            mesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.White)
+                            # apply the colors
+                            for verCount in range(mesh.Vertices.Count):
+                                mesh.VertexColors[verCount] = coloredChart.VertexColors[selVertices[verCount]]
+                            
+                            # add to culledMesh
+                            culledMesh.Append(mesh)
+                    
+                    coloredChart = culledMesh
                 
                 lb_visualization.calculateBB([coloredChart], True)
                 

@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.56
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_17_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1788,11 +1788,13 @@ class ResultVisualization(object):
             return meshAndCrv
         else: return -1
     
-    def chartGeometry(self, values, xSize, xScale, yScale, zScale, patternList, basePoint = rc.Geometry.Point3d.Origin, condStatement = None, cullVertices = False):
+    def chartGeometry(self, values, xSize, xScale, yScale, zScale, patternList, basePoint = rc.Geometry.Point3d.Origin):
         # make a monocolor mesh
         meshVertices = range(len(values))
         ySize = int(len(values)/xSize)
         conditionalPoints = []
+        
+        # print len(meshVertices)
         
         for i in range(len(values)):
             xMove = - xScale * (i % xSize)
@@ -1802,10 +1804,14 @@ class ResultVisualization(object):
             newPoint = rc.Geometry.Point3d.Add(basePoint, movingVec)
             meshVertices[i] = newPoint
             try:
-                if patternList[i]: conditionalPoints.append(newPoint)
+                if patternList[i]:
+                    conditionalPoints.append(newPoint)
             except:
                 pass
+        
+        
         joinedMesh = rc.Geometry.Mesh()
+        duplicatedMeshPattern = []
         for i in  range(len(meshVertices)):
             # check the point not to be in the last row or the last column
             if (i + 1) % xSize != 0 and i + 1 < xSize * (ySize - 1):
@@ -1813,39 +1819,25 @@ class ResultVisualization(object):
                 mesh = rc.Geometry.Mesh()
                 
                 verIDs = [i, i + 1, i + xSize + 1, i + xSize]
-                selVerIDs = []
-                if condStatement != None and cullVertices:
-                    for id in verIDs:
-                        #collect vertices that satisfy the conditional statement
-                        if patternList[id]: selVerIDs.append(id)
-                else:
-                    selVerIDs = verIDs
+                duplicatedMeshPattern.extend([patternList[i], patternList[i + 1], patternList[i + xSize + 1], patternList[i + xSize]])
                 
-                if len(selVerIDs) > 2:
-                    for id in selVerIDs:
-                        mesh.Vertices.Add(meshVertices[id]) #0
-                    if len(selVerIDs) == 3: mesh.Faces.AddFace(0, 1, 2)
-                    elif len(selVerIDs) == 4: mesh.Faces.AddFace(0, 1, 2, 3)
-                    joinedMesh.Append(mesh)
+                for id in verIDs:
+                    mesh.Vertices.Add(meshVertices[id])
                     
-        return joinedMesh, conditionalPoints
-
+                mesh.Faces.AddFace(0, 1, 2, 3)
+                joinedMesh.Append(mesh)
+                
+        return joinedMesh, conditionalPoints, duplicatedMeshPattern
 
     def colorMeshChart(self, joinedMesh, xSize, colors, basePoint = rc.Geometry.Point3d.Origin):
         # color mesh surface
         joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.White)
-    
-        # Colors = [System.Drawing.Color.Green, System.Drawing.Color.Red, System.Drawing.Color.Blue]
-        # try except as some of the vertices might be removed because they couldn't meet the conditional statement
+        
         for srfNum in range (joinedMesh.Faces.Count):
-            try: joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum + int(srfNum/(xSize -1))]
-            except: pass
-            try: joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum + int(srfNum/(xSize -1)) + 1]
-            except: pass
-            try: joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum + int(srfNum/(xSize -1)) + xSize + 1]
-            except: pass
-            try: joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum + int(srfNum/(xSize -1)) + xSize]
-            except: pass
+            joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum + int(srfNum/(xSize -1))]
+            joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum + int(srfNum/(xSize -1)) + 1]
+            joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum + int(srfNum/(xSize -1)) + xSize + 1]
+            joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum + int(srfNum/(xSize -1)) + xSize]
             
     
         rotate90 = True
