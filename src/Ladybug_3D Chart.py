@@ -31,7 +31,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_20_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_21_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -56,8 +56,8 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         
         letters = [chr(i) for i in xrange(ord('a'), ord('z')+1)]
         # remove 'and' and 'or' from conditional statements
-        csCleaned = conditionalStatement.replace('and', '',20000)
-        csCleaned = csCleaned.replace('or', '',20000)
+        csCleaned = conditionalStatement.Replace('and', '')
+        csCleaned = csCleaned.Replace('or', '')
         
         # find the number of the lists that have assigned conditional statements
         listNum = []
@@ -77,10 +77,14 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         
         selList = []
         [selList.append([]) for i in range(len(listInfo))]
+        startHour = listInfo[0][5]
+        endHour = listInfo[0][6]
+        
         for i in range(len(listInfo)):
             selList[i] = annualHourlyData[indexList[i]+7:indexList[i+1]]
-            if listInfo[i][4]!='Hourly' or listInfo[i][5]!=(1,1,1) or  listInfo[i][6]!=(12,31,24) or len(selList[i])!=8760:
-                warning = 'At least one of the input data lists is not a valis ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
+            if listInfo[i][5]!= startHour or  listInfo[i][6]!=endHour :
+                warning = 'Length of all the lists should be the same to apply conditional statemnets.' + \
+                          ' Please fix this issue and try again!\nList number '+ `i+1` + ' is the one that causes the issue.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1, -1
@@ -112,15 +116,14 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         
         # check for the pattern
         patternList = []
-        try:
-            for HOY in range(8760):
+       
+        for HOY in range(8760):
+            try:
                 exec(finalStatement)
                 patternList.append(pattern)
-        except Exception,e:
-            warning = 'There is an error in the conditional statement:\n' + `e`
-            print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            return -1, -1
+            except:
+                pass
+                
         return titleStatement, patternList
 
 
