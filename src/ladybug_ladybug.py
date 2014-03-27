@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.56
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_20_2014'
+ghenv.Component.Message = 'VER 0.0.56\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -468,9 +468,10 @@ class Preparation(object):
             # in case of numbers with no str information
             if len(indexList) == 0:
                 indexList = [-7, len(list)];
-                listInfo = [key, 'somewhere','someData','?','?','?','?']
-            else: indexList.append(len(list))
-            #
+                listInfo = [[key, 'somewhere','someData', 'someUnits', 'someTimeStep',(1, 1, 1),(12, 31, 24)]]
+            else:
+                indexList.append(len(list))
+                
             return indexList, listInfo
 
     ## read epw file
