@@ -44,7 +44,8 @@ Provided by Ladybug 0.0.55
         legend: Legend(s) of the chart(s). Connect to Geo for preview
         legendBasePts: Legend base points, mainly for presentation purposes 
         sunPathCenPts: Center points of the sun-path, mainly for presentation purposes 
-        sunPositionsInfo: Information for each sun position 
+        sunPositionsInfo: Information for each sun position
+        SunPositionsHOY: Hour of the year for each sun position
         selHourlyData: Selected hourly data from the annual hourly data
 """
 
@@ -510,7 +511,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         if bakeIt: bakePlease(listInfo[i], sunsJoined, legendSrfs, legendText, textPt, textSize, crvsTemp)
             
-                return allSunPositions, allSunsJoined, sunVectors, allSunPathCrvs, allLegend, allValues, sunAlt, sunAzm, cenPts, allSunPosInfo, legendBasePoints
+                return allSunPositions, allSunsJoined, sunVectors, allSunPathCrvs, allLegend, allValues, sunAlt, sunAzm, cenPts, allSunPosInfo, legendBasePoints, [sunUpHours]
             
             # no hourly data tp overlay
             elif dailySunPath or annualSunPath:
@@ -544,7 +545,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 
             else: return -1
                 
-            return [sunPositions], [sunsJoined], sunVectors, [sunPathCrvs + compassCrvs], [legend], [values], sunAlt, sunAzm, [cenPt], [sunPosInfo], [titlebasePt]
+            return [sunPositions], [sunsJoined], sunVectors, [sunPathCrvs + compassCrvs], [legend], [values], sunAlt, sunAzm, [cenPt], [sunPosInfo], [titlebasePt], [sunUpHours]
         
         else:
             print 'Please input a number for Latitude'
@@ -566,7 +567,7 @@ if _location:
                   _dailyOrAnnualSunPath_, bakeIt_)
 
     if result!= -1:
-        sunPositionsList, sunSpheres, sunVectors, sunPathCrvsList, legendCrvs, selHourlyDataList, sunAltitudes, sunAzimuths, centerPoints, sunPosInfoList,  legendBasePtList= result
+        sunPositionsList, sunSpheres, sunVectors, sunPathCrvsList, legendCrvs, selHourlyDataList, sunAltitudes, sunAzimuths, centerPoints, sunPosInfoList,  legendBasePtList, sunPosHOY = result
         
         # graft the data
         # I added this at the last minute! There should be a cleaner way
@@ -577,6 +578,7 @@ if _location:
         sunPositions = DataTree[System.Object]()
         sunPathCenPts = DataTree[System.Object]()
         sunPositionsInfo = DataTree[System.Object]()
+        sunPositionsHOY = DataTree[System.Object]()
         legendBasePts = DataTree[System.Object]()
         for i, leg in enumerate(legendCrvs):
             p = GH_Path(i)
@@ -588,6 +590,7 @@ if _location:
             sunPositions.AddRange(sunPositionsList[i],p)
             sunPathCenPts.Add(centerPoints[i],p)
             sunPositionsInfo.AddRange(sunPosInfoList[i], p)
+            sunPositionsHOY.AddRange(sunPosHOY[0], p)
             legendBasePts.Add(legendBasePtList[i],p)
         
         # hide preview of sunCnterpoints and legendBasePts
