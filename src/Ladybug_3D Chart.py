@@ -237,8 +237,6 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     except:
                         zSC = 10/(conversionFac*extraFactor)
                 
-                if float(zSC) == 0:
-                    zSC = 10/(conversionFac*extraFactor)
                 
                 print 'zScale is set to ' +  ("%.2f" % (1/extraFactor)) + ' for ' + dataType
                     
