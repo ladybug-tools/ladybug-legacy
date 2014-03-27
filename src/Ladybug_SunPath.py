@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.55\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -171,14 +171,18 @@ def getHOYs(hours, days, months, timeStep, lb_preparation, method = 0):
     if timeStep != 1: hours = rs.frange(hours[0], hours[-1] + 1 - 1/timeStep, 1/timeStep)
     
     HOYS = []
-        
+    
     for monthCount, m in enumerate(months):
-        if method == 1:
+        # just a single day
+        if method == 1 and len(months) == 1 and stDay - endDay == 0:
+            days = [stDay]
+        elif method == 1:
             #based on analysis period
-            if monthCount == 0: days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
+            if monthCount == 0:
+                days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
             elif monthCount == len(months) - 1: days = range(1, lb_preparation.checkDay(endDay, m) + 1)
             else: days = range(1, numberOfDaysEachMonth[monthCount] + 1)
-            
+        
         for d in days:
             for h in hours:
                 h = lb_preparation.checkHour(float(h))
@@ -208,7 +212,7 @@ def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
     
     HOYS = getHOYs(hours, days, months, timeStep, lb_preparation, method = 1)
     
-    return HOYS, months
+    return HOYS, months, days
     
     
 def main(latitude, longitude, timeZone, elevation, north, hour, day, month, timeStep, analysisPeriod, centerPt, sunPathScale, sunScale, annualHourlyData, conditionalStatement, legendPar, dailyOrAnnualSunPath, bakeIt):
@@ -293,7 +297,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
         # check for analysisPeriod
         if len(analysisPeriod)!=0 and analysisPeriod[0]!=None:
             
-            HOYs, months = getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation)
+            HOYs, months, days = getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation)
             
         else:
             days = day
