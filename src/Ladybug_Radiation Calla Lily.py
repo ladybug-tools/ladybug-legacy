@@ -7,31 +7,31 @@
 Draw Radiation Calla Lily
 Radiation calla lily is a 3d presentation of radiation rose.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _selectedSkyMtx: selectSkyMtx component result
-        _horAngleStep_: Angle step for horizontal rotation between 0 and 360. The number should be smaller than 360 and divisible into 360.
-        _verAngleStep_: Angle step for vertical rotation between 0 and 90. The number should be smaller than 90 and divisible into 90.
-        _centerPoint: Input a point to locate the center point of the Calla Lily Graph
-        _horScale_: Input a number to change horizontal scale of the graph
-        _verScale_: Input a number to change vertical scale of the graph 
-        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
-        _runIt: Set Boolean to True to run
-        bakeIt_: Set Boolean to True to bake the graph
+        _selectedSkyMtx: The output from the selectSkyMtx component.
+        _horAngleStep_: An angle between 0 and 360 that represents an angle step for horizontal rotation. The number should be smaller than 360 and divisible by 360.
+        _verAngleStep_: Angle step between 0 and 90 that represents the vertical rotation. The number should be smaller than 90 and divisible by 90.
+        _centerPoint: Input a point here to chage the center point of the Calla Lily graph and move it around the Rhino scene.  The default is set to the Rhino origin (0,0,0).
+        _horScale_: Input a number here to change horizontal scale of the graph. The default value is set to 1.
+        _verScale_: Input a number here to change vertical scale of the graph. The default value is set to 1.
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        _runIt: Set to "True" to run the component and generate a radiation Calla Lily.
+        bakeIt_: Set to "True" to bake the Calla Lily into the Rhino scene.
     Returns:
         readMe!: ...
-        radiationLilyMesh: Radiation Calla Lily as a joined mesh
-        baseCrvs: Base curves of the graph
-        legend: Legend of the study. Connect to Geo for preview
-        testPts: Graph mesh vertices; mainly for presentation purposes
-        testPtsInfo: Information for each test point; mainly for presentation purposes
-        values: Radiation values for each point
+        radiationLilyMesh: A colored mesh representing radiation of the Calla Lily.
+        baseCrvs: A set of guide curves for the Calla Lily.
+        legend: A legend of the Calla Lily. Connect this output to a grasshopper "Geo" component in order to preview the legend in the Rhino scene.  
+        testPts: The vertices of the Calla Lily mesh.
+        testPtsInfo: Information for each test point of the Calla Lily mesh.
+        values: Radiation values for each test point of the Calla Lily mesh.
 """
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Lily"
 ghenv.Component.NickName = 'radiationCallaLily'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

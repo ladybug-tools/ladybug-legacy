@@ -5,41 +5,41 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Draws windRose
+Use this component to make a windRose in the Rhino scene.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _north_: Input a number or a vector to set north; default is set to the Y-axis
-        _hourlyWindDirection: A list of hourly wind direction data
-        _hourlyWindSpeed: A list of hourly wind speed data
-        annualHourlyData_: Connect a list of annual hourly data to be overlaid on sunpath
-        _analysisPeriod_: Analysis period from Analysis Period component; may be used to override hour of  the year
-        conditionalStatement_: The Conditional Statement Input allows users to filter data for specific conditions. Specific hourly data, such as temperature or humidity, can be filtered and overlaid with the Sun Path. The conditional statement should be a valid condition statement in Python such as a>25 and b<80.
-                              The current version accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" represents the 2nd list, etc.
-                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list, and you want to plot the data for the time period when temperature is between 18 and 23, and humidity is less than 80%, the statement should be written as 18<a<23 and b<80 (without quotation marks)
-                              In windRose component "a" always represents windSpeed as the first list.
-        _numOfDirections_: Input a number to set the number of directions for wind rose. Minimum is 4
-        _centerPoint_: Input a point to locate the center point of the wind rose 
-        _scale_: Input a number to set the scale of the radiation rose
-        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
-        _runIt: Set Boolean to True to run the component 
-        bakeIt_: Set Boolean to True to bake the radiation rose
+        _north_: Input a vector to be used as a true North direction for the wind rose or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        _hourlyWindDirection: The list of hourly wind direction data from the Import epw component.
+        _hourlyWindSpeed: The list of hourly wind speed data from the Import epw component.
+        annualHourlyData_: An optional list of hourly data from the Import epw component, which will be overlaid on wind rose (e.g. dryBulbTemperature)
+        _analysisPeriod_: An optional analysis period from the Analysis Period component.
+        conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the wind rose. To use this input correctly, hourly data, such as temperature or humidity, must be plugged into the annualHourlyData_ input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
+                              The current version of this component accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
+                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<a<23 and b<80 (without quotation marks).
+                              For the windRose component, the variable "a" always represents windSpeed.
+        _numOfDirections_: A number of cardinal directions with which to divide up the data in wind rose. Values must be greater than 4 since you can have no fewer than 4 cardinal directions.
+        _centerPoint_: Input a point here to change the location of the wind rose in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
+        _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        _runIt: Set this value to "True" to run the component and generate a wind rose in the Rhino scene.
+        bakeIt_: Set this value to "True" to bake the wind rose into the Rhino scene.
     
     Returns:
         readMe!: ...
-        calmRoseMesh: Frequency during the calm hours as a joined mesh
-        windRoseMesh: Wind rose as a joined mesh
-        windRoseCrvs: Wind rose guide curves
-        windRoseCenPts: Center point(s) of wind rose
-        legend: Legend(s) of the chart(s). Connect to Geo for preview
-        legendBasePts: Legend base point, mainly for presentation purposes
+        calmRoseMesh: A mesh in the center of the wind rose representing the relative number of hours where the wind speed is around 0 m/s.
+        windRoseMesh: A mesh representing the wind speed from different directions for all hours analyzed.
+        windRoseCrvs: A set of guide curves that mark the number of hours corresponding to the windRoseMesh.
+        windRoseCenPts: The center point(s) of wind rose(s).  Use this to move the wind roses in relation to one another using the grasshopper "move" component.
+        legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        legendBasePts: The legend base point(s), which can be used to move the legend in relation to the rose with the grasshopper "move" component.
 """
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

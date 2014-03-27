@@ -6,48 +6,51 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component uses cumulative sky result to calculate radiation on building surfaces.
-No reflection is included in the studies with this component and it should be used
-neither for interior studies nor for complex geometries nor geometries with surfaces with high reflectivity.
-I'm testing a more sophisticated component that uses RADIANCE for calculations. Meanwhile use
-one of the alternative plugins for more advanced studies. 
+This component allows you to calculate the radiation fallin on input _geometry using a sky matrix from the selectSkyMxt component.
+This type of radiation sutdy is useful for building surfaces such as windows, where you might be interested in solar heat gain, or solar panels, where you might be interested in the energy that can be collected.
+This component is also good for surfaces representing outdoor spaces (such as parks or seating areas) where radiation could affect thermal comfort or vegetation growth.
+No reflection of sunlight is included in the radiation analysis with this component and it should therefore be used
+neither for interior daylight studies nor for complex geometries nor for surfaces with high a reflectivity.
+For these situations where the relfection of light is important, the Honeybee daylight components should be used instead of this one.
+
 
 -
-Provided by Ladybug 0.0.56
+Provided by Ladybug 0.0.57
     
     Args:
-        north_: Input a vector to set north
-        _geometry: Input the test geometries as a Brep or Mesh
-        context_: Input the context as a Brep or Mesh
-        _gridSize_: Input a number to set the test points grid size
-        _disFromBase: Input a number to set the distance between the test points grid and the base geometry
-        orientationStudyP_: Input result from Orientation Study Parameter component
-        _selectedSkyMtx: SelectSkyMtx component result
-        _____________________: This is just for graphical purposes. I appreciate your curiosity though!
-        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
-        parallel_: Set Boolean to True to use multiple CPUs
-        _runIt: Set Boolean to True to run the analysis
-        bakeIt_: Set Boolean to True to bake the analysis result
-        workingDir_: Working directory on your system. Default is set to C:\Ladybug
-        projectName_: Input the project name as a string. The result will be baked in a layer with project name.
+        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        _geometry: Geometry for which radiation analysis will be conducted.  Geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
+        context_: Context geometry that could block sunlight to the test _geometry.  Conext geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
+        _gridSize_: A number in Rhino model units that represents the average size of a grid cell for radiation analysis on the test surface(s).  This value should be smaller than the smallest dimension of the test geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take.
+        _disFromBase: A number in Rhino model units that represents the offset distance of the test point grid from the input test _geometry.  Usually, the test point grid is offset by a small amount from the test _geometry in order to ensure that radiation analysis is done for the correct side of the test _geometry.  If the resulting radiation mesh of this component is offset to the wrong side of test _geometry, you should use the "Flip" Rhino command on the test _geometry before inputting it to this component.
+        orientationStudyP_: Optional output from the "Orientation Study Parameter" component.
+        _selectedSkyMtx: The output from the selectSkyMtx component.
+        _____________________: ...
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        parallel_: Set to "True" to run the radiation analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
+        _runIt: Set to "True" to run the component and perform radiation analysis on the input _geometry.
+        bakeIt_: Set to True to bake the analysis results into the Rhino scene.
+        workingDir_: Use this input to change the working directory of the radiation analysis on your system. Input here must be a valid file path location on your computer.  The default is set to "C:\Ladybug" and it is from this file location that radiation results are loaded into grasshopper after the analysis is done.
+        projectName_: Use this input to change the project name of the files generated in the working directory.  Input here must be a string without special characters.  If "bakeIt_" is set to "True", the result will be baked into a layer with this project name.
     
     Returns:
         readMe!: ...
-        contextMesh: Connect to Mesh to preview the test mesh for the context
-        analysisMesh: Connect to Mesh to preview the test mesh for the test geometries
-        testPts: Test points
-        testVec: Test point vectors
-        _____________________: This is just for graphical purposes. I appreciate your curiosity though!
-        radiationResult: Result for each test point
-        radiationMesh: The result of the study as a joined mesh
-        radiationLegend: Legend of the study. Connect to Geo for preview
-        legendBasePt: Legend base point, mainly for presentation purposes
-        totalRadiation: Mass addition of result multiplied by the area of the surface for all the surfaces
+        contextMesh: An uncolored mesh representing the context_ geometry that was input to this component. Connect this output to a "Mesh" grasshopper component to preview this output seperately from the others of this component. Note that this mesh is generated before the analysis is run, allowing you to be sure that the right geometry will be run through the analysis before running this component.
+        analysisMesh: An uncolored mesh representing the test _geometry that will be analyzed.  Connect this output to a "Mesh" grasshopper component to preview this output seperately from the others of this component. Note that this mesh is generated before the analysis is run, allowing you to be sure that the right geometry will be run through the analysis before running this component.
+        testPts: The grid of test points on the test _geometry that will be used to perform the radiation analysis.  Note that these points are generated before the analysis is run, allowing you to preview the resolution of the result before you run the component.
+        testVec: Vectors for each of the test points on the test _geometry, which indicate the direction for which radiation analysis is performed.  Hook this and the test points up to a Grasshopper "Vector Display" component to see how analysis is performed on the test _geometry.
+        _____________________: ...
+        radiationResult: The amount of radiation in Wh/m2 falling on the input test _geometry at each of the test points.
+        radiationMesh: A colored mesh of the test _geometry representing the radiation in Wh/m2 falling on this input _geometry for the selected sky.
+        radiationLegend: A legend for the radiation study showing radiation values that correspond to the colors of the radiationMesh. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        legendBasePt: The legend base point, which can be used to move the legend in relation to the radiation mesh with the grasshopper "move" component.
+        totalRadiation: The total radiation in Wh falling on the input test _geometry.  This is computed through a mass addition of all the Wh/m2 results at each of the test points and then multiplying this by the area of all the the surfaces in the test _geometry.
+        intersectionMtx: A python list that includes the relation between each test point and all the sky patchs on the sky dome.  After running a basic radiation study, you can connect this output to the Ladybug "Real Time Radiation Analysis" component to scroll through the radiation falling on your test geometry on an hour-by-hour basis in real time.
 """
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_19_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

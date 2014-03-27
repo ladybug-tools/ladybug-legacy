@@ -5,23 +5,23 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component opens a new viewport that shows the view from sun.
+Use this component to open a new viewport in Rhino that shows the view from the sun.  This is useful for understanding what parts of Rhino geometry are shaded at a particular hour of the day.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _sunVector: Sun vector as a vector3D
-        _cenPt_: Center point for the camera target as a point3D. The origin point will be used if not provided.
-        sunViewPt_: Optional input for sun position as a point3D
-        width_: Optional input for width of RhinoView
-        height_: Optional input for height of RhinoView 
-        dispMode_: Optional input for display mode. Wireframe, Shaded, Rendered, etc.
+        _sunVector: A sun vector from which the the Rhino view will be generated. Use the Ladybug sunPath component to generate sunVectors.
+        _cenPt_: The target point of the camera for the Rhino view that will be generated.  This point should be close to Rhino geometry that you are interested in viewing from the sun. If no point is progived, the Rhino origin will be used (0,0,0).
+        sunViewPt_: An optional point for the camera position (or sun position). Use this to move the camera closer to the geometry you would like to view if the initial view is too far away..
+        width_: An optional interger that represents the width (in pixels) of the Rhino viewport that will be generated.
+        height_: An optional interger that represents the height (in pixels) of the Rhino viewport that will be generated.
+        dispMode_: An optional text input for the display mode of the Rhino viewport that will be generated. For example: Wireframe, Shaded, Rendered, etc.
     Returns:
         readMe!: ...
 """
 ghenv.Component.Name = "Ladybug_View From Sun"
 ghenv.Component.NickName = 'viewFromSun'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nFEB_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

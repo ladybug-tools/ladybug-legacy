@@ -5,33 +5,33 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Draw 3D Charts
+Use this component to make a 3D chart of any climate data in the Rhino scene.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _inputData: List of input data for plot
-        _xScale_: Scale of the X axis of the graph. Connect a list for multiple graphs
-        _yScale_: Scale of the Y axis of the graph. Connect a list for multiple graphs
-        _zScale_: Scale of the Z axis of the graph. Connect a list for multiple graphs
-        _yCount_: Default is set to 24, as 24 hours. Change it in regard to your input data
-        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
-        _basePoint_: Input a point to locate the 3D chart base point
-        condStatement_ : Conditional statement (e.g. a > 25)
-        cullVertices_: If set to True the vertices that don't satisfy the conditional statement will be removed from the mesh
-        bakeIt_ : Bake the chart as a colored mesh
+        _inputData: A list of input data to plot.
+        _xScale_: The scale of the X axis of the graph. The default will plot the X axis with a length of 365 Rhino model units (for 365 days of the year). Connect a list of values for multiple graphs.
+        _yScale_: The scale of the Y axis of the graph. The default will plot the Y axis with a length of 24 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
+        _zScale_: The scale of the Z axis of the graph. The default will plot the Z axis with a number of Rhino model units corresponding to the input data values.  Connect a list of values for multiple graphs.
+        _yCount_: The number of segments on your y-axis.  The default is set to 24 for 24 hours of the day. This variable is particularly useful for input data that is not for each hour of the year.
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
+        condStatement_ : An optional conditional statement, which will remove data from the chart that does not fit the conditions. The input must be a valid python conditional statement (e.g. a > 25).
+        cullVertices_: If set to True, the vertices that do not satisfy the conditional statement will be removed from the plotted mesh.
+        bakeIt_ : If set to True, the chart will be Baked into the Rhino scene as a colored mesh.
     Returns:
         readMe!: ...
-        graphMesh: 3D chart as a mesh
-        legend: Legend(s) of the chart(s). Connect to Geo for preview
-        legendBasePts: Legend base point, mainly for presentation purposes
-        conditionalPts: A list of 3D points which represent the time steps that conditional statement is correct
-        HOY: List of hours of the year that pass the conditional statement
+        graphMesh: A 3D plot of the input data as a colored mesh.  Multiple meshes will be output for several input data streams or graph scales.
+        legend: A legend of the chart. Connect this output to a grasshopper "Geo" component in order to preview the legend in the Rhino scene.  
+        legendBasePts: The legend base point, which can be used to move the legend in relation to the chart with the grasshopper "move" component.
+        conditionalPts: A list of points that represent the values of the mesh data on the chart.
+        HOY: The input data for the hours of the year that pass the conditional statement.
 """
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.56\nMAR_21_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -136,7 +136,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
         conversionFac = lb_preparation.checkUnits()
         # copy the custom code here
         
-        if len(inputData)!=0 and inputData[0]!=None:
+        if len(inputData)!=0 and inputData[0]!=None and str(inputData[0]) != "Connect input data here":
             
             # check conditional statement for the whole year
             titleStatement = -1
@@ -366,8 +366,11 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 res[3].append(conditionalPoints)
                 res[4].append(hoursOfYear)
             return res
+        elif str(inputData[0]) == "Connect input data here":
+            print 'Connect inputData!'
+            return -1
         else:
-            warning = 'Connect inputData!'
+            warning = 'Please ensure that the connected inputData is valid!'
             print warning
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)

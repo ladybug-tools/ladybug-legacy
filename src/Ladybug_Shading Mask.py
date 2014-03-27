@@ -1,28 +1,31 @@
-# By Mostapha Sadeghipour Roudsari
+# By Mostapha Sadeghipour Roudsari and Chris Mackey
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component draws shading mask for a test point
-The component is intended to be used with sunPath
+Use this component to see the portion of the sky dome that is masked by context geometry around a given viewpoint.
+The component will generate separate meshs for the portions of the sky dome that are masked and visible.
+The component will also calculate the percentage of the sky that is masked by the context geometry and the percentage that is visible (the sky view factor).
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        pt: Test point
-        context: Context buildings
-        scale: Scale of the sky dome
+        _testPt: A view point for which one wants to see the portion of the sky masked by the context geometry surrounding this point.
+        _context: Context geometry surrounding the _testPt that could block the view to the sky.  Geometry must be a Brep or list of Breps.
+        _skyDensity_: Set to 0 to view a sky mask of the Tregenza sky, which will divide up the sky with a coarse density of 145 sky patches.  Set to 1 to view a sky mask of a Reinhart sky, which will divide up tthe sky with a very fine density of 580 sky patches.  Note that, while the Reinhart sky is more accurate, it will result in considerably longer calculation times.  Accordingly, the default is set to 0 for a Tregenza sky.
+        scale: Use this input to change the scale of the sky dome.  The default is set to 1.
         
     Returns:
-        masked: Shadow mask
-        unmasked: Unmasked portion of the sky
-        percMasked: Percentage of the sky masked
+        masked: A mesh of the portion of the sky dome masked by the _context geometry.
+        visible: A mesh of the portion of the sky dome visible by the _testPt through the _context geometry.
+        percMasked: The percentage of the sky masked by the _context geometry at the _testPt.
+        skyView: The percentage of the sky visible by the _testPt through the _context geometry.
 """
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_09_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -161,47 +164,71 @@ def meshAndJoin(brepList):
     
 
 def main(testPt, skyDensity, contextMesh, scale):
-    
-    # generate sky patches
-    skyPatches = generateSkyGeo(testPt, skyDensity, scale)
-    
-    #return skyPatches
-    if skyPatches == -1: return
-    # join mesh
-    joinedContextMesh = joinMesh(contextMesh)
-    
-    # run parallel intersections
-    masked = parallelIntersection(testPt, joinedContextMesh, skyPatches)
-    
-    # filter breps based on the result
-    # the reason I do it separately is to have the dome always on z = 0
-    maskedSrfs = []
-    unmaskedSrfs = []
-    testPtProjected = rc.Geometry.Point3d(testPt.X, testPt.Y, 0)
-    skyPatches = generateSkyGeo(testPtProjected, skyDensity, scale)
-    for i, isMasked in enumerate(masked):
-        if isMasked==1:
-            maskedSrfs.append(skyPatches[i])
-        else:
-            unmaskedSrfs.append(skyPatches[i])
-    
-    # mesh the patches and calculate the area
-    skyMeshed = meshAndJoin(skyPatches)
-    maskedMesh = meshAndJoin(maskedSrfs)
-    # change the color to black so the user don't get confused
-    #maskedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
-    
-    # unmasked area output is added by William Haviland
-    unmaskedMesh = meshAndJoin(unmaskedSrfs)
-    
-    maskedArea = rc.Geometry.AreaMassProperties.Compute(maskedMesh).Area
-    skyArea = rc.Geometry.AreaMassProperties.Compute(skyMeshed).Area
-    
-    percentageArea = (maskedArea/skyArea) * 100
-    return maskedMesh, "%.2f"%percentageArea, unmaskedMesh
+    if sc.sticky.has_key('ladybug_release'):
+        lb_preparation = sc.sticky["ladybug_Preparation"]()
+        lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
+        
+        # generate sky patches
+        skyPatches = generateSkyGeo(testPt, skyDensity, scale)
+        
+        #return skyPatches
+        if skyPatches == -1: return
+        # join mesh
+        joinedContextMesh = joinMesh(contextMesh)
+        
+        # run parallel intersections
+        masked = parallelIntersection(testPt, joinedContextMesh, skyPatches)
+        
+        # filter breps based on the result
+        # the reason I do it separately is to have the dome always on z = 0
+        maskedSrfs = []
+        unmaskedSrfs = []
+        testPtProjected = rc.Geometry.Point3d(testPt.X, testPt.Y, 0)
+        skyPatches = generateSkyGeo(testPtProjected, skyDensity, scale)
+        for i, isMasked in enumerate(masked):
+            if isMasked==1:
+                maskedSrfs.append(skyPatches[i])
+            else:
+                unmaskedSrfs.append(skyPatches[i])
+        
+        # mesh the patches and calculate the area
+        skyMeshed = meshAndJoin(skyPatches)
+        maskedMesh = meshAndJoin(maskedSrfs)
+        # change the color to black so the user don't get confused
+        #maskedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+        
+        # unmasked area output is added by William Haviland
+        unmaskedMesh = meshAndJoin(unmaskedSrfs)
+        
+        # color the meshes for masked and visible differently.
+        meshColor = []
+        for face in maskedMesh.Faces:
+            meshColor.append(1.0)
+        colors = lb_visualization.gradientColor(meshColor, 0, 2, [System.Drawing.Color.FromArgb(1,1,1), System.Drawing.Color.FromArgb(1,1,1)])
+        maskedMesh = lb_visualization.colorMesh(colors, maskedMesh)
+        
+        meshColor = []
+        for face in unmaskedMesh.Faces:
+            meshColor.append(1.0)
+        colors = lb_visualization.gradientColor(meshColor, 0, 2, [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(200,200,255)])
+        unmaskedMesh = lb_visualization.colorMesh(colors, unmaskedMesh)
+        
+        maskedArea = rc.Geometry.AreaMassProperties.Compute(maskedMesh).Area
+        skyArea = rc.Geometry.AreaMassProperties.Compute(skyMeshed).Area
+        
+        percentageArea = (maskedArea/skyArea) * 100
+        percentageSky = 100 - percentageArea
+        return maskedMesh, "%.2f"%percentageArea, unmaskedMesh, "%.2f"%percentageSky
+    else:
+        print "You should let the Ladybug fly first..."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, "You should let the Ladybug fly first...")
+        return -1, -1, -1, -1
 
 if _testPt and _context and scale_:
-    masked, percMasked, unmasked = main(_testPt, _skyDensity_, _context, 200*scale_)
+    masked, percMasked, visible, skyView = main(_testPt, _skyDensity_, _context, 200*scale_)
+elif _testPt == None and _context == []:
+    print "Connect a test point and context geometry."
 else:
-    print "Either testPt or context is missing"
+    print "Either the testPt or the context is missing"
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "Either testPt or context is missing")

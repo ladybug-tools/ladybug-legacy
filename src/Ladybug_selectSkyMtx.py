@@ -5,26 +5,25 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component generates the selected skyMtx for an hour of the year or an analysis period 
+Use this component to select a specific sky matrix (skyMxt) for an hour of the year or for an analysis period.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _cumulativeSkyMtx: Results of GenCumulativeSkyMtx 
-        HOY_: Hour of the year (a value between 1-8760)
-        _analysisPeriod_: Analysis period from Analysis Period component; may be used to override hour of  the year
-        removeDiffuse_: Set to True if you want to remove the diffuse component of the sky
-        removeDirect_: Set to True if you want to remove the direct component of the sky
+        _cumulativeSkyMtx: The output from a GenCumulativeSkyMtx component.
+        HOY_: An hour of the year for which you would like to select a sky.  This must be a value between 1 and 8760.
+        _analysisPeriod_: An analysis period from Analysis Period component.  This will override an input HOY (hour of the year).
+        removeDiffuse_: Set to "True" if you want to remove the diffuse component of the selected sky.
+        removeDirect_: Set to "True" if you want to remove the direct component of the selected sky.
     Returns:
-        selectedSkyDetails: Details of the sky
         readMe!: ...
-        selectedSkyMtx: Selected sky mtx for hour of the year or an analysis period.
+        selectedSkyMtx: The selected sky matrix (SkyMtx) for the input hour of the year or an analysis period.
 """
 
 ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

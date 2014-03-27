@@ -5,33 +5,33 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component uses skyMatrix result to visualize the sky patches for total, diffuse and direct radiation.
+This component allows you to visualize a selected sky matrix from the selectSkyMxt component in order to see the patches of the sky dome where radiation is coming from.
+The component will produce 3 sky domes by default: a dome showing just the diffuse radiation, a dome showing just the direct radiation, and a dome showing the total radiation.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _selectedSkyMtx: SelectedSkyMtx component result
-        _centerPoint_: Input a point to locate the center point of the sky patches
-        _scale_: Input a number to set the scale of the sky patches
-        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
-        showTotalOnly_: Set Boolean to True to show the total radiation only
-        _runIt: Set Boolean to True to run
-        bakeIt_: Set Boolean to True to bake the sky patches
+        _selectedSkyMtx: The output from the selectSkyMtx component.
+        _centerPoint_: A point that sets the location of the sky domes.  The default is set to the Rhino origin (0,0,0).
+        _scale_: Use this input to change the scale of the sky dome.  The default is set to 1.
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        showTotalOnly_: Set to "True" to only show a sky dome with the total radiation.  The default is "False", which will produce 3 sky domes: one of diffuse radiation, one of direct radiation, and one of the total radiation.
+        _runIt: Set to "True" to run the component and generate a sky dome.
+        bakeIt_: Set to "True" to bake the sky dome into the Rhino scene.
     Returns:
         readMe!: ...
-        skyPatchesMesh: Sky Patches as a joined mesh
-        baseCrvs: Base curves of the graph
-        legend: Legend of the study. Connect to Geo for preview
-        legendBasePts: Legend base points, mainly for presentation purposes 
-        skyPatchesCenPts: Center points of sky patches; mainly for presentation purposes
-        skyPatchesAreas: The area of sky patches
-        legendBasePts: Legend base point mainly for presentation purposes
-        values: Radiation values for sky patches
+        skyPatchesMesh:  A colored mesh representing the intensity of radiation for each of the sky patches of the sky dome.
+        baseCrvs:  A set of guide curves that mark information on the sky dome.
+        legend: A legend for the sky dome. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        legendBasePts: The legend base point(s), which can be used to move the legend(s) in relation to the sky domes with the grasshopper "move" component.
+        skyPatchesCenPts: The center points of sky patches, which can be used to shape Rhino geometry in relation to radiation from different sky patches.
+        skyPatchesAreas: The area of sky patches in Rhino model units.
+        values: Radiation values for the sky patches in Wh/m2.
 """
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

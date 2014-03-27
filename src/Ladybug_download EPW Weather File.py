@@ -5,18 +5,18 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Open DOE website to download .epw weather file.
+Use this component to open the Department of Energy's weather database in your default web browser and download an .epw weather file.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
 
     Args:
-        _download: Set Boolean to True to open the website
+        _download: Set Boolean to True to open the website of the Department of Energy's weather database.
     Returns:
-        readMe! : 'Happy downloading...' in case of success
+        readMe! : Will read 'Happy downloading...' in the case of successfully opening your browser
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

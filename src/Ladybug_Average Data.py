@@ -5,24 +5,25 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Select and average hourly data
+Use this component to select the data out of an annual hourly data stream (from the importEPW component) using the "Analysis Period" component.
+This componenent also averages this selected data for each day during the analysis period, each month during the analysis period, and for the average hour of each month for the analysis period.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _annualHourlyData: Hourly data from import EPW component
-        _analysisPeriod_: Analysis period from Analysis Period component. Default is set to the whole year
+        _annualHourlyData: An hourly data stream from the "Import epw" component.
+        _analysisPeriod_: The "analysisPeriod" Output from "Analysis Period" component. If no input is provided, the default analysis period is set to the whole year.
     Returns:
-        readMe!: Analysis period
-        selHourlyData: Selected hourly data
-        averagedDaily: Averaged data for each day during the analysis period
-        averagedMonthly: Averaged data for each month during the analysis period
-        avrMonthlyPerHour: Averaged data for each hour of each month during the analysis period
+        readMe!: A text confirmation of the analysis period.
+        selHourlyData: The hourly data stream for the analysis period.
+        averagedDaily: The averaged data for each day during the analysis period
+        averagedMonthly: The averaged data for each month during the analysis period
+        avrMonthlyPerHour: The data for the average hour of each month during the analysis period
 """
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -178,6 +179,9 @@ def main(annualHourlyData, analysisPeriod):
                             selMonthlyData.append(average(eachHourData))
                 
             return selHourlyData, avDailyData, selDailyData, selWeeklyData, selMonthlyData, avMonthlyData
+        elif _annualHourlyData[0] == "Connect Data Here!":
+            print "Connect annualHourlyData from the importEPW component!"
+            return -1
         else:
             print "Input annualHourlyData is not a valid Ladybug hourly data!"
             w = gh.GH_RuntimeMessageLevel.Warning

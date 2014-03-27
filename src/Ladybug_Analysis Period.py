@@ -5,26 +5,26 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Analysis period 
+Use this component to set an analysis period, which can be used as input for a variety of other Ladybug and Honeybee components.  Default analysis period without any inputs is set to the entire year.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _fromMonth_: Default starting month is set to 1, if not provided [1-12]
-        _fromDay_: Default starting day is set to 1, if not provided [1-31]
-        _fromHour_: Default starting hour is set to 1, if not provided [1-24]
-        _toMonth_: Default end month is set to 12, if not provided [1-12]
-        _toDay_: Default end day is set to 31, if not provided [1-31]
-        _toHour_: Default end hour is set to 24, if not provided [1-24]
+        _fromMonth_: The number of the month for the start of the analysis.  Default starting month is set to 1 (January).
+        _fromDay_: The day of the month for the start of the analysis. Default starting day is set to 1 (the first of the month).
+        _fromHour_: The hour of the day for the start of the analysis. Default starting hour is set to 1 (the first hour of the day after midnight).
+        _toMonth_: The number of the month for the end of the analysis. Default end month is set to 12 (December).
+        _toDay_: The day of the month for the end of the analysis.  Default end day is set to 31 (the 31st of the month).
+        _toHour_: The hour of the day for the end of the analysis. Default end hour is set to 24 (the last hour of the day before midnight)
     Returns:
-        readMe!: Analysis period
+        readMe!: A text confirmation of the analysis period.
         analysisPeriod: Two tuples that represent the running period
                         (fromMonth, fromDay, fromHour) to (toMonth, toDay, toHour)
 """
 
 ghenv.Component.Name = "Ladybug_Analysis Period"
 ghenv.Component.NickName = 'analysisPeriod'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

@@ -5,36 +5,36 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Draw radiation rose.
+Use this component to make a radiation rose in the Rhino scene.  Radiation roses give a sense of how much radiation comes from the different cardinal directions, which will give an initial idea of where glazing should be minimized, shading applied, or solar collectors placed.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _selectedSkyMtx: SelectSkyMtx component result
-        context_: Optional context as Brep or Mesh
-        _numOfArrows_: Input a number to set the number of arrows in the radiation rose. Default is set to 36
-        _surfaceTiltAngle_: Input a number to set the tilt angle of the surface. Defult is set to 90 (0 = roof, 90 = vertical wall)
-        _centerPoint_: Input a point to locate the center point of the radiation rose 
-        _scale_: Input a number to set the scale of the radiation rose
-        _arrowHeadScale_: Input a number to set the scale of the arrow heads of the radiation rose
-        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
-        showTotalOnly_: Set Boolean to True to show the total radiation only
-        _runIt: Set Boolean to True to run the component 
-        bakeIt_: Set Boolean to True to bake the radiation rose
+        _selectedSkyMtx: The output from the selectSkyMtx component.
+        context_: Optional breps or meshes representing context surrounding the point at the center of the radiation rose.  This context geometry will block the radiation that shows up in the rose.
+        _numOfArrows_: An interger that sets the number of arrows (or cardingal directions) in the radiation rose. The default is set to 36.
+        _surfaceTiltAngle_: A number between 0 and 90 that sets the tilt angle in degrees of the analysis plane (0 = roof, 90 = vertical wall). The defult is set to 90 for a radiation study of a wall (ie. radiation on a curtain wall).
+        _centerPoint_: A point that sets the location of the radiation rose.  The default is set to the Rhino origin (0,0,0).
+        _scale_: Use this input to change the scale of the radiation rose.  The default is set to 1.
+        _arrowHeadScale_: Use this input to change the scale of the arrow heads of the radiation rose.  The default is set to 1.
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        showTotalOnly_: Set to "True" to only show a radiation rose with the total radiation.  The default is "False", which will produce 3 radiation roses: one of diffuse radiation, one of direct radiation, and one of the total radiation.
+        _runIt: Set to "True" to run the component and generate a radiation rose.
+        bakeIt_: Set to "True" to bake the radiation rose into the Rhino scene.
     Returns:
         readMe!: ...
-        radiationArrowsMesh: Radiation roses as a joined mesh
-        radRoseBaseCrvs: Base curves of the graph
-        legend: Legend of the study. Connect to Geo for preview
-        legendBasePts: Legend base points; mainly for presentation purposes
-        radRoseEndPts: End point of the roses; mainly for presentation purposes
-        radRoseValues: Radiation values for each rose arrow
+        radiationArrowsMesh: A colored mesh representing the intensity of radiation from different cardinal directions.
+        radRoseBaseCrvs: A set of guide curves that mark the directions of radiation analysis.
+        legend:  A legend of the radiation rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        legendBasePts: The legend base point(s), which can be used to move the legend(s) in relation to the rose with the grasshopper "move" component.
+        radRoseEndPts: The end points of the rose arrows.
+        radRoseValues: The radiation values in Wh/m2 for each rose arrow.
 """
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_21_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -329,4 +329,5 @@ if _runIt:
             radRoseValues.AddRange(result[5][i], p)
         ghenv.Component.Params.Output[4].Hidden = True       
         ghenv.Component.Params.Output[5].Hidden = True
+else: print "Set _runIt to True!"
 

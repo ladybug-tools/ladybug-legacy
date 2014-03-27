@@ -4,24 +4,25 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-ViewRose
+Use this component to see the area visible from a given viewpoint across a 2D plane of vision.
+The component will create a circular surface in this plane of vision that is interrupted by context geometry to show the places that can be seen through this context geometry.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _context: Context buildings as Brep or Mesh
-        _plane: Test plane. Default is XY plane
-        _radius: Study radius in meters
+        _context: Breps or Meshes representing context geometry that can block the view around a given viewPoint.
+        _plane: The plane of vision in which to generate the view rose that includes the the viewpoint as the plane's origin.  The default is set to the XY plane, which will take the Rhino origin (0,0,0) as the viewpoint.
+        _radius: A radius to make the view rose in Rhino model units. Note that, if the view rose is not extending past the _context geometry, you should increase this value.
     Returns:
-        readMe!: View Angles
-        viewRose: The visible area
-        blocked: The blocked area
-        visibleAngle: Total visible angle
+        readMe!: ...
+        viewRose: A surface representing the visible area from the viewpoint past the _context geometry.
+        blocked: A set of curves representing the views blocked by the _context geometry from the viewpoint .
+        visibleAngle: The total angle of visibility from the viewpoint in the plane of visibility.
 """
 
 ghenv.Component.Name = "Ladybug_view Rose"
 ghenv.Component.NickName = 'viewRose'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -334,4 +335,4 @@ if _context and _radius:
         print dom
         visibleAngle -= dom.length()
 else:
-    print "At least one of the inputs is missing!"
+    print "Either the _context geometry or the _radius is missing!"

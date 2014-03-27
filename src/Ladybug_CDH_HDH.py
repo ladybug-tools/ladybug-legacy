@@ -5,30 +5,30 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Heating and cooling degree hours.
-Degree hour for each hour is the difference between the base temperature and the average ambient outside air temperature.
+Calculates heating and cooling degree-hours.
+Degree-hours are defined as the difference between the base temperature and the average ambient outside air temperature multiplied by the number of hours that this difference condition exists.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
-        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius)
-        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius)
+        _hourlyDryBulbTemperature: Annual dry bulb temperature from the Import epw component (in degrees Celsius).
+        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius). Default is set to 18.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
+        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius). Default is set to 23.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
     Returns:
-        readMe!: Summary of the input for double check
-        hourly_coolingDegHours: Hourly cooling degree hours data. For visualization connect to the chart/graph component(s) 
-        hourly_heatingDegHours: Hourly heating degree hours data. For visualization connect to the chart/graph component(s)
-        daily_coolingDegHours: Daily cooling degree hours data. For visualization connect to the chart/graph component(s)
-        daily_heatingDegHours: Daily heating degree hours data. For visualization connect to the chart/graph component(s)
-        monthly_coolingDegHours: Monthly cooling degree hours data
-        monthly_heatingDegHours: Monthly heating degree hours data
-        annual_coolingDegHours: Annual cooling degree hours data
-        annual_heatingDegHours: Annual heating degree hours
+        readMe!: A ummary of the input.
+        hourly_coolingDegHours: Cooling degree-hours for each hour of the year. For visualizations over the whole year, connect this to the grasshopper chart/graph component. 
+        hourly_heatingDegHours: Heating degree-days for each hour of the year. For visualizations over the whole year, connect this to the grasshopper chart/graph component. 
+        daily_coolingDegHours: Cooling degree-days summed for each day of the year. For visualizations of over the whole year, connect this to the grasshopper chart/graph component. 
+        daily_heatingDegHours: Heating degree-days summed for each day of the year. For visualizations of over the whole year, connect this to the grasshopper chart/graph component. 
+        monthly_coolingDegHours: Cooling degree-days summed for each month of the year.
+        monthly_heatingDegHours: Heating degree-days summed for each month of the year.
+        annual_coolingDegHours: The total cooling degree-days for the entire year.
+        annual_heatingDegHours: The total heating degree-days for the entire year.
 """
 
 ghenv.Component.Name = "Ladybug_CDH_HDH"
 ghenv.Component.NickName = "CDH_HDH"
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -46,27 +46,17 @@ except: coolingSetPoint = 23.3
 print 'Cooling base temperature: ' + `coolingSetPoint` + ' C.'
 coolingSetBack = coolingSetPoint
 
-#try: coolingSetBack = float(coolingSetBack)
-#except: coolingSetBack = 26.7
-#print 'Cooling setback is: ' + `coolingSetBack` + ' C.'
-
 try: heatingSetPoint = float(_heatingBaseTemperature_)
 except: heatingSetPoint = 18.3
 print 'Heating base temperature is: ' + `heatingSetPoint` + ' C.'
 
-#try: heatingSetBack = float(heatingSetBack)
-#except: heatingSetBack = 16.0
-#print 'Heating setback is: ' + `heatingSetBack` + ' C.'
 heatingSetBack = heatingSetPoint
 
 try: startOfWorkingHours = float(occupationStartHour - 1)
 except: startOfWorkingHours = 0
-#print 'Occupation hours starts at ' + `startOfWorkingHours + 1` + ':00.'
-
 
 try: endOfWorkingHours = float(occupationEndHour - 1)
 except: endOfWorkingHours = 23
-#print 'Occupation hours ends at ' + `endOfWorkingHours + 1` + ':00.'
 
 
 def main(coolingSetPoint, heatingSetPoint, coolingSetBack, heatingSetBack, startOfWorkingHours, endOfWorkingHours):
@@ -177,6 +167,9 @@ def main(coolingSetPoint, heatingSetPoint, coolingSetBack, heatingSetBack, start
                 annual_coolingDegHours.append(sum(monthly_coolingDegHours[7:]))
                 
             return hourly_coolingDegHours, hourly_heatingDegHours, daily_coolingDegHours, daily_heatingDegHours, monthly_coolingDegHours, monthly_heatingDegHours, annual_coolingDegHours, annual_heatingDegHours
+        elif hourlyDBTemp[0] == 'Connect temperature here':
+            print 'Connect annual hourly dry bulb temperature'
+            return -1
         else:
             warning = 'Please provide annual hourly dry bulb temperature!'
             print warning

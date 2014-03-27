@@ -5,32 +5,32 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Heating and cooling degree days
-In traditional way degree day is the difference between the base temperature and the average ambient air temperature for the day.
-This component uses a more accurate calculation method based on min and max temperature of the day.
+Calculates heating and cooling degree-days.
+Traditionally, degree-days are defined as the difference between a base temperature and the average ambient air temperature multiplied by the number of days that this difference exists.
+By default, this component uses a more accurate calculation than the traditional method based on the minimum and maximum temperature of each day.
 You may check the formulas in this page: "http://www.vesma.com/ddd/ddcalcs.htm"
-If you rather to use the traditional method set useDailyAvrMethod to True.
+If you rather to use the traditional method, set useDailyAvrMethod to True.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _hourlyDryBulbTemperature: Annual dry bulb temperature (in degrees Celsius)
-        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius)
-        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius)
-        useDailyAvrMethod_: set it to True to use the traditional method of degree days calculation
+        _hourlyDryBulbTemperature: Annual dry bulb temperature from the Import epw component (in degrees Celsius).
+        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius).  Default is set to 18.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
+        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius).  Default is set to 23.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
+        useDailyAvrMethod_: set to "True" to use the traditional method of degree days calculation, which will calculate the average temperature of each day and sum up all of these temperatures over the year.  This is opoosed to this component's default analysis, which will will examine each hour of the year and then convert results to degree-days.
     Returns:
-        readMe!: summary of the input for double check
-        daily_coolingDegDays: Daily cooling degree days data. For visualization connect to the chart/graph component(s) 
-        daily_heatingDegDays: Heating degree days. For visualization connect to the chart/graph component(s) 
-        monthly_coolingDegDays: Monthly cooling degree days data
-        monthly_heatingDegDays: Monthly heating degree days data
-        annual_coolingDegDays: Annual cooling degree days
-        annual_heatingDegDays: Annual heating degree days
+        readMe!: A summary of the input.
+        daily_coolingDegDays: Cooling degree-days summed for each day of the year. For visualizations of over the whole year, connect this to the grasshopper chart/graph component. 
+        daily_heatingDegDays: Heating degree-days summed for each day of the year. For visualizations of over the whole year, connect this to the grasshopper chart/graph component. 
+        monthly_coolingDegDays: Cooling degree-days summed for each month of the year.
+        monthly_heatingDegDays: Heating degree-days summed for each month of the year.
+        annual_coolingDegDays: The total cooling degree-days for the entire year.
+        annual_heatingDegDays: The total heating degree-days for the entire year.
 """
 
 ghenv.Component.Name = "Ladybug_CDD_HDD"
 ghenv.Component.NickName = "CDD_HDD"
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -161,8 +161,12 @@ def main(coolingSetPoint, heatingSetPoint, hourlyDryBulbTemperature, useDailyAvr
                     
                     
             return daily_coolingDegDays, daily_heatingDegDays, monthly_coolingDegDays, monthly_heatingDegDays, annual_coolingDegDays, annual_heatingDegDays
+        elif hourlyDBTemp[0] == 'Connect temperature here':
+            print 'Connect annual hourly dry bulb temperature'
+            return -1
         else:
-            warning = 'Please provide annual hourly dry bulb temperature!'
+            print str(hourlyDBTemp[0])
+            warning = 'Please connect valid annual hourly dry bulb temperature from the Import epw component!'
             print warning
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)

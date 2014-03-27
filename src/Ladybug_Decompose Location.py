@@ -5,23 +5,23 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Decompose location
+Use this component to separate and exctract the information in the 'location' output of the importEPW or constructLocation component.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
 
     Args:
-        _location: Location data as a string [Output from importEPW or constructLocation]
+        _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
     Returns:
         readMe! : ...
-        locationName: Location name
-        latitude: Latitude of the location
-        longitude: Langitude of the location
-        timeZone: Time zone of the location
-        elevation: Elevation of the location
+        locationName: Name of the location.
+        latitude: Latitude of the location.
+        longitude: Longitude of the location.
+        timeZone: Time zone of the location.
+        elevation: Elevation of the location.
 """
 ghenv.Component.Name = "Ladybug_Decompose Location"
 ghenv.Component.NickName = 'explodeLocation'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

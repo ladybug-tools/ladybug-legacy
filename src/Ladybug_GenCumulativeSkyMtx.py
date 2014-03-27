@@ -5,30 +5,30 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component uses Radiance's gendaymtx to calculate the sky radiation for each single hour of the year. 
+This component uses Radiance's gendaymtx function to calculate the sky's radiation for each hour of the year. This is a necessary pre-step before doing radiation analysis with Rhino geometry or generating a radiation rose.
 
-Gendaymtx is written by Ian Ashdown and Greg Ward. For more information check the manual page at:
+The first time you use this component, you will need to be connected to the internet so that the component can download the "gendaymtx.exe" function to your system.
+
+Gendaymtx is written by Ian Ashdown and Greg Ward. For more information, check the Radiance manual at:
 http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymtx.pdf
 
-The first time you use this component, you need to be connected to the internet so the component can download gendaymtx.exe
-to the working directory.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _epwFile: epw weather file address on your system
-        skyDensity: 0-> Tregenza sky (145 Patches), 1-> Reinhart Sky (580 patches)
-        workingDir: Optional working directory on your system. Default is set to C:\Ladybug
-        useOldRes: Set this to True if you want the component to use the already avialable data for this weather file
-        runIt: Set boolean to True to run the component
+        _epwFile: The file path location of the epw weather file on your system or the output of the "Open epw" component.
+        skyDensity: Set to 0 to generate a Tregenza sky, which will divide up the radiation data in the epw file with a coarse density of 145 sky patches.  Set to 1 to generate a Reinhart sky, which will divide up the radiation data in the epw file using a very fine density of 580 sky patches.  Note that, while the Reinhart sky is more accurate, it will result in considerably longer calculation times.  Accordingly, the default is set to 0 for a Tregenza sky.
+        workingDir: An optional working directory in your system where the sky will be generated. Default is set to C:\Ladybug and any valid file path location can be connected.
+        useOldRes: Set this to "True" if you have already run this component previously and you want to use the already-generated data for this weather file.
+        runIt: Set to "True" to run the component and generate a sky matrix.
     Returns:
         readMe!: ...
-        cumulativeSkyMtx: Result of the study; Use selectSkyMtx to generate the desired sky mtx for radiation study, radition rose and sky dome.
+        cumulativeSkyMtx: The result of the gendaymtx function. Use the selectSkyMtx component to select a desired sky matrix from this output for use in a radiation study, radition rose, or sky dome visualization.
 """
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -144,7 +144,7 @@ def main(epwFile, skyType, workingDir, useOldRes):
                 # ask the user if he wants to re-run the study
                 print "Sky matrix files for this epw file are already existed on your system.\n" + \
                       "The component won't recalculate the sky and imports the available result.\n" + \
-                      "In case you don't want to use this files, set useOldRes input to False and re-run the study.\n" + \
+                      "In case you don't want to use these files, set useOldRes input to False and re-run the study.\n" + \
                       "If you found the lines above confusing just ignore it! It's all fine. =)\n"
             else:
                 batchFile = weaFile.replace(".wea", ".bat")
@@ -271,7 +271,7 @@ if _runIt and _epwFile!=None:
         daylightMtxDiffueFile, daylightMtxDirectFile, newLocName = result
         cumulativeSkyMtx = readMTXFile(daylightMtxDiffueFile, daylightMtxDirectFile, n, newLocName)
 else:
-    warn = "set runIt to True and connect a valid epw file address"
+    warn = "Set runIt to True and connect a valid epw file address"
     print warn
-    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warn)
+    #ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warn)
 
