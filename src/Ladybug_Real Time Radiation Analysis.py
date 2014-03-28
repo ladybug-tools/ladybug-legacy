@@ -5,20 +5,22 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component uses skyMatrix and intersection matrix to produce real time radiation result.
+Use this component to scroll through the results of a Ladybug Radiation Analysis on an hour-by-hour, day-by-day, or month-by-month basis in real time!
+The component uses a sky matrix (SkyMxt) from the selectSkyMxt component and the intersection matrix (intersectionMxt) from the Radiation Analysis component to calculate real time radiation results.
+Once the correct inputs have been hooked up to this component, you should use the inputs of the connected selectSkyMxt component to scroll through results.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _selectedSkyMatrix: SelectedSkyMtx component result
-        _intersectionMatrix: Intersection matrix [Output of the radiation study]
+        _selectedSkyMatrix: The output from a Ladybug selectedSkyMtx component.  This matrix basically carries all of the radiation values that define a sky and includes a radiation value for each sky patch on the sky dome.  You should use the selectSkyMxt component connected here to scroll through radiation results.
+        _intersectionMatrix: The intersectionMxt output from a Ladybug Radiation Analysis component that has been run for test geometry.  This matrix is basically a python list that includes the relation between each test point in the Radiation Analysis and all the sky patchs on the sky dome.
     Returns:
-        radiationResult: The results of the study
+        radiationResult: New radiation values in Wh/m2 for each test point in the original Radiation Analysis.  Values indicate radiation for the the connected sky matrix.  To visualize these new radiation values in the Rhino scene, connect these values to the Ladybug Re-Color Mesh component to re-color the mesh from the original Radiation Analysis with these new values.
 """
 
 ghenv.Component.Name = "Ladybug_Real Time Radiation Analysis"
 ghenv.Component.NickName = 'RTRadiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

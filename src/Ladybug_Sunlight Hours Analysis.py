@@ -23,7 +23,7 @@ Provided by Ladybug 0.0.57
         _sunVectors: Sun vectors from the sunPath component, which will be used to determine the number of hours of direct sunlight received by the test _geometry.
         _timeStep_: The number of timesteps per hour used by the sunPath component that generated the sun vectors. This number should be smaller than 60 and divisible by 60. The default is set to 1 such that one ssun vector is generated for each hour.
         ___________________: ...
-        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        legendPar_: Optional output from the "Orientation Study Parameter" component.  You can use an Orientation Study input here to answer questions like "What orientation of my building will give me the highest or lowest hours of direct sunlight for my analysis period?"  An Orientation Study will automatically rotate your input _geometry around several times and record the sunlight hours results each time in order to output a list of values for totalSunlightHours and a grafted data stream for sunlightHoursResult.
         parallel_: Set to "True" to run the sunlight hours analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
         _runIt: Set to "True" to run the component and perform sunlight hours analysis on the input _geometry.
         bakeIt_: Set to "True" to bake the analysis results into the Rhino scene.

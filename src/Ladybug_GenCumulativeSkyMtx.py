@@ -16,11 +16,11 @@ http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymt
 Provided by Ladybug 0.0.57
     
     Args:
-        _epwFile: The file path location of the epw weather file on your system or the output of the "Open epw" component.
-        skyDensity: Set to 0 to generate a Tregenza sky, which will divide up the radiation data in the epw file with a coarse density of 145 sky patches.  Set to 1 to generate a Reinhart sky, which will divide up the radiation data in the epw file using a very fine density of 580 sky patches.  Note that, while the Reinhart sky is more accurate, it will result in considerably longer calculation times.  Accordingly, the default is set to 0 for a Tregenza sky.
-        workingDir: An optional working directory in your system where the sky will be generated. Default is set to C:\Ladybug and any valid file path location can be connected.
-        useOldRes: Set this to "True" if you have already run this component previously and you want to use the already-generated data for this weather file.
-        runIt: Set to "True" to run the component and generate a sky matrix.
+        _epwFile: The output of the Ladybug Open EPW component or the file path location of the epw weather file on your system.
+        _skyDensity_: Set to 0 to generate a Tregenza sky, which will divide up the sky dome with a coarse density of 145 sky patches.  Set to 1 to generate a Reinhart sky, which will divide up the sky dome using a very fine density of 580 sky patches.  Note that, while the Reinhart sky is more accurate, it will result in considerably longer calculation times.  Accordingly, the default is set to 0 for a Tregenza sky.
+        workingDir_: An optional working directory in your system where the sky will be generated. Default is set to C:\Ladybug and any valid file path location can be connected.
+        useOldRes_: Set this to "True" if you have already run this component previously and you want to use the already-generated data for this weather file.
+        _runIt: Set to "True" to run the component and generate a sky matrix.
     Returns:
         readMe!: ...
         cumulativeSkyMtx: The result of the gendaymtx function. Use the selectSkyMtx component to select a desired sky matrix from this output for use in a radiation study, radition rose, or sky dome visualization.

@@ -9,7 +9,7 @@ Provided by Honeybee 0.0.43
 
 ghenv.Component.Name = "Ladybug_Honeybee Place Holder"
 ghenv.Component.NickName = 'honeybeePlaceHolder'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Honeybee"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

@@ -23,7 +23,7 @@ Provided by Ladybug 0.0.57
         context_: Context geometry that could block sunlight to the test _geometry.  Conext geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         _gridSize_: A number in Rhino model units that represents the average size of a grid cell for radiation analysis on the test surface(s).  This value should be smaller than the smallest dimension of the test geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take.
         _disFromBase: A number in Rhino model units that represents the offset distance of the test point grid from the input test _geometry.  Usually, the test point grid is offset by a small amount from the test _geometry in order to ensure that radiation analysis is done for the correct side of the test _geometry.  If the resulting radiation mesh of this component is offset to the wrong side of test _geometry, you should use the "Flip" Rhino command on the test _geometry before inputting it to this component.
-        orientationStudyP_: Optional output from the "Orientation Study Parameter" component.
+        orientationStudyP_: Optional output from the "Orientation Study Parameter" component.  You can use an Orientation Study input here to answer questions like "What orientation of my building will give me the highest or lowest radiation gain for my analysis period?"  An Orientation Study will automatically rotate your input _geometry around several times and record the radiation results each time in order to output a list of values for totalRadiation and a grafted data stream for radiationResult.
         _selectedSkyMtx: The output from the selectSkyMtx component.
         _____________________: ...
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.57
         radiationLegend: A legend for the radiation study showing radiation values that correspond to the colors of the radiationMesh. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePt: The legend base point, which can be used to move the legend in relation to the radiation mesh with the grasshopper "move" component.
         totalRadiation: The total radiation in Wh falling on the input test _geometry.  This is computed through a mass addition of all the Wh/m2 results at each of the test points and then multiplying this by the area of all the the surfaces in the test _geometry.
-        intersectionMtx: A python list that includes the relation between each test point and all the sky patchs on the sky dome.  After running a basic radiation study, you can connect this output to the Ladybug "Real Time Radiation Analysis" component to scroll through the radiation falling on your test geometry on an hour-by-hour basis in real time.
+        intersectionMtx: A python list that includes the relation between each test point and all the sky patchs on the sky dome.  After running a basic radiation study, you can connect this output to the Ladybug "Real Time Radiation Analysis" component to scroll through the radiation falling on your test geometry on an hour-by-hour, day-by-day, or month-by-month basis in real time.
 """
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"

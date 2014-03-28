@@ -5,23 +5,24 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to generate a solar fan for a given test surface and set of solar vectors.  Solar fans essentially illustrate the volume that should be clear of shading in order to provide solar access for the given set of sun vectors.
+Use this component to generate a solar fan for a given test surface and set of solar vectors.  Solar fans essentially illustrate the volume that should be clear of shading in order to provide solar access to a test surface for a given set of sun vectors.
+Solar fans are typically used to ensure solar access for park vegetation in the midst of large developments constructed around it.  It can be also used to ensure solar access for windows that might want to use the sun for heating for ceratin hours of the year.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
         _baseSrf: A surface representing a piece of land (such as a park) or a window for which solar access is desired.
-        _sunVectors: Sun vectors that should be accessible to the baseSrf.
-        _size_: Default scale of 1 produces a solar fan that is half as tall as the longest side of the _baseSrf.  Increase or decrease this value to extend the fan higher or lower.  Note that increasing the height too high can cause the fan to break up into multiple fans due to the resolution of the solar vectors.
-        _runIt: Set to "True" to generate a solar fan.
+        _sunVectors: Sun vectors representing hours of the year when sun should be accessible to the baseSrf. sunVectors can be generated using the Ladybug sunPath component.
+        _size_: Input a number here to change how far the solar fan extends from the _baseSrf.  The default is set to 1, which will produce a solar fan that is half as tall as the longest side of the _baseSrf. Note that increasing the height too high can cause the fan to break up into multiple fans due to the resolution of the solar vectors.
+        _runIt: Set to "True" to run the analysis and generate a solar fan. Note that, for more than 500 sunVectors, calculation times can take more than a half-minute.
     Returns:
         readMe!:...
-        solarFan: Brep representing a solar fan (or list of breps in the event that sun vectors are too far from one another).
+        solarFan: Brep representing a solar fan that should be clear of shading in order to ensure solar access to the _baseSrf for the given _sunVectors.
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

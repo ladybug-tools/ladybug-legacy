@@ -5,20 +5,22 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Separates numbers from strings
+Use this component to separate the text strings from the numbers in the climate data streams output from the Import EPW component.
+You can then perform mathamatical functions on the numerical climate data using the Grasshopper math components or quickly preview the numerical data stream using the Grasshopper "Quick Graph" component.
+This component can also be used generally to separate any data stream that contains both numbers and text strings.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _inputList: List of input data
+        _inputList: A list of data that contains both text srtings and numbers.  For example, a data stream output from the Import EPW component.
     Returns:
-        numbers: List of numbers
-        strings: List of strings
+        numbers: The numbers from in the _inputList data.  Note that the order of numbers in this list is the same as the _inputList.
+        strings: The text strings from in the _inputList data.  Note that the order of text strings in this list is the same as the _inputList.
 """
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

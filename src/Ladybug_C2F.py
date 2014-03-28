@@ -5,19 +5,19 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Convert from C to F 
+Use this component to convert temperatures from Celcius to Fahrenheit.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _C: Input temperatures in C
+        _C: A temperature or list of temperatures in Celcius.
     Returns:
-        F: Output temperatures in F
+        F: The input temperatures converted to Fahrenheit.
 """
 
 ghenv.Component.Name = "Ladybug_C2F"
 ghenv.Component.NickName = 'C2F'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"

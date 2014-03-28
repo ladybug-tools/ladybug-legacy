@@ -4,31 +4,33 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to generate lists of shading depths, numbers of shades, horizontal or vertical values, and shade angles for different cardinal directions to be plugged into the _depthOrVector, _numOfShds, _horOrVertical_, and _shdAngle_ inputs of the "ShadingDesigner" component.
+Use this component to generate shading depths, numbers of shades, horizontal or vertical values, and shade angles for different cardinal directions to be plugged into the "ShadingDesigner" component.
+Each of the ouput lists should be plugged into the corresponding list of the "ShadingDesigner" component.
+For exmaple, the _depthList goes to the _depthOrVector input, the _numOfShdsList goes to the _numOfShds input, the _horOrVertList_ goes to the _horOrVertical_ input, and the _shdAngleList_ goes to the _shdAngle_ input.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
 
     Args:
-        _northDepth: Shading depth for north-facing glazing.
-        _westDepth: Shading depth for west-facing glazing.
-        _southDepth: Shading depth for south-facing glazing.
-        _eastDepth: Shading depth for east-facing glazing.
+        _northDepth: A number representing the shading depth in Rhino model units for north-facing glazing.
+        _westDepth: A number representing the shading depth in Rhino model units for west-facing glazing.
+        _southDepth: A number representing the shading depth in Rhino model units for south-facing glazing.
+        _eastDepth: A number representing the shading depth in Rhino model units for east-facing glazing.
         --------------------: ...
-        _northNumOfShds: Number of shades to be generated for north-facing glazing.
-        _westNumOfShds: Number of shades to be generated for west-facing glazing.
-        _southNumOfShds: Number of shades to be generated for south-facing glazing.
-        _eastNumOfShds: Number of shades to be generated for east-facing glazing.
+        _northNumOfShds: An interger representing the number of shades to be generated for north-facing glazing.
+        _westNumOfShds: An interger representing the number of shades to be generated for west-facing glazing.
+        _southNumOfShds: An interger representing the number of shades to be generated for south-facing glazing.
+        _eastNumOfShds: An interger representing the number of shades to be generated for east-facing glazing.
         -------------------: ...
         _northHorOrVert_: Set to "True" to generate horizontal overhangs for north-facing glazing or set to "False" to generate vertical fins.
         _westHorOrVert_: Set to "True" to generate horizontal overhangs for west-facing glazing or set to "False" to generate vertical fins.
         _southHorOrVert_: Set to "True" to generate horizontal overhangs for south-facing glazing or set to "False" to generate vertical fins.
         _eastHorOrVert: Set to "True" to generate horizontal overhangs for east-facing glazing or set to "False" to generate vertical fins.
         ------------------: ...
-        _northShdAngle_: If you have vertical shades, use this to rotate them towards the South by a certain value in degrees (negative values here on the north input will rotate shades to the North and be particularly helpful in blocking out early morning or late afternoon summer sun).  If you have horizontal shades on the north side, use this to angle shades downward, as in some versions of the brise soleil.
-        _westShdAngle_: If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied positively here in the west direction, will let in more winter afternoon sun and block summer afternoon sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.
-        _southShdAngle_: If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil. If you have vertical shades, use this to rotate them further towards the South by a certain value in degrees.
-        _eastShdAngle_: If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied positively here in the east direction, will let in more winter morning sun and block summer morning sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.
+        _northShdAngle_: A number between -90 and 90 that represents an angle in degrees to rotate the north-facing shades.  The default is set to "0" for no rotation.  If you have vertical shades, use this to rotate them towards the South by a certain value in degrees.  If applied to windows facing East or West, tilting the shades like this will let in more winter sun than summer sun.  If you have horizontal shades, use this input to angle shades downward.  You can also put in lists of angles to assign different shade angles to different cardinal directions.
+        _westShdAngle_: A number between -90 and 90 that represents an angle in degrees to rotate the west-facing shades.  The default is set to "0" for no rotation.  If you have vertical shades, use this to rotate them towards the South by a certain value in degrees.  If applied to windows facing East or West, tilting the shades like this will let in more winter sun than summer sun.  If you have horizontal shades, use this input to angle shades downward.  You can also put in lists of angles to assign different shade angles to different cardinal directions.
+        _southShdAngle_: A number between -90 and 90 that represents an angle in degrees to rotate the south-facing shades.  The default is set to "0" for no rotation.  If you have vertical shades, use this to rotate them towards the South by a certain value in degrees.  If applied to windows facing East or West, tilting the shades like this will let in more winter sun than summer sun.  If you have horizontal shades, use this input to angle shades downward.  You can also put in lists of angles to assign different shade angles to different cardinal directions.
+        _eastShdAngle_: A number between -90 and 90 that represents an angle in degrees to rotate the east-facing shades.  The default is set to "0" for no rotation.  If you have vertical shades, use this to rotate them towards the South by a certain value in degrees.  If applied to windows facing East or West, tilting the shades like this will let in more winter sun than summer sun.  If you have horizontal shades, use this input to angle shades downward.  You can also put in lists of angles to assign different shade angles to different cardinal directions.
     Returns:
         readMe!: ...
         _depthList: A list of shade depths for different cardinal directions to be plugged into the _depthOrVector input of the "ShadingDesigner" component.
@@ -38,7 +40,7 @@ Provided by Ladybug 0.0.55
 """
 ghenv.Component.Name = "Ladybug_Shading Parameters List"
 ghenv.Component.NickName = 'shdParamList'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

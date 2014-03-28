@@ -1,28 +1,35 @@
-﻿# By Saeran Vasanthakumar
+# By Saeran Vasanthakumar
 # saeranv@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component generates a Solar Fan. The Solar Fan indicates the maximum 
-heights for surrounding geometries that guarentees solar penetration within 
-the given closed boundary. Thus, surrounding geometries that do not penetrate
-the Solar Fan will not cast shadows into the chosen boundary for the 
-user-specfied amount of time. The autumn equinox is used as the solar cutoff point.
-Warning: Extremely complicated concave shapes will take a long time.
+Use this component to generate a Solar Fan for a closed boundary curve and a required minimum hours of solar access to the area inside this boundary curve.  
+The solar fan is used to ensure that a given property within a boundary curve is guarenteed a specified minimum hours of direct solar access for each day in a specified month range of the year.
+Thus, context geometries surrounding this boundary curve that do not penetrate the Solar Fan will not cast shadows onto the boundary area for the specified hour and month range.
+
+The start and end dates that determine the month range for solar access can be chosen from the following options:
+0) Mar 21 - Jun 21
+1) Mar 21 - Sep 21
+2) Mar 21 - Dec 21
+3) Jun 21 - Sep 21
+4) Jun 21 - Dec 21
+5) Sep 21 - Dec 21
+The default set to 3) June 21 to September 21.
+
+Note that extremely complicated concave shapes will take a long time to calculate a solar fan for.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _boundary: Input the boundary geometry as a closed, planar Curve(s).
-        _location: Input location from Import .epw component or constructLocation.
-        _requiredHours: Input the desired guaranteed sunlight hours as a number.  
-        _height: Input the height of the fan as a number.
-        north_: Optional. Input a number or a vector to set north. 
-            Default is set to the Y-axis
-        _monthRange: Optional. Input a number between 0 - 5.
-            Default is Jun 21 - Sep 21 (3).
+        _boundary:  closed boundary curve representing a piece of land (such as a park) or a window for which solar access is desired.
+        _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
+        _requiredHours: The number of hours of direct solar access that the property inside the boundary curve should receive during the _monthRange.
+        _height: The number of Rhino model units that the solar fan should be extended above the boundary curve.
+        north_: Input a vector to be used as a true North direction or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        _monthRange: An optional interger value to change the month range for which solar access is being considered. The default month range is Jun 21 - Sep 21.
+            Intergers input here must be between 0 - 5 and correspond to the following :
             ---
             0 = Mar 21 - Jun 21
             1 = Mar 21 - Sep 21
@@ -31,19 +38,19 @@ Provided by Ladybug 0.0.55
             4 = Jun 21 - Dec 21
             5 = Sep 21 - Dec 21
             ---
-            Where in the North/South Hemispheres respectively: 
+            Where, in the North/South Hemispheres, these dates repsectively signify:  
                 Mar 21 = Vernal/Autumnal Equinox
                 Jun 21 = Summer/Winter Solstice
                 Sep 21 = Autumnal/Vernal Equinox
                 Dec 21 = Winter/Summer Solstice
  
     Returns:
-        solarFan: solar fan
+        solarFan: Brep representing a solar fan.  This volume should be clear of shading in order to ensure solar access to the area inside the boundary curve for the given number of hours.
 """
 
 ghenv.Component.Name = "Ladybug_SolarFan_alt"
 ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.55\nMar_18_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

@@ -5,23 +5,23 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-North Arrow
+Use this component to create a compass sign that indicates the direction of North in the Rhino scene.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _north_: Input a number or a vector to set north; default is set to the Y-axis
-        _centerPt_: Input a point to locate the center point of the sun-path
-        _scale_: Input a number to set the scale of the sun-path
+        _north_: Input a vector to be used as a North direction or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        _centerPt_: Input a point here to change the location of the North sign in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
+        _scale_: Input a number here to change the scale of the sun path.  The default is set to 1.
     Returns:
         readMe!: ...
-        northSign: northSign geometry
+        northSign: A set of surfaces and curves that indicate the direction of North in Rhino.
 """
 
 ghenv.Component.Name = "Ladybug_North"
 ghenv.Component.NickName = 'northArrow'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

@@ -5,29 +5,31 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Re-color Mesh
+Use this component to re-color a mesh with new a numerical data set whose length corresponds to the number of faces in the _inputMesh.
+This component is useful if you have post-processed any of the numerical data out of the Ladybug components using Grasshopper math components.
+It is also necessary to view results from the Ladybug Real Time Radiation Analysis.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _analysisResult: The result of the analysis
-        _inputMesh: Already colored mesh for the analysis
-        legendPar_: Input legend parameters from the Ladybug Legend Parameters component
-        analysisTitle_: Custom title for the study as a string
-        legendTitle_: Custom title for the legend. It is usually the unit of the analysis result.
-        bakeIt_: Set Boolean to True to bake the result
-        layerName_: Layer name
+        _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to re-color the _inputMesh.
+        _inputMesh: An already-colored mesh from one of the Ladybug components which you would like to re-color based on data in the _analysisResult.
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.  Legend Parameters can be used to change the colors, numerical range, and/or number of divisions of any Ladybug legend along with the corresponding colored mesh.
+        analysisTitle_: Text representing a new title for the re-colored mesh.  If no title is input here, the default will read "unnamed."
+        legendTitle_: Text representing a new legend title for re-colored mesh. Legends are usually titled with the units of the _analysisResult.  If no title is provided, no text will appear above the legend.
+        bakeIt_: Set to "True" to bake the resulting mesh and legend into the Rhino scene.
+        layerName_: If bakeIt_ is set to "True", input Text here corresponding to the Rhino layer onto which the resulting mesh and legend should be baked.
         
     Returns:
         readMe!: ...
-        newMesh: A new re-colored mesh based on the new setting
-        newLegend: Legend of the study. Connect to Geo for preview
-        legendBasePt: Legend base point, mainly for presentation purposes
+        newMesh: A new mesh that has been re-colored based on the _analysisResult data.
+        newLegend: A new legend that that corresponds to the colors of the newMesh. Connect this output to a grasshopper "Geo" component in order to preview this legend separately in the Rhino scene.  
+        legendBasePt: The legend base point, which can be used to move the legend in relation to the newMesh with the grasshopper "move" component.
 """
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

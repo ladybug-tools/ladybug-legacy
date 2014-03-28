@@ -4,24 +4,24 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Calculate day of the year and hour of the year based on day, month and hour
+Use this component to calculate the day of the year and hour of the year from an input date with a day of the month, month of the year and hour of the day.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _day_: Days of the month [1-31]
-        _month_: Months of the year [1-12]
-        _hour_: Hours of the day [1-24]
+        _days_: A number (or list of numbers) between 1 and 31 that represents the day(s) of the month.
+        _months_: A number (or list of numbers) between 1 and 12 that represents the month(s) of the year.
+        _hours_: A number (or list of numbers) between 1 and 24 that represents the hour(s) of the day.
     
     Returns:
-        DOY: Days of the year
-        HOY: Hours of the year
-        date: Date 
+        DOY: The day of the year on which the input date falls.
+        HOY: The hour of the year on which the input date and time fall.
+        date: The input information written out as a full date and time text string.
 """
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"

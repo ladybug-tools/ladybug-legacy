@@ -21,7 +21,7 @@ http://www.gsd.harvard.edu/research/gsdsquare/Publications/Shaderade_BS2011.pdf
 The heating/cooling degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the cooling-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or cooling degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive cooling degree-days to give a net effect for the cell.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
         _sunVectors: The sunVectors output from the Ladybug_SunPath component.  Note that you can adjust the analysis period of the sun vectors to look at shade benefit over an entire year or just for a few months (for example, when you have an outdoor space that you know will only be occupied for a few months of the year or when the outside is above a certain temperature).
@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.55
 
 ghenv.Component.Name = "Ladybug_Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.55\nMAR_15_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"

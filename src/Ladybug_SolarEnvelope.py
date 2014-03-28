@@ -5,22 +5,22 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to generate a solar envelope for a given test surface and set of solar vectors.  Solar envelopes essentially illustrate the volume that can be built within in order to ensure that the test property does not shade the surrounding properties from the given set of sun vectors.
+Use this component to generate a solar envelope for a given test surface and set of solar vectors.  Solar envelopes are typically used to illustrate the volume that can be built within in order to ensure that a new development does not shade the surrounding properties for a given set of sun vectors.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _baseSrf: A surface representing a piece of land (such as a property to be developed) for which solar access of the surrounding land is desired.
-        _sunVectors: Sun vectors that should be accessible to the property surrounding the baseSrf.
-        _runIt: Set to "True" to generate a solar fan.
+        _baseSrf: A surface representing a piece of land (such as a property to be developed) for which solar access of the surrounding land is desired.  Surfaces can be planar or curved but they must be a single surface and not a polysurface.
+        _sunVectors: Sun vectors representing hours of the year when sun should be accessible to the properties surrounding the baseSrf.  sunVectors can be generated using the Ladybug sunPath component. 
+        _runIt: Set to "True" to run the analysis and generate a solar envelope. Note that, for more than 500 sunVectors, calculation times can take more than a half-minute.
     Returns:
         readMe!:...
-        solarEnvelope: Brep representing a solar envelope (or list of breps in the event that a boolean intersect of the sun vectors failed).  Note that, in the event of a list output, you can try to Boolean intersect the results yourself.
+        solarEnvelope: A Brep representing a solar envelope that can be built within in order to ensure that the surrounding property is not shaded for the given _sunVectors.
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelope'
 ghenv.Component.NickName = 'SolarEnvelope'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

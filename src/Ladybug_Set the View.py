@@ -5,24 +5,23 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Set the view
+Use this component to set the camera location and direction for the Rhino "Perspective" viewport.
 Here is the video that shows how it works: http://www.youtube.com/watch?v=7Mmhz867zY8
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _cameraLocation: A Point3D for the location of camera
-        _cameraDirection: A Vector3D that shows the direction of the camera
-        sunViewPt_: Optional input for sun position as a point3D
-        uvLookAround_: Optional tilt from the camera direction. Use a Point3D or sliderMD for input. The range is between -1 and 1 (-180 to 180 Degrees).
-        lensLength_: Optional float number to set the lens length
+        _cameraLocation: A point representing the location of the viewport camera.
+        _cameraDirection: A vector that represents the direction that the viewport camera should face.
+        uvLookAround_: Optional UV coordinates to tilt the viewport camera off from from the input _cameraDirection. Values for UV coordinates must be between -1 and 1 and these correspond to a tilt of 180 degrees in either direction.  It is recommended that you use a Grasshopper sliderMD comonent for input.
+        lensLength_: An optional float number that sets the lens length of the viewport camera.
         
     Returns:
         readMe!: ...
 """
 ghenv.Component.Name = "Ladybug_Set the View"
 ghenv.Component.NickName = 'setTheView'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -58,7 +57,9 @@ def setCamera(cameraLocation, cameraDirection, uvLookAround, lensLength):
 
 if _cameraLocation and _cameraDirection:
     setCamera(_cameraLocation, _cameraDirection, uvLookAround_, lensLength_)
+elif _cameraLocation == None and _cameraDirection == None:
+    print "Connect a _cameraLocation and _cameraDirection."
 else:
-    msg = "Either _cameraLocation or _cameraDirection is missing."
+    msg = "Either the _cameraLocation or _cameraDirection is missing."
     print msg
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)

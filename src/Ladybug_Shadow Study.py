@@ -4,23 +4,25 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Shadow Study [Proof of Concept]
-Warning: The component doesn't calculate self-shading and is not able to calculate shadow for geometries which are passing each other.
+Use this component to generate outline curves representing shadows cast by input _geometry for a given _sunVector.
+Note that, to see shadows cast onto a ground, a surface representing the ground plane must be included in the input _geometry.
+Also, please note that, for a list of input _geometry that is larger than 4 or 5 breps, the calculation time of this component can be very long.  Please keep the input geometry to small lists or be prepared to wait a long time.
+WARNING: This component is a proof of concept that will not work in every situation.  It is not ideal for analyzing curved surfaces and it is not able to calculate shadows for geometries that are intersecting each other.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _geometry: Test geometries
-        _sunVector: Sun vector
+        _geometry: Breps representig test geometries that will cast shadows on each other.
+        _sunVector: A sun vector from the Ladybug sunPath component.
     Returns:
         readMe!: ...
-        shadow: Areas in shadow
-        shade: Areas in shade
+        shadow: Outline curves representing the shadows cast by the individual input Breps on other input Breps.  Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing shadows cast.
+        shade: Outline curves representing the the parts of individual input Breps that are not in the sun.  In other words, this is the self-shaded part of the Breps. Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing self-shaded areas.
 """
 
 ghenv.Component.Name = "Ladybug_Shadow Study"
 ghenv.Component.NickName = 'shadowStudy'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

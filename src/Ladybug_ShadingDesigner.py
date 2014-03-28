@@ -5,30 +5,30 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to generate shading breps for any glazed surface or list of glazed surfaces.  The component supports two methods for shading generation.  The first is a simple depth method, which will generate an overhang of the speficied depth (or multiple overhangs if the _numOfShds is increased).  The second method is to input solar vectors from the Sunpath component that should be blocked by the shade.
+Use this component to generate shading breps for any glazed surface or list of glazed surfaces.  The component supports two methods for shading generation.  The first is a simple depth method, which will generate an overhang of the speficied depth (or multiple overhangs if the _numOfShds is increased).  The second method is to input a set of solar vectors from the Sunpath component that should be blocked by the shade.
 
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        _glzSrf: A surface representing a window to be used for shading design.  This can also be a list of glazed surfaces.
-        _depthOrVector: The depth of the shade to be genrated or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input.
-        _numOfShds: The number of shades to generate for each glazed surface.
-        _distBetween: An alternate option for _numOfShds.
-        optionalShdSrf_: Optional shade surface to draw shading curves on. This input can only be used with the sun vector method.
-        optionalPlanes_: Optional planes to draw shading curves on.  This input can only be used with the sun vector method.
+        _glzSrf: A Surface or Brep representing a window to be used for shading design.  This can also be a list of Surfaces of Breps.
+        _depthOrVector: A number representing the depth of the shade to be generated or a sun vector to be shaded from the _glzSrf.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input.
+        _numOfShds: The number of shades to generated for each glazed surface.
+        _distBetween: An alternate option to _numOfShds where the input here is the distance in Rhino units between each shade.
+        _runIt: Set to "True" to run the component and generate shades.
+        optionalShdSrf_: An optional shade surface representing a 2D area under consideration for shading. This input can only be used with the sun vector method.
+        optionalPlanes_: An optional plane (or list of planes) representing a 2D area under consideration for shading.  This input can only be used with the sun vector method.
         mergeVectors_: Set to "True" to merge all the shades generated from a list of sun vectors into a single shade. This input can only be used with the sun vector method.
         _horOrVertical_: Set to "True" to generate horizontal shades or "False" to generate vertical shades. You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction.
-        _shdAngle_: If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  This input can only be used with the depth method.  You can also put in lists of angles to assign different shade angles to different directions.
-        north_: Input a vector to set north; default is set to the Y-axis.  This can only be used with the depth method since you should set the north with the Sunpath component if using the vector method.
-        _runIt: Set to true to run the study.
+        _shdAngle_: A number between -90 and 90 that represents an angle in degrees to rotate the shades.  The default is set to "0" for no rotation.  If you have vertical shades, use this to rotate them towards the South by a certain value in degrees.  If applied to windows facing East or West, tilting the shades like this will let in more winter sun than summer sun.  If you have horizontal shades, use this input to angle shades downward.  You can also put in lists of angles to assign different shade angles to different cardinal directions.
+        north_: Input a vector to be used as a true North direction or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
     Returns:
         readMe!:...
-        shadingSrfs: Shading surfaces generated based on inputs.
+        shadingSrfs: Shading surfaces that were generated based on the inputs.
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -45,20 +45,19 @@ import math
 
 inputsDict = {
      
-0 : ["_glzSrf", "A surface representing a window to be used for shading design.  This can also be a list of glazed surfaces."],
-1: ["_depthOrVector", "Depth of the shade or a sun vector to be shaded.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input."],
-2: ["_numOfShds", "The number of shades to generate for each glazed surface."],
-3: ["_distBetween", "An alternate option for _numOfShds."],
-4: ["---------------", "---------------"],
-5: ["optionalShdSrf_", "Optional shade surface to draw shading curves on.  This input can only be used with the sun vector method."],
-6: ["optionalPlanes_", "Optional planes to draw shading curves on. This input can only be used with the sun vector method."],
-7: ["mergeVectors_", "Set to True to merge all the shades generated from a list of sun vectors into a single shade. This input can only be used with the sun vector method."],
-8: ["---------------", "---------------"],
-9: ["_horOrVertical_", "Set to True to generate horizontal shades or False to generate vertical shades. You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction."],
-10: ["_shdAngle_", "If you have vertical shades, use this to rotate them towards the South by a certain value in degrees, which, if applied in the East-West direction will let in more winter sun than summer sun.  If you have horizontal shades, use this to angle shades downward, as in some versions of the brise soleil.  This input can only be used with the depth method.  You can also put in lists of angles to assign different shade angles to different directions."],
-11: ["north_", "Input a vector to set north; default is set to the Y-axis.  This can only be used with the depth method since you should set the north with the Sun Path component if using the vector method."],
-12: ["---------------", "---------------"],
-13: ["_runIt", "Set to true to run the study."]
+0: ["_glzSrf", "A Surface or Brep representing a window to be used for shading design.  This can also be a list of Surfaces of Breps."],
+1: ["_depthOrVector", "A number representing the depth of the shade to be generated or a sun vector to be shaded from the _glzSrf.  You can also input lists of depths, which will assign different depths based on cardinal direction.  For example, inputing 4 values for depths will assign each value of the list as follows: item 0 = north depth, item 1 = west depth, item 2 = south depth, item 3 = east depth.  Lists of vectors to be shaded can also be input and shades can be joined together with the mergeVectors_ input."],
+2: ["_numOfShds", "The number of shades to generated for each glazed surface."],
+3: ["_distBetween", "An alternate option to _numOfShds where the input here is the distance in Rhino units between each shade."],
+4: ["_runIt", "Set to 'True' to run the component and generate shades."],
+5: ["---------------", "---------------"],
+6: ["optionalShdSrf_", "An optional shade surface representing a 2D area under consideration for shading. This input can only be used with the sun vector method."],
+7: ["optionalPlanes_", "An optional plane (or list of planes) representing a 2D area under consideration for shading.  This input can only be used with the sun vector method."],
+8: ["mergeVectors_", "Set to 'True' to merge all the shades generated from a list of sun vectors into a single shade. This input can only be used with the sun vector method."],
+9: ["---------------", "---------------"],
+10: ["_horOrVertical_", "Set to 'True' to generate horizontal shades or 'False' to generate vertical shades. You can also input lists of _horOrVertical_ input, which will assign different orientations based on cardinal direction."],
+11: ["_shdAngle_", "A number between -90 and 90 that represents an angle in degrees to rotate the shades.  The default is set to '0' for no rotation.  If you have vertical shades, use this to rotate them towards the South by a certain value in degrees.  If applied to windows facing East or West, tilting the shades like this will let in more winter sun than summer sun.  If you have horizontal shades, use this input to angle shades downward.  You can also put in lists of angles to assign different shade angles to different cardinal directions."],
+12: ["north_", "Input a vector to be used as a true North direction or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees)."]
 }
 
 # manage component inputs
@@ -73,15 +72,7 @@ except:
 
 if method == 0:
     for input in range(numInputs):
-        if input == 5:
-            ghenv.Component.Params.Input[input].NickName = "............................"
-            ghenv.Component.Params.Input[input].Name = "............................"
-            ghenv.Component.Params.Input[input].Description = " "
-        elif input == 6:
-            ghenv.Component.Params.Input[input].NickName = "............................"
-            ghenv.Component.Params.Input[input].Name = "............................"
-            ghenv.Component.Params.Input[input].Description = " "
-        elif input == 7:
+        if input == 6 or input == 7 or input == 8:
             ghenv.Component.Params.Input[input].NickName = "............................"
             ghenv.Component.Params.Input[input].Name = "............................"
             ghenv.Component.Params.Input[input].Description = " "
@@ -91,11 +82,7 @@ if method == 0:
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 else:
     for input in range(numInputs):
-        if input == 10:
-            ghenv.Component.Params.Input[input].NickName = "............................"
-            ghenv.Component.Params.Input[input].Name = "............................"
-            ghenv.Component.Params.Input[input].Description = " "
-        elif input == 11:
+        if input == 11 or input == 12:
             ghenv.Component.Params.Input[input].NickName = "............................"
             ghenv.Component.Params.Input[input].Name = "............................"
             ghenv.Component.Params.Input[input].Description = " "

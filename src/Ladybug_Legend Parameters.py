@@ -5,24 +5,27 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-This component sets up the parameters to customize legends and presentation
+Use this component to change the colors, numerical range, and/or number of divisions of any Ladybug legend along with the corresponding colored mesh that the legend refers to.
+This component can also move a legend and change its scale.
+Any Ladybug component that outputs a colored mesh and a legend will have an input that can accept Legend Parameters from this component.
+This component particularly helpful in making the colors of Ladybug graphics consistent for a presentation or for synchonizing the numerical range and colors between Ladybug graphics.
 -
-Provided by Ladybug 0.0.55
+Provided by Ladybug 0.0.57
     
     Args:
-        lowBound_: Low bound of the legend
-        highBound_: High bound of the legend
-        numSegments_: Number of segments
-        customColors_: A list of colors to customize the presentation color set
-        legendLocation_: A point to locate base point of the legend
-        legendScale_: A number to change the scale of the legend
+        lowBound_: A number representing the lower boundary of the legend's numerical range.  The default is set to the lowest value of the data stream that the legend refers to.
+        highBound_: A number representing the higher boundary of the legend's numerical range. The default is set to the highest value of the data stream that the legend refers to.
+        numSegments_: An interger representing the number of steps between the high and low boundary of the legend.  The default is set to 10 and any custom values put in here should always be greater than or equal to 2.
+        customColors_: A list of colors that will be used to re-color the legend and the corresponding colored mesh(es).  The number of colors input here should match the numSegments_ value input above.  An easy way to generate a list of colors to input here is with the Grasshopper "Gradient" component and a Grasshopper "Series" component connected to the Gradient component's "t" input.  A bunch of Grasshopper "Swatch" components is another way to generate a list of custom colors.  The default colors are a gradient spectrum from blue to yellow to red.
+        legendLocation_: Input a point here to change the location of the legend in the Rhino scene.  The default is usually set to the right of the legend's corresponding Ladybug graphic.
+        legendScale_: Input a number here to change the scale of the legend in relation to its corresponding Ladybug graphic.  The default is set to 1.
     Returns:
         legendPar: Legend parameters
 """
 
 ghenv.Component.Name = "Ladybug_Legend Parameters"
 ghenv.Component.NickName = 'legendPar'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
