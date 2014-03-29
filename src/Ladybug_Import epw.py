@@ -46,6 +46,7 @@ except: pass
 
 
 import scriptcontext as sc
+import os
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
@@ -54,6 +55,13 @@ def main(_epw_file):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
+        
+        if not os.path.isfile(_epw_file):
+            warningM = "Failed to find the file: " + str(_epw_file)
+            print warningM
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warningM)
+            return -1
         
         locationData = lb_preparation.epwLocation(_epw_file)
         weatherData = lb_preparation.epwDataReader(_epw_file, locationData[0])
