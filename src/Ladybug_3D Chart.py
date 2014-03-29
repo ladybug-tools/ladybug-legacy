@@ -254,6 +254,8 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     
                 coloredChart = lb_visualization.colorMeshChart(mesh, xC, colors, lb_preparation.getCenPt(basePoint))
                 
+                lb_visualization.calculateBB([coloredChart], True)
+                
                 # cull mesh vertices
                 # There should be a better way to do this. I should be able to generate the mesh in a smarter way
                 # and then the process of coloring will be more clear
@@ -286,7 +288,6 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     
                     coloredChart = culledMesh
                 
-                lb_visualization.calculateBB([coloredChart], True)
                 
                 try: movingDist = -1.5 * lb_visualization.BoundingBoxPar[2] # moving distance for sky domes
                 except: movingDist = 0
