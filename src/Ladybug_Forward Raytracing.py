@@ -15,6 +15,7 @@ Provided by Ladybug 0.0.57
         _startVectors: A sun vector from the sunPath component or a list of sun vectors to be forward ray-traced.
         _context: Breps of conext geometry that will reflect the sun rays.
         _numOfBounce_: An interger representing the number of ray bounces to trace the sun rays forward.
+        _lastBounceLen_: A float number representing the length of the last bounce. 
     Returns:
         readMe!: Read erros, comments, suggestions here.
         rays: The rays traced forward through the geometry.
@@ -22,7 +23,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Forward Raytracing"
 ghenv.Component.NickName = 'forwardRaytracing'
-ghenv.Component.Message = 'VER 0.0.55\nFEB_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_27_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -36,7 +37,7 @@ import Rhino as rc
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
 
-def main(startPts, startVectors, context, numOfBounce):
+def main(startPts, startVectors, context, numOfBounce, lastBounceLen):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -68,6 +69,7 @@ def main(startPts, startVectors, context, numOfBounce):
     rays = []
     for testPt in startPts:
         for vector in startVectors:
+            vector.Unitize()
             ray = rc.Geometry.Ray3d(testPt, vector)
             if numOfBounce>0:
                 intPts = rc.Geometry.Intersect.Intersection.RayShoot(ray, [cleanBrep], numOfBounce)
@@ -75,16 +77,44 @@ def main(startPts, startVectors, context, numOfBounce):
                 if intPts:
                     ptList = [testPt]
                     ptList.extend(intPts)
-                    rays.append(rc.Geometry.Polyline(ptList).ToNurbsCurve())
+                    ray = rc.Geometry.Polyline(ptList).ToNurbsCurve()
+                    
+                    try:
+                        # create last ray
+                        # calculate plane at intersection
+                        intNormal = cleanBrep.ClosestPoint(intPts[-1], sc.doc.ModelAbsoluteTolerance)[5]
+                        
+                        lastVector = rc.Geometry.Vector3d(ptList[-2] - ptList[-1])
+                        lastVector.Unitize()
+                        
+                        crossProductNormal = rc.Geometry.Vector3d.CrossProduct(intNormal, lastVector)
+                        
+                        plane = rc.Geometry.Plane(intPts[-1], intNormal, crossProductNormal)
+                        
+                        mirrorT = rc.Geometry.Transform.Mirror(intPts[-1], plane.Normal)
+                        
+                        lastRay = rc.Geometry.Line(intPts[-1], lastBounceLen * lastVector).ToNurbsCurve()
+                        lastRay.Transform(mirrorT)
+                        
+                        ray = rc.Geometry.Curve.JoinCurves([ray, lastRay])[0]
+                    except:
+                        pass
+                        
+                    rays.append(ray)
+                else:
+                    # no bounce so let's just create a line form the point
+                    firstRay = rc.Geometry.Line(testPt, lastBounceLen * vector).ToNurbsCurve()
+                    rays.append(firstRay)
+                    
     if len(rays) == 0:
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "No reflection!")
     return rays
 
 if (_startPts and _startPts[0]!=None) and (_startVectors and _startVectors[0]!=None) and (_context and _context[0]!=None):
-    rays = main(_startPts, _startVectors, _context, _numOfBounce_)
+    rays = main(_startPts, _startVectors, _context, _numOfBounce_, _lastBounceLen_)
 elif _startPts == [] and _startVectors == [] and _context == []:
     print "Provide start points, start vectors and context."
 else:
-    print _startPts
+    #print _startPts
     print "Provide valid start points, start vectors and context..."
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "Provide start points, start vectors and context...")
