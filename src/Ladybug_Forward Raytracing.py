@@ -13,17 +13,17 @@ Provided by Ladybug 0.0.57
     Args:
         _startPts: Points from which the sun rays will be cast towards the _context geometry.  You may want to connect a grid of points here to mimic the fact that direct sun will be streaming evenly from the sky.
         _startVectors: A sun vector from the sunPath component or a list of sun vectors to be forward ray-traced.
-        _context: Breps of conext geometry that will reflect the sun rays.
+        _context: Breps or meshes of conext geometry that will reflect the sun rays.  Note that, for curved surfaces, smooth meshes of the geometry will be more accurate than inputing a Brep.
         _numOfBounce_: An interger representing the number of ray bounces to trace the sun rays forward.
-        _lastBounceLen_: A float number representing the length of the last bounce. 
+        _lastBounceLen_: A float number representing the length in Rhino model units of the light ray after the last bounce.
     Returns:
         readMe!: Read erros, comments, suggestions here.
-        rays: The rays traced forward through the geometry.
+        rays: A series of line curves representing light rays traced forward through the geometry.
 """
 
 ghenv.Component.Name = "Ladybug_Forward Raytracing"
 ghenv.Component.NickName = 'forwardRaytracing'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_27_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_28_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
