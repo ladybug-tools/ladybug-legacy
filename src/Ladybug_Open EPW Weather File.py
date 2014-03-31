@@ -13,11 +13,11 @@ Provided by Ladybug 0.0.57
         _open: Set Boolean to True to browse for a weather file on your system.
     Returns:
         readMe!: ...
-        fileAddress: The file path of the selected epw file.
+        epwFile: The file path of the selected epw file.
 """
 ghenv.Component.Name = "Ladybug_Open EPW Weather File"
 ghenv.Component.NickName = 'Open weather file'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_31_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
