@@ -18,13 +18,13 @@ Provided by Ladybug 0.0.57
         firstBounceLen_: A number representing the length of the first bounce. If empty the length of diagonal of bounding box of geometries will be used.
         _lastBounceLen_: A number representing the length of the last bounce. 
     Returns:
-        readMe!: Read erros, comments, suggestions here.
+        bouncePts: The generated base points. The preview is set to hidden by default.
         rays: The rays traced forward through the geometry.
 """
 
 ghenv.Component.Name = "Ladybug_Bounce from Surface"
 ghenv.Component.NickName = 'bounceFromSurface'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_27_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_31_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -47,7 +47,7 @@ def main(sourceSrfs, gridSizeOrPoints, sunVectors, context, numOfBounce, firstBo
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return -1
+        return -1, -1
     
     # Check the geometry
     
@@ -143,10 +143,11 @@ def main(sourceSrfs, gridSizeOrPoints, sunVectors, context, numOfBounce, firstBo
                     
     if len(rays) == 0:
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "No reflection!")
-    return rays
+    return rays, initialTestPoints
 
 if (_sourceSrfs and _sourceSrfs[0]!=None) and (_sunVectors and _sunVectors[0]!=None) and (_gridSizeOrPoints and _gridSizeOrPoints[0]!=None):
-    rays = main(_sourceSrfs, _gridSizeOrPoints, _sunVectors, context_, _numOfBounce_, firstBounceLen_, _lastBounceLen_)
+    rays, bouncePts = main(_sourceSrfs, _gridSizeOrPoints, _sunVectors, context_, _numOfBounce_, firstBounceLen_, _lastBounceLen_)
+    ghenv.Component.Params.Output[1].Hidden= True
     
 elif _sourceSrfs == [] and _gridSizeOrPoints == [] and _sunVectors == []:
     print "Provide start points, start vectors and context."
