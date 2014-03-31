@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_31_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -714,22 +714,25 @@ def main(method, depth, sunVectors, numShds, distBtwn, horOrVert):
                         if unionedProjectedCrvs == []:
                             unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(pProjectedCrvs)
                     else:
-                        # join the curves and return
-                        unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
+                        # Return the original curves
+                        unionedProjectedCrvs = projectedCrvs
                 
                 for curve in unionedProjectedCrvs:
                     try:
                         splitShades = rc.Geometry.Brep.Split(optionalShdSrf_, rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(curve, rc.Geometry.Vector3d.ZAxis)), sc.doc.ModelAbsoluteTolerance)
+                        #shadingSurfaces.append(splitShades[1])
+                        cenDist = []
                         for shade in splitShades:
-                            brepCurves = shade.DuplicateEdgeCurves()
-                            brepPerimComp = []
-                            for edge in brepCurves:
-                                brepPerimComp.append(edge.GetLength())
-                            brepPerim = sum(brepPerimComp)
-                            if curve.GetLength() + sc.doc.ModelAbsoluteTolerance > brepPerim and curve.GetLength() - sc.doc.ModelAbsoluteTolerance < brepPerim:
-                                shadingSurfaces.append(shade)
-                            else:
-                                pass
+                            shadeBBox = shade.GetBoundingBox(False)
+                            shadeBBoxCen = shadeBBox.Center
+                            curveBBox = curve.GetBoundingBox(False)
+                            curveBBoxCen = curveBBox.Center
+                            cenDist.append(rc.Geometry.Point3d.DistanceTo(shadeBBoxCen, curveBBoxCen))
+                        cenDist1, splitShades1 = (list(t) for t in zip(*sorted(zip(cenDist, splitShades))))
+                        if mergeVectors_ == True:
+                            shadingSurfaces.append(splitShades1[0])
+                        else:
+                            shadingSurfaces.append(splitShades1[-1])
                     except:
                         shadingSurfaces.append(curve)
                 
