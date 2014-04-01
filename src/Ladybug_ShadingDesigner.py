@@ -366,7 +366,7 @@ def splitSrf(brep, cuttingPlanes):
         brepNormal = getSrfPlane(brep).Normal
         for srf in sortedFaces:
             angle = rc.Geometry.Vector3d.VectorAngle(getSrfPlane(srf).Normal, brepNormal)
-            if angle > math.pi/2: srf.Filp()
+            if angle > math.pi/2: srf.Flip()
     elif len(optionalPlanes_)!=0:
         tangantVec = intCrv.TangentAt(intCrv.ClosestPoint(intCrv.PointAtNormalizedLength(0.5))[1])
         if tangantVec!= rc.Geometry.Vector3d.ZAxis:
