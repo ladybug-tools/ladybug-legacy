@@ -4,27 +4,27 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to get a sense of how sunlight is reflected by a set of context geometries by tracing sun rays forwards through this geometry.
+Use this component to get a sense of how direct sunlight is reflected off of an initial _sourceSrf and subsequently to a set of context_ geometries by tracing sun rays forwards through this geometry.
 Examples where this component might be useful include the evaluation of the diffusion of light by a light shelf, or testing to see whether a parabolic building geometry (like a Ghery building) might focus sunlight to dangerous levels at certain times of the year.
 Note that this component assumes that all sun light is reflected off of these geometries specularly (as if they were a mirror) and, for more detailed raytrace analysis, the Honeybee daylight components should be used.
 -
 Provided by Ladybug 0.0.57
     
     Args:
-        _sourceSrfs: A list of Breps as surfaces to bounce from.
-        _gridSizeOrPoints: A number in Rhino model units that represents the average size of a grid cell to generate the points, or list of points itself.
-        context_: Breps or meshes of conext geometry that will reflect the sun rays.  Note that, for curved surfaces, smooth meshes of the geometry will be more accurate than inputing a Brep.
+        _sourceSrfs: A brep or mesh representing a surface that you are interested in seeing direct sunlight bounce off of.  You can also put in lists of breps or meshes. These surfaces will be used to generate the initial sun rays in a grid-like pattern.  Note that, for curved surfaces, smooth meshes of the geometry will be more accurate than inputing a Brep.
+        _gridSizeOrPoints: A number in Rhino model units that represents the average size of a grid cell to generate the points, or list of points itself.  Note that, if you put in meshes for the input above, the _gridSize number option of this input will not work as this component will use the vertices of the mesh to generate the sun rays.
+        context_: Breps or meshes of conext geometry, which will reflect the sun rays after they bounce off of the _sourceSrfs.  Note that, for curved surfaces, smooth meshes of the geometry will be more accurate than inputing a Brep.
         _numOfBounce_: An interger representing the number of ray bounces to trace the sun rays forward.
-        firstBounceLen_: A number representing the length of the first bounce. If empty the length of diagonal of bounding box of geometries will be used.
-        _lastBounceLen_: A number representing the length of the last bounce. 
+        firstBounceLen_: A number representing the length of the sun ray before the first bounce. If left empty, this length will be the diagonal of the bounding box surrounding all input geometries.
+        _lastBounceLen_: A number representing the length of the sun ray after the last bounce. If left empty, this length will be the diagonal of the bounding box surrounding all input geometries.
     Returns:
-        bouncePts: The generated base points. The preview is set to hidden by default.
-        rays: The rays traced forward through the geometry.
+        bouncePts: The generated base points on the _sourceSrfs to which the sun rays will be directed. The preview of this output is set to be hidden by default.  Connect to a Grasshopper "Point" component to visualize.
+        rays: The sun rays traced forward through the geometry.
 """
 
 ghenv.Component.Name = "Ladybug_Bounce from Surface"
 ghenv.Component.NickName = 'bounceFromSurface'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_31_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

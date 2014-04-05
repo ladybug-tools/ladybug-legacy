@@ -1,12 +1,13 @@
-# import .stat file data
-# By Chris MAckey
+# Import .stat file data
+# By Chris Mackey
 # Chris@MackeyArchitecture.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to import climate data that can only be found in the .stat file that downloads in the .zip folder with the .epw file.
-Sepcifcally, this includes the ASHRAE and Koppen climate zones as well as design temperatures representing the temperature extremes of the climate that should be used to design and size heating and cooling systems.
+Use this component to import climate data found in the .stat file that downloads with the .epw file (in the same .zip folder).
+Sepcifcally, this allows you to import the ASHRAE and Koppen climate zones as well as design temperatures representing the temperature extremes of the climate that should be used to design and size heating and cooling systems.
+Lastly, this component brings in the typical and extreme weeks of the year as ladybug analysis periods that can be plugged into the other ladybug components.
 -
 Provided by Ladybug 0.0.57
     
@@ -29,7 +30,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Import stat"
 ghenv.Component.NickName = 'importSTAT'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_31_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
