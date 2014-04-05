@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_31_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -247,23 +247,31 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
         # Horizontal
         #Define a bounding box for use in calculating the number of shades to generate
         minZPt = bbox.Corner(False, True, True)
+        minZPt = rc.Geometry.Point3d(minZPt.X, minZPt.Y, minZPt.Z)
         maxZPt = bbox.Corner(False, True, False)
-        maxZPt = rc.Geometry.Point3d(maxZPt.X, maxZPt.Y, maxZPt.Z - sc.doc.ModelAbsoluteTolerance)
+        maxZPt = rc.Geometry.Point3d(maxZPt.X, maxZPt.Y, maxZPt.Z)
         centerPt = bbox.Center 
         #glazing hieghts
         glzHeight = minZPt.DistanceTo(maxZPt)
         
         # find number of shadings
-        try: numOfShd = int(numOfShds)
-        except: numOfShd = math.ceil(glzHeight/distBetween)
-        shadingHeight = glzHeight/numOfShd
+        try:
+            numOfShd = int(numOfShds)
+            shadingHeight = glzHeight/numOfShd
+            shadingRemainder = shadingHeight
+        except:
+            shadingHeight = distBetween
+            shadingRemainder = (((glzHeight/distBetween) - math.floor(glzHeight/distBetween))*distBetween)
+            if shadingRemainder == 0:
+                shadingRemainder = shadingHeight
         
         # find shading base planes
         planeOrigins = []
         planes = []
         X, Y, z = minZPt.X, minZPt.Y, minZPt.Z
+        zHeights = rs.frange(minZPt.Z + shadingRemainder, maxZPt.Z + 0.5*sc.doc.ModelAbsoluteTolerance, shadingHeight)
         try:
-            for Z in rs.frange(minZPt.Z + shadingHeight , maxZPt.Z, shadingHeight):
+            for Z in zHeights:
                 planes.append(rc.Geometry.Plane(rc.Geometry.Point3d(X, Y, Z), rc.Geometry.Vector3d.ZAxis))
         except:
             # single shading
@@ -279,16 +287,24 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
         
         #Define a bounding box for use in calculating the number of shades to generate
         minXYPt = bbox.Corner(True, True, True)
+        minXYPt = rc.Geometry.Point3d(minXYPt.X, minXYPt.Y, minXYPt.Z)
         maxXYPt = bbox.Corner(False, False, True)
+        maxXYPt = rc.Geometry.Point3d(maxXYPt.X, maxXYPt.Y, maxXYPt.Z)
         centerPt = bbox.Center 
         #glazing distance
         glzHeight = minXYPt.DistanceTo(maxXYPt)
         
         # find number of shadings
-        try: numOfShd = int(numOfShds)
-        except: numOfShd = math.ceil(glzHeight/distBetween)
+        try:
+            numOfShd = int(numOfShds)
+            shadingHeight = glzHeight/numOfShd
+            shadingRemainder = shadingHeight
+        except:
+            shadingHeight = distBetween
+            shadingRemainder = (((glzHeight/distBetween) - math.floor(glzHeight/distBetween))*distBetween)
+            if shadingRemainder == 0:
+                shadingRemainder = shadingHeight
         
-        shadingHeight = glzHeight/numOfShd - sc.doc.ModelAbsoluteTolerance
         # find shading base planes
         planeOrigins = []
         planes = []
@@ -297,7 +313,7 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
         divisionPoints = []
         for param in divisionParams:
             divisionPoints.append(pointCurve.PointAt(param))
-        planePoints = divisionPoints[1:]
+        planePoints = divisionPoints
         try:
             for point in planePoints:
                 planes.append(rc.Geometry.Plane(point, planeVec))
@@ -313,19 +329,39 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
 
 def unionAllCurves(Curves):
     res = []
+    
     for curveCount in range(0, len(Curves), 2):
         try:
-            x = Curves[curveCount]
-            y = Curves[curveCount + 1]
-            a = rc.Geometry.Curve.CreateBooleanUnion([x, y])
+            sc.doc = rc.RhinoDoc.ActiveDoc #change target document
+            
+            rs.EnableRedraw(False)
+            
+            guid1 = sc.doc.Objects.AddCurve(Curves[curveCount])
+            guid2 = sc.doc.Objects.AddCurve(Curves[curveCount + 1])
+            all = rs.CurveBooleanUnion([guid1, guid2])
+            rs.DeleteObjects(guid1)
+            rs.DeleteObjects(guid2)
+            if all:
+                a = [rs.coercegeometry(a) for a in all]
+                for g in a: g.EnsurePrivateCopy() #must ensure copy if we delete from doc
+            
+            rs.DeleteObjects(all)
+            
+            sc.doc = ghdoc #put back document
+            rs.EnableRedraw()
+            
             if a == None:
                 a = [Curves[curveCount], Curves[curveCount + 1]]
         except:
+            rs.DeleteObjects(guid1)
+            sc.doc = ghdoc #put back document
+            rs.EnableRedraw()
             a = [Curves[curveCount]]
         
         if a:
             res.extend(a)
     return res
+
 
 def splitSrf(brep, cuttingPlanes):
     # find the intersection crvs as the base for shadings
@@ -403,7 +439,6 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, rotationAngle_, lb_p
     # create shading on planes
     unionedProjectedCrvsCollection = []
     firsTime = True
-    
     for brepCount, brep in enumerate(baseSrfs):
         unionedProjectedCrvs = []
         projectedCrvs = []
@@ -503,7 +538,7 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, rotationAngle_, lb_p
             unionedProjectedCrvs = mergedShadingFinal
             if len(unionedProjectedCrvs) == 0:
                 unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(justVecShading)
-                print "Merging of vectors into a single shade failed."
+                print "Merging of vectors into a single shade failed. Component will return multiple shadings."
         else:
             unionedProjectedCrvs = projectedCrvs
         
@@ -753,10 +788,9 @@ def main(method, depth, sunVectors, numShds, distBtwn, horOrVert):
                         horOrVert = True
                     else: horOrVert = horOrVert[0]
                     planes = analyzeGlz(_glzSrf, distBtwn, numShds, horOrVert, lb_visualization, normalVector)
-                # return planes
                 # split base surface with planes
                 baseSrfs = splitSrf(_glzSrf, planes)
-                #print len(baseSrfs), len(planes)
+                
                 # create shading surfaces
                 shadingSrfs = createShadings(baseSrfs, planes, sunVectors, mergeVectors_, rotationAngle_, lb_preparation)
                 
