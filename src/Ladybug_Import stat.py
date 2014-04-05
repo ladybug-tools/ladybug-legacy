@@ -17,8 +17,15 @@ Provided by Ladybug 0.0.57
         readMe!: ...
         ashraeClimateZone: The estimated ASHRAE climate zone of the STAT file.  ASHRAE climate zones are frequently used to make suggestions for heating and cooling systems and correspond to recommendations for insulation levels of a building.  For more information, see this pdf: https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf
         koppenClimateZone: The estimated Koppen climate zone of the STAT file.  The Koppen climate classification is the most widely used climate classification system and is based on the concept that native vegetation is the best expression of climate. Thus, Koppen climate zones combine average annual and monthly temperatures, precipitation, and the seasonality of precipitation.  For more information, see the wikipendia page on Koppen climate: http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification.
+        --------------------: ...
         heatingDesignTemp: The temperature in Celcius that ASHRAE recommends using to design a heating system for a building.  It rempresents the one of the coldest temperatures of the year for which only 0.4% of the hours are below.
         coolingDesignTemp: The temperature in Celcius that ASHRAE recommends using to design a cooling system for a building.  It rempresents the one of the hottest temperatures of the year for which only 0.4% of the hours are above.
+        --------------------: ...
+        extremeHotWeek: An analysis period representing the hottest week of the typical mean year.  If the stat file does not specify an extreme hot week, it is the most extreme week of the hottest season.
+        typicalHotWeek: An analysis period representing a typical week of the hottest season in the typical mean year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
+        typicalWeek: An analysis period representing a typical week of the typical mean year.  If the stat file does not specify a typical week, it is the typical week of Autumn.
+        typicalColdWeek: An analysis period representing a typical week of the coldest season in the typical mean year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
+        extremeColdWeek: An analysis period representing the coldest week of the typical mean year.  If the stat file does not specify an extreme cold week, it is the most extreme week of the coldest season.
 """
 ghenv.Component.Name = "Ladybug_Import stat"
 ghenv.Component.NickName = 'importSTAT'
@@ -37,10 +44,10 @@ if _statFile and _statFile.lower().endswith(".stat"):
         with open(_statFile, 'r') as statFile:
             statFileLines = statFile.readlines()
             
-            #Search the first part of the file for heating and then cooling design temperatures.
+            #Search the first part of the file for heating design temperatures.
             heatCount = 1
-            for line in statFileLines[:30]:
-                if 'ColdestMonth' or 'Coldest Month' in line:
+            for line in statFileLines[:26]:
+                if 'Coldest' in line:
                     heatLineSplit = line.split('\t')
                     for elementCount, element in enumerate(heatLineSplit):
                         if element == 'HDB 99.6%':
@@ -58,9 +65,10 @@ if _statFile and _statFile.lower().endswith(".stat"):
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             else: pass
             
+            #Search the second part of the file for cooling design temperatures.
             coolCount = 1
-            for line in statFileLines[:30]:
-                if 'HottestMonth' or 'Hottest Month' in line:
+            for line in statFileLines[:26]:
+                if 'Hottest' in line:
                     coolLineSplit = line.split('\t')
                     for elementCount, element in enumerate(coolLineSplit):
                         if element == 'CDB .4%':
@@ -93,8 +101,94 @@ if _statFile and _statFile.lower().endswith(".stat"):
                 if count == 2:
                     ashraeClimateZone = line.split('"')[1]
                     break
+            
+            # Search the last part of the file for typical and extreme periods.
+            #First define a function that will convert the text month to a number.
+            def monthNumber(month):
+                if month == 'Jan': return 1
+                elif month == 'Feb': return 2
+                elif month == 'Mar': return 3
+                elif month == 'Apr': return 4
+                elif month == 'May': return 5
+                elif month == 'Jun': return 6
+                elif month == 'Jul': return 7
+                elif month == 'Aug': return 8
+                elif month == 'Sep': return 9
+                elif month == 'Oct': return 10
+                elif month == 'Nov': return 11
+                elif month == 'Dec': return 12
+            
+            #Search for the extreme hot period.
+            extremeHotWeek = None
+            for line in statFileLines[220:]:
+                if 'Extreme Hot Week Period selected' in line:
+                    extHotStart = (line.split(':'))[1].split()
+                    extHotEnd = (line.split(':'))[2].split(',')[0].split()
+                    extremeHotWeek = ((monthNumber(extHotStart[0]), int(extHotStart[1]), 1), ((monthNumber(extHotEnd[0]), int(extHotEnd[1]), 24)))
+                else: pass
+            if extremeHotWeek == None:
+                print 'No extreme hot week was found in the stat file.'
+            else: pass
+            
+            #Search for the typical hot period.
+            typicalHotWeek = None
+            for lineCount, line in enumerate(statFileLines):
+                if 'Typical Summer Week' in line:
+                    hotStart =(statFileLines[lineCount+1].split(':'))[1].split()
+                    hotEnd = (statFileLines[lineCount+1].split(':'))[2].split(',')[0].split()
+                    typicalHotWeek = ((monthNumber(hotStart[0]), int(hotStart[1]), 1), ((monthNumber(hotEnd[0]), int(hotEnd[1]), 24)))
+                else: pass
+            if typicalHotWeek == None:
+                print 'No typical hot week was found in the stat file.'
+            else: pass
+            
+            #Search for the typical period.
+            typicalWeek = None
+            for lineCount, line in enumerate(statFileLines):
+                if 'Typical Autumn Week' in line:
+                    #The file contains multiple typical periods and I just want the Autumn one.
+                    typStart =(statFileLines[lineCount+1].split(':'))[1].split()
+                    typEnd = (statFileLines[lineCount+1].split(':'))[2].split(',')[0].split()
+                    typicalWeek = ((monthNumber(typStart[0]), int(typStart[1]), 1), ((monthNumber(typEnd[0]), int(typEnd[1]), 24)))
+                else: pass
+            if typicalWeek == None:
+                #The file contains only one typical period and I will take that one.
+                for line in statFileLines:
+                    if 'Typical Week Period selected' in line:
+                        typStart = (line.split(':'))[1].split()
+                        typEnd = (line.split(':'))[2].split(',')[0].split()
+                        typicalWeek = ((monthNumber(typStart[0]), int(typStart[1]), 1), ((monthNumber(typEnd[0]), int(typEnd[1]), 24)))
+                else: pass
+            if typicalWeek == None:
+                print 'No typical week was found in the stat file.'
+            else: pass
+            
+            #Search for the typical cold period.
+            typicalColdWeek = None
+            for lineCount, line in enumerate(statFileLines):
+                if 'Typical Winter Week' in line:
+                    coldStart =(statFileLines[lineCount+1].split(':'))[1].split()
+                    coldEnd = (statFileLines[lineCount+1].split(':'))[2].split(',')[0].split()
+                    typicalColdWeek = ((monthNumber(coldStart[0]), int(coldStart[1]), 1), ((monthNumber(coldEnd[0]), int(coldEnd[1]), 24)))
+                else: pass
+            if typicalColdWeek == None:
+                print 'No typical cold week was found in the stat file.'
+            else: pass
+            
+            #Search for the extreme cold period.
+            extremeColdWeek = None
+            for line in statFileLines[220:]:
+                if 'Extreme Cold Week Period selected' in line:
+                    extColdStart = (line.split(':'))[1].split()
+                    extColdEnd = (line.split(':'))[2].split(',')[0].split()
+                    extremeColdWeek = ((monthNumber(extColdStart[0]), int(extColdStart[1]), 1), ((monthNumber(extColdEnd[0]), int(extColdEnd[1]), 24)))
+                else: pass
+            if extremeColdWeek == None:
+                print 'No extreme cold week was found in the stat file.'
+            else: pass
+            
+            
     except Exception, e:
-        #print `e`
         msg = "Invalid stat file path."
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
         pass
