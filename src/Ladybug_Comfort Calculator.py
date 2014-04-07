@@ -71,8 +71,7 @@ def checkTheInputs():
         if checkData1 == False:
             try:
                 if _dryBulbTemperature[2] == 'Dry Bulb Temperature':
-                    for item in _dryBulbTemperature[7:]:
-                        airTemp.append(float(item))
+                    airTemp = _dryBulbTemperature[7:]
                     checkData1 = True
             except: checkData1 = False
         if len(_dryBulbTemperature) > 1: airMultVal = True
@@ -96,8 +95,7 @@ def checkTheInputs():
         if checkData2 == False:
             try:
                 if meanRadiantTemperature_[2] == 'Dry Bulb Temperature':
-                    for item in meanRadiantTemperature_[7:]:
-                        radTemp.append(float(item))
+                    radTemp = meanRadiantTemperature_[7:]
                     checkData2 = True
             except: checkData2 = False
         if len(meanRadiantTemperature_) > 1: radMultVal = True
@@ -128,8 +126,7 @@ def checkTheInputs():
         if checkData3 == False:
             try:
                 if meanRadiantTemperature_[2] == 'Dry Bulb Temperature':
-                    for item in meanRadiantTemperature_[7:]:
-                        windSpeed.append(float(item))
+                    windSpeed = windSpeed_[7:]
                     checkData3 = True
             except: checkData3 = False
         if len(windSpeed_) > 1: windMultVal = True
@@ -159,8 +156,7 @@ def checkTheInputs():
         if checkData4 == False:
             try:
                 if _relativeHumidity[2] == 'Relative Humidity':
-                    for item in _relativeHumidity[7:]:
-                        relHumid.append(float(item))
+                    relHumid = _relativeHumidity[7:]
                     checkData4 = True
             except: checkData4 = False
         if len(_relativeHumidity) > 1: humidMultVal = True
