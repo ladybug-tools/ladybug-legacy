@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_09_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -278,7 +278,7 @@ def main(sunVectors):
                 shadingCrvs = createShadings([_baseSrf], plane, sunVectors, True, lb_preparation)
             except: pass
         
-        # if one of the shading curves is cintained inside the other, it can be deleted from the solar fan and can speed up the calculation down the line.
+        # if one of the shading curves is contained inside the other, it can be deleted from the solar fan and can speed up the calculation down the line.
         shdCrv2 = []
         for curve in shadingCrvs:
             if rc.Geometry.AreaMassProperties.Compute(curve).Area > rc.Geometry.AreaMassProperties.Compute(_baseSrf).Area:
@@ -296,40 +296,70 @@ def main(sunVectors):
         # get a point from the center of the shading curve to a new seam to adjust the seam on the shading curve.
         seamVectorPt = rc.Geometry.Vector3d((baseSrfCrv.PointAtStart.X - baseSrfCenPt.X)*planeHeight, (baseSrfCrv.PointAtStart.Y - baseSrfCenPt.Y)*planeHeight, 0)
         # adjust the seam of the shading curves.
+        shadingCrvAdjust = []
         for curve in finalShdCrvs:
             curve.Reverse()
-            curve.ChangeClosedCurveSeam(curve.ClosestPoint(rc.Geometry.Intersect.Intersection.CurveCurve(curve, rc.Geometry.Line(rc.Geometry.AreaMassProperties.Compute(curve).Centroid, seamVectorPt).ToNurbsCurve(), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)[1])
+            curveParameter = curve.ClosestPoint(rc.Geometry.Intersect.Intersection.CurveCurve(curve, rc.Geometry.Line(rc.Geometry.AreaMassProperties.Compute(curve).Centroid, seamVectorPt).ToNurbsCurve(), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)[1]
+            curveParameterRound = round(curveParameter)
+            curveParameterTol = round(curveParameter, (len(list(str(sc.doc.ModelAbsoluteTolerance)))-2))
+            if curveParameterRound + sc.doc.ModelAbsoluteTolerance > curveParameter and curveParameterRound - sc.doc.ModelAbsoluteTolerance < curveParameter:
+                curve.ChangeClosedCurveSeam(curveParameterRound)
+                shadingCrvAdjust.append(curve)
+            else:
+                curve.ChangeClosedCurveSeam(curveParameterTol)
+                if curve.IsClosed == True:
+                    shadingCrvAdjust.append(curve)
+                else:
+                    curve.ChangeClosedCurveSeam(curveParameterTol+sc.doc.ModelAbsoluteTolerance)
+                    if curve.IsClosed == True:
+                        shadingCrvAdjust.append(curve)
+                    else:
+                        curve.ChangeClosedCurveSeam(curveParameterTol-sc.doc.ModelAbsoluteTolerance)
+                        if curve.IsClosed == True:
+                            shadingCrvAdjust.append(curve)
+                        else:
+                            curve.ChangeClosedCurveSeam(curveParameter)
+                            curve.MakeClosed(sc.doc.ModelAbsoluteTolerance)
+                            shadingCrvAdjust.append(curve)
         
         # loft the shading curves with the base curve and generate a surface to cap the loft.
         solarFanInit = []
         shadingSrfs =[]
-        for curve in finalShdCrvs:
+        for curve in shadingCrvAdjust:
             try:
                 solarFanInit.append(rc.Geometry.Brep.CreateFromLoft([curve, baseSrfCrv], rc.Geometry.Point3d.Unset, rc.Geometry.Point3d.Unset, rc.Geometry.LoftType.Normal, False)[0])
                 shadingSrfs.append(rc.Geometry.Brep.CreatePlanarBreps(curve)[0])
             except: pass
         
-        # close the brep of the solar fan
-        for brepCount, brep in enumerate(solarFanInit):
-            brep.Join(_baseSrf, sc.doc.ModelAbsoluteTolerance, True)
-            brep.Join(shadingSrfs[brepCount], sc.doc.ModelAbsoluteTolerance, True)
-        
-        # if more than one solar fan solids have been produced, resulting from multiple shading curves being produced, try to boolean union them together into one solar fan.
-        if len(solarFanInit) > 1:
-            listLength = len(solarFanInit)
-            solarFanFinal = solarFanInit
-            count  = 0
-            while len(solarFanFinal) > 1 and count < int(listLength/2) + 1:
-                solarFanFinal = unionAllFans(solarFanFinal)
-                count += 1
-            
-            if solarFanFinal == None:
-                solarFanFinal = solarFanInit
-                print "Attempt to Boolean Union multiple solar fans into one failed.  Component will return multiple solar fans.  Try decreasing the '_adjustScale' parameter or using a greater timestep of solar vectors if a single solar fan is desired." 
+        #See if the loft has failed for any of the vectors.  This can happen if vectors are too close to being parallel to the input surface.
+        if len(solarFanInit) != len(shadingCrvAdjust):
+            warning = "Some of your input solar vectors are almost parallel to your input _baseSrf and this is causing the operations in the component to fail.  Either get rid of the vectors that are nearly parallel to your _baseSrf, or drop down the size of the fan to a very small level to get a true fan."
+            print warning
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
         else:
-            solarFanFinal = solarFanInit
-        
-        return solarFanFinal
+            # close the brep of the solar fan
+            for brepCount, brep in enumerate(solarFanInit):
+                brep.Join(_baseSrf, sc.doc.ModelAbsoluteTolerance, True)
+                brep.Join(shadingSrfs[brepCount], sc.doc.ModelAbsoluteTolerance, True)
+            
+            # if more than one solar fan solids have been produced, resulting from multiple shading curves being produced, try to boolean union them together into one solar fan.
+            if len(solarFanInit) > 1:
+                listLength = len(solarFanInit)
+                solarFanFinal = solarFanInit
+                count  = 0
+                while len(solarFanFinal) > 1 and count < int(listLength/2) + 10:
+                    solarFanFinal = unionAllFans(solarFanFinal)
+                    count += 1
+                
+                if solarFanFinal == None or len(solarFanFinal) > 1:
+                    solarFanFinal = solarFanInit
+                    print "Attempt to Boolean Union multiple solar fans into one failed.  Component will return multiple solar fans.  Try decreasing the '_adjustScale' parameter or using a greater timestep of solar vectors if a single solar fan is desired." 
+            else:
+                solarFanFinal = solarFanInit
+            
+            return solarFanFinal
         
     else:
         print "You should first let Ladybug fly..."

@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_05_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_09_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -370,8 +370,8 @@ def splitSrf(brep, cuttingPlanes):
         try:
             intCrvs.append(rc.Geometry.Brep.CreateContourCurves(brep, plane)[0])
         except:
-            print "one intersection failed"
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "one intersection failed")
+            print "One intersection failed.  One of your vectors might be parallel to the _glzSrf."
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "One intersection failed.  One of your vectors might be parallel to the _glzSrf.")
             
     if len(intCrvs) <= 1: return [brep] # only one shading/surface
     else: splitBrep = brep.Faces[0].Split(intCrvs, sc.doc.ModelAbsoluteTolerance)
@@ -638,7 +638,7 @@ def main(method, depth, sunVectors, numShds, distBtwn, horOrVert):
             intCrvs =[]
             for plane in planes:
                 try: intCrvs.append(rc.Geometry.Brep.CreateContourCurves(_glzSrf, plane)[0])
-                except: print "one intersection failed"
+                except: print "One intersection failed."
             
             if normalVector != rc.Geometry.Vector3d.ZAxis:
                 normalVectorPerp = rc.Geometry.Vector3d(normalVector.X, normalVector.Y, 0)

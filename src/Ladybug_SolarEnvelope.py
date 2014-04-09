@@ -20,7 +20,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelope'
 ghenv.Component.NickName = 'SolarEnvelope'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_09_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -310,30 +310,38 @@ def main(sunVectors):
                 shadingSrfs.append(rc.Geometry.Brep.CreatePlanarBreps(curve)[0])
             except: pass
         
-        solarFans = []
-        # close the brep of the solar fan
-        for brepCount, brep in enumerate(solarFansInit):
-            capped = brep.CapPlanarHoles((sc.doc.ModelAbsoluteTolerance))
-            if capped.IsSolid:
-                solarFans.append(capped)
-            else:
-                try:
-                    capped.Join(_baseSrf, 0, True)
-                    if capped.IsSolid:
-                        solarFans.append(capped)
-                    else: print 'Some initial solar fan geometry could not be closed and has been excluded from the calculation.'
-                except: print 'Some initial solar fan geometry could not be closed and has been excluded from the calculation.'
-        
-        # calculate boolean intersections (fingers crossed!)
-        # recursive function makes GHPython and Rhino crash so I just put the function in a while loop
-        listLength = len(solarFans)
-        solarEnvelope = solarFans
-        count  = 0
-        while len(solarEnvelope) > 1 and count < int(listLength/2) + 1:
-            solarEnvelope = intersectAllFans(solarEnvelope)
-            count += 1
-        
-        return solarEnvelope
+        #See if the loft has failed for any of the vectors.  This can happen if vectors are too close to being parallel to the input surface.
+        if len(solarFansInit) != len(shadingCrvAdjust):
+            warning = "Some of your input solar vectors are almost parallel to your input _baseSrf and this is causing the operations in the component to fail.  Either get rid of the vectors that are nearly parallel to your _baseSrf, or drop down the size of the fan to a very small level to get a true fan."
+            print warning
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
+        else:
+            solarFans = []
+            # close the brep of the solar fan
+            for brepCount, brep in enumerate(solarFansInit):
+                capped = brep.CapPlanarHoles((sc.doc.ModelAbsoluteTolerance))
+                if capped.IsSolid:
+                    solarFans.append(capped)
+                else:
+                    try:
+                        capped.Join(_baseSrf, 0, True)
+                        if capped.IsSolid:
+                            solarFans.append(capped)
+                        else: print 'Some initial solar fan geometry could not be closed and has been excluded from the calculation.'
+                    except: print 'Some initial solar fan geometry could not be closed and has been excluded from the calculation.'
+            
+            # calculate boolean intersections (fingers crossed!)
+            # recursive function makes GHPython and Rhino crash so I just put the function in a while loop
+            listLength = len(solarFans)
+            solarEnvelope = solarFans
+            count  = 0
+            while len(solarEnvelope) > 1 and count < int(listLength/2) + 1:
+                solarEnvelope = intersectAllFans(solarEnvelope)
+                count += 1
+            
+            return solarEnvelope
         
     else:
         print "You should first let Ladybug fly..."
