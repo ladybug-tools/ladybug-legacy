@@ -19,7 +19,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_07_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -33,6 +33,7 @@ import shutil
 import zipfile
 import time
 import urllib
+import Grasshopper.Folders as folders
 
 
 def downloadSourceAndUnzip(lb_preparation):
@@ -178,7 +179,7 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
     else:
         userObjectsFolder = sourceDirectory
     
-    destinationDirectory = 'c:/Users/' + os.getenv("USERNAME") + '/AppData/Roaming/Grasshopper/UserObjects'
+    destinationDirectory = folders.ClusterFolders[0]
     
     if updateThisFile:
         # find all the userObjects
