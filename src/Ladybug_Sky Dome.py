@@ -323,6 +323,6 @@ if _runIt and _selectedSkyMtx:
                 skyPatchesAsBrep.AddRange(result[7][i], p)
             ghenv.Component.Params.Output[4].Hidden = True
             ghenv.Component.Params.Output[6].Hidden = True
-            ghenv.Component.Params.Output[8].Hidden = True
+            ghenv.Component.Params.Output[7].Hidden = True
 else:
     print "Set runIt to True!"
