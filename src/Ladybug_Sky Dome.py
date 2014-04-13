@@ -26,12 +26,13 @@ Provided by Ladybug 0.0.57
         legendBasePts: The legend base point(s), which can be used to move the legend(s) in relation to the sky domes with the grasshopper "move" component.
         skyPatchesCenPts: The center points of sky patches, which can be used to shape Rhino geometry in relation to radiation from different sky patches.
         skyPatchesAreas: The area of sky patches in Rhino model units.
+        skyPatchesAsBrep: The geometry of sky patches as breps.
         values: Radiation values for the sky patches in Wh/m2.
 """
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_12_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -149,10 +150,11 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
         
         skyPatchCenPts = []
         skyPatchAreas = []
-        
+        movedSkyPatches = []
         for patchCount, patch in enumerate(skyDomeSrfs):
             newPatch = patch.DuplicateShallow() # make a copy so I ca
             newPatch.Translate(movingVector) # move it to the right place
+            movedSkyPatches.append(newPatch)
             MP = rc.Geometry.AreaMassProperties.Compute(newPatch)
             patchCenPt = MP.Centroid
             area = MP.Area
@@ -191,7 +193,7 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
             
             lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize, 'Verdana', compassCrvs)
             
-        return domeMeshed, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], compassCrvs, movedLegendBasePoint, skyPatchCenPts, skyPatchAreas, strResults
+        return domeMeshed, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], compassCrvs, movedLegendBasePoint, skyPatchCenPts, skyPatchAreas, strResults, movedSkyPatches
     
     
     # separate ladybug input data into lists
@@ -259,7 +261,7 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
     normLegend = False
     # palce holder for results
     # I'l replace all this lists of lists with dictionaries later
-    result = [[], [], [], [], [], [], []]
+    result = [[], [], [], [], [], [], [], []]
     
     # generate the skies
     for i in range(skyTypes):
@@ -277,7 +279,7 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
             normLegend = True
         
         # this was a stupid idea to separate this function
-        coloredSkyMesh, legend, compassCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues = visualizeData(i, separatedLists[i], skyDomeSrfs, legendTitles[i], legendPar, bakeIt)
+        coloredSkyMesh, legend, compassCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues, movedSkySrfs = visualizeData(i, separatedLists[i], skyDomeSrfs, legendTitles[i], legendPar, bakeIt)
         
         result[0].append(coloredSkyMesh)
         result[1].append(legend)
@@ -286,6 +288,7 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
         result[4].append(skyPatchCenPts)
         result[5].append(skyPatchAreas)
         result[6].append(radValues)
+        result[7].append(movedSkySrfs)
     
     return result
 
@@ -305,6 +308,7 @@ if _runIt and _selectedSkyMtx:
             skyPatchesCenPts = DataTree[Object]()
             skyPatchesAreas = DataTree[Object]()
             values = DataTree[Object]()
+            skyPatchesAsBrep = DataTree[Object]()
             
             for i, leg in enumerate(result[1]):
                 p = GH_Path(i)
@@ -316,7 +320,9 @@ if _runIt and _selectedSkyMtx:
                 skyPatchesCenPts.AddRange(result[4][i], p)
                 skyPatchesAreas.AddRange(result[5][i], p)
                 values.AddRange(result[6][i], p)
+                skyPatchesAsBrep.AddRange(result[7][i], p)
             ghenv.Component.Params.Output[4].Hidden = True
             ghenv.Component.Params.Output[6].Hidden = True
+            ghenv.Component.Params.Output[8].Hidden = True
 else:
     print "Set runIt to True!"
