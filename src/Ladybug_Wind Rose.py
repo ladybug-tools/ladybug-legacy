@@ -24,6 +24,7 @@ Provided by Ladybug 0.0.57
         _centerPoint_: Input a point here to change the location of the wind rose in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        maxFrequency_: Optional number to fix the maximum frequency for windrose. Mainly useful for comparative analysis.
         _runIt: Set this value to "True" to run the component and generate a wind rose in the Rhino scene.
         bakeIt_: Set this value to "True" to bake the wind rose into the Rhino scene.
     
@@ -39,7 +40,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_01_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_13_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -130,7 +131,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                   analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
-                  scale, legendPar, bakeIt):
+                  scale, legendPar, bakeIt, maxFrequency):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -303,7 +304,8 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             freqCrvs = []
             minFreq = calmFreq
-            maxFreq = max(windFreq) + calmFreq
+            try: maxFreq = float(maxFrequency)
+            except: maxFreq = max(windFreq) + calmFreq
             
             step = (maxFreq-minFreq)/10
             comment2 = 'Each closed polyline shows frequency of ' + "%.1f"%step + '%. = ' + `int(step * len(studyHours)/100)` + ' hours.'
@@ -563,7 +565,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
 if _runIt:
     result = main(_north_, _hourlyWindDirection, _hourlyWindSpeed, annualHourlyData_,
                   _analysisPeriod_, conditionalStatement_, _numOfDirections_, _centerPoint_,
-                  _scale_, legendPar_, bakeIt_)
+                  _scale_, legendPar_, bakeIt_, maxFrequency_)
     
     if result!= -1:
         allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints = result
