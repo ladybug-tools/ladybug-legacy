@@ -237,7 +237,7 @@ def checkTheInputs():
     else:
         checkData5 = True
         metRate = [1]
-        print 'No value connected for metabolicRate_.  It will be assumed that the metabolic rate is that of a seated person at 1.2 met.'
+        print 'No value connected for metabolicRate_.  It will be assumed that the metabolic rate is that of a seated person at 1.0 met.'
     
     #Check lenth of the clothingLevel_ list and evaluate the contents.
     checkData6 = False
@@ -773,6 +773,7 @@ def main():
             runPeriod = [epwStr[5], epwStr[6]]
         else:
             HOYS = range(calcLength)
+            runPeriod = []
         
         #If things are good, run it through the comfort model.
         predictedMeanVote = []
