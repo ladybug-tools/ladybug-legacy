@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_13_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_14_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -304,7 +304,14 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             freqCrvs = []
             minFreq = calmFreq
-            try: maxFreq = float(maxFrequency)
+            try:
+                maxFreq = float(maxFrequency)%100
+                if maxFreq ==0: maxFreq == 100
+                
+                # overwrite minimum so all the graphs will have similar curves
+                # regardless of calm hours
+                minFreq = 0
+                
             except: maxFreq = max(windFreq) + calmFreq
             
             step = (maxFreq-minFreq)/10
