@@ -5,14 +5,14 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to calculate comfort metrics of Prediceted Mean Vote (PMV), the Percent of People Dissatisfied (PPD) and the Standard Effective Temperature (SET) for a set of individual climate conditions or for imported EPW weather data.
-Perhaps the most familiar application of SET is the temperature given by TV weathermen and women when they say that, even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something that is much higher or lower.
+Use this component to calculate comfort metrics of Predicted Mean Vote (PMV), the Percent of People Dissatisfied (PPD) and the Standard Effective Temperature (SET) for a set of individual climate conditions or for imported EPW weather data.
+Perhaps the most familiar application of SET is the temperature given by TV weathermen and women when they say that, even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something higher or lower.
 This is because SET takes into account other climate variables such as relative humidity and wind speed and uses them in a human energy balance model to give a temperature value that is indicative of the heat stress or loss felt by the human body.
 
 Specifically, SET is definied as the equivalent temperature of an imaginary environment at 50% relative humidity, <0.1 m/s air speed, and mean radiant temperature equal to air temperature, in which the total heat loss from the skin of an imaginary occupant is the same as that from a person existing under the input conditions.
-It is also important to note that the imaginary occupant is modeled with an activity level of 1.0 met, a clothing level of 0.6 clo, and an external work value of 0 (meaning that all of the energy the body produces is heat).  The actual occupant in the real environment can have different values from these.
+It is also important to note that the imaginary occupant is modeled with an activity level of 1.0 met and a clothing level of 0.6 clo.  The actual occupant in the real environment can have different values from these.
 
-The specific human energy balance model that SET uses to perform this calculation is the Predicted Mean Vote (PMV) model developed by P.O. Fanger.  PMV technically refers to a scale from -3 to +3 where -3 is extremely uncomfortably cold, +3 is extremely uncomfortably hot, and values between -1 and +1 are comfortable.
+The specific human energy balance model that SET uses to perform this calculation is the Predicted Mean Vote (PMV) model developed by P.O. Fanger. PMV is a seven-point scale from cold (-3) to hot (+3) that is used in comfort surveys.  Each interger value of the scale indicates the following: -3:Cold, -2:Cool, -1:Slightly Cool, 0:Neutral, +1:Slightly Warm, +2:Warm, +3:Hot.  The range of comfort is generally accepted as a PMV between -1 and +1.  Exceeding +1 will result in an uncomfortably warm occupant while dropping below -1 will result in an uncomfortably cool occupant.
 Accordingly, this component will also output the PMV of the occupant for the input conditions as well as an estimated percentage of people dissatisfied (PPD) in the given conditions.
 
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models developed at the Berkely Center for the Built Environment (CBE).
@@ -30,23 +30,35 @@ Provided by Ladybug 0.0.57
         windSpeed_: A number representing the wind speed of the air in meters per second.  If no value is plugged in here, this component will assume a very low wind speed of 0.05 m/s, characteristic of most indoor conditions.  This input can also accept a list of wind speeds representing conditions at different times or the direct output of windSpeed from of the Import EPW component.
         _relativeHumidity: A number between 0 and 100 representing the relative humidity of the air in percentage.  This input can also accept a list of relative humidity values representing conditions at different times or the direct output of relativeHumidity from of the Import EPW component.
         ------------------------------: ...
-        metabolicRate_: A number representing the metabolic rate of the human subject in met.  If no value is input here, the component will assume a metabolic rate of 1 met, which is the metabolic rate of a seated human being and roughly equal to 100 Watts for the average adult.  Sleeping human beings rarely drop below 0.8 met and exercising human beings can have metabolic rates as high as 6 to 8 met.  This input can also accept lists of metabolic rates.
+        metabolicRate_: A number representing the metabolic rate of the human subject in met.  This input can also accept text inputs for different activities.  Acceptable text inputs include Sleeping, Reclining, Sitting, Typing, Standing, Driving, Cooking, House Cleaning, Walking, Walking 2mph, Walking 3mph, Walking 4mph, Running 9mph, Lifting 10lbs, Lifting 100lbs, Shoveling, Dancing, and Basketball.  If no value is input here, the component will assume a metabolic rate of 1 met, which is the metabolic rate of a seated human being.  This input can also accept lists of metabolic rates.
         clothingLevel_: A number representing the clothing level of the human subject in clo.  If no value is input here, the component will assume a clothing level of 1 clo, which is roughly the insulation provided by a 3-piece suit. A person dressed in shorts and a T-shirt has a clothing level of roughly 0.5 clo and a person in a thick winter jacket can have a clothing level as high as 2 to 4 clo.  This input can also accept lists of clothing levels.
         ------------------------------: ...
+        analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
+        calcBalanceTemperature_: Set to "True" to have the component calculate the balance temperature for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_.  The balance temperature is essentially the temperature for these conditions at which the PMV is equal to 0 (or the energy flowing into the human body is equal to the energy flowing out).  Note that calculating the balance temperature for a whole year with epw windspeed can take as long as 10 minutes and so, by default, this option is set to "False".
+        calcComfortRange_: Set to "True" to have the component calculate the range of comfortable temperatures for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_.  The the comfort range is essentially the temperatures for these conditions at which the PMV is between -1 and +1. This component will output an upper comfort temperature and a lower comfort temperature indicating a PMV of +1 and -1 respectively.  Note that calculating the comfort range for a whole year with epw windspeed can take as long as 20 minutes and so, by default, this option is set to "False".
         _runIt: Set to "True" to run the component ant calculate Standard Effective Temperature.  The default is set to "True" because the calculation is fast for individual conditions and only gets long if you try to use it for a whole year.
     Returns:
         readMe!: ...
-        predictedMeanVote: The estimated predicted mean vote (PMV) of the test subject on a scale from -3 to +3.  A value of -3 inidcates extremely uncomfortably cold conditions while a value of +3 indicates extremely uncomfortably hot conditions.  A value of 0 indicates neither hot nor cold and the range of comfort is generally accepted as that between -1 and +1.
+        ------------------------------: ...
+        predictedMeanVote: The estimated predicted mean vote (PMV) of the test subject.  PMV is a seven-point scale from cold (-3) to hot (+3) that is used in comfort surveys.  Each interger value of the scale indicates the following: -3:Cold, -2:Cool, -1:Slightly Cool, 0:Neutral, +1:Slightly Warm, +2:Warm, +3:Hot.  The range of comfort is generally accepted as a PMV between -1 and +1.  Exceeding +1 will result in an uncomfortably warm occupant while dropping below -1 will result in an uncomfortably cool occupant.  For detailed information on the PMV scale, see P.O. Fanger's original paper: Fanger, P Ole (1970). Thermal Comfort: Analysis and applications in environmental engineering.
         percentPeopleDissatisfied: The estimated percentage of people dissatisfied (PPD) under the given input conditions as defined by the percent of people who would have a PMV less than -1 or greater than +1 under the conditions.  Note that, with this model, it is not possible to get a PPD of 0% and most engineers just aim to have a PPD below 20%.
         standardEffectiveTemperature: The standard effective temperature (SET) for the given input conditions in degrees Celcius. 
-            Perhaps the most familiar application of SET is the temperature given by TV weathermen and women when they say that, even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something that is much higher or lower.
+            Perhaps the most familiar application of SET is the temperature given by TV weathermen and women when they say that, even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something higher or lower.
             Specifically, SET is definied as the equivalent temperature of an imaginary environment at 50% relative humidity, <0.1 m/s air speed, and mean radiant temperature equal to air temperature, in which the total heat loss from the skin of an imaginary occupant is the same as that from a person existing under the input conditions.
-            It is also important to note that the imaginary occupant is modeled with an activity level of 1.0 met, a clothing level of 0.6 clo, and an external work value of 0 (meaning that all of the energy the body produces is heat).  The actual occupant in the real environment can have different values from these.
+            It is also important to note that the imaginary occupant is modeled with an activity level of 1.0 met and a clothing level of 0.6 clo.  The actual occupant in the real environment can have different values from these.
+        ------------------------------: ...
+        comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether the occupant is comfortable for each hour of the input conditions.  0 indicates that the occupant is not comfortable while 1 indicates that the occupant is comfortable.
+        percentOfTimeComfortable: The percent of input conditions for which the occupant is comfortable.  Note that this output is only menaingful when multiple values are connected for the input conditions.
+        ------------------------------: ...
+        balanceTemperature: The balance temperature is the temperature for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_ at which the PMV is equal to 0 (or the energy flowing into the human body is equal to the energy flowing out).  Setting the dry bulb and radiant temperatures to this value will produce a PMV of 0 and will yield the lowest possible PPD.
+        upperComfortTemperature: The upper comfort temperature is the temperature for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_ at which the PMV is equal to +1.  In other words, if this temperature is exceeded, the occupant will become uncomfortably warm and the PPD will be roughly around 20%.  Setting the dry bulb and radiant temperatures to this value will produce a PMV of +1 and will yield a PPD around 20%.
+        lowerComfortTemperature: The lower comfort temperature is the temperature for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_ at which the PMV is equal to -1.  In other words, if the temperature drops below this value, the occupant will become uncomfortably cold and the PPD will be roughly around 20%.  Setting the dry bulb and radiant temperatures to this value will produce a PMV of -1 and will yield a PPD around 20%.
+
 
 """
 ghenv.Component.Name = "Ladybug_Comfort Calculator"
 ghenv.Component.NickName = 'ComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_06_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_13_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -55,25 +67,32 @@ except: pass
 
 import Grasshopper.Kernel as gh
 import math
+import scriptcontext as sc
 
 
 def checkTheInputs():
+    #Define a value that will indicate whether someone has hooked up epw data.
+    epwData = False
+    epwStr = []
+    
     #Check lenth of the _dryBulbTemperature list and evaluate the contents.
     checkData1 = False
     airTemp = []
     airMultVal = False
     if len(_dryBulbTemperature) != 0:
-        for item in _dryBulbTemperature:
-            try:
-                airTemp.append(float(item))
+        try:
+            if _dryBulbTemperature[2] == 'Dry Bulb Temperature':
+                airTemp = _dryBulbTemperature[7:]
                 checkData1 = True
-            except: checkData1 = False
+                epwData = True
+                epwStr = _dryBulbTemperature[0:7]
+        except: pass
         if checkData1 == False:
-            try:
-                if _dryBulbTemperature[2] == 'Dry Bulb Temperature':
-                    airTemp = _dryBulbTemperature[7:]
+            for item in _dryBulbTemperature:
+                try:
+                    airTemp.append(float(item))
                     checkData1 = True
-            except: checkData1 = False
+                except: checkData1 = False
         if len(_dryBulbTemperature) > 1: airMultVal = True
         if checkData1 == False:
             warning = '_dryBulbTemperature input does not contain valid temperature values in degrees Celcius.'
@@ -87,17 +106,19 @@ def checkTheInputs():
     radTemp = []
     radMultVal = False
     if len(meanRadiantTemperature_) != 0:
-        for item in meanRadiantTemperature_:
-            try:
-                radTemp.append(float(item))
+        try:
+            if meanRadiantTemperature_[2] == 'Dry Bulb Temperature':
+                radTemp = meanRadiantTemperature_[7:]
                 checkData2 = True
-            except: checkData2 = False
+                epwData = True
+                epwStr = meanRadiantTemperature_[0:7]
+        except: pass
         if checkData2 == False:
-            try:
-                if meanRadiantTemperature_[2] == 'Dry Bulb Temperature':
-                    radTemp = meanRadiantTemperature_[7:]
+            for item in meanRadiantTemperature_:
+                try:
+                    radTemp.append(float(item))
                     checkData2 = True
-            except: checkData2 = False
+                except: checkData2 = False
         if len(meanRadiantTemperature_) > 1: radMultVal = True
         if checkData2 == False:
             warning = 'meanRadiantTemperature_ input does not contain valid temperature values in degrees Celcius.'
@@ -115,7 +136,15 @@ def checkTheInputs():
     windMultVal = False
     nonPositive = True
     if len(windSpeed_) != 0:
-        for item in windSpeed_:
+        try:
+            if windSpeed_[2] == 'Wind Speed':
+                windSpeed = windSpeed_[7:]
+                checkData3 = True
+                epwData = True
+                epwStr = windSpeed_[0:7]
+        except: pass
+        if checkData3 == False:
+            for item in windSpeed_:
                 try:
                     if float(item) >= 0:
                         windSpeed.append(float(item))
@@ -123,12 +152,6 @@ def checkTheInputs():
                     else: nonPositive = False
                 except: checkData3 = False
         if nonPositive == False: checkData3 = False
-        if checkData3 == False:
-            try:
-                if meanRadiantTemperature_[2] == 'Dry Bulb Temperature':
-                    windSpeed = windSpeed_[7:]
-                    checkData3 = True
-            except: checkData3 = False
         if len(windSpeed_) > 1: windMultVal = True
         if checkData3 == False:
             warning = 'windSpeed_ input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
@@ -145,20 +168,22 @@ def checkTheInputs():
     humidMultVal = False
     nonValue = True
     if len(_relativeHumidity) != 0:
-        for item in _relativeHumidity:
-            try:
-                if 0 <= float(item) <= 100:
-                    relHumid.append(float(item))
-                    checkData4 = True
-                else: nonValue = False
-            except:checkData4 = False
-        if nonValue == False: checkData4 = False
+        try:
+            if _relativeHumidity[2] == 'Relative Humidity':
+                relHumid = _relativeHumidity[7:]
+                checkData4 = True
+                epwData = True
+                epwStr = _relativeHumidity[0:7]
+        except: pass
         if checkData4 == False:
-            try:
-                if _relativeHumidity[2] == 'Relative Humidity':
-                    relHumid = _relativeHumidity[7:]
-                    checkData4 = True
-            except: checkData4 = False
+            for item in _relativeHumidity:
+                try:
+                    if 0 <= float(item) <= 100:
+                        relHumid.append(float(item))
+                        checkData4 = True
+                    else: nonValue = False
+                except:checkData4 = False
+        if nonValue == False: checkData4 = False
         if len(_relativeHumidity) > 1: humidMultVal = True
         if checkData4 == False:
             warning = '_relativeHumidity input does not contain valid value.'
@@ -180,6 +205,29 @@ def checkTheInputs():
                     checkData5 = True
                 else: nonVal = False
             except: checkData5 = False
+        if checkData5 == False:
+            try:
+                if str(metabolicRate_[0]) == "Sleeping": metRate.append(0.7)
+                elif str(metabolicRate_[0]) == "Reclining": metRate.append(0.8)
+                elif str(metabolicRate_[0]) == "Sitting": metRate.append(1.0)
+                elif str(metabolicRate_[0]) == "Typing": metRate.append(1.1)
+                elif str(metabolicRate_[0]) == "Standing": metRate.append(1.2)
+                elif str(metabolicRate_[0]) == "Driving": metRate.append(1.5)
+                elif str(metabolicRate_[0]) == "Cooking": metRate.append(1.8)
+                elif str(metabolicRate_[0]) == "House Cleaning": metRate.append(2.7)
+                elif str(metabolicRate_[0]) == "Walking": metRate.append(1.7)
+                elif str(metabolicRate_[0]) == "Walking 2mph": metRate.append(2.0)
+                elif str(metabolicRate_[0]) == "Walking 3mph": metRate.append(2.6)
+                elif str(metabolicRate_[0]) == "Walking 4mph": metRate.append(3.8)
+                elif str(metabolicRate_[0]) == "Running 9mph": metRate.append(9.5)
+                elif str(metabolicRate_[0]) == "Lifting 10lbs": metRate.append(2.1)
+                elif str(metabolicRate_[0]) == "Lifting 100lbs": metRate.append(4.0)
+                elif str(metabolicRate_[0]) == "Shoveling": metRate.append(4.4)
+                elif str(metabolicRate_[0]) == "Dancing": metRate.append(3.4)
+                elif str(metabolicRate_[0]) == "Basketball": metRate.append(6.3)
+                else: pass
+            except: pass
+        if len(metRate) > 0: checkData5 = True
         if nonVal == False: checkData5 = False
         if len(metabolicRate_) > 1: metMultVal = True
         if checkData5 == False:
@@ -265,7 +313,7 @@ def checkTheInputs():
         checkData = False
     
     #Let's return everything we need.
-    return checkData, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork
+    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork
 
 
 
@@ -618,22 +666,201 @@ def comfPierceSET(ta, tr, vel, rh, met, clo, wme):
     return X
 
 
+def calcBalTemp(windSpeed, relHumid, metRate, cloLevel, exWork):
+    balTemper = 21
+    delta = 3
+    while abs(delta) > 0.01:
+        delta, ppd, set, taAdj, coolingEffect = comfPMVElevatedAirspeed(balTemper, balTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+        balTemper = balTemper - delta
+    return balTemper
+
+
+def calcComfRange(windSpeed, relHumid, metRate, cloLevel, exWork):
+    upTemper = 24
+    upDelta = 3
+    downTemper = 18
+    downDelta = 3
+    while abs(upDelta) > 0.01:
+        pmv, ppd, set, taAdj, coolingEffect = comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+        upDelta = 1 - pmv
+        upTemper = upTemper + upDelta
+    
+    while abs(downDelta) > 0.01:
+        pmv, ppd, set, taAdj, coolingEffect = comfPMVElevatedAirspeed(downTemper, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+        downDelta = -1 - pmv
+        downTemper = downTemper + downDelta
+    
+    return upTemper, downTemper
+
+
+def getHOYs(hours, days, months, timeStep, lb_preparation, method = 0):
+    
+    if method == 1: stDay, endDay = days
+        
+    numberOfDaysEachMonth = lb_preparation.numOfDaysEachMonth
+    
+    if timeStep != 1: hours = rs.frange(hours[0], hours[-1] + 1 - 1/timeStep, 1/timeStep)
+    
+    HOYS = []
+    
+    for monthCount, m in enumerate(months):
+        # just a single day
+        if method == 1 and len(months) == 1 and stDay - endDay == 0:
+            days = [stDay]
+        # few days in a single month
+        
+        elif method == 1 and len(months) == 1:
+            days = range(stDay, endDay + 1)
+        
+        elif method == 1:
+            #based on analysis period
+            if monthCount == 0:
+                # first month
+                days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
+            elif monthCount == len(months) - 1:
+                # last month
+                days = range(1, lb_preparation.checkDay(endDay, m) + 1)
+            else:
+                #rest of the months
+                days = range(1, numberOfDaysEachMonth[monthCount] + 1)
+        
+        for d in days:
+            for h in hours:
+                h = lb_preparation.checkHour(float(h))
+                m  = lb_preparation.checkMonth(int(m))
+                d = lb_preparation.checkDay(int(d), m)
+                HOY = lb_preparation.date2Hour(m, d, h)
+                if HOY not in HOYS: HOYS.append(int(HOY))
+    
+    return HOYS
+
+
+def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
+    
+    stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, True, False)
+    
+    if stMonth > endMonth:
+        months = range(stMonth, 13) + range(1, endMonth + 1)
+    else:
+        months = range(stMonth, endMonth + 1)
+    
+    # end hour shouldn't be included
+    hours  = range(stHour, endHour)
+    
+    days = stDay, endDay
+    
+    HOYS = getHOYs(hours, days, months, timeStep, lb_preparation, method = 1)
+    
+    return HOYS, months, days
+
+
+def main():
+    # import the classes
+    if sc.sticky.has_key('ladybug_release'):
+        lb_preparation = sc.sticky["ladybug_Preparation"]()
+        
+        #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
+        checkData = False
+        checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork = checkTheInputs()
+        
+        #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
+        if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
+            HOYS, months, days = getHOYsBasedOnPeriod(analysisPeriod_, 1, lb_preparation)
+            runPeriod = analysisPeriod_
+            calcLength = len(HOYS)
+        elif calcLength == 8760 and len(analysisPeriod_)==0 and epwData == True:
+            HOYS = range(calcLength)
+            runPeriod = [epwStr[5], epwStr[6]]
+        else:
+            HOYS = range(calcLength)
+        
+        #If things are good, run it through the comfort model.
+        predictedMeanVote = []
+        percentPeopleDissatisfied = []
+        standardEffectiveTemperature = []
+        comfortableOrNot = []
+        percentOfTimeComfortable = None
+        if checkData == True and epwData == True:
+            predictedMeanVote.extend([epwStr[0], epwStr[1], 'Predicted Mean Vote', 'PMV', epwStr[4], runPeriod[0], runPeriod[1]])
+            percentPeopleDissatisfied.extend([epwStr[0], epwStr[1], 'Percentage of People Dissatisfied', '%', epwStr[4], runPeriod[0], runPeriod[1]])
+            standardEffectiveTemperature.extend([epwStr[0], epwStr[1], 'Standard Effective Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        if checkData == True:
+            try:
+                for count in HOYS:
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    pmv, ppd, set, taAdj, coolingEffect = comfPMVElevatedAirspeed(airTemp[count], radTemp[count], windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
+                    predictedMeanVote.append(pmv)
+                    percentPeopleDissatisfied.append(ppd)
+                    standardEffectiveTemperature.append(set)
+                    if pmv < 1 and pmv > -1:
+                        comfortableOrNot.append(1)
+                    else: comfortableOrNot.append(0)
+                percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100
+            except:
+                predictedMeanVote = []
+                percentPeopleDissatisfied = []
+                standardEffectiveTemperature = []
+                comfortableOrNot = []
+                percentOfTimeComfortable = None
+                print "The calculation has been terminated by the user!"
+                e = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
+        
+        #If things are good and the user has set the calcBalanceTemperature to "True", calculate the balance temperature.
+        balanceTemperature = []
+        if checkData == True and calcBalanceTemperature_ == True and epwData == True:
+            balanceTemperature.extend([epwStr[0], epwStr[1], 'Balance Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        if checkData == True and calcBalanceTemperature_ == True:
+            try:
+                for count in HOYS:
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    balTemp = calcBalTemp(windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
+                    balanceTemperature.append(balTemp)
+            except:
+                balanceTemperature = []
+                print "The calculation has been terminated by the user!"
+                e = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
+        
+        #If things are good and the user has set the calcComfortRange to "True", calculate the comfort range.
+        upperComfortTemperature = []
+        lowerComfortTemperature = []
+        if checkData == True and calcComfortRange_ == True and epwData == True:
+            upperComfortTemperature.extend([epwStr[0], epwStr[1], 'Upper Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            lowerComfortTemperature.extend([epwStr[0], epwStr[1], 'Lower Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        if checkData == True and calcComfortRange_ == True:
+            try:
+                for count in HOYS:
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    upTemp, lowTemp = calcComfRange(windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
+                    upperComfortTemperature.append(upTemp)
+                    lowerComfortTemperature.append(lowTemp)
+            except:
+                upperComfortTemperature = []
+                lowerComfortTemperature = []
+                print "The calculation has been terminated by the user!"
+                e = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
+        
+        #Return all of the info.
+        return predictedMeanVote, percentPeopleDissatisfied, standardEffectiveTemperature, comfortableOrNot, percentOfTimeComfortable, balanceTemperature, upperComfortTemperature, lowerComfortTemperature
+    else:
+        print "You should first let the Ladybug fly..."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
+        return [None, None, None, None, None, None]
 
 
 
 
-# Cehck the inputs and organize the incoming data into streams that can be run t
-checkData = False
 if _runIt == True:
-    checkData, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork = checkTheInputs()
+    predictedMeanVote, percentPeopleDissatisfied, standardEffectiveTemperature, comfortableOrNot, percentOfTimeComfortable, balanceTemperature, upperComfortTemperature, lowerComfortTemperature = main()
 
-#If things are good, run it through the PMV model.
-if checkData == True:
-    predictedMeanVote = []
-    percentPeopleDissatisfied = []
-    standardEffectiveTemperature = []
-    for count in range(calcLength):
-        pmv, ppd, set, taAdj, coolingEffect = comfPMVElevatedAirspeed(airTemp[count], radTemp[count], windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
-        predictedMeanVote.append(pmv)
-        percentPeopleDissatisfied.append(ppd)
-        standardEffectiveTemperature.append(set)
+
+

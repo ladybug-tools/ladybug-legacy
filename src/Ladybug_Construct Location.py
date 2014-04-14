@@ -13,9 +13,9 @@ Provided by Ladybug 0.0.57
     Args:
         _locationName: A name for the location you are constructing. (ie. Steventon Island, Antarctica)
         _latitude: The latitude of the location you are constructing. Values must be between -90 and 90. Default is set to the equator.
-        _longitude_: Optional longitude of the location you are constructing. (this can improve the accuracy of the resulting sun plot)
-        _timeZone_: Optional time zone of the location you are constructing. (this can improve the accuracy of the resulting sun plot)
-        _elevation_: Optional elevation of the location you are constructing.
+        _longitude_: An optional numerical value representing the longitude of the location you are constructing. This can improve the accuracy of the resulting sun plot.
+        _timeZone_: An optional integer representing the time zone of the location you are constructing. This can improve the accuracy of the resulting sun plot.  The time zone should follow the epw convention and should be between -12 and +12, where 0 is at Greenwich, UK, positive values are to the East of Greenwich and negative values are to the West.
+        _elevation_: An optional numerical value representing the elevation of the location you are constructing.
     Returns:
         readMe!: ...
         location: A list of text summarizing the location data in the weather file (use this to construct the sun path).
@@ -24,7 +24,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Construct Location"
 ghenv.Component.NickName = 'constructLocation'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_13_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

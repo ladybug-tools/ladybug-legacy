@@ -30,7 +30,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Humidity Ratio Calculator"
 ghenv.Component.NickName = 'CalcHumidityRatio'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_13_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -182,7 +182,7 @@ def main():
        HR.append(Tstr[1])
        HR.append('Humidity Ratio')
        HR.append('kg water / kg air')
-       HR.append('Hourly')
+       HR.append(Tstr[4])
        HR.append(Tstr[5])
        HR.append(Tstr[6])
        
@@ -195,7 +195,7 @@ def main():
        EN.append(Tstr[1])
        EN.append('Enthalpy')
        EN.append('kJ/kg')
-       EN.append('Hourly')
+       EN.append(Tstr[4])
        EN.append(Tstr[5])
        EN.append(Tstr[6])
        
@@ -209,7 +209,7 @@ def main():
        SP.append(Tstr[1])
        SP.append('Saturation Pressure')
        SP.append('Pa')
-       SP.append('Hourly')
+       SP.append(Tstr[4])
        SP.append(Tstr[5])
        SP.append(Tstr[6])
        
