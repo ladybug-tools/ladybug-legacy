@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_14_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2367,8 +2367,8 @@ class ComfortModels(object):
         return X
     
     
-    def calcBalTemp(self, windSpeed, relHumid, metRate, cloLevel, exWork):
-        balTemper = 21
+    def calcBalTemp(self, initialGuess, windSpeed, relHumid, metRate, cloLevel, exWork):
+        balTemper = initialGuess
         delta = 3
         while abs(delta) > 0.01:
             delta, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(balTemper, balTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
@@ -2376,16 +2376,18 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, windSpeed, relHumid, metRate, cloLevel, exWork):
-        upTemper = 24
+    def calcComfRange(self, initialGuessUp, initialGuessDown, windSpeed, relHumid, metRate, cloLevel, exWork):
+        upTemper = initialGuessUp
         upDelta = 3
-        downTemper = 18
-        downDelta = 3
         while abs(upDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
             upDelta = 1 - pmv
             upTemper = upTemper + upDelta
         
+        if initialGuessDown == None:
+            downTemper = upTemper - 6
+        else: downTemper = initialGuessDown
+        downDelta = 3
         while abs(downDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
             downDelta = -1 - pmv

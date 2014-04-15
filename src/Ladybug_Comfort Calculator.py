@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Comfort Calculator"
 ghenv.Component.NickName = 'ComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_14_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -397,6 +397,7 @@ def main():
             runPeriod = [epwStr[5], epwStr[6]]
         else:
             HOYS = range(calcLength)
+            runPeriod = [(0,0,0), (0,0,0)]
         
         #If things are good, run it through the comfort model.
         predictedMeanVote = []
@@ -442,7 +443,11 @@ def main():
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
-                    balTemp = lb_comfortModels.calcBalTemp(windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
+                    if count == HOYS[0]:
+                        balTemp = 24
+                    else: pass
+                    
+                    balTemp = lb_comfortModels.calcBalTemp(balTemp, windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
                     balanceTemperature.append(balTemp)
             except:
                 balanceTemperature = []
@@ -462,7 +467,12 @@ def main():
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
-                    upTemp, lowTemp = lb_comfortModels.calcComfRange(windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
+                    if count == HOYS[0]:
+                        upTemp = 26
+                        lowTemp = None
+                    else: pass
+                    
+                    upTemp, lowTemp = lb_comfortModels.calcComfRange(upTemp, lowTemp, windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
                     upperComfortTemperature.append(upTemp)
                     lowerComfortTemperature.append(lowTemp)
             except:
