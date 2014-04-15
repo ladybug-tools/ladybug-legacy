@@ -24,7 +24,7 @@ Provided by Ladybug 0.0.57
         _centerPoint_: Input a point here to change the location of the wind rose in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
-        maxFrequency_: Optional number to fix the maximum frequency for windrose. Mainly useful for comparative analysis.
+        maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
         _runIt: Set this value to "True" to run the component and generate a wind rose in the Rhino scene.
         bakeIt_: Set this value to "True" to bake the wind rose into the Rhino scene.
     
