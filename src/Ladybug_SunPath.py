@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_05_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -481,7 +481,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         ##
                         compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
-                        numberCrvs = lb_visualization.text2crv(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                        numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
                         compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
 
@@ -544,7 +544,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     
                 textSize = legendScale * 0.5 * lb_visualization.BoundingBoxPar[2]/20
                 titlebasePt = lb_visualization.BoundingBoxPar[-2]
-                titleTextCurve = lb_visualization.text2crv(['\n\n' + customHeading], [titlebasePt], 'Veranda', textSize)
+                titleTextCurve = lb_visualization.text2srf(['\n\n' + customHeading], [titlebasePt], 'Veranda', textSize)
                 legend = None, lb_preparation.flattenList(titleTextCurve)
                 
                 legendText.append('\n\n' + customHeading)
@@ -552,7 +552,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 sunsJoined = colorSun(sunSpheres, colors)
                 
                 compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
-                numberCrvs = lb_visualization.text2crv(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
                 compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                 
                 if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, textSize, sunPathCrvs + compassCrvs)

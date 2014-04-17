@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -134,7 +134,7 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
                 northVector = rc.Geometry.Vector3d.YAxis
                 # print legendMax[i]
                 compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 0.3 * scale * legendMax[i], roseAngles, 1.2*textSize, True)
-                numberCrvs = lb_visualization.text2crv(compassText, compassTextPts, 'Times New Romans', textSize/1.7)
+                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.7)
                 compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                 
                 for crv in legendTextCrv + [compassCrvs]:

@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_12_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -109,13 +109,14 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
         , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
         
+        #print listInfo[i], customHeading[i]
         # generate the title
         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i])
         
         # generate compass curve
         northVector = rc.Geometry.Vector3d.YAxis
         compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 100 * scale, range(0, 360, 10), 1.2*textSize)
-        numberCrvs = lb_visualization.text2crv(compassText, compassTextPts, 'Times New Romans', textSize/1.2)
+        numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.2)
         compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
         
         # move all the geometries to the right place
@@ -249,7 +250,7 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
     
     # prepare legend information
     legendTitles = [listInfo[0][3], listInfo[1][3], listInfo[2][3]]
-    customHeading = ['\n\nTotal Radiation('+ listInfo[0][3]+')', 'Diffuse Radiation(' + listInfo[1][3] + ')', 'Direct Radiation(' + listInfo[2][3] + ')']
+    customHeading = ['\n\nTotal Radiation('+ listInfo[0][3]+')', '\n\nDiffuse Radiation(' + listInfo[1][3] + ')', '\n\nDirect Radiation(' + listInfo[2][3] + ')']
     
     legendMax = [max(separatedLists[0]), max(separatedLists[1] + separatedLists[2]), max(separatedLists[1] + separatedLists[2])]
     legendMin = [0,0,0]

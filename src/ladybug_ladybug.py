@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_15_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_17_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1315,7 +1315,8 @@ class MeshPreparation(object):
 
 class RunAnalysisInsideGH(object):
     #
-    def calRadRoseRes(self, tiltedRoseVectors, TregenzaPatchesNormalVectors, genCumSkyResult, testPoint = rc.Geometry.Point3d.Origin, bldgMesh = [], groundRef = 0):
+    def calRadRoseRes(self, tiltedRoseVectors, TregenzaPatchesNormalVectors, genCumSkyResult, testPoint = rc.Geometry.Point3d.Origin, bldgMesh = [], 
+groundRef = 0):
         radResult = []; sunUpHours = 1
         for vec in tiltedRoseVectors:
             radiation = 0; groundRadiation = 0; patchNum = 0;
@@ -1426,7 +1427,8 @@ class RunAnalysisInsideGH(object):
         return radResult, totalRadiation, intersectionMtx
     
     
-    def parallel_sunlightHoursCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, sunVectors, conversionFac, northVector, timeStep = 1):
+    def parallel_sunlightHoursCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, sunVectors, conversionFac, northVector, 
+timeStep = 1):
         # preparing bulk lists
         sunlightHours = [0] * len(testPts)
         sunlightHoursResult = [0] * len(testPts)
@@ -1778,7 +1780,7 @@ class ResultVisualization(object):
         legendSrf, textPt = legend(basePt, legendHeight, legendWidth, numOfSeg)
         #print numOfSeg
         textSize = (legendHeight/3) * legendScale
-        numbersCrv = self.text2crv(numbersStr, textPt, 'Verdana', textSize)
+        numbersCrv = self.text2srf(numbersStr, textPt, 'Verdana', textSize)
         
         return legendSrf, numbers, numbersCrv, textPt, textSize
     
@@ -1864,6 +1866,33 @@ class ResultVisualization(object):
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
         return textCrvs
     
+    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20):
+        # Thanks to Giulio Piacentino for his version of text to curve
+        textSrfs = []
+        for n in range(len(text)):
+            plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
+            if type(text[n]) is not str:
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, True, False)
+            else:
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, True, False)
+                
+            postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
+            TG = postText.Geometry
+            crvs = TG.Explode()
+            
+            # join the curves
+            joindCrvs = rc.Geometry.Curve.JoinCurves(crvs)
+            
+            # create the surface
+            srfs = rc.Geometry.Brep.CreatePlanarBreps(joindCrvs)
+            
+            if srfs: textSrfs.append(srfs)
+            else: textSrfs.append(crvs)
+            
+            rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
+            
+        return textSrfs
+    
     def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False):
         if Heading==None: Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
         
@@ -1876,11 +1905,12 @@ class ResultVisualization(object):
         else: titleStr = '\n' + Heading + '\n' + listInfo[0][1] + '\n' + period
         
         titlebasePt = boundingBoxPar[-2]
-        titleTextCurve = self.text2crv([titleStr], [titlebasePt], 'Veranda', (boundingBoxPar[2]/30) * legendScale)
+        titleTextCurve = self.text2srf([titleStr], [titlebasePt], 'Veranda', (boundingBoxPar[2]/30) * legendScale)
         
         return titleTextCurve, titleStr, titlebasePt
 
-    def compassCircle(self, cenPt = rc.Geometry.Point3d.Origin, northVector = rc.Geometry.Vector3d.YAxis, radius = 200, angles = range(0,360,30), xMove = 10, centerLine = False):
+    def compassCircle(self, cenPt = rc.Geometry.Point3d.Origin, northVector = rc.Geometry.Vector3d.YAxis, radius = 200, angles = range(0,360,30), xMove = 
+10, centerLine = False):
         baseCircle = rc.Geometry.Circle(cenPt, radius).ToNurbsCurve()
         outerCircle = rc.Geometry.Circle(cenPt, 1.02*radius).ToNurbsCurve()
         
@@ -2008,7 +2038,12 @@ class ResultVisualization(object):
             
             rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
             if crvs != None:
-                for crv in crvs: rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+                for crv in crvs:
+                    try:
+                        rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+                    except:
+                        # This is for breps surfaces as I changed curves to surfaces now
+                        rc.RhinoDoc.ActiveDoc.Objects.AddBrep(crv, attr)
             for text in range(len(legendText)):
                 plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
                 if type(legendText[text]) is not str: legendText[text] = ("%.2f" % legendText[text])
@@ -2030,7 +2065,7 @@ class ComfortModels(object):
         r = []
         set = self.comfPierceSET(ta, tr, vel, rh, met , clo, wme)
         
-        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
+        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function 
         def utilSecant(a, b, epsilon):
             # root-finding only
             res = []
