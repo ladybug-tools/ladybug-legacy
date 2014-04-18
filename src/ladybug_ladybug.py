@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_17_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1886,9 +1886,25 @@ class ResultVisualization(object):
             # create the surface
             srfs = rc.Geometry.Brep.CreatePlanarBreps(joindCrvs)
             
-            if srfs: textSrfs.append(srfs)
-            else: textSrfs.append(crvs)
+            if "<=" in text[n]:
+                # = generate 2 surfaces
+                extraSrfCount = -1
+            else:
+                extraSrfCount = 0
+                
+            if len(text[n]) != len(srfs) + extraSrfCount:
+                # project the curves to the place in case number of surfaces
+                # doesn't match the text
+                projectedCrvs = []
+                for crv in joindCrvs:
+                    projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
+                srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
             
+            if len(text[n]) == len(srfs)+ extraSrfCount:
+                textSrfs.append(srfs)
+            else:
+                textSrfs.append(projectedCrvs)
+                
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
             
         return textSrfs
