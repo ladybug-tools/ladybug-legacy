@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -84,7 +84,7 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             
             titlebasePt = lb_visualization.BoundingBoxPar[-2]
-            titleTextCurve = lb_visualization.text2crv([analysisTitle], [titlebasePt], 'Veranda', legendScale * (lb_visualization.BoundingBoxPar[2]/20))
+            titleTextCurve = lb_visualization.text2srf(["\n\n" + analysisTitle], [titlebasePt], 'Veranda', legendScale * (lb_visualization.BoundingBoxPar[2]/20))
             
             if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
             
