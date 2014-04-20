@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_16_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -79,7 +79,7 @@ def skyPreparation(skyType):
         
 
 
-def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, showTotalOnly, bakeIt, skyType):
+def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, showTotalOnly, bakeIt, skyType):
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
     
@@ -89,17 +89,17 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
         ghenv.Component.AddRuntimeMessage(w, "selectedSkyMtx is not a valid Ladybug sky information!")
         return -1
     
-    def visualizeData(i, results, originalSkyDomeSrfs, legendTitle, legendPar, bakeIt):
+    def visualizeData(i, northAngle, results, originalSkyDomeSrfs, legendTitle, legendPar, bakeIt):
         # creat moving vector for each sky
         movingVector = rc.Geometry.Vector3d(i * movingDist,0,0)
         
         # check if the user has an input for legend parameters
         overwriteScale = False
         if legendPar == []: overwriteScale = True
-        elif legendPar[-1] == None: overwriteScale = True
+        elif legendPar[5] == None: overwriteScale = True
         
         # read the legend parameters legend
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
         
         # this is not a good idea to set the default to 0.9!
         # should be fixed later
@@ -107,11 +107,11 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
         
         # generate the legend
         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
         
         #print listInfo[i], customHeading[i]
         # generate the title
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i])
+        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False,  legendFont, legendFontSize)
         
         # generate compass curve
         northVector = rc.Geometry.Vector3d.YAxis
@@ -139,6 +139,7 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         legendSrfs.Translate(movingVector) # move it to the right place
         
+        
         # generate dome patches colors
         totalRadiationColors = lb_visualization.gradientColor(results, lowB, highB, customColors)
         
@@ -153,7 +154,8 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
         skyPatchAreas = []
         movedSkyPatches = []
         for patchCount, patch in enumerate(skyDomeSrfs):
-            newPatch = patch.DuplicateShallow() # make a copy so I ca
+            newPatch = patch.DuplicateShallow() # make a copy so I can
+            if northAngle!=0: newPatch.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis, rc.Geometry.Point3d.Origin)
             newPatch.Translate(movingVector) # move it to the right place
             movedSkyPatches.append(newPatch)
             MP = rc.Geometry.AreaMassProperties.Compute(newPatch)
@@ -192,10 +194,14 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
             # check the study type
             newLayerIndex, l = lb_visualization.setupLayers(skyTypes[i], 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
             
-            lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize, 'Verdana', compassCrvs)
+            lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, compassCrvs)
             
         return domeMeshed, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], compassCrvs, movedLegendBasePoint, skyPatchCenPts, skyPatchAreas, strResults, movedSkyPatches
     
+    
+    
+    # north direction
+    northAngle, northVector = lb_preparation.angle2north(north)
     
     # separate ladybug input data into lists
     indexList, listInfo = lb_preparation.separateList(genCumSkyResult, lb_preparation.strToBeFound)
@@ -274,13 +280,13 @@ def main(genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, sh
                 normLegend = True
         except:
             # make an initial legend parameter to replace the max
-            legendPar = [None,None,None,[],None, None]
+            legendPar = [None,None,None,[],None, None, None, None]
             legendPar[0] = legendMin[i]
             legendPar[1] = legendMax[i]
             normLegend = True
         
         # this was a stupid idea to separate this function
-        coloredSkyMesh, legend, compassCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues, movedSkySrfs = visualizeData(i, separatedLists[i], skyDomeSrfs, legendTitles[i], legendPar, bakeIt)
+        coloredSkyMesh, legend, compassCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues, movedSkySrfs = visualizeData(i, northAngle, separatedLists[i], skyDomeSrfs, legendTitles[i], legendPar, bakeIt)
         
         result[0].append(coloredSkyMesh)
         result[1].append(legend)
@@ -298,8 +304,10 @@ if _runIt and _selectedSkyMtx:
     elif len(_selectedSkyMtx) == 1752: skyType = 1
     # generate sky domes and put them in the shared library
     skyGeometries = skyPreparation(skyType)
+    
+    north_ = 0 # I will apply rotation for north later! It is partially applied
     if skyGeometries != -1:
-        result = main(_selectedSkyMtx, skyGeometries, _centerPoint_, _scale_, legendPar_, showTotalOnly_, bakeIt_, skyType)
+        result = main(north_, _selectedSkyMtx, skyGeometries, _centerPoint_, _scale_, legendPar_, showTotalOnly_, bakeIt_, skyType)
         
         if result!=-1:
             legend = DataTree[Object]()

@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_18_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -308,7 +308,7 @@ class Preparation(object):
         return selHourlyData
     
     def readLegendParameters(self, legendPar, getCenter = True):
-        if legendPar == []: legendPar = [None] * 6
+        if legendPar == []: legendPar = [None] * 8
         if legendPar[0] == None: lowB = 'min'
         elif legendPar[0] == 'min': lowB = 'min'
         else: lowB = float(legendPar[0])
@@ -333,7 +333,13 @@ class Preparation(object):
         if legendPar[5] == None or float(legendPar[5])==0: legendScale = 1
         else: legendScale = legendPar[5]
         
-        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale
+        if legendPar[6] == None: legendFont = 'Verdana'
+        else: legendFont = legendPar[6]
+        
+        if legendPar[7] == None: legendFontSize = None
+        else: legendFontSize = legendPar[7]
+        
+        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize
     
     def readOrientationParameters(self, orientationStudyP):
         try:
@@ -1728,7 +1734,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -1778,9 +1784,14 @@ class ResultVisualization(object):
         
         # mesh surfaces and legend text
         legendSrf, textPt = legend(basePt, legendHeight, legendWidth, numOfSeg)
-        #print numOfSeg
-        textSize = (legendHeight/3) * legendScale
-        numbersCrv = self.text2srf(numbersStr, textPt, 'Verdana', textSize)
+        
+        # check for user input
+        if font == None:
+            font = 'Verdana'
+        if  textSize == None:
+            textSize = (legendHeight/3) * legendScale
+        
+        numbersCrv = self.text2srf(numbersStr, textPt, font, textSize)
         
         return legendSrf, numbers, numbersCrv, textPt, textSize
     
@@ -1886,13 +1897,13 @@ class ResultVisualization(object):
             # create the surface
             srfs = rc.Geometry.Brep.CreatePlanarBreps(joindCrvs)
             
-            if "<=" in text[n]:
-                # = generate 2 surfaces
-                extraSrfCount = -1
-            else:
-                extraSrfCount = 0
-                
-            if len(text[n]) != len(srfs) + extraSrfCount:
+            
+            extraSrfCount = 0
+            # = generate 2 surfaces
+            if "=" in text[n]: extraSrfCount += -1
+            if ":" in text[n]: extraSrfCount += -1
+            
+            if len(text[n].strip()) != len(srfs) + extraSrfCount:
                 # project the curves to the place in case number of surfaces
                 # doesn't match the text
                 projectedCrvs = []
@@ -1900,16 +1911,20 @@ class ResultVisualization(object):
                     projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
                 srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
             
-            if len(text[n]) == len(srfs)+ extraSrfCount:
+            if len(text[n].strip()) == len(srfs)+ extraSrfCount:
                 textSrfs.append(srfs)
             else:
+                #print len(text[n])
+                #print len(text[n].strip())
+                #print len(srfs)+ extraSrfCount
+                #print extraSrfCount
                 textSrfs.append(projectedCrvs)
                 
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
             
         return textSrfs
     
-    def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False):
+    def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False, font = None, fontSize = None):
         if Heading==None: Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
         
         stMonth, stDay, stHour, endMonth, endDay, endHour = self.readRunPeriod((listInfo[0][5], listInfo[0][6]), False)
@@ -1920,13 +1935,18 @@ class ResultVisualization(object):
         if shortVersion: titleStr = '\n' + Heading
         else: titleStr = '\n' + Heading + '\n' + listInfo[0][1] + '\n' + period
         
+        if font == None: font = 'Veranda'
+        
+        if fontSize == None: fontSize = (boundingBoxPar[2]/30) * legendScale
+        
         titlebasePt = boundingBoxPar[-2]
-        titleTextCurve = self.text2srf([titleStr], [titlebasePt], 'Veranda', (boundingBoxPar[2]/30) * legendScale)
+        
+        titleTextCurve = self.text2srf([titleStr], [titlebasePt], font, fontSize)
         
         return titleTextCurve, titleStr, titlebasePt
 
     def compassCircle(self, cenPt = rc.Geometry.Point3d.Origin, northVector = rc.Geometry.Vector3d.YAxis, radius = 200, angles = range(0,360,30), xMove = 
-10, centerLine = False):
+                        10, centerLine = False):
         baseCircle = rc.Geometry.Circle(cenPt, radius).ToNurbsCurve()
         outerCircle = rc.Geometry.Circle(cenPt, 1.02*radius).ToNurbsCurve()
         

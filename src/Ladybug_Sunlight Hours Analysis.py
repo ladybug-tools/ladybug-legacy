@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -190,7 +190,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
     
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
         
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
         
         colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
 
@@ -202,7 +202,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         if not (runOrientation and legendBasePoint==None):
             lb_visualization.calculateBB([analysisSrfs, contextSrfs])
         # legend geometry
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
         
         # legend colors
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -213,7 +213,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         if runOrientation:
             try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
             except: pass
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo], lb_visualization.BoundingBoxPar, legendScale, customHeading, True)
+        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
         
         # calculate the boundingbox to find the legendPosition
         if not (runOrientation and legendBasePoint==None):
@@ -226,7 +226,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
             newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
                                                             studyLayerName, checkTheName,
                                                             runOrientation, angle, l)
-            lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, fontName = 'Verdana')
+            lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont)
         
         return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 

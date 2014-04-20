@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_14_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -140,7 +140,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
         
         conversionFac = lb_preparation.checkUnits()
         
-        def bakePlease(listInfo, meshJoined, legendSrfs, legendText, textPt, textSize, windRoseCrvs):
+        def bakePlease(listInfo, meshJoined, legendSrfs, legendText, textPt, legendFont, textSize, windRoseCrvs):
             # legendText = legendText + ('\n\n' + customHeading)
             studyLayerName = 'WINDROSE'
             try:
@@ -153,7 +153,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             # check the study type
             newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
-            lb_visualization.bakeObjects(newLayerIndex, meshJoined, legendSrfs, legendText, textPt, textSize, 'Verdana', windRoseCrvs)
+            lb_visualization.bakeObjects(newLayerIndex, meshJoined, legendSrfs, legendText, textPt, textSize, legendFont, windRoseCrvs)
         
         def movePointList(textPt, movingVector):
             for ptCount, pt in enumerate(textPt):
@@ -323,7 +323,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             # initial compass for BB
             textSize = 10
             compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
-            numberCrvs = lb_visualization.text2crv(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+            numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
             compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
             lb_visualization.calculateBB(compassCrvs, True)
             
@@ -331,7 +331,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == None: overwriteScale = True
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.9
             legend = []; legendText = []; textPt = []; legendSrfs = None
@@ -374,7 +374,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         
                         # get the legend done
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(allValues
-                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
                         
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -395,7 +395,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             # print resultStr
                             customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
-                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True)
+                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
                         
                         
                         # find the freq of the numbers in each segment
@@ -555,7 +555,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         
                     if bakeIt:
                         try:
-                            bakePlease(listInfo[i], [segments, centerMesh], legendSrfs, legendText, textPt, textSize, crvsTemp)
+                            bakePlease(listInfo[i], [segments, centerMesh], legendSrfs, legendText, textPt, legendFont, textSize, crvsTemp)
                         except Exception, e:
                             print `e`
                             

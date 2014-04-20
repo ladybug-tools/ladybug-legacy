@@ -31,7 +31,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -243,8 +243,9 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 zSC = abs(zSC)
                 
                 # read legend parameters
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
                 
+                # print lowB, highB, numSeg, legendBasePoint, legendScale
                 # draw the graph
                 mesh, conditionalPoints, duplicatedMeshPattern = lb_visualization.chartGeometry(results, xC, xSC, ySC, zSC, patternList, lb_preparation.getCenPt(basePoint))
                 
@@ -294,7 +295,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 movingVector = rc.Geometry.Vector3d(0, i * movingDist,0)
                 coloredChart.Translate(movingVector)
-                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]],lb_visualization.BoundingBoxPar, legendScale)
+                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]],lb_visualization.BoundingBoxPar, legendScale, None, False, legendFont, legendFontSize)
                 
                 legendTitle = listInfo[i][3]
                 placeName = listInfo[i][1]
@@ -302,7 +303,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 # create legend geometries
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
                 
                 textPt.append(titlebasePt)
                 
@@ -359,7 +360,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     except:
                         placeName = 'alternateLayerName'
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, fontName = 'Verdana')
+                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont)
                 
                 res[0].append(coloredChart)
                 res[1].append([legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)])

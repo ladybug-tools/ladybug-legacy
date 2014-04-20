@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_16_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -253,7 +253,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 sunS.Append(sun)
             return lb_visualization.colorMesh(repeatedColors, sunS)
 
-        def bakePlease(listInfo, sunsJoined, legendSrfs, legendText, textPt, textSize, sunPathCrvs):
+        def bakePlease(listInfo, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs):
             # legendText = legendText + ('\n\n' + customHeading)
             studyLayerName = 'SUNPATH'
             try:
@@ -266,7 +266,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             
             # check the study type
             newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
-            lb_visualization.bakeObjects(newLayerIndex, sunsJoined, legendSrfs, legendText, textPt, textSize, 'Verdana', sunPathCrvs)
+            lb_visualization.bakeObjects(newLayerIndex, sunsJoined, legendSrfs, legendText, textPt, textSize, legendFont, sunPathCrvs)
         
         def movePointList(textPt, movingVector):
             for ptCount, pt in enumerate(textPt):
@@ -396,7 +396,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == []: overwriteScale = True
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.9
             
@@ -443,7 +443,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         customHeading = '\n\n\n\nSun-Path Diagram - Latitude: ' + `latitude` + '\n'
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(values
-                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
                         
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -469,7 +469,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                             # print resultStr
                             customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
-                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True)
+                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
                         
                         
                         legend = lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]])
@@ -523,7 +523,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         allSunPosInfo.append(modifiedsunPosInfo)
                         allValues.append(values)
                         
-                        if bakeIt: bakePlease(listInfo[i], sunsJoined, legendSrfs, legendText, textPt, textSize, crvsTemp)
+                        if bakeIt: bakePlease(listInfo[i], sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, crvsTemp)
             
                 return allSunPositions, allSunsJoined, sunVectors, allSunPathCrvs, allLegend, allValues, sunAlt, sunAzm, cenPts, allSunPosInfo, legendBasePoints, [sunUpHours]
             
@@ -555,7 +555,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
                 compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                 
-                if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, textSize, sunPathCrvs + compassCrvs)
+                if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvs)
                 
             else: return -1
                 

@@ -31,7 +31,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Lily"
 ghenv.Component.NickName = 'radiationCallaLily'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_16_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -197,7 +197,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
             elif legendPar[-1] == None: overwriteScale = True
             
             # generate the colors
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.85
             
@@ -245,7 +245,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
             
             # get the legend done
             legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(resultsFlatten
-                    , lowB, highB, numSeg, listInfo[0][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+                    , lowB, highB, numSeg, listInfo[0][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
             
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -255,7 +255,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
             
             # title
             customHeading = '\n\nRadiation Calla Lily (' + listInfo[0][3] + ')'
-            titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle(listInfo, lb_visualization.BoundingBoxPar, legendScale, customHeading)
+            titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle(listInfo, lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize)
             
             cenPtMoved = rc.Geometry.Point3d.Add(cenPt, 0.9*lb_visualization.BoundingBoxPar[3]*rc.Geometry.Vector3d.ZAxis)
             compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPtMoved, northVector, maxHorRadius, roseHAngles, 1.2*textSize)
@@ -275,7 +275,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
                 # check the study type
                 newLayerIndex, l = lb_visualization.setupLayers(period, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
                 
-                lb_visualization.bakeObjects(newLayerIndex, vaseMesh, legendSrfs, legendText, textPt, textSize, 'Verdana', compassCrvs)
+                lb_visualization.bakeObjects(newLayerIndex, vaseMesh, legendSrfs, legendText, textPt, textSize, legendFont, compassCrvs)
             # done
 
         return ptsClean, vaseMesh, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], resultsFlatten, testPtsInfos, compassCrvs
