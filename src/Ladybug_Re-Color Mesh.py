@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_18_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -63,7 +63,7 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
                 ghenv.Component.AddRuntimeMessage(w, warning)
                 return -1
             
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
             
             colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors)
             coloredChart = lb_visualization.colorMesh(colors, inputMesh)
@@ -75,7 +75,8 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
             if not analysisTitle: analysisTitle = '\nno title'
             
             legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(analysisResult
-                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale
+                , legendFont, legendFontSize)
             
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -84,7 +85,9 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             
             titlebasePt = lb_visualization.BoundingBoxPar[-2]
-            titleTextCurve = lb_visualization.text2srf(["\n\n" + analysisTitle], [titlebasePt], 'Veranda', legendScale * (lb_visualization.BoundingBoxPar[2]/20))
+            if legendFont == None: legendFont = 'Veranda'
+            if legendFontSize == None: legendFontSize = legendScale * (lb_visualization.BoundingBoxPar[2]/20)
+            titleTextCurve = lb_visualization.text2srf(["\n\n" + analysisTitle], [titlebasePt], legendFont, legendFontSize)
             
             if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
             
@@ -95,7 +98,7 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
                 if layerName == None: layerName = 'Custom'
                 # check the study type
                 newLayerIndex, l = lb_visualization.setupLayers('Modified Version', 'LADYBUG', layerName, studyLayerName)
-                lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, fontName = 'Verdana')
+                lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont)
                 
             return coloredChart, [legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]], legendBasePoint
         else:
