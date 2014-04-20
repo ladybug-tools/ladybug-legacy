@@ -11,6 +11,7 @@ The component will produce 3 sky domes by default: a dome showing just the diffu
 Provided by Ladybug 0.0.57
     
     Args:
+        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _selectedSkyMtx: The output from the selectSkyMtx component.
         _centerPoint_: A point that sets the location of the sky domes.  The default is set to the Rhino origin (0,0,0).
         _scale_: Use this input to change the scale of the sky dome.  The default is set to 1.
@@ -89,7 +90,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         ghenv.Component.AddRuntimeMessage(w, "selectedSkyMtx is not a valid Ladybug sky information!")
         return -1
     
-    def visualizeData(i, northAngle, results, originalSkyDomeSrfs, legendTitle, legendPar, bakeIt):
+    def visualizeData(i, northAngle, northVector, results, originalSkyDomeSrfs, legendTitle, legendPar, bakeIt):
         # creat moving vector for each sky
         movingVector = rc.Geometry.Vector3d(i * movingDist,0,0)
         
@@ -114,7 +115,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False,  legendFont, legendFontSize)
         
         # generate compass curve
-        northVector = rc.Geometry.Vector3d.YAxis
+        # northVector = rc.Geometry.Vector3d.YAxis
         compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 100 * scale, range(0, 360, 10), 1.2*textSize)
         numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.2)
         compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
@@ -155,7 +156,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         movedSkyPatches = []
         for patchCount, patch in enumerate(skyDomeSrfs):
             newPatch = patch.DuplicateShallow() # make a copy so I can
-            if northAngle!=0: newPatch.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis, rc.Geometry.Point3d.Origin)
+            if northAngle!=0: newPatch.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis, cenPt)
             newPatch.Translate(movingVector) # move it to the right place
             movedSkyPatches.append(newPatch)
             MP = rc.Geometry.AreaMassProperties.Compute(newPatch)
@@ -286,7 +287,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
             normLegend = True
         
         # this was a stupid idea to separate this function
-        coloredSkyMesh, legend, compassCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues, movedSkySrfs = visualizeData(i, northAngle, separatedLists[i], skyDomeSrfs, legendTitles[i], legendPar, bakeIt)
+        coloredSkyMesh, legend, compassCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues, movedSkySrfs = visualizeData(i, northAngle, northVector, separatedLists[i], skyDomeSrfs, legendTitles[i], legendPar, bakeIt)
         
         result[0].append(coloredSkyMesh)
         result[1].append(legend)
@@ -305,7 +306,6 @@ if _runIt and _selectedSkyMtx:
     # generate sky domes and put them in the shared library
     skyGeometries = skyPreparation(skyType)
     
-    north_ = 0 # I will apply rotation for north later! It is partially applied
     if skyGeometries != -1:
         result = main(north_, _selectedSkyMtx, skyGeometries, _centerPoint_, _scale_, legendPar_, showTotalOnly_, bakeIt_, skyType)
         

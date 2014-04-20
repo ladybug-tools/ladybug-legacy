@@ -11,6 +11,7 @@ Use this component to make a radiation rose in the Rhino scene.  Radiation roses
 Provided by Ladybug 0.0.57
     
     Args:
+        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _selectedSkyMtx: The output from the selectSkyMtx component.
         context_: Optional breps or meshes representing context surrounding the point at the center of the radiation rose.  This context geometry will block the radiation that shows up in the rose.
         _numOfArrows_: An interger that sets the number of arrows (or cardingal directions) in the radiation rose. The default is set to 36.
@@ -51,7 +52,7 @@ import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 
-def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, scale, arrowHeadScale, legendPar, showTotalOnly, bakeIt):
+def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, scale, arrowHeadScale, legendPar, showTotalOnly, bakeIt):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -60,6 +61,10 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         conversionFac = lb_preparation.checkUnits()
+        
+        
+        # north direction
+        northAngle, northVector = lb_preparation.angle2north(north)
         
         # copy the custom code here
         # check the input data
@@ -72,8 +77,8 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
             # separate the data
             indexList, listInfo = lb_preparation.separateList(genCumSkyResult, lb_preparation.strToBeFound)
             
-            if indexList[-1] == 456: patchesNormalVectors = lb_preparation.TregenzaPatchesNormalVectors
-            elif indexList[-1] == 1752: patchesNormalVectors = lb_preparation.getReinhartPatchesNormalVectors()
+            if indexList[-1] == 456: patchesNormalVectors = list(lb_preparation.TregenzaPatchesNormalVectors)
+            elif indexList[-1] == 1752: patchesNormalVectors = list(lb_preparation.getReinhartPatchesNormalVectors())
             
             # check num of arrows
             if not numOfArrows or int(numOfArrows) < 4: numOfArrows = 36
@@ -82,7 +87,6 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
                 except: numOfArrows = 36
             
             # define angles
-            northVector = (0,1,0)
             roseAngles = rs.frange(0,360,(360/numOfArrows));
             if round(roseAngles[-1]) == 360: roseAngles.remove(roseAngles[-1])
     
@@ -116,7 +120,7 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
             legendTitles = [listInfo[0][3], listInfo[1][3], listInfo[2][3]]
             customHeading = ['Total Radiation('+ listInfo[0][3]+')', 'Diffuse Radiation(' + listInfo[1][3] + ')', 'Direct Radiation(' + listInfo[2][3] + ')']
             
-            def visualizeData(i, results, arrows, legendTitle, legendPar, bakeIt, cenPt):
+            def visualizeData(i, northAngle, northVector, results, arrows, legendTitle, legendPar, bakeIt, cenPt):
                 
                 movingVector = rc.Geometry.Vector3d(i * movingDist, 0, 0)
                 
@@ -131,7 +135,6 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
                 
                 titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False, legendFont, legendFontSize)
                 
-                northVector = rc.Geometry.Vector3d.YAxis
                 # print legendMax[i]
                 compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 0.3 * scale * legendMax[i], roseAngles, 1.2*textSize, True)
                 numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.7)
@@ -240,6 +243,17 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
             for i in range(skyTypes):
                 if centerPoint == None: cenPt = rc.Geometry.Point3d.Origin
                 else: cenPt = centerPoint
+                
+                # rotating the vectors
+                if northVector != rc.Geometry.Vector3d.YAxis:
+                    rotatoionAngle= rc.Geometry.Vector3d.VectorAngle(northVector, rc.Geometry.Vector3d.YAxis, rc.Geometry.Plane.WorldXY)
+                    for vectorCount, vec in enumerate(tiltedRoseVectors):
+                        rcVector = rc.Geometry.Vector3d(vec)
+                        rcVector.Rotate(rotatoionAngle, rc.Geometry.Vector3d.ZAxis)
+                        patchesNormalVectors[vectorCount] = (rcVector.X, rcVector.Y, rcVector.Z)
+                        
+                    if contextSrfs!=[]: contextSrfs.Rotate(rotatoionAngle, rc.Geometry.Vector3d.ZAxis, cenPt)
+                    
                 radResult.append(lb_runStudy_GH.calRadRoseRes(tiltedRoseVectors, patchesNormalVectors, separatedLists[i], cenPt, contextSrfs))
             
             normLegend = False; res = [[], [], [], [], [], []];
@@ -281,7 +295,7 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
                         ghenv.Component.AddRuntimeMessage(w, "Input Radiation values are all 0")
                         return -1
                 
-                arrowsColored, leg, compassCrvs, arrowsEndPts, legendBsePt= visualizeData(i, radResult[i], arrows, legendTitles[i], legendPar, bakeIt, cenPt)
+                arrowsColored, leg, compassCrvs, arrowsEndPts, legendBsePt= visualizeData(i, northAngle, northVector, radResult[i], arrows, legendTitles[i], legendPar, bakeIt, cenPt)
                 
                 res[0].append(arrowsColored)
                 res[1].append(leg)
@@ -308,7 +322,7 @@ def main(genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerPoint, s
 
 
 if _runIt:
-    result = main(_selectedSkyMtx, context_, _numOfArrows_, _surfaceTiltAngle_, _centerPoint_,
+    result = main(north_, _selectedSkyMtx, context_, _numOfArrows_, _surfaceTiltAngle_, _centerPoint_,
                    _scale_, _arrowHeadScale_, legendPar_, showTotalOnly_, bakeIt_)
     
     if result!= -1:
