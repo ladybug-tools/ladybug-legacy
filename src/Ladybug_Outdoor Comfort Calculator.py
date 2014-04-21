@@ -6,13 +6,13 @@
 
 """
 Use this component to calculate the Universal Thermal Climate Index (UTCI) for a set of input climate conditions.  Perhaps the most familiar application of Univeral Thermal Climate Index (UTCI) is the temperature given by TV weathermen and women when they say that, "even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something higher or lower."
-UTCI is this temperature of what the weather "feels like" and it takes into account the outdoor radiant temperature (sometimes including solar radiation), relative humidity, and wind speed and.  UTCI uses these variables in a human energy balance model to give a temperature value that is indicative of the heat stress or cold stress felt by the human body.
+UTCI is this temperature of what the weather "feels like" and it takes into account the radiant temperature (sometimes including solar radiation), relative humidity, and wind speed.  UTCI uses these variables in a human energy balance model to give a temperature value that is indicative of the heat stress or cold stress felt by a human body in the outdoors.
 _
 A UTCI between 9 and 26 degrees Celcius indicates no thermal stress or comfortable conditions outdoors.
 _
-A UTCI between 26 and 32 degrees Celcius indicates slight heat stress (comfortable for short periods of time). Between 32 and 38 degrees UTCI indicates strong heat stress (not at all comfortable and dangerous beyond short periods of time).  Above 38, UTCI indicates very strong to extreme heat stress (very dangerous).
+A UTCI between 26 and 32 degrees Celcius indicates slight heat stress (comfortable for short periods of time). Between 32 and 38 degrees, UTCI indicates strong heat stress (not at all comfortable and dangerous beyond short periods of time).  Above 38, UTCI indicates very strong to extreme heat stress (very dangerous).
 _
-A UTCI between -14 and 9 degrees Celcius indicates slight cold stress (comfortable for short periods of time). Between -14 and -27 degrees UTCI indicates strong cold stress (not at all comfortable and dangerous beyond short periods of time).  Below -27, UTCI indicates very stong to extreme cold stress (very dangerous).
+A UTCI between -14 and 9 degrees Celcius indicates slight cold stress (comfortable for short periods of time). Between -14 and -27 degrees, UTCI indicates strong cold stress (not at all comfortable and dangerous beyond short periods of time).  Below -27, UTCI indicates very stong to extreme cold stress (very dangerous).
 _
 _
 UTCI is result of the world's leading comfort specailists' attempt to make an interational standard of outdoor temperature sensation that fills the follwoing requirements:
@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.57
         conditionOfPerson: A stream of interger values from -2 to +2 that indicate the following: -2: A person outside expereinces strong cold stress and the mortality rate is higher than normal (UTCI < -14 C). -1: A person outside is cool but comfortable for short periods of time (-14 < UTCI <9). 0: A person outside expereinces no thermal stress (9 < UTCI < 26). +1: A person outside is warm but comfortable for short periods of time (26 < UTCI < 32). +2: A person outside expereinces strong heat stress and the mortality rate is higher than normal (UTCI > 32 C).
         ------------------------------: ...
         percentOfTimeComfortable: The percent of the input data for which the UTCI indicates no thermal stress (comfortable conditions).  Comfortable conditions are when the UTCI is between 9 and 26 degrees Celcius.
-        percentComfForShortPeriod: The percent of the input data for which the UTCI indicates no thermal stress or slight-to-moderate heat/cold stress.  This indicates conditions that are comfortable for short periods of time with proper attire.  This includes all conditions are when the UTCI is between -14 and 32 degrees Celcius.
+        percentComfForShortPeriod: The percent of the input data for which the UTCI indicates slight-to-moderate heat/cold stress.  This indicates conditions that are comfortable for short periods of time with proper attire.  This includes all conditions are when the UTCI is between -14 and 9 degrees Celcius or between 26 and 32 degrees Celcius.
         percentHeatStress: The percent of the input data for which the UTCI indicates strong-to-extreme heat stress.  This indicates conditions that are not at all comfortable and for which the mortality rate over a large population will begin to rise.  This includes all conditions are when the UTCI is above 32 degrees Celcius.
         percentColdStress: The percent of the input data for which the UTCI indicates strong-to-extreme cold stress.  This indicates conditions that are not at all comfortable and for which the mortality rate over a large population will begin to rise.  This includes all conditions are when the UTCI is below -14 degrees Celcius.
 

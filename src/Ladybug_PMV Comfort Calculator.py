@@ -96,7 +96,7 @@ except: pass
 if outSet == True:
     message1 = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the values out of this component only indicate how much the outdoor condtions should be changed in order to make indoor conditions comfortable."
     message2 = "They do not idicate whether someone will actually be comfortable outdoors."
-    message3 = "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug UTCI Comfort Calculator."
+    message3 = "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
     print message1, message2, message3
     m = gh.GH_RuntimeMessageLevel.Remark
     ghenv.Component.AddRuntimeMessage(m, message1)
