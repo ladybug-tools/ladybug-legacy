@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -126,7 +126,8 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                 
                 overwriteScale = False
                 if legendPar == []: overwriteScale = True
-                elif legendPar[-1] == None: overwriteScale = True
+                elif legendPar[5] == None: overwriteScale = True
+                
                 lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
                 if overwriteScale: legendScale = 0.9
                 
@@ -273,7 +274,7 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                         normLegend = True
                 except:
                     # make an initial legend parameter to replace the max
-                    legendPar = [None,None,None,[],None, None]
+                    legendPar = [None,None,None,[],None, None, None, None]
                     legendPar[1] = legendMax[i]
                     legendPar[0] = legendMin[i]
                     normLegend = True
