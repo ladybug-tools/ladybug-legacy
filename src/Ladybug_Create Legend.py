@@ -30,7 +30,7 @@ ghenv.Component.Name = "Ladybug_Create Legend"
 ghenv.Component.NickName = 'createLegend'
 ghenv.Component.Message = 'VER 0.0.57\nAPR_26_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
