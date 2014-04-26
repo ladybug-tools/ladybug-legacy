@@ -16,7 +16,7 @@ Provided by Ladybug 0.0.57
         _inputMesh: An already-colored mesh from one of the Ladybug components which you would like to re-color based on data in the _analysisResult.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.  Legend Parameters can be used to change the colors, numerical range, and/or number of divisions of any Ladybug legend along with the corresponding colored mesh.
         analysisTitle_: Text representing a new title for the re-colored mesh.  If no title is input here, the default will read "unnamed."
-        legendTitle_: Text representing a new legend title for re-colored mesh. Legends are usually titled with the units of the _analysisResult.  If no title is provided, no text will appear above the legend.
+        legendTitle_: Text representing a new legend title for re-colored mesh. Legends are usually titled with the units of the _analysisResult.  If no text is provided here, the default title will read "unkown units."
         bakeIt_: Set to "True" to bake the resulting mesh and legend into the Rhino scene.
         layerName_: If bakeIt_ is set to "True", input Text here corresponding to the Rhino layer onto which the resulting mesh and legend should be baked.
         
@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

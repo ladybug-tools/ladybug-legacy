@@ -19,15 +19,15 @@ Provided by Ladybug 0.0.57
         customColors_: A list of colors that will be used to re-color the legend and the corresponding colored mesh(es).  The number of colors input here should match the numSegments_ value input above.  An easy way to generate a list of colors to input here is with the Grasshopper "Gradient" component and a Grasshopper "Series" component connected to the Gradient component's "t" input.  A bunch of Grasshopper "Swatch" components is another way to generate a list of custom colors.  The default colors are a gradient spectrum from blue to yellow to red.
         legendLocation_: Input a point here to change the location of the legend in the Rhino scene.  The default is usually set to the right of the legend's corresponding Ladybug graphic.
         legendScale_: Input a number here to change the scale of the legend in relation to its corresponding Ladybug graphic.  The default is set to 1.
-        font_: Font name
-        fontSize_: Font size 
+        font_: An optional text string that sets the font of the legend text. Examples include "Arial", "Times New Roman" or "Courier" (all without quotations).  The text input here can be any font that is on your computer but the font must be of an Editable file type (as seen in the font folder off of your control panel).  Font files that are Print and Preview will not work.
+        fontSize_: An optional number to set the size of the font of the legend text. 
     Returns:
-        legendPar: Legend parameters
+        legendPar: A list of legend parameters to be plugged into any of the Ladybug components with a legend.
 """
 
 ghenv.Component.Name = "Ladybug_Legend Parameters"
 ghenv.Component.NickName = 'legendPar'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAPR_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
