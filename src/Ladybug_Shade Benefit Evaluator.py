@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.57
     Returns:
         readMe!: ...
         ==========: ...
-        windowTestPts: Points across the window surface from which sun vectors will be projected
+        regionTestPts: Points across the test region surface from which sun vectors will be projected
         shadeMesh: A colored mesh of the _testShades showing where shading is helpful (in satuated blue), harmful (in saturated red), or does not make much of a difference (white or desaturated colors).
         legend: Legend showing the numeric values of degree-days that correspond to the colors in the shade mesh.
         ==========: ...
@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_09_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAY_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -480,12 +480,12 @@ if gridSize > 0 and _testShades:
 else: pass
 
 if gridSize > 0 and shadeMesh and _testRegion:
-    windowTestPts, windowMesh = generateTestPoints(gridSize, _testRegion)
+    regionTestPts, windowMesh = generateTestPoints(gridSize, _testRegion)
 else: pass
 
 #If all of the data is good, run the shade benefit calculation to generate all results.
 if checkData == True:
-    result = main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowTestPts, legendPar_)
+    result = main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, regionTestPts, legendPar_)
     if result != -1:
         shadeHelpfulness = result[0]
         shadeHarmfulness = result[1]
