@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.57\nMAY_01_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAY_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -198,34 +198,34 @@ def generateTestPoints(gridSize, testRegion):
     vertices = windowMesh.Vertices
     
     # Convert window Point3f to Point3d
-    windowTestPtsInit = []
+    regionTestPtsInit = []
     for item in vertices:
-        windowTestPtsInit.append(rc.Geometry.Point3d(item))
+        regionTestPtsInit.append(rc.Geometry.Point3d(item))
     
     #Get rid of the points that lie along the boundary of the shape.
-    windowTestPts = []
+    regionTestPts = []
     edges = testRegion.DuplicateEdgeCurves()
     boundary = rc.Geometry.Curve.JoinCurves(edges)
-    for point in windowTestPtsInit:
+    for point in regionTestPtsInit:
         closestPtInit =  rc.Geometry.Curve.ClosestPoint(boundary[0], point)
         closestPt = boundary[0].PointAt(closestPtInit[1])
         if point.DistanceTo(closestPt) < sc.doc.ModelAbsoluteTolerance: pass
-        else: windowTestPts.append(point)
+        else: regionTestPts.append(point)
     
     #If there is a dense collection of points that are too close to each other, get rid of it.
-    windowTestPtsFinal = []
-    for pointCount, point in enumerate(windowTestPts):
+    regionTestPtsFinal = []
+    for pointCount, point in enumerate(regionTestPts):
         pointOK = True
-        testPtsWihtout = list(windowTestPts)
+        testPtsWihtout = list(regionTestPts)
         del testPtsWihtout[pointCount]
         for othPt in testPtsWihtout:
             if point.DistanceTo(othPt) < (gridSize/4):
                 pointOK = False
             else:pass
         if pointOK == True:
-            windowTestPtsFinal.append(point)
+            regionTestPtsFinal.append(point)
     
-    return windowTestPtsFinal, windowMesh
+    return regionTestPtsFinal, windowMesh
 
 
 def nonparallel_projection(analysisMesh, sunLines):
@@ -233,7 +233,7 @@ def nonparallel_projection(analysisMesh, sunLines):
     faceInt = []
     for face in range(analysisMesh.Faces.Count): faceInt.append([])
     
-    for ptCount, pt in enumerate(windowTestPts):
+    for ptCount, pt in enumerate(regionTestPts):
         try:
             for hour, sunLine in enumerate(sunLines[ptCount]):
                 if sunLine != 0:
@@ -261,7 +261,7 @@ def parallel_projection(analysisMesh, sunLines):
         except Exception, e:
             print `e`
     
-    tasks.Parallel.ForEach(range(len(windowTestPts)), intersect)
+    tasks.Parallel.ForEach(range(len(regionTestPts)), intersect)
     
     return faceInt
 
@@ -292,7 +292,7 @@ def valCalc(percentBlocked, deltaBal, cellArea):
     return coolEffect, heatEffect, netEffect
 
 
-def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowTestPts, legendPar):
+def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, regionTestPts, legendPar):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -325,9 +325,9 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
             contextMesh = joinMesh(contextMeshes)
         else: pass
         
-        for pt in windowTestPts: sunLines.append([]) 
+        for pt in regionTestPts: sunLines.append([]) 
         
-        for ptCount, pt in enumerate(windowTestPts):
+        for ptCount, pt in enumerate(regionTestPts):
             for vec in _sunVectors:
                 if context_:
                     if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh, rc.Geometry.Ray3d(pt, vec)) < 0:
@@ -348,7 +348,7 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, windowT
         for face in range(analysisMesh.Faces.Count):
             percentBlocked.append(len(_sunVectors) *[0])
         
-        testPtsCount = len(windowTestPts) 
+        testPtsCount = len(regionTestPts) 
         # for each mesh surface,
         for faceCount, faceData in enumerate(faceInt):
             # check the number of intersections for each hour
