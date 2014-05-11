@@ -1,4 +1,4 @@
-![Screenshot](http://api.ning.com/files/UAWGUe-OfSQs1F6H5cmsbo2N7IoZYaBtFjk46TXrIquS4SRKHdG-deTfkeczEvqqykEHRIXCH41qDiJvw6FvabDItFPvTabd/ladybug.jpg)
+![Screenshot](http://api.ning.com/files/OsG-NixX39fgvBguMkfqhfQB8A6qoIOoishY-IJX5jjM5aTt7vHdO05*4SLN3rLPUVIksyARyzUIMt3w1gJPlWA3aO-DlMvQ/Merged_Icons_2.png?width=200)
 
 Ladybug for Grasshopper
 ========================================
