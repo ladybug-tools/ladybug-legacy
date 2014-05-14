@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_21_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAY_14_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -56,10 +56,10 @@ rc.Runtime.HostUtils.DisplayOleAlerts(False)
 
 
 #set up default pass
-if os.path.exists("c:\\ladybug\\"):
+if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
     # folder already exists so it is all fine
     sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-elif os.access(os.path.dirname("c:\\"), os.W_OK):
+elif os.access(os.path.dirname("c:\\"), os.F_OK):
     #the folder does not exists but write privileges are given so it is fine
     sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
 else:
