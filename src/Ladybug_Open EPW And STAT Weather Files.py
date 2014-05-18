@@ -20,7 +20,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'Open EPW + STAT'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_05_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAY_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
@@ -86,8 +86,10 @@ def unzip(source_filename, dest_dir):
 
 def addresses(filename, directory):
     filenamewords = filename.split('.zip')[-2]
-    epw = filenamewords + '.epw'
-    stat = filenamewords + '.stat'
+    filenamewords2 = filenamewords.split('/')
+    filenamewords3 = filenamewords2[0] + '\\' + filenamewords2[1] + '\\' + filenamewords2[2] + '\\' + filenamewords2[3]
+    epw = filenamewords3 + '.epw'
+    stat = filenamewords3 + '.stat'
     return epw, stat
 
 

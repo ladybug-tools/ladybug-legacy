@@ -75,7 +75,7 @@ def checkNumOfShds(numOfShds):
         giveWarning("Please put in a positive value for the numOfShds.")
         return 0
     elif str(numOfShds-int(numOfShds))[1] != 0:
-        giveWarning("Decimal value input for numOfShds. NumOfShds rounded to the nearest interger.")
+        print "Decimal value input for numOfShds. NumOfShds rounded to the nearest interger."
         return int(numOfShds)
     else: return numOfShds
 
