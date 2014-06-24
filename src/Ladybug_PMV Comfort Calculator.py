@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_21_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUN_23_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -477,7 +477,7 @@ def main():
         comfortableOrNot = []
         percentOfTimeComfortable = None
         if checkData == True and epwData == True:
-            predictedMeanVote.extend([epwStr[0], epwStr[1], 'Predicted Mean Vote', 'PMV', epwStr[4], runPeriod[0], runPeriod[1]])
+            predictedMeanVote.extend([epwStr[0], epwStr[1], 'Predicted Mean Vote', '+3 hot, +2 warm, +1 slightly warm, 0 neutral, -1 slightly cool, -2 cool, -3 cold', epwStr[4], runPeriod[0], runPeriod[1]])
             percentPeopleDissatisfied.extend([epwStr[0], epwStr[1], 'Percentage of People Dissatisfied', '%', epwStr[4], runPeriod[0], runPeriod[1]])
             standardEffectiveTemperature.extend([epwStr[0], epwStr[1], 'Standard Effective Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
