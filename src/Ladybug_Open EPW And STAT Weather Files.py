@@ -20,7 +20,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'Open EPW + STAT'
-ghenv.Component.Message = 'VER 0.0.57\nMAY_18_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUN_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
@@ -34,7 +34,10 @@ import zipfile,os.path
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
+import time
 
+
+doc = gh.GH_Document()
 
 def checkTheInputs():
     #Check the inputs to make sure that a valid DOE URL has been connected.
@@ -60,15 +63,24 @@ def checkTheInputs():
     return checkData, workingDir
 
 def download(url, workingDir):
-            if not os.path.isdir(workingDir):
-                os.mkdir(workingDir)
-            webFile = urllib.urlopen(url)
+    try:
+        if not os.path.isdir(workingDir):
+            os.mkdir(workingDir)
+        webFile = urllib.urlopen(url)
+        if webFile != None:
             localFile = open(workingDir + '/' + url.split('/')[-1], 'wb')
             localFile.write(webFile.read())
             webFile.close()
             localFile.close()
             Address = workingDir + url.split('/')[-1]
             return Address
+        else:
+            return None
+    except:
+        warning = 'You are not connected to the internet and you do not have the weather files already on your computer.  You must be connected to the internet to download the files with this component.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return None
 
 def unzip(source_filename, dest_dir):
     with zipfile.ZipFile(source_filename) as zf:
@@ -92,18 +104,30 @@ def addresses(filename, directory):
     stat = filenamewords3 + '.stat'
     return epw, stat
 
+def checkIfAlreadyDownloaded(workingDir, url):
+    zipFileAddress = Address = workingDir + url.split('/')[-1]
+    epw, stat = addresses(zipFileAddress, workingDir)
+    if os.path.isfile(epw) == True and os.path.isfile(stat) == True:
+        return True, epw, stat
+    else:
+        return False, None, None
 
 
 
-
-#Check the inputs.
+#Check the inputs to make sure that they are the correct syntax.
 checkData, workingDir = checkTheInputs()
 
-#Download the zip file to the directory.
+#Check to see if the file has already been downloaded to the C:\ladybug drive.
 if checkData == True:
+    checkData2, epwFile, statFile = checkIfAlreadyDownloaded(workingDir, _weatherFileURL)
+
+#Download the zip file to the directory.
+if checkData2 == False:
     zipFileAddress = download(_weatherFileURL, workingDir)
+else: pass
 
 #Unzip the file and load it into Grasshopper!!!!
-if checkData == True and zipFileAddress:
+if checkData2 == False and zipFileAddress:
     unzip(zipFileAddress, workingDir)
     epwFile, statFile = addresses(zipFileAddress, workingDir)
+else: pass
