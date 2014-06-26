@@ -120,6 +120,7 @@ checkData, workingDir = checkTheInputs()
 #Check to see if the file has already been downloaded to the C:\ladybug drive.
 if checkData == True:
     checkData2, epwFile, statFile = checkIfAlreadyDownloaded(workingDir, _weatherFileURL)
+else: checkData2 = True
 
 #Download the zip file to the directory.
 if checkData2 == False:
