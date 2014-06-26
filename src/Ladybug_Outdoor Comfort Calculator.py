@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUN_23_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUN_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -79,7 +79,7 @@ def checkTheInputs():
     airMultVal = False
     if len(_dryBulbTemperature) != 0:
         try:
-            if _dryBulbTemperature[2] == 'Dry Bulb Temperature':
+            if "Temperature" in _dryBulbTemperature[2]:
                 airTemp = _dryBulbTemperature[7:]
                 checkData1 = True
                 epwData = True
@@ -105,7 +105,7 @@ def checkTheInputs():
     radMultVal = False
     if len(meanRadiantTemperature_) != 0:
         try:
-            if meanRadiantTemperature_[2] == 'Dry Bulb Temperature':
+            if "Temperature" in meanRadiantTemperature_[2]:
                 radTemp = meanRadiantTemperature_[7:]
                 checkData2 = True
                 epwData = True
@@ -167,7 +167,7 @@ def checkTheInputs():
     nonValue = True
     if len(_relativeHumidity) != 0:
         try:
-            if _relativeHumidity[2] == 'Relative Humidity':
+            if "Humidity" in _relativeHumidity[2]:
                 relHumid = _relativeHumidity[7:]
                 checkData4 = True
                 epwData = True
