@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nMAY_14_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUN_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1803,63 +1803,6 @@ class ResultVisualization(object):
             return meshAndCrv
         else: return -1
     
-    def chartGeometry(self, values, xSize, xScale, yScale, zScale, patternList, basePoint = rc.Geometry.Point3d.Origin):
-        # make a monocolor mesh
-        meshVertices = range(len(values))
-        ySize = int(len(values)/xSize)
-        conditionalPoints = []
-        
-        # print len(meshVertices)
-        
-        for i in range(len(values)):
-            xMove = - xScale * (i % xSize)
-            yMove = yScale * int(i / xSize)
-            zMove = zScale * values[i]
-            movingVec = rc.Geometry.Vector3f(xMove,yMove,zMove)
-            newPoint = rc.Geometry.Point3d.Add(basePoint, movingVec)
-            meshVertices[i] = newPoint
-            try:
-                if patternList[i]:
-                    conditionalPoints.append(newPoint)
-            except:
-                pass
-        
-        
-        joinedMesh = rc.Geometry.Mesh()
-        duplicatedMeshPattern = []
-        for i in  range(len(meshVertices)):
-            # check the point not to be in the last row or the last column
-            if (i + 1) % xSize != 0 and i + 1 < xSize * (ySize - 1):
-                # draw each mesh surface
-                mesh = rc.Geometry.Mesh()
-                
-                verIDs = [i, i + 1, i + xSize + 1, i + xSize]
-                duplicatedMeshPattern.extend([patternList[i], patternList[i + 1], patternList[i + xSize + 1], patternList[i + xSize]])
-                
-                for id in verIDs:
-                    mesh.Vertices.Add(meshVertices[id])
-                    
-                mesh.Faces.AddFace(0, 1, 2, 3)
-                joinedMesh.Append(mesh)
-                
-        return joinedMesh, conditionalPoints, duplicatedMeshPattern
-
-    def colorMeshChart(self, joinedMesh, xSize, colors, basePoint = rc.Geometry.Point3d.Origin):
-        # color mesh surface
-        joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.White)
-        
-        for srfNum in range (joinedMesh.Faces.Count):
-            joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum + int(srfNum/(xSize -1))]
-            joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum + int(srfNum/(xSize -1)) + 1]
-            joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum + int(srfNum/(xSize -1)) + xSize + 1]
-            joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum + int(srfNum/(xSize -1)) + xSize]
-            
-    
-        rotate90 = True
-        if rotate90: joinedMesh.Rotate(-math.pi/2, rc.Geometry.Vector3d.ZAxis, basePoint)
-        
-        return joinedMesh
-
     def text2crv(self, text, textPt, font = 'Verdana', textHeight = 20):
         # Thanks to Giulio Piacentino for his version of text to curve
         textCrvs = []
@@ -1911,20 +1854,24 @@ class ResultVisualization(object):
                     projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
                 srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
             
-            if len(text[n].strip()) == len(srfs)+ extraSrfCount:
-                textSrfs.append(srfs)
-            else:
-                #print len(text[n])
-                #print len(text[n].strip())
-                #print len(srfs)+ extraSrfCount
-                #print extraSrfCount
-                textSrfs.append(projectedCrvs)
+            textSrfs.append(srfs)
+            
+            #if len(text[n].strip()) == len(srfs)+ extraSrfCount:
+            #    textSrfs.append(srfs)
+            #else:
+            #print len(text[n])
+            #print len(text[n].strip())
+            #print len(srfs)+ extraSrfCount
+            #print extraSrfCount
+            #textSrfs.append(projectedCrvs)
                 
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
             
         return textSrfs
     
     def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False, font = None, fontSize = None):
+        #Define a function to create surfaces from input curves.
+        
         if Heading==None: Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
         
         stMonth, stDay, stHour, endMonth, endDay, endHour = self.readRunPeriod((listInfo[0][5], listInfo[0][6]), False)
@@ -1941,9 +1888,9 @@ class ResultVisualization(object):
         
         titlebasePt = boundingBoxPar[-2]
         
-        titleTextCurve = self.text2srf([titleStr], [titlebasePt], font, fontSize)
+        titleTextSrf = self.text2srf([titleStr], [titlebasePt], font, fontSize)
         
-        return titleTextCurve, titleStr, titlebasePt
+        return titleTextSrf, titleStr, titlebasePt
 
     def compassCircle(self, cenPt = rc.Geometry.Point3d.Origin, northVector = rc.Geometry.Vector3d.YAxis, radius = 200, angles = range(0,360,30), xMove = 
                         10, centerLine = False):
