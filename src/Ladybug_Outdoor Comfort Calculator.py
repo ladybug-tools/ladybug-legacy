@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.57
         readMe!: ...
         ------------------------------: ...
         universalThermalClimateIndex: The UTCI of the input conditions in degrees Celcius. Perhaps the most familiar application of Univeral Thermal Climate Index (UTCI) is the temperature given by TV weathermen and women when they say that, even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something higher or lower. UTCI is this temperature of what the weather "feels like" and it takes into account radiant temperature (usually including solar radiation), relative humidity, wind speed and uses them in a human energy balance model to give a temperature value that is indicative of the heat stress or cold stress felt by the human body.
-        comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether a person outside is comfortable for each hour of the input conditions.  0 indicates that a person is not comfortable while 1 indicates that a person is comfortable.
+        comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether a person outside is comfortable for each hour of the input conditions.  0 indicates that a person is not comfortable while 1 indicates that a person is comfortable.  A person is considered to be comfortable when he/she experiences no thermal stress (9 < UTCI < 26).
         conditionOfPerson: A stream of interger values from -2 to +2 that indicate the following: -2: A person outside expereinces strong cold stress and the mortality rate is higher than normal (UTCI < -14 C). -1: A person outside is cool but comfortable for short periods of time (-14 < UTCI <9). 0: A person outside expereinces no thermal stress (9 < UTCI < 26). +1: A person outside is warm but comfortable for short periods of time (26 < UTCI < 32). +2: A person outside expereinces strong heat stress and the mortality rate is higher than normal (UTCI > 32 C).
         ------------------------------: ...
         percentOfTimeComfortable: The percent of the input data for which the UTCI indicates no thermal stress (comfortable conditions).  Comfortable conditions are when the UTCI is between 9 and 26 degrees Celcius.
@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUN_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUN_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -79,7 +79,7 @@ def checkTheInputs():
     airMultVal = False
     if len(_dryBulbTemperature) != 0:
         try:
-            if "Temperature" in _dryBulbTemperature[2]:
+            if _dryBulbTemperature[2] == 'Dry Bulb Temperature':
                 airTemp = _dryBulbTemperature[7:]
                 checkData1 = True
                 epwData = True
@@ -105,7 +105,7 @@ def checkTheInputs():
     radMultVal = False
     if len(meanRadiantTemperature_) != 0:
         try:
-            if "Temperature" in meanRadiantTemperature_[2]:
+            if meanRadiantTemperature_[2] == 'Dry Bulb Temperature':
                 radTemp = meanRadiantTemperature_[7:]
                 checkData2 = True
                 epwData = True
@@ -167,7 +167,7 @@ def checkTheInputs():
     nonValue = True
     if len(_relativeHumidity) != 0:
         try:
-            if "Humidity" in _relativeHumidity[2]:
+            if _relativeHumidity[2] == 'Relative Humidity':
                 relHumid = _relativeHumidity[7:]
                 checkData4 = True
                 epwData = True
@@ -325,7 +325,7 @@ def main():
         if checkData == True and epwData == True:
             universalThermalClimateIndex.extend([epwStr[0], epwStr[1], 'Universal Thermal Climate Index', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Outdoor Comfort or Not', 'Boolean Value', epwStr[4], runPeriod[0], runPeriod[1]])
-            coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort', '-2 = Deadly Cold -1 = Cold, 0 = Comfortable, 1 = Hot, 2 = Deadly Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+            coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort', '-2 = Extremely Cold, -1 = Cold, 0 = Comfortable, 1 = Hot, 2 = Extremely Hot', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
             try:
                 utciList = []
