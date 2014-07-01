@@ -559,11 +559,15 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 cenPt = lb_preparation.getCenPt(basePoint)
                 rotatoion = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.YAxis, rc.Geometry.Vector3d.XAxis, cenPt)
                 
-                
+                transMtx = rc.Geometry.Transform.Translation(movingVector)
                 for crv in legendTextCrv:
                     for c in crv: c.Translate(movingVector)
                 for crv in titleTextCurve:
                     for c in crv: c.Translate(movingVector)
+                for geo in finalChartCrvs:
+                    geo.Translate(movingVector)
+                for point in titleBasePoints:
+                    point.Transform(transMtx)
                 
                 # generate legend colors
                 legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
