@@ -311,7 +311,7 @@ def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
         months = range(stMonth, endMonth + 1)
     
     # end hour shouldn't be included
-    hours  = range(stHour, endHour)
+    hours  = range(stHour, endHour + 1)
     
     days = stDay, endDay
     

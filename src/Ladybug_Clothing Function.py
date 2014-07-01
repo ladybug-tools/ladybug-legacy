@@ -26,7 +26,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Clothing Function"
 ghenv.Component.NickName = 'CloFunction'
-ghenv.Component.Message = 'VER 0.0.57\nJUN_30_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -186,7 +186,7 @@ def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
         months = range(stMonth, endMonth + 1)
     
     # end hour shouldn't be included
-    hours  = range(stHour, endHour)
+    hours  = range(stHour, endHour + 1)
     
     days = stDay, endDay
     
