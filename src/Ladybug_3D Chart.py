@@ -240,7 +240,7 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     # Get a value to set the chart curves with.
     orderedVal = values[:]
     orderedVal.sort()
-    zMax = orderedVal[0]*zScale
+    zMax = orderedVal[0]*zScale + sc.doc.ModelAbsoluteTolerance*5
     
     # Decompose the analysis period
     startMonth = analysisStart[0]
