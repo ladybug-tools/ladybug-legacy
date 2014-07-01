@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUN_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -463,12 +463,12 @@ def main():
             HOYS, months, days = getHOYsBasedOnPeriod(analysisPeriod_, 1, lb_preparation)
             runPeriod = analysisPeriod_
             calcLength = len(HOYS)
-        elif calcLength == 8760 and len(analysisPeriod_)==0 and epwData == True:
+        elif len(analysisPeriod_)==0 and epwData == True:
             HOYS = range(calcLength)
             runPeriod = [epwStr[5], epwStr[6]]
         else:
             HOYS = range(calcLength)
-            runPeriod = [(0,0,0), (0,0,0)]
+            runPeriod = [(1,1,1), (12,31,24)]
         
         #If things are good, run it through the comfort model.
         predictedMeanVote = []
