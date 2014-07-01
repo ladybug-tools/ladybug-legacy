@@ -262,8 +262,12 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     daysList = []
     for count, month in enumerate(monthsList):
         textStrings.append(monthNames[month-1])
-        if count == 0:
+        if count == 0 and startMonth == endMonth:
+            daysList.append(daysPerMonth[month-1] + 1 - startDay + (endDay - daysPerMonth[month-1]))
+        elif count == 0:
             daysList.append(daysPerMonth[month-1] + 1 - startDay)
+        elif count == len(monthsList) - 1 and endDay != daysPerMonth[month-1]:
+            daysList.append(endDay)
         else:
             daysList.append(daysPerMonth[month-1])
     
