@@ -13,7 +13,7 @@ Provided by Ladybug 0.0.57
         _inputData: A list of input data to plot.
         _xScale_: The scale of the X axis of the graph. The default will plot the X axis with a length of 365 Rhino model units (for 365 days of the year). Connect a list of values for multiple graphs.
         _yScale_: The scale of the Y axis of the graph. The default will plot the Y axis with a length of 24 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
-        _zScale_: The scale of the Z axis of the graph. The default will plot the Z axis with a number of Rhino model units corresponding to the input data values.  Connect a list of values for multiple graphs.
+        _zScale_: The scale of the Z axis of the graph. The default will plot the Z axis with a number of Rhino model units corresponding to the input data values.  Set to 0 to see graphCurves appear on top of the mesh.  Connect a list of values for multiple graphs.
         _yCount_: The number of segments on your y-axis.  The default is set to 24 for 24 hours of the day. This variable is particularly useful for input data that is not for each hour of the year.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.57\nJUN_29_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -237,10 +237,10 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
 
 def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize):
     ySize = int(len(values)/xSize)
-    # Get a maximum Z value from the data.
+    # Get a value to set the chart curves with.
     orderedVal = values[:]
     orderedVal.sort()
-    zMax = orderedVal[-1]*zScale
+    zMax = orderedVal[0]*zScale
     
     # Decompose the analysis period
     startMonth = analysisStart[0]
