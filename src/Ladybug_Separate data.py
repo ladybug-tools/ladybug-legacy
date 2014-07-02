@@ -20,7 +20,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
