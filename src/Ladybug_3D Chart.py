@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_01_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_02_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -556,9 +556,6 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     textPt[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
                     ptCount += 1
                 
-                cenPt = lb_preparation.getCenPt(basePoint)
-                rotatoion = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.YAxis, rc.Geometry.Vector3d.XAxis, cenPt)
-                
                 transMtx = rc.Geometry.Transform.Translation(movingVector)
                 for crv in legendTextCrv:
                     for c in crv: c.Translate(movingVector)
@@ -588,6 +585,23 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 else:
                     movedLegendBasePoint = rc.Geometry.Point3d.Add(legendBasePoint, movingVector);
                 
+                fullLegTxt = lb_preparation.flattenList(legendTextCrv + titleTextCurve)
+                
+                # If the user has specified a base point, move all geometry to align with that base point.
+                if basePoint:
+                    translation = rc.Geometry.Transform.Translation(basePoint.X, basePoint.Y, basePoint.Z)
+                    transVec = rc.Geometry.Vector3d(basePoint.X, basePoint.Y, basePoint.Z)
+                    coloredChart.Transform(translation)
+                    movedLegendBasePoint.Transform(translation)
+                    legendSrfs.Transform(translation)
+                    for item in fullLegTxt:
+                        item.Transform(translation)
+                    for item in finalChartCrvs:
+                        item.Transform(translation)
+                    for point in titleBasePoints:
+                        point.Transform(translation)
+                else: pass
+                
                 if bakeIt:
                     studyLayerName = '3D_CHARTS'
                     legendText.append(titleStr)
@@ -600,7 +614,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont)
                 
                 res[0].append(coloredChart)
-                res[1].append([legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)])
+                res[1].append([legendSrfs, fullLegTxt])
                 res[2].append(movedLegendBasePoint)
                 res[3].append(titleText)
                 res[4].append(titleBasePoints)
