@@ -1,4 +1,4 @@
-# This component separates numbers and strings from an input list
+# This component creates a 3D chart of hourly or daily data.
 # By Chris Mackey and Mostapha Sadeghipour Roudsari
 # Chris@MackeyArchitecture.com and Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed

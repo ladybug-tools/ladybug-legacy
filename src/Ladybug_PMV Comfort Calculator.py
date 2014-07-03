@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_01_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_02_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -480,6 +480,7 @@ def main():
             predictedMeanVote.extend([epwStr[0], epwStr[1], 'Predicted Mean Vote', '+3 hot, +2 warm, +1 slightly warm, 0 neutral, -1 slightly cool, -2 cool, -3 cold', epwStr[4], runPeriod[0], runPeriod[1]])
             percentPeopleDissatisfied.extend([epwStr[0], epwStr[1], 'Percentage of People Dissatisfied', '%', epwStr[4], runPeriod[0], runPeriod[1]])
             standardEffectiveTemperature.extend([epwStr[0], epwStr[1], 'Standard Effective Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not', 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
             try:
                 for count in HOYS:
