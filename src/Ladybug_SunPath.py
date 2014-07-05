@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -173,7 +173,17 @@ def getHOYs(hours, days, months, timeStep, lb_preparation, method = 0):
         
     numberOfDaysEachMonth = lb_preparation.numOfDaysEachMonth
     
-    if timeStep != 1: hours = rs.frange(hours[0], hours[-1] + 1 - 1/timeStep, 1/timeStep)
+    numOfHours = timeStep * len(hours) 
+    
+    if timeStep != 1:
+        step = 1/timeStep
+        hours = rs.frange(hours[0], hours[-1] + 1, step)
+        
+        # make sure hours are generated correctly
+        if len(hours) > numOfHours:
+            hours = hours[:numOfHours]
+        elif len(hours) < numOfHours:
+            newHour = hours[-1] + step
     
     HOYS = []
     
