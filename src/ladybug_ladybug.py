@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUN_29_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_06_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -314,7 +314,7 @@ class Preparation(object):
         else: lowB = float(legendPar[0])
         if legendPar[1] == None: highB = 'max'
         elif legendPar[1] == 'max': highB = 'max'
-        else: highB = int(legendPar[1])
+        else: highB = float(legendPar[1])
         if legendPar[2] == None: numSeg = 11
         else: numSeg = float(legendPar[2])
         if not legendPar[3] or legendPar[3][0] == None:
