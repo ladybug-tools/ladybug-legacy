@@ -20,7 +20,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_01_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_06_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -41,19 +41,29 @@ numPath = 0
 numbers = DataTree[Object]()
 strings = DataTree[Object]()
 
-for item in _inputList:
+for count, item in enumerate(_inputList):
     try:
         item = float(item)
+        if count == 0: numfirst = True
         if lastOne == None: lastOne = "float"
         if lastOne!= "float":
             lastOne = "float"
             numPath += 1
-        p = GH_Path(numPath)
-        numbers.Add(item, p)
+        if numfirst == False:
+            p = GH_Path(numPath-1)
+            numbers.Add(item, p)
+        else:
+            p = GH_Path(numPath)
+            numbers.Add(item, p)
     except:
+        if count == 0: numfirst = False
         if lastOne == None: lastOne = "str"
         if lastOne!= "str":
             lastOne = "str"
             strPath += 1
-        p = GH_Path(strPath)
-        strings.Add(item, p)
+        if numfirst == True:
+            p = GH_Path(strPath-1)
+            strings.Add(item, p)
+        else:
+            p = GH_Path(strPath)
+            strings.Add(item, p)
