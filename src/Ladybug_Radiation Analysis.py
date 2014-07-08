@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -246,6 +246,9 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
 
     ## data for visualization
     legendTitles = ['kWh/m2', 'Hours', '%']
+    try: legendTitles[0] = cumSky_radiationStudy[3]
+    except: pass
+    
     studyLayerNames = ['RADIATION_STUDIES', 'SUNLIGHTHOURS_STUDIES', 'VIEW_STUDIES']
     CheckTheName = True
     resV = 0 # Result visualization
