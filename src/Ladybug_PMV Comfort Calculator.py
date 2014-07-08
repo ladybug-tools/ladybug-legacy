@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_02_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -499,7 +499,9 @@ def main():
                         if ppd < 10:
                             comfortableOrNot.append(1)
                         else: comfortableOrNot.append(0)
-                percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100
+                if epwData == True:
+                    percentOfTimeComfortable = ((sum(comfortableOrNot[7:]))/calcLength)*100
+                else: percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100
             except:
                 predictedMeanVote = []
                 percentPeopleDissatisfied = []
