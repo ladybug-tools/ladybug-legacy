@@ -32,7 +32,8 @@ import shutil
 import os
 import uuid
 
-UOFolder = "C:\\Users\\" + os.getenv("USERNAME") + "\\AppData\\Roaming\\Grasshopper\\UserObjects\\"
+UOFolder = gh.GH_ComponentServer.GHUser_AppDataDirectory
+UOFolder = UOFolder.replace("\\", "\\\\")
 cs = gh.GH_ComponentServer()
 
 #gh.GH_ComponentServer
