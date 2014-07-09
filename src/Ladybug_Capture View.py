@@ -1,35 +1,35 @@
-# This script captures the views based on the view name
-# Construct Time
+# This script captures a png image file of a Rhino viewport.
 # By Mostapha Sadeghipour Roudsari
 # Sadeghipour@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Capture Rhino views and save them as a .png file.
+Use this component to capture Rhino views and save them to your hard drive as as a .png files.
+This is particularly useful if you are trying to create animations of Grasshopper geometry and want to automate the capturing of views.
+Note that your images will have a Rhino world axes icon in the lower left of the image unless you go to Options > Grid > and uncheck "Show world axes icon" in Rhino.
 -
 Provided by Ladybug 0.0.57
 
     Args:
-        _fileName:
-        folder_:
-        viewNames_:
-        imageWidth_:
-        imageHeight_:
-        displayMode_:
-        keepAspectR_:
-        _capture:
+        _fileName: The file name that you would like the image to be saved as.  Note that, for animations, you want to make sure that each saved images has a different filename otherwise the previous image will be overwritten by each successive image.
+        folder_: The folder into which you would like to write the image file.  This should be a complete file path to the folder.  If no folder is provided, the images will be written to C:/Ladybug/Capturedviews/.
+        viewNames_: The Rhino viewport name which you would like to take a snapshot of.  Acceptable inputs include "Perspective", "Top", "Bottom", "Left", "Right", "Front", "Back" or any view name that you have already saved within the Rhino file (note that you do not need to input quotations).  If no text is input here, the default will be an image of the active viewport (or the last viewport in which you navigated).
+        imageWidth_: The width of the image that you would like to take in pixels.  If no value is provided here, the component will set the width to that of the active Rhino viewport on your screen.
+        imageHeight_: The height of the image that you would like to take in pixels.  If no value is provided here, the component will set the height to that of the active Rhino viewport on your screen.
+        displayMode_: The display mode of the viewport that you would like to take an image of. Acceptable inputs include "Wireframe", "Shaded", "Rendered", "Ghosted", "X-Ray", "Technical", "Atristic", and "Pen".  If no text is input here, the default will be the displaymode of the active viewport (or the last viewport in which you navigated).
+        keepAspectR_: Set to "True" to keep the aspect ratio of the viewport in the images that you save.  By default, this is set to "False" if you have connected an imageHeight_ but will override this input to ensure correct aspect ratio if set to "True".
+        _capture: Set to "True" to capture the image of the Rhino viewport and save it to your hard drive.
     Returns:
-        imagePath: 
+        imagePath: The filepath of the image taken with this component.
 
 """
 ghenv.Component.Name = "Ladybug_Capture View"
 ghenv.Component.NickName = 'captureView'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_14_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_08_2014'
 ghenv.Component.Category = "Ladybug"
-# ghenv.Component.SubCategory = "4 | Extra"
-ghenv.Component.SubCategory = "7 | WIP"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+ghenv.Component.SubCategory = "4 | Extra"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 import os
