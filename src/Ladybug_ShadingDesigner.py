@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_09_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_09_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -249,7 +249,7 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
         minZPt = bbox.Corner(False, True, True)
         minZPt = rc.Geometry.Point3d(minZPt.X, minZPt.Y, minZPt.Z)
         maxZPt = bbox.Corner(False, True, False)
-        maxZPt = rc.Geometry.Point3d(maxZPt.X, maxZPt.Y, maxZPt.Z)
+        maxZPt = rc.Geometry.Point3d(maxZPt.X, maxZPt.Y, maxZPt.Z - sc.doc.ModelAbsoluteTolerance)
         centerPt = bbox.Center 
         #glazing hieghts
         glzHeight = minZPt.DistanceTo(maxZPt)
@@ -285,12 +285,43 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
         planeVec = rc.Geometry.Vector3d(normalVector.X, normalVector.Y, 0)
         planeVec.Rotate(1.570796, rc.Geometry.Vector3d.ZAxis)
         
+        
         #Define a bounding box for use in calculating the number of shades to generate
         minXYPt = bbox.Corner(True, True, True)
         minXYPt = rc.Geometry.Point3d(minXYPt.X, minXYPt.Y, minXYPt.Z)
         maxXYPt = bbox.Corner(False, False, True)
         maxXYPt = rc.Geometry.Point3d(maxXYPt.X, maxXYPt.Y, maxXYPt.Z)
-        centerPt = bbox.Center 
+        centerPt = bbox.Center
+        
+        #Test to be sure that the values are parallel to the correct vector.
+        testVec = rc.Geometry.Vector3d.Subtract(rc.Geometry.Vector3d(minXYPt.X, minXYPt.Y, minXYPt.Z), rc.Geometry.Vector3d(maxXYPt.X, maxXYPt.Y, maxXYPt.Z))
+        if testVec.IsParallelTo(planeVec) == 0:
+            minXYPt = bbox.Corner(False, True, True)
+            minXYPt = rc.Geometry.Point3d(minXYPt.X, minXYPt.Y, minXYPt.Z)
+            maxXYPt = bbox.Corner(True, False, True)
+            maxXYPt = rc.Geometry.Point3d(maxXYPt.X, maxXYPt.Y, maxXYPt.Z)
+        
+        #Adjust the points to ensure the creation of the correct number of shades starting from the northernmost side of the window.
+        tolVec = rc.Geometry.Vector3d.Subtract(rc.Geometry.Vector3d(minXYPt.X, minXYPt.Y, minXYPt.Z), rc.Geometry.Vector3d(maxXYPt.X, maxXYPt.Y, maxXYPt.Z))
+        tolVec.Unitize()
+        tolVec = rc.Geometry.Vector3d.Multiply(sc.doc.ModelAbsoluteTolerance*2, tolVec)
+        
+        if tolVec.X > 0 and  tolVec.Y > 0:
+            tolVec = rc.Geometry.Vector3d.Multiply(1, tolVec)
+            norOrient = False
+        if tolVec.X < 0 and  tolVec.Y > 0:
+            tolVec = rc.Geometry.Vector3d.Multiply(1, tolVec)
+            norOrient = False
+        if tolVec.X < 0 and  tolVec.Y < 0:
+            tolVec = rc.Geometry.Vector3d.Multiply(-1, tolVec)
+            norOrient = True
+        else:
+            tolVec = rc.Geometry.Vector3d.Multiply(-1, tolVec)
+            norOrient = True
+        
+        maxXYPt = rc.Geometry.Point3d.Subtract(maxXYPt, tolVec)
+        minXYPt = rc.Geometry.Point3d.Subtract(minXYPt, tolVec)
+        
         #glazing distance
         glzHeight = minXYPt.DistanceTo(maxXYPt)
         
@@ -308,23 +339,23 @@ def analyzeGlz(glzSrf, distBetween, numOfShds, horOrVertical, lb_visualization, 
         # find shading base planes
         planeOrigins = []
         planes = []
-        pointCurve = rc.Geometry.Curve.CreateControlPointCurve([minXYPt, maxXYPt])
+        
+        pointCurve = rc.Geometry.Curve.CreateControlPointCurve([maxXYPt, minXYPt])
         divisionParams = pointCurve.DivideByLength(shadingHeight, True)
         divisionPoints = []
         for param in divisionParams:
             divisionPoints.append(pointCurve.PointAt(param))
+        
         planePoints = divisionPoints
         try:
             for point in planePoints:
                 planes.append(rc.Geometry.Plane(point, planeVec))
         except:
             # single shading
-            planes.append(rc.Geometry.Plane(rc.Geometry.Point3d(maxXYPt), planeVec))
-        # sort the planes
-        try: sortedPlanes = sorted(planes, key=lambda a: a.Origin.X)
-        except: sortedPlanes = sorted(planes, key=lambda a: a.Origin.Y)
+            planes.append(rc.Geometry.Plane(rc.Geometry.Point3d(minXYPt), planeVec))
+        sortedPlanes = planes
     
-    # return planes
+    
     return sortedPlanes
 
 def unionAllCurves(Curves):
@@ -645,7 +676,7 @@ def main(method, depth, sunVectors, numShds, distBtwn, horOrVert):
             
             #If an shdAngle is provided, use it to rotate the planes by that angle
             if shdAngle != None:
-                if horOrVertical == True:
+                if horOrVertical == True or horOrVertical == None:
                     planeVec = rc.Geometry.Vector3d(normalVector.X, normalVector.Y, 0)
                     planeVec.Rotate(1.570796, rc.Geometry.Vector3d.ZAxis)
                     normalVectorPerp.Rotate((shdAngle*0.01745329), planeVec)
