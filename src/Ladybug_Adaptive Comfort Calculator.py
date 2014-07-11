@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_02_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -354,6 +354,11 @@ def main():
             extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
             upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        elif checkData == True and epwData == True and 'for' in epwStr[2]:
+            comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
+            extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+            upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
             try:
                 comfOrNot = []

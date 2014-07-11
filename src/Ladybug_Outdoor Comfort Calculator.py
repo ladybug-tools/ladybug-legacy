@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_02_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -326,6 +326,10 @@ def main():
             universalThermalClimateIndex.extend([epwStr[0], epwStr[1], 'Universal Thermal Climate Index', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfort or Not', 'Boolean Value', epwStr[4], runPeriod[0], runPeriod[1]])
             coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort', '-2 = Extremely Cold, -1 = Cold, 0 = Comfortable, 1 = Hot, 2 = Extremely Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+        elif checkData == True and epwData == True and 'for' in epwStr[2]:
+            universalThermalClimateIndex.extend([epwStr[0], epwStr[1], 'Universal Thermal Climate Index' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfort or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean Value', epwStr[4], runPeriod[0], runPeriod[1]])
+            coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-2 = Extremely Cold, -1 = Cold, 0 = Comfortable, 1 = Hot, 2 = Extremely Hot', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
             try:
                 utciList = []

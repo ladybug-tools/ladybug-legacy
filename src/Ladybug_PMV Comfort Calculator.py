@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_08_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -62,6 +62,8 @@ import math
 import scriptcontext as sc
 
 
+
+# Manage component outputs
 outputsDict = {
      
 0: ["readMe!", "..."],
@@ -75,8 +77,6 @@ outputsDict = {
 8: ["------------------------------", "------------------------------"],
 9: ["balanceTemperature", "The balance temperature is the temperature for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_ at which the PMV is equal to 0 (or the energy flowing into the human body is equal to the energy flowing out).  Setting the dry bulb and radiant temperatures to this value will produce a PMV of 0 and will yield the lowest possible PPD."],
 }
-
-# manage component outputs
 
 numOutputs = ghenv.Component.Params.Output.Count
 outSet = False
@@ -135,9 +135,6 @@ else:
         else: pass
     
 ghenv.Component.Attributes.Owner.OnPingDocument()
-
-
-
 
 
 
@@ -476,11 +473,16 @@ def main():
         standardEffectiveTemperature = []
         comfortableOrNot = []
         percentOfTimeComfortable = None
-        if checkData == True and epwData == True:
+        if checkData == True and epwData == True and 'for' not in epwStr[2]:
             predictedMeanVote.extend([epwStr[0], epwStr[1], 'Predicted Mean Vote', '+3 hot, +2 warm, +1 slightly warm, 0 neutral, -1 slightly cool, -2 cool, -3 cold', epwStr[4], runPeriod[0], runPeriod[1]])
             percentPeopleDissatisfied.extend([epwStr[0], epwStr[1], 'Percentage of People Dissatisfied', '%', epwStr[4], runPeriod[0], runPeriod[1]])
             standardEffectiveTemperature.extend([epwStr[0], epwStr[1], 'Standard Effective Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not', 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
+        elif checkData == True and epwData == True and 'for' in epwStr[2]:
+            predictedMeanVote.extend([epwStr[0], epwStr[1], 'Predicted Mean Vote' + ' for ' + epwStr[2].split('for ')[-1], '+3 hot, +2 warm, +1 slightly warm, 0 neutral, -1 slightly cool, -2 cool, -3 cold', epwStr[4], runPeriod[0], runPeriod[1]])
+            percentPeopleDissatisfied.extend([epwStr[0], epwStr[1], 'Percentage of People Dissatisfied' + ' for ' + epwStr[2].split('for ')[-1], '%', epwStr[4], runPeriod[0], runPeriod[1]])
+            standardEffectiveTemperature.extend([epwStr[0], epwStr[1], 'Standard Effective Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
             try:
                 for count in HOYS:
