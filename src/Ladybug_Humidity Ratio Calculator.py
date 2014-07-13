@@ -30,7 +30,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Humidity Ratio Calculator"
 ghenv.Component.NickName = 'CalcHumidityRatio'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_13_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_13_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -38,19 +38,20 @@ except: pass
 
 
 import math
+import scriptcontext as sc
 
 def checkTheData():
     try:
        hourlyDBTemp = _dryBulbTemperature
-       if hourlyDBTemp[2] == 'Dry Bulb Temperature' and hourlyDBTemp[4] == 'Hourly': checkData1 = True
+       if 'Temperature' in hourlyDBTemp[2] and hourlyDBTemp[4] == 'Hourly': checkData1 = True
        else: checkData1 = False
        
        hourlyRH = _relativeHumidity
-       if hourlyRH[2] == 'Relative Humidity' and hourlyRH[4] == 'Hourly': checkData2 = True
+       if 'Relative Humidity' in hourlyRH[2] and hourlyRH[4] == 'Hourly': checkData2 = True
        else: checkData2 = False
        
        barPress = _barometricPressure
-       if barPress[2] == 'Barometric Pressure' and barPress[4] == 'Hourly': checkData3 = True
+       if 'Barometric Pressure' in barPress[2] and barPress[4] == 'Hourly': checkData3 = True
        else: checkData3 = False
        
        if checkData1 == True and checkData2 == True and checkData3 == True: checkData = True
@@ -58,194 +59,102 @@ def checkTheData():
     
     return checkData
 
+
 def main():
-    if checkData == True:
-       #Separate the numbers from the header strings
-       Tnumbers = []
-       Tstr = []
-       for item in _dryBulbTemperature:
+    # import the classes
+    if sc.sticky.has_key('ladybug_release'):
+        lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
+        
+        #Separate the numbers from the header strings
+        Tnumbers = []
+        Tstr = []
+        for item in _dryBulbTemperature:
            try: Tnumbers.append(float(item))
            except: Tstr.append(item)
-       
-       Rnumbers = []
-       Rstr = []
-       for item in _relativeHumidity:
+        
+        Rnumbers = []
+        Rstr = []
+        for item in _relativeHumidity:
            try: Rnumbers.append(float(item))
            except: Rstr.append(item)
-       
-       Bnumbers = []
-       Bstr = []
-       for item in _barometricPressure:
+        
+        Bnumbers = []
+        Bstr = []
+        for item in _barometricPressure:
            try: Bnumbers.append(float(item))
            except: Bstr.append(item)
-       
-       #Convert Temperature to Kelvin
-       TKelvin = []
-       for item in Tnumbers:
-           TKelvin.append(item+273)
-       
-       #Calculate saturation vapor pressure above freezing
-       Sigma = []
-       for item in TKelvin:
-           if item >= 273:
-              Sigma.append(1-(item/647.096))
-           else:
-               Sigma.append(0)
-       
-       ExpressResult = []
-       for item in Sigma:
-           ExpressResult.append(((item)*(-7.85951783))+((item**1.5)*1.84408259)+((item**3)*(-11.7866487))+((item**3.5)*22.6807411)+((item**4)*(-15.9618719))+((item**7.5)*1.80122502))
-       
-       CritTemp = []
-       for item in TKelvin:
-           CritTemp.append(647.096/item)
-       
-       Exponent = [a*b for a,b in zip(CritTemp,ExpressResult)]
-       
-       Power = []
-       for item in Exponent:
-           Power.append(math.exp(item))
-       
-       SatPress1 = []
-       for item in Power:
-           if item != 1:
-               SatPress1.append(item*22064000)
-           else:
-               SatPress1.append(0)
-       
-       #Calculate saturation vapor pressure below freezing
-       Theta = []
-       for item in TKelvin:
-           if item < 273:
-              Theta.append(item/273.16)
-           else:
-               Theta.append(1)
-       
-       Exponent2 = []
-       for x in Theta:
-           Exponent2.append(((1-(x**(-1.5)))*(-13.928169))+((1-(x**(-1.25)))*34.707823))
-       
-       Power = []
-       for item in Exponent2:
-           Power.append(math.exp(item))
-       
-       SatPress2 = []
-       for item in Power:
-           if item != 1:
-               SatPress2.append(item*611.657)
-           else:
-               SatPress2.append(0)
-       
-       #Combine into final saturation vapor pressure
-       satPress = [a+b for a,b in zip(SatPress1,SatPress2)]
-       
-       #Calculate hourly water vapor pressure
-       DecRH = []
-       for item in Rnumbers:
-           DecRH.append(item*0.01)
-       
-       vapPress = [a*b for a,b in zip(DecRH,satPress)]
-       
-       #Calculate hourly humidity ratio
-       PressDiffer = [a-b for a,b in zip(Bnumbers,vapPress)]
-       
-       Constant = []
-       for item in vapPress:
-           Constant.append(item*0.621991)
-       
-       HRCalc = [a/b for a,b in zip(Constant,PressDiffer)]
-       
-       #Calculate hourly enthalpy
-       EnVariable1 = []
-       for item in HRCalc:
-           EnVariable1.append(1.01+(1.89*item))
-       
-       EnVariable2 = [a*b for a,b in zip(EnVariable1,Tnumbers)]
-       
-       EnVariable3 = []
-       for item in HRCalc:
-           EnVariable3.append(2500*item)
-       
-       EnVariable4 = [a+b for a,b in zip(EnVariable2,EnVariable3)]
-       
-       ENCalc = []
-       for x in EnVariable4:
-           if x >= 0:
-               ENCalc.append(x)
-           else:
-               ENCalc.append(0)
-       
-       #Build the strings and add it to the final calculation outputs
-       HR = []
-       
-       HR.append(Tstr[0])
-       HR.append(Tstr[1])
-       HR.append('Humidity Ratio')
-       HR.append('kg water / kg air')
-       HR.append(Tstr[4])
-       HR.append(Tstr[5])
-       HR.append(Tstr[6])
-       
-       for item in HRCalc:
+        
+        #Calculate the Humidity Ratio.
+        HRCalc, ENCalc, vapPress, satPress = lb_comfortModels.calcHumidRatio(Tnumbers, Rnumbers, Bnumbers)
+        
+        #Build the strings and add it to the final calculation outputs
+        HR = []
+        
+        HR.append(Tstr[0])
+        HR.append(Tstr[1])
+        HR.append('Humidity Ratio')
+        HR.append('kg water / kg air')
+        HR.append(Tstr[4])
+        HR.append(Tstr[5])
+        HR.append(Tstr[6])
+        
+        for item in HRCalc:
            HR.append(item)
-       
-       EN = []
-       
-       EN.append(Tstr[0])
-       EN.append(Tstr[1])
-       EN.append('Enthalpy')
-       EN.append('kJ/kg')
-       EN.append(Tstr[4])
-       EN.append(Tstr[5])
-       EN.append(Tstr[6])
-       
-       for item in ENCalc:
+        
+        EN = []
+        
+        EN.append(Tstr[0])
+        EN.append(Tstr[1])
+        EN.append('Enthalpy')
+        EN.append('kJ/kg')
+        EN.append(Tstr[4])
+        EN.append(Tstr[5])
+        EN.append(Tstr[6])
+        
+        for item in ENCalc:
            EN.append(item)
-       
-       
-       SP = []
-       
-       SP.append(Tstr[0])
-       SP.append(Tstr[1])
-       SP.append('Saturation Pressure')
-       SP.append('Pa')
-       SP.append(Tstr[4])
-       SP.append(Tstr[5])
-       SP.append(Tstr[6])
-       
-       satPress100 = []
-       for item in satPress:
+        
+        
+        SP = []
+        
+        SP.append(Tstr[0])
+        SP.append(Tstr[1])
+        SP.append('Saturation Pressure')
+        SP.append('Pa')
+        SP.append(Tstr[4])
+        SP.append(Tstr[5])
+        SP.append(Tstr[6])
+        
+        satPress100 = []
+        for item in satPress:
            satPress100.append(item*100)
-       
-       for item in satPress100:
+        
+        for item in satPress100:
            SP.append(item)
-       
-       VP = []
-       
-       VP.append(Tstr[0])
-       VP.append(Tstr[1])
-       VP.append('Vapor Pressure')
-       VP.append('Pa')
-       VP.append('Hourly')
-       VP.append(Tstr[5])
-       VP.append(Tstr[6])
-       
-       vapPress100 = []
-       for item in vapPress:
+        
+        VP = []
+        
+        VP.append(Tstr[0])
+        VP.append(Tstr[1])
+        VP.append('Vapor Pressure')
+        VP.append('Pa')
+        VP.append('Hourly')
+        VP.append(Tstr[5])
+        VP.append(Tstr[6])
+        
+        vapPress100 = []
+        for item in vapPress:
            vapPress100.append(item*100)
-       
-       for item in vapPress100:
+        
+        for item in vapPress100:
            VP.append(item)
-       
-       
-       
-       #Output the final results!
-       humidityRatio = HR
-       enthalpy = EN
-       partialPressure = VP
-       saturationPressure = SP
-       
-    return humidityRatio, enthalpy, partialPressure, saturationPressure
+        
+        return HR, EN, VP, SP
+    else:
+        print "You should first let the Ladybug fly..."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
+        return None, None, None, None
 
 
 #Check the data to make sure it is the correct type

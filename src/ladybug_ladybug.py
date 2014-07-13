@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_06_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_13_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2728,6 +2728,109 @@ class ComfortModels(object):
             stressRange = None
         
         return UTCI_approx, comfortable, stressRange
+    
+    
+    def calcHumidRatio(self, airTemp, relHumid, barPress):
+        #Convert Temperature to Kelvin
+        TKelvin = []
+        for item in airTemp:
+            TKelvin.append(item+273)
+        
+        #Calculate saturation vapor pressure above freezing
+        Sigma = []
+        for item in TKelvin:
+            if item >= 273:
+                Sigma.append(1-(item/647.096))
+            else:
+                Sigma.append(0)
+        
+        ExpressResult = []
+        for item in Sigma:
+            ExpressResult.append(((item)*(-7.85951783))+((item**1.5)*1.84408259)+((item**3)*(-11.7866487))+((item**3.5)*22.6807411)+((item**4)*(-15.9618719))+((item**7.5)*1.80122502))
+        
+        CritTemp = []
+        for item in TKelvin:
+            CritTemp.append(647.096/item)
+        
+        Exponent = [a*b for a,b in zip(CritTemp,ExpressResult)]
+        
+        Power = []
+        for item in Exponent:
+            Power.append(math.exp(item))
+        
+        SatPress1 = []
+        for item in Power:
+            if item != 1:
+                SatPress1.append(item*22064000)
+            else:
+                SatPress1.append(0)
+        
+        #Calculate saturation vapor pressure below freezing
+        Theta = []
+        for item in TKelvin:
+            if item < 273:
+                Theta.append(item/273.16)
+            else:
+                Theta.append(1)
+        
+        Exponent2 = []
+        for x in Theta:
+            Exponent2.append(((1-(x**(-1.5)))*(-13.928169))+((1-(x**(-1.25)))*34.707823))
+        
+        Power = []
+        for item in Exponent2:
+            Power.append(math.exp(item))
+        
+        SatPress2 = []
+        for item in Power:
+            if item != 1:
+                SatPress2.append(item*611.657)
+            else:
+                SatPress2.append(0)
+        
+        #Combine into final saturation vapor pressure
+        saturationPressure = [a+b for a,b in zip(SatPress1,SatPress2)]
+        
+        #Calculate hourly water vapor pressure
+        DecRH = []
+        for item in relHumid:
+            DecRH.append(item*0.01)
+        
+        partialPressure = [a*b for a,b in zip(DecRH,saturationPressure)]
+        
+        #Calculate hourly humidity ratio
+        PressDiffer = [a-b for a,b in zip(barPress,partialPressure)]
+        
+        Constant = []
+        for item in partialPressure:
+            Constant.append(item*0.621991)
+        
+        humidityRatio = [a/b for a,b in zip(Constant,PressDiffer)]
+        
+        #Calculate hourly enthalpy
+        EnVariable1 = []
+        for item in humidityRatio:
+            EnVariable1.append(1.01+(1.89*item))
+        
+        EnVariable2 = [a*b for a,b in zip(EnVariable1,airTemp)]
+        
+        EnVariable3 = []
+        for item in humidityRatio:
+            EnVariable3.append(2500*item)
+        
+        EnVariable4 = [a+b for a,b in zip(EnVariable2,EnVariable3)]
+        
+        enthalpy = []
+        for x in EnVariable4:
+            if x >= 0:
+                enthalpy.append(x)
+            else:
+                enthalpy.append(0)
+        
+        #Return all of the results
+        return humidityRatio, enthalpy, partialPressure, saturationPressure
+
+
 
 
 
