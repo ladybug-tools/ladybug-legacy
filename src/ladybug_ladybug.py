@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_13_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_14_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2394,22 +2394,30 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, initialGuessUp, initialGuessDown, windSpeed, relHumid, metRate, cloLevel, exWork):
+    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercent):
         upTemper = initialGuessUp
         upDelta = 3
         while abs(upDelta) > 0.01:
-            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
-            upDelta = 1 - pmv
-            upTemper = upTemper + upDelta
+            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
+            if eightyPercent == True:
+                upDelta = 1 - pmv
+                upTemper = upTemper + upDelta
+            else:
+                upDelta = 0.5 - pmv
+                upTemper = upTemper + upDelta
         
         if initialGuessDown == None:
             downTemper = upTemper - 6
         else: downTemper = initialGuessDown
         downDelta = 3
         while abs(downDelta) > 0.01:
-            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
-            downDelta = -1 - pmv
-            downTemper = downTemper + downDelta
+            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
+            if eightyPercent == True:
+                downDelta = -1 - pmv
+                downTemper = downTemper + downDelta
+            else:
+                downDelta = -0.5 - pmv
+                downTemper = downTemper + downDelta
         
         return upTemper, downTemper
     
