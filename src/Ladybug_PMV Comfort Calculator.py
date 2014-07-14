@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
         metabolicRate_: A number representing the metabolic rate of the human subject in met.  This input can also accept text inputs for different activities.  Acceptable text inputs include Sleeping, Reclining, Sitting, Typing, Standing, Driving, Cooking, House Cleaning, Walking, Walking 2mph, Walking 3mph, Walking 4mph, Running 9mph, Lifting 10lbs, Lifting 100lbs, Shoveling, Dancing, and Basketball.  If no value is input here, the component will assume a metabolic rate of 1 met, which is the metabolic rate of a seated human being.  This input can also accept lists of metabolic rates.
         clothingLevel_: A number representing the clothing level of the human subject in clo.  If no value is input here, the component will assume a clothing level of 1 clo, which is roughly the insulation provided by a 3-piece suit. A person dressed in shorts and a T-shirt has a clothing level of roughly 0.5 clo and a person in a thick winter jacket can have a clothing level as high as 2 to 4 clo.  This input can also accept lists of clothing levels.
         ------------------------------: ...
-        eightyPercentComfortable: Set to "True" to have the comfort standard be 80 percent of occupants comfortable and set to "False" to have the comfort standard be 90 percent of all occupants comfortable.  The default is set to "True" for 80 percent, which is what most HVAC engineers aim for.  However some projects will occasionally use 90%.
+        eightyPercentComfortable_: Set to "True" to have the comfort standard be 80 percent of occupants comfortable and set to "False" to have the comfort standard be 90 percent of all occupants comfortable.  The default is set to "True" for 80 percent, which is what most HVAC engineers aim for.  However some projects will occasionally use 90%.
         analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
         calcBalanceTemperature_: Set to "True" to have the component calculate the balance temperature for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_.  The balance temperature is essentially the temperature for these conditions at which the PMV is equal to 0 (or the energy flowing into the human body is equal to the energy flowing out).  Note that calculating the balance temperature for a whole year with epw windspeed can take as long as 10 minutes and so, by default, this option is set to "False".
         _runIt: Set to "True" to run the component and calculate the PMV comfort metrics.
@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_11_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_14_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -305,7 +305,7 @@ def checkTheInputs():
     else:
         checkData5 = True
         metRate = [1]
-        print 'No value connected for metabolicRate_.  It will be assumed that the metabolic rate is that of a seated person at 1.2 met.'
+        print 'No value connected for metabolicRate_.  It will be assumed that the metabolic rate is that of a seated person at 1 met.'
     
     #Check lenth of the clothingLevel_ list and evaluate the contents.
     checkData6 = False
@@ -493,7 +493,7 @@ def main():
                     predictedMeanVote.append(pmv)
                     percentPeopleDissatisfied.append(ppd)
                     standardEffectiveTemperature.append(set)
-                    if eightyPercentComfortable == True:
+                    if eightyPercentComfortable_ == True:
                         if ppd < 20:
                             comfortableOrNot.append(1)
                         else: comfortableOrNot.append(0)
