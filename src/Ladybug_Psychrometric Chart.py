@@ -992,7 +992,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                 strategyListTest.append("Thermal Mass + Night Vent")
             
             #If the user has hooked up natural ventilation, add a natural ventilation curve to the chart.
-            if "Natural Ventilation" in passiveStrategy and windSpeed[comfCount] < 1.5:
+            if "Occupant Use of Fans" in passiveStrategy and windSpeed[comfCount] < 1.5:
                 #Calculate the upper boundary of Natural ventilation.
                 upTemperPts = []
                 for count, humidity in enumerate(range(0,150,50)):
@@ -1031,7 +1031,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                 joinedNatVentBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, natVentLine])[0]
                 passiveStrategyCurves.append(joinedNatVentBound)
                 passiveStrategyBreps.append(outlineCurve(joinedNatVentBound))
-                strategyListTest.append("Natural Ventilation")
+                strategyListTest.append("Occupant Use of Fans")
             
             #If the user has hooked up internal gain, add an internal gain curve to the chart.
             if "Internal Heat Gain" in passiveStrategy:
