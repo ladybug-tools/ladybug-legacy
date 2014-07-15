@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_11_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -258,68 +258,6 @@ def checkTheInputs():
     return checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed
 
 
-
-def getHOYs(hours, days, months, timeStep, lb_preparation, method = 0):
-    
-    if method == 1: stDay, endDay = days
-        
-    numberOfDaysEachMonth = lb_preparation.numOfDaysEachMonth
-    
-    if timeStep != 1: hours = rs.frange(hours[0], hours[-1] + 1 - 1/timeStep, 1/timeStep)
-    
-    HOYS = []
-    
-    for monthCount, m in enumerate(months):
-        # just a single day
-        if method == 1 and len(months) == 1 and stDay - endDay == 0:
-            days = [stDay]
-        # few days in a single month
-        
-        elif method == 1 and len(months) == 1:
-            days = range(stDay, endDay + 1)
-        
-        elif method == 1:
-            #based on analysis period
-            if monthCount == 0:
-                # first month
-                days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
-            elif monthCount == len(months) - 1:
-                # last month
-                days = range(1, lb_preparation.checkDay(endDay, m) + 1)
-            else:
-                #rest of the months
-                days = range(1, numberOfDaysEachMonth[monthCount] + 1)
-        
-        for d in days:
-            for h in hours:
-                h = lb_preparation.checkHour(float(h))
-                m  = lb_preparation.checkMonth(int(m))
-                d = lb_preparation.checkDay(int(d), m)
-                HOY = lb_preparation.date2Hour(m, d, h)
-                if HOY not in HOYS: HOYS.append(int(HOY))
-    
-    return HOYS
-
-
-def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
-    
-    stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, True, False)
-    
-    if stMonth > endMonth:
-        months = range(stMonth, 13) + range(1, endMonth + 1)
-    else:
-        months = range(stMonth, endMonth + 1)
-    
-    # end hour shouldn't be included
-    hours  = range(stHour, endHour + 1)
-    
-    days = stDay, endDay
-    
-    HOYS = getHOYs(hours, days, months, timeStep, lb_preparation, method = 1)
-    
-    return HOYS, months, days
-
-
 def main():
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
@@ -332,7 +270,7 @@ def main():
         
         #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
         if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-            HOYS, months, days = getHOYsBasedOnPeriod(analysisPeriod_, 1, lb_preparation)
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
             runPeriod = analysisPeriod_
             calcLength = len(HOYS)
         elif len(analysisPeriod_)==0 and epwData == True:

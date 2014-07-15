@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_14_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -306,6 +306,69 @@ class Preparation(object):
                 type = False
         
         return selHourlyData
+    
+    
+    def getHOYs(self, hours, days, months, timeStep, method = 0):
+        
+        if method == 1: stDay, endDay = days
+            
+        numberOfDaysEachMonth = self.numOfDaysEachMonth
+        
+        if timeStep != 1: hours = rs.frange(hours[0], hours[-1] + 1 - 1/timeStep, 1/timeStep)
+        
+        HOYS = []
+        
+        for monthCount, m in enumerate(months):
+            # just a single day
+            if method == 1 and len(months) == 1 and stDay - endDay == 0:
+                days = [stDay]
+            # few days in a single month
+            
+            elif method == 1 and len(months) == 1:
+                days = range(stDay, endDay + 1)
+            
+            elif method == 1:
+                #based on analysis period
+                if monthCount == 0:
+                    # first month
+                    days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
+                elif monthCount == len(months) - 1:
+                    # last month
+                    days = range(1, self.checkDay(endDay, m) + 1)
+                else:
+                    #rest of the months
+                    days = range(1, numberOfDaysEachMonth[monthCount] + 1)
+            
+            for d in days:
+                for h in hours:
+                    h = self.checkHour(float(h))
+                    m  = self.checkMonth(int(m))
+                    d = self.checkDay(int(d), m)
+                    HOY = self.date2Hour(m, d, h)
+                    if HOY not in HOYS: HOYS.append(int(HOY))
+        
+        return HOYS
+    
+    
+    def getHOYsBasedOnPeriod(self, analysisPeriod, timeStep):
+        
+        stMonth, stDay, stHour, endMonth, endDay, endHour = self.readRunPeriod(analysisPeriod, True, False)
+        
+        if stMonth > endMonth:
+            months = range(stMonth, 13) + range(1, endMonth + 1)
+        else:
+            months = range(stMonth, endMonth + 1)
+        
+        # end hour shouldn't be included
+        hours  = range(stHour, endHour+1)
+        
+        days = stDay, endDay
+        
+        HOYS = self.getHOYs(hours, days, months, timeStep, method = 1)
+        
+        return HOYS, months, days
+    
+    
     
     def readLegendParameters(self, legendPar, getCenter = True):
         if legendPar == []: legendPar = [None] * 8
