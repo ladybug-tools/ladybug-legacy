@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_02_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -235,7 +235,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     
     return joinedMesh, originalMesh
 
-def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize):
+def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize, lb_visualization):
     ySize = int(len(values)/xSize)
     # Get a value to set the chart curves with.
     orderedVal = values[:]
@@ -292,7 +292,7 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     #Make the text surfaces for each month.
     textSrfs = []
     for count, monthText in enumerate(textStrings):
-        textSrf = text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize)
+        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize)
         textSrfs.extend(textSrf[0])
     
     #Generate curves for each of the major hours.
@@ -320,52 +320,12 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
                 textStrings.append(hourNames[count])
                 monthCurves.append(hourLines[hourCount])
                 textBasePts.append(hourTextPts[hourCount])
-                srfs = text2srf([hourNames[count]], [hourTextPts[hourCount]], legendFont, legendFontSize)[0]
+                srfs = lb_visualization.text2srf([hourNames[count]], [hourTextPts[hourCount]], legendFont, legendFontSize)[0]
                 for srf in srfs:
                     textSrfs.append(srf)
     
     return monthCurves, textBasePts, textStrings, textSrfs
 
-
-def text2srf(text, textPt, font, textHeight):
-    # Thanks to Giulio Piacentino for his version of text to curve
-    textSrfs = []
-    for n in range(len(text)):
-        plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
-        if type(text[n]) is not str:
-            preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, True, False)
-        else:
-            preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, True, False)
-            
-        postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
-        TG = postText.Geometry
-        crvs = TG.Explode()
-        
-        # join the curves
-        joindCrvs = rc.Geometry.Curve.JoinCurves(crvs)
-        
-        # create the surface
-        srfs = rc.Geometry.Brep.CreatePlanarBreps(joindCrvs)
-        
-        
-        extraSrfCount = 0
-        # = generate 2 surfaces
-        if "=" in text[n]: extraSrfCount += -1
-        if ":" in text[n]: extraSrfCount += -1
-        
-        if len(text[n].strip()) != len(srfs) + extraSrfCount:
-            # project the curves to the place in case number of surfaces
-            # doesn't match the text
-            projectedCrvs = []
-            for crv in joindCrvs:
-                projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
-            srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
-        
-        textSrfs.append(srfs)
-        
-        rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
-        
-    return textSrfs
 
 def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condStatement, bakeIt):
     # import the classes
@@ -494,7 +454,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 if yHeight == 24*xSC:
                     if len(results) == 8760 or listInfo[i][4] == "Hourly":
-                        chartCrvs, textBasePts, textStrings, textSrfs = createChartCrvs(results, listInfo[i][5], listInfo[i][6], xC, xSC, ySC, zSC, rc.Geometry.Point3d.Origin, yHeight, lb_preparation, legendFont, legendFontSize)
+                        chartCrvs, textBasePts, textStrings, textSrfs = createChartCrvs(results, listInfo[i][5], listInfo[i][6], xC, xSC, ySC, zSC, rc.Geometry.Point3d.Origin, yHeight, lb_preparation, legendFont, legendFontSize, lb_visualization)
                     else:
                         chartCrvs = []
                         textBasePts = []

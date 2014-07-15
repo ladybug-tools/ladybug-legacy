@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_14_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -420,47 +420,6 @@ def checkTheInputs():
     return checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLength2
 
 
-def text2srf(text, textPt, font, textHeight):
-    # Thanks to Giulio Piacentino for his version of text to curve
-    textSrfs = []
-    for n in range(len(text)):
-        plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
-        if type(text[n]) is not str:
-            preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, True, False)
-        else:
-            preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, True, False)
-            
-        postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
-        TG = postText.Geometry
-        crvs = TG.Explode()
-        
-        # join the curves
-        joindCrvs = rc.Geometry.Curve.JoinCurves(crvs)
-        
-        # create the surface
-        srfs = rc.Geometry.Brep.CreatePlanarBreps(joindCrvs)
-        
-        
-        extraSrfCount = 0
-        # = generate 2 surfaces
-        if "=" in text[n]: extraSrfCount += -1
-        if ":" in text[n]: extraSrfCount += -1
-        
-        if len(text[n].strip()) != len(srfs) + extraSrfCount:
-            # project the curves to the place in case number of surfaces
-            # doesn't match the text
-            projectedCrvs = []
-            for crv in joindCrvs:
-                projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
-            srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
-        
-        textSrfs.append(srfs)
-        
-        rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
-        
-    return textSrfs
-
-
 def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, scaleFactor, epwData, epwStr, lb_visualization):
     #Generate a list of temperatures that will be used to make the relative humidity curves.
     tempNum = range(-20, 55, 5)
@@ -567,12 +526,12 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     # Make the temperature text for the chart.
     tempLabels = []
     for count, text in enumerate(tempText):
-        tempLabels.extend(text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize)[0])
+        tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize)[0])
     
     # Make the humidity ratio text for the chart.
     ratioLabels = []
     for count, text in enumerate(ratioText):
-        ratioLabels.extend(text2srf([text], [ratioBasePt[count]], legendFont, legendFontSize)[0])
+        ratioLabels.extend(lb_visualization.text2srf([text], [ratioBasePt[count]], legendFont, legendFontSize)[0])
     
     # Make the relative humidity text for the chart.
     relHumidBasePts = []
@@ -584,18 +543,18 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     for humid in relHumidNum:
         relHumidTxt.append(str(humid)+"%")
     for count, text in enumerate(relHumidTxt[:-1]):
-        relHumidLabels.extend(text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75)[0])
+        relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75)[0])
     
     #Make axis labels for the chart.
     xAxisLabels = []
     xAxisTxt = ["Dry Bulb Temperature"]
     xAxisPt = [rc.Geometry.Point3d(-20.5, -2.5, 0)]
-    xAxisLabels.extend(text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25)[0])
+    xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25)[0])
     
     yAxisLabels = []
     yAxisTxt = ["Humidity Ratio"]
     yAxisPt = [rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0)]
-    yAxisLabels.extend(text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25)[0])
+    yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25)[0])
     rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0))
     for geo in yAxisLabels:
         geo.Transform(rotateTransf)
@@ -617,7 +576,7 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     else: titleTxt = ["Psychrometric Chart", "Unlown Location", "Unknown Time Period"]
     titlePt = [rc.Geometry.Point3d(-19, 0.0295*scaleFactor, 0), rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
-        titleLabels.extend(text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5)[0])
+        titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5)[0])
     
     #Bring all text and curves together in one list.
     chartCrvAndText = []
