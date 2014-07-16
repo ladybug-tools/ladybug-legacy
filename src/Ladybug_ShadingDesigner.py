@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_09_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
