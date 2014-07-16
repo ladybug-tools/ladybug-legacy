@@ -11,10 +11,10 @@ Use this component to calculate wind speed at a specific height over analysis pe
 Provided by Ladybug 0.0.57
     
     Args:
-        _hourlyWindSpeed: The wind speed from the import EPW component.
-        _hourlyWindDirection: The wind direction from the import EPW component.
+        _windSpeed_tenMeters: The wind speed from the import EPW component or a number representing the wind speed at 10 meters off the ground in agricultural or airport terrian.  This input also accepts lists of numbers representing different speeds at 10 meters.
+        _hourlyWindDirection: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
         _terrainType: The logarithmic model for wind speed varies with the type of terrain. The user may enter values from a slider or a string of text indicating the type of landscape to be evaluated, note that strings of text are case sensistive and therefore capitalization must match exactly the following terms. 0 = "water", 0.5 = "concrete", 1 = "agricultural", 1.5 = "orchard", 2 = "rural", 2.5 = "sprawl", 3 = "suburban", 3.5 = "town", 4 = "urban".
-        heightAboveGround_ : Optional. This is the height above ground for which you would like to measure wind speed. Providing more than one value will generate a list of speeds at each given height. Default height is 1 m above ground.
+        heightAboveGround_ : Optional. This is the height above ground for which you would like to measure wind speed. Providing more than one value will generate a list of speeds at each given height. Default height is 1 m above ground, which is what a person standing on the ground would feel.
         analysisPeriod_: Optional. Plug in an analysis period from the Ladybug_Analysis Period component. Default is Jan 1st 00:00 - Dec 31st 24:00, the entire year.
         averageData_: Optional boolean toggle. The default is False, which means the component will return a list of all hours within the analysis period.  If se tot Ture, the wind data will be averaged for the entire analysis period into a single value. 
     Returns:
@@ -24,7 +24,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Wind Speed Calculator"
 ghenv.Component.NickName = 'WindSpeedCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -45,46 +45,123 @@ windVectorAtHeight = DataTree[Object]()
 
 
 def checkTheInputs():
-    # Check if the _hourlyWindSpeed is connected.
-    if _hourlyWindSpeed != []:
-        if _hourlyWindSpeed[2] == "Wind Speed":
-            checkData1 = True
-        else:
-            checkData1 == False
-            print "_hourlyWindSpeed is not valid EPW wind data."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "_hourlyWindSpeed is not valid EPW wind data.  Valid EPW data has a Ladybug header on it.")
+    #Define a value that will indicate whether someone has hooked up epw data.
+    epwData = False
+    epwStr = []
+    
+    #Check lenth of the _windSpeed_tenMeterslist and evaluate the contents.
+    checkData1 = False
+    windSpeed = []
+    windMultVal = False
+    nonPositive = True
+    if len(_windSpeed_tenMeters) != 0:
+        try:
+            if _windSpeed_tenMeters[2] == 'Wind Speed':
+                windSpeed = _windSpeed_tenMeters[7:]
+                checkData1 = True
+                epwData = True
+                epwStr = _windSpeed_tenMeters[0:7]
+        except: pass
+        if checkData1 == False:
+            for item in _windSpeed_tenMeters:
+                try:
+                    if float(item) >= 0:
+                        windSpeed.append(float(item))
+                        checkData1 = True
+                    else: nonPositive = False
+                except: checkData1 = False
+        if nonPositive == False: checkData1 = False
+        if len(windSpeed) > 1: windMultVal = True
+        if checkData1 == False:
+            warning = '_windSpeed_tenMeters input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         checkData1 = False
+        print "Connect wind speed."
     
-    if _hourlyWindDirection != []:
-        if _hourlyWindDirection[2] == "Wind Direction":
-            checkData2 = True
-        else:
-            checkData2 = False
-            print "_hourlyWindDirection is not valid EPW wind data."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "_hourlyWindDirection is not valid EPW wind data.  Valid EPW data has a Ladybug header on it.")
+    #Check lenth of the _hourlyWindDirection list and evaluate the contents.
+    checkData2 = False
+    windDir = []
+    dirMultVal = False
+    nonPositive = True
+    if len(_hourlyWindDirection) != 0:
+        try:
+            if _hourlyWindDirection[2] == 'Wind Direction':
+                windDir = _hourlyWindDirection[7:]
+                checkData2 = True
+                epwData = True
+                epwStr = _hourlyWindDirection[0:7]
+        except: pass
+        if checkData2 == False:
+            for item in _hourlyWindDirection:
+                try:
+                    if float(item) >= 0:
+                        windDir.append(float(item))
+                        checkData2 = True
+                    else: nonPositive = False
+                except: checkData2 = False
+        if nonPositive == False: checkData2 = False
+        if len(windDir) > 1: dirMultVal = True
+        if checkData2 == False:
+            warning = '_hourlyWindDirection input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         checkData2 = False
+        print "Connect wind direction."
+    
+    #Define a function to duplicate data
+    def duplicateData(data, calcLength):
+        dupData = []
+        for count in range(calcLength):
+            dupData.append(data[0])
+        return dupData
+    
+    #For those lists of length greater than 1, check to make sure that they are all the same length.
+    checkData5 = False
+    if checkData1 == True and checkData2 == True :
+        if windMultVal == True or dirMultVal == True:
+            listLenCheck = []
+            if windMultVal == True: listLenCheck.append(len(windSpeed))
+            if dirMultVal == True: listLenCheck.append(len(windDir))
+            
+            if all(x == listLenCheck[0] for x in listLenCheck) == True:
+                checkData5 = True
+                calcLength = listLenCheck[0]
+                
+                if windMultVal == False: windSpeed = duplicateData(windSpeed, calcLength)
+                if dirMultVal == False: windDir = duplicateData(windDir, calcLength)
+                
+            else:
+                calcLength = None
+                warning = 'If you have put in lists with multiple values for wind speed or direction, the lengths of these lists must match across the parameters or you have a single value for a given parameter to be applied to all values in the list.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        else:
+            checkData5 = True
+            calcLength = 1
+    else:
+        calcLength = 0
+    
     
     #Make the default height at 1 meters if the user has not input a height.
     checkData4 = True
     if heightAboveGround_ == []:
-        heightAboveGround = [1.6]
+        heightAboveGround = [1]
     else:
         for item in heightAboveGround_:
-            if item < 1.6:
+            if item < 0:
                 checkData4 = False
-                print "The input heightAboveGround cannot be less than 1.6."
+                print "The input heightAboveGround cannot be less than 0."
                 w = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(w, "The input heightAboveGround cannot be less than 1.6.")
+                ghenv.Component.AddRuntimeMessage(w, "The input heightAboveGround cannot be less than 0.")
             else: pass
         heightAboveGround = heightAboveGround_
     
     #Make the default analyisis period for the whole year if the user has not input one.
     if analysisPeriod_ == []:
-        analysisPeriod = [ (1, 1, 1), (12, 31, 24)]
+        analysisPeriod = [(1, 1, 1), (12, 31, 24)]
     else:
         analysisPeriod = analysisPeriod_
     
@@ -118,47 +195,59 @@ def checkTheInputs():
         print "Terrain set to urban."
         roughLength = 1.6
     else:
+        roughLength = None
         checkData3 = False
         print "You have not connected a correct Terrain type."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct Terrain type.")
     
-    #Set the default averageData_ to true.
+    #Set the default to not averageData_.
     if averageData_ == None:
         averageData = False
     else:
         averageData = averageData_
     
-    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True:
+    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData4 == True:
         checkData = True
     else:
         checkData = False
     
-    return checkData, heightAboveGround, analysisPeriod, roughLength, averageData
+    return checkData, heightAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr
 
 def calcWindSpeedBasedOnHeight(vMet, height, roughLength):
-    #Calculate the velocity
-    vHeight = vMet * ((math.log(height/roughLength))/(math.log(10/0.0024)))
+    #Caclculate the wind speed at the boundary layer (a half-kilometer into the sky) assuming airport flat terrain for the weather file.
+    vBound = vMet * ((math.log(500/0.03))/(math.log(10/0.03)))
+    
+    #Calculate the velocity at the specified height.
+    if height != 0:
+        vHeight = vBound * ((math.log(height/roughLength))/(math.log(500/roughLength)))
+    else: vHeight = 0
+    
+    #If the speed is negative, that means that the wind speed is 0.
+    if vHeight < 0:
+        vHeight = 0
     
     return vHeight
 
 
-def main(heightAboveGround, analysisPeriod, roughLength, averageData):
+def main(heightAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         #Get the data for the analysis period and strip the header off.
-        hourlyWindSpeed = _hourlyWindSpeed[7:]
-        hrWindSpd = []
-        HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
-        hourlyWindDirection = _hourlyWindDirection[7:]
-        hrWindDir = []
-        for count in HOYS:
-            hrWindDir.append(hourlyWindDirection[count-1])
-            hrWindSpd.append(hourlyWindSpeed[count-1])
-        
+        if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+            hourlyWindDirection = _hourlyWindDirection[7:]
+            hrWindDir = []
+            hrWindSpd = []
+            for count in HOYS:
+                hrWindSpd.append(windSpeed[count-1])
+                hrWindDir.append(windDir[count-1])
+        else:
+            hrWindSpd = windSpeed
+            hrWindDir = windDir
         
         if averageData == True:
             #Avergage the data.
@@ -180,10 +269,20 @@ def main(heightAboveGround, analysisPeriod, roughLength, averageData):
                 windVec.append([vec])
             
         else:
-            #Add the headers to the data trees.
-            for count, height in enumerate(heightAboveGround):
-                for text in hourlyWindSpeed[:7]:
-                    windSpeedAtHeight.Add(text, GH_Path(count))
+            #Add the headers to the wind speed data trees.
+            if epwData == True:
+                for count, height in enumerate(heightAboveGround):
+                    windSpeedAtHeight.Add(epwStr[0], GH_Path(count))
+                    windSpeedAtHeight.Add(epwStr[1], GH_Path(count))
+                    windSpeedAtHeight.Add('Wind Speed', GH_Path(count))
+                    windSpeedAtHeight.Add('m/s', GH_Path(count))
+                    windSpeedAtHeight.Add(epwStr[4], GH_Path(count))
+                    if analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
+                        windSpeedAtHeight.Add(analysisPeriod[0], GH_Path(count))
+                        windSpeedAtHeight.Add(analysisPeriod[1], GH_Path(count))
+                    else:
+                        windSpeedAtHeight.Add(epwStr[5], GH_Path(count))
+                        windSpeedAtHeight.Add(epwStr[6], GH_Path(count))
             
             #Evaluate each height.
             windSpdHeight = []
@@ -213,11 +312,11 @@ def main(heightAboveGround, analysisPeriod, roughLength, averageData):
 
 
 #Check the inputs.
-checkData, heightAboveGround, analysisPeriod, roughLength, averageData = checkTheInputs()
+checkData, heightAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr = checkTheInputs()
 
 #Run the function.
 if checkData == True:
-    windSpdAtHght, windVecAtHght = main(heightAboveGround, analysisPeriod, roughLength, averageData)
+    windSpdAtHght, windVecAtHght = main(heightAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr)
 
 
 #Unpack the lists of lists in Python.
