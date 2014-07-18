@@ -48,9 +48,9 @@ Provided by Ladybug 0.0.57
         netEffect: The sum of the helpfulness and harmfulness for each cell.  This will be negative if shading the cell has a net harmful effect and positive if the shade has a net helpful effect.
 """
 
-ghenv.Component.Name = "Ladybug_Shade Benefit Evaluator"
-ghenv.Component.NickName = 'ShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.57\nMAY_05_2014'
+ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
+ghenv.Component.NickName = 'ComfortShadeBenefit'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -390,8 +390,9 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, regionT
         else: legendVal = abs(mostHarm)
         
         #Get the colors for the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
+        legendFont = 'Verdana'
         if legendPar:
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
         else:
             lowB = -1 * legendVal
             highB = legendVal
@@ -438,7 +439,7 @@ def main(gridSize, balanceTemp, analysisMesh, analysisAreas, windowMesh, regionT
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         
         titlebasePt = lb_visualization.BoundingBoxPar[-2]
-        titleTextCurve = lb_visualization.text2crv([analysisTitle], [titlebasePt], 'Veranda', legendScale * (lb_visualization.BoundingBoxPar[2]/20))
+        titleTextCurve = lb_visualization.text2srf([analysisTitle], [titlebasePt], 'Veranda', legendScale * (lb_visualization.BoundingBoxPar[2]/20))
         
         #Package the final legend together.
         legend = [legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]]
@@ -494,3 +495,8 @@ if checkData == True:
         legendBasePoint = result[5]
         legend = []
         [legend.append(item) for item in openLegend(result[4])]
+    ghenv.Component.Params.Output[2].Hidden = True
+    ghenv.Component.Params.Output[5].Hidden = True
+else:
+    ghenv.Component.Params.Output[2].Hidden = False
+    ghenv.Component.Params.Output[5].Hidden = False
