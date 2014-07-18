@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -49,6 +49,8 @@ import System
 import time
 from itertools import chain
 import datetime
+import urllib
+
 PI = math.pi
 letItFly = True
 rc.Runtime.HostUtils.DisplayOleAlerts(False)
@@ -65,6 +67,104 @@ elif os.access(os.path.dirname("c:\\"), os.F_OK):
 else:
     # let's use the user folder
     sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
+
+class CheckIn():
+    
+    def __init__(self):
+        #set up default pass
+        if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
+            # folder already exists so it is all fine
+            sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+        elif os.access(os.path.dirname("c:\\"), os.F_OK):
+            #the folder does not exists but write privileges are given so it is fine
+            sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+        else:
+            # let's use the user folder
+            sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
+    
+    def getComponentVersion(self):
+        monthDict = {'JAN':'01', 'FEB':'02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06',
+                     'JUL':'07', 'AUG':'08', 'SEP':'09', 'OCT':'10', 'NOV':'11', 'DEC':'12'}
+        # convert component version to standard versioning
+        ver, verDate = ghenv.Component.Message.split("\n")
+        ver = ver.split(" ")[1].strip()
+        month, day, year = verDate.split("_")
+        month = monthDict[month.upper()]
+        version = ".".join([year, month, day, ver])
+        return version
+        
+    def isNewerVersionAvailable(self, currentVersion, availableVersion):
+        # print int(availableVersion.replace(".", "")), int(currentVersion.replace(".", ""))
+        return int(availableVersion.replace(".", "")) > int(currentVersion.replace(".", ""))
+    
+    def checkForUpdates(self, LB= True, HB= True, OpenStudio = True, template = True):
+        
+        url = "https://dl.dropboxusercontent.com/u/16228160/honeybee/versions.txt"
+        webFile = urllib.urlopen(url)
+        versions= eval(webFile.read())
+        webFile.close()
+        
+        if LB:
+            ladybugVersion = versions['Ladybug']
+            currentLadybugVersion = self.getComponentVersion() # I assume that this function will be called inside Ladybug_ladybug Component
+            if self.isNewerVersionAvailable(currentLadybugVersion, ladybugVersion):
+                msg = "There is a newer version of Ladybug available to download! " + \
+                      "We strongly recommend you to download the newer version from Food4Rhino: " + \
+                      "http://www.food4rhino.com/project/ladybug-honeybee"
+                print msg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+        if HB:
+            honeybeeVersion = versions['Honeybee']
+            currentHoneybeeVersion = self.getComponentVersion() # I assume that this function will be called inside Honeybee_Honeybee Component
+            if self.isNewerVersionAvailable(currentHoneybeeVersion, honeybeeVersion):
+                msg = "There is a newer version of Honeybee available to download! " + \
+                      "We strongly recommend you to download the newer version from Food4Rhino: " + \
+                      "http://www.food4rhino.com/project/ladybug-honeybee"
+                print msg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+            
+        if OpenStudio:
+            # This should be called inside OpenStudio component which means Honeybee is already flying
+            # check if the version file exist
+            openStudioLibFolder = os.path.join(sc.sticky["Honeybee_DefaultFolder"], "OpenStudio")
+            versionFile = os.path.join(openStudioLibFolder, "osversion.txt")
+            isNewerOSAvailable= False
+            if not os.path.isfile(versionFile):
+                isNewerOSAvailable= True
+            else:
+                # read the file
+                with open(versionFile) as verFile:
+                    currentOSVersion= eval(verFile.read())['version']
+            
+            OSVersion = versions['OpenStudio']
+            
+            if isNewerOSAvailable or self.isNewerVersionAvailable(currentOSVersion, OSVersion):
+                sc.sticky["isNewerOSAvailable"] = True
+            else:
+                sc.sticky["isNewerOSAvailable"] = False
+                
+        if template:
+            honeybeeDefaultFolder = sc.sticky["Honeybee_DefaultFolder"]
+            templateFile = os.path.join(honeybeeDefaultFolder, 'OpenStudioMasterTemplate.idf')
+            
+            # check file doesn't exist then it should be downloaded
+            if not os.path.isfile(templateFile):
+                return True
+            
+            # find the version
+            try:
+                with open(templateFile) as tempFile:
+                    templateVersion = eval(tempFile.readline().split("!")[-1].strip())["version"]
+            except Exception, e:
+                return True
+            
+            # finally if the file exist and already has a version, compare the versions
+            currentTemplateVersion = versions['Template']
+            
+            return self.isNewerVersionAvailable(currentTemplateVersion, templateVersion)
+            
+
+checkIn = CheckIn()
 
 
 class Preparation(object):
@@ -2901,12 +3001,11 @@ class ComfortModels(object):
         #Return all of the results
         return humidityRatio, enthalpy, partialPressure, saturationPressure
 
-
-
-
-
-
-
+try:
+    checkIn.checkForUpdates(LB= True, HB= False, OpenStudio = False, template = False)
+except:
+    # no internet connection
+    pass
 
 now = datetime.datetime.now()
 
