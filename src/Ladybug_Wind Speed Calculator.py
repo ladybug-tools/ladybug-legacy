@@ -5,7 +5,7 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to calculate wind speed at a specific height over analysis period.  Terain types ....
+Use this component to calculate wind speed at a specific height for a given terrain type.  By default, the component will calculate ground wind speed, which is useful for comfrt calculations.  Also, by hooking up wind data from an epw file, you can use the resulting data to create a wind rose at any height.
 
 -
 Provided by Ladybug 0.0.57
@@ -13,19 +13,20 @@ Provided by Ladybug 0.0.57
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _windSpeed_tenMeters: The wind speed from the import EPW component or a number representing the wind speed at 10 meters off the ground in agricultural or airport terrian.  This input also accepts lists of numbers representing different speeds at 10 meters.
-        _hourlyWindDirection: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
+        _windDirection: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
         _terrainType: The logarithmic model for wind speed varies with the type of terrain. The user may enter values from a slider or a string of text indicating the type of landscape to be evaluated, note that strings of text are case sensistive and therefore capitalization must match exactly the following terms. 0 = "water", 0.5 = "concrete", 1 = "agricultural", 1.5 = "orchard", 2 = "rural", 2.5 = "sprawl", 3 = "suburban", 3.5 = "town", 4 = "urban".
         heightAboveGround_ : Optional. This is the height above ground for which you would like to measure wind speed. Providing more than one value will generate a list of speeds at each given height. Default height is 1 m above ground, which is what a person standing on the ground would feel.
-        analysisPeriod_: Optional. Plug in an analysis period from the Ladybug_Analysis Period component. Default is Jan 1st 00:00 - Dec 31st 24:00, the entire year.
-        averageData_: Optional boolean toggle. The default is False, which means the component will return a list of all hours within the analysis period.  If se tot Ture, the wind data will be averaged for the entire analysis period into a single value. 
+        analysisPeriod_: If you have connected data from an EPW component, plug in an analysis period from the Ladybug_Analysis Period component to calculate data for just a portion of the year. The default is Jan 1st 00:00 - Dec 31st 24:00, the entire year.
+        averageData_: Set to "True" to average all of the wind data that you have connected into a single speed and wind vector. The default is False, which means the component will return a list of all hours within the analysis period.  If se tot Ture, the wind data will be averaged for the entire analysis period into a single value. 
     Returns:
         readMe!: ...
-        windSpeedAtHeight: If averageData_ = True, this returns a single value representing the average speed for the analysis period at each height. If averageData_ = False, this returns a list of wind speeds for every hour within the analysis period at each height. Note than when averageData_ =  False, the list will include a header specific to each list. This header is located in in positions 0-6 of the list and can be removed by culling those values.
+        windSpeedAtHeight: The wind speed at the connected height above the ground.  If averageData_ = True, this will be a single value representing the average speed for all connected values or values within the analysis period at each height. If averageData_ = False, this returns a list of wind speeds for every hour within the analysis period at each height. Note than when averageData_ =  False, the list will include a header specific to each list. This header can be removed by using the "Ladybug_Separate Data" component.
+        windDirectionAtHeight: The wind direction in degrees at the connected height above the ground.  If averageData_ = True, this will be a single value representing the average direction for connected values or values within the analysis period. If averageData_ = False, this is essentially the same as the _windDirection input but for the analysis period.
         windVectorAtHeight: Returns a list of vectors representing wind speed and direction at every hour within the analysis period, at each height provided.
 """
 ghenv.Component.Name = "Ladybug_Wind Speed Calculator"
 ghenv.Component.NickName = 'WindSpeedCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_21_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_22_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -42,6 +43,7 @@ from System import Object
 
 #Make data Tree objects.
 windSpeedAtHeight = DataTree[Object]()
+windDirectionAtHeight = DataTree[Object]()
 windVectorAtHeight = DataTree[Object]()
 
 
@@ -81,21 +83,21 @@ def checkTheInputs():
         checkData1 = False
         print "Connect wind speed."
     
-    #Check lenth of the _hourlyWindDirection list and evaluate the contents.
+    #Check lenth of the _windDirection list and evaluate the contents.
     checkData2 = False
     windDir = []
     dirMultVal = False
     nonPositive = True
-    if len(_hourlyWindDirection) != 0:
+    if len(_windDirection) != 0:
         try:
-            if _hourlyWindDirection[2] == 'Wind Direction':
-                windDir = _hourlyWindDirection[7:]
+            if _windDirection[2] == 'Wind Direction':
+                windDir = _windDirection[7:]
                 checkData2 = True
                 epwData = True
-                epwStr = _hourlyWindDirection[0:7]
+                epwStr = _windDirection[0:7]
         except: pass
         if checkData2 == False:
-            for item in _hourlyWindDirection:
+            for item in _windDirection:
                 try:
                     if float(item) >= 0:
                         windDir.append(float(item))
@@ -105,7 +107,7 @@ def checkTheInputs():
         if nonPositive == False: checkData2 = False
         if len(windDir) > 1: dirMultVal = True
         if checkData2 == False:
-            warning = '_hourlyWindDirection input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
+            warning = '_windDirection input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
@@ -200,7 +202,7 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
             #Get the data for the analysis period and strip the header off.
             if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
                 HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
-                hourlyWindDirection = _hourlyWindDirection[7:]
+                hourlyWindDirection = _windDirection[7:]
                 hrWindDir = []
                 hrWindSpd = []
                 for count in HOYS:
@@ -214,13 +216,18 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
                 #Avergage the data.
                 avgHrWindSpd = sum(hrWindSpd)/len(hrWindSpd)
                 
-                avgHrWindDir = sum(hrWindDir)/len(hrWindDir)
-                avgHrWindDir = 0.0174532925*avgHrWindDir
+                avgHrWindDirDeg = sum(hrWindDir)/len(hrWindDir)
+                avgHrWindDir = 0.0174532925*avgHrWindDirDeg
                 
                 #Evaluate each height.
                 windSpdHeight = []
                 for count, height in enumerate(heightAboveGround):
                     windSpdHeight.append([lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height, roughLength)])
+                
+                #Declare the wind direction.
+                windDirHeight = []
+                for count, height in enumerate(heightAboveGround):
+                    windDirHeight.append([avgHrWindDirDeg])
                 
                 #Make wind Vectors.
                 windVec = []
@@ -232,9 +239,8 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
                 #If there is a north angle hooked up, rotate the vectors.
                 if north_ != None:
                     northAngle, northVector = lb_preparation.angle2north(north_)
-                    for list in windVec:
-                        for vec in list:
-                            vec.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis)
+                    for vec in windVec:
+                        vec.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis)
                 else: pass
                 
             else:
@@ -246,28 +252,42 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
                         windSpeedAtHeight.Add('Wind Speed', GH_Path(count))
                         windSpeedAtHeight.Add('m/s', GH_Path(count))
                         windSpeedAtHeight.Add(epwStr[4], GH_Path(count))
+                        windDirectionAtHeight.Add(epwStr[0], GH_Path(count))
+                        windDirectionAtHeight.Add(epwStr[1], GH_Path(count))
+                        windDirectionAtHeight.Add('Wind Direction', GH_Path(count))
+                        windDirectionAtHeight.Add('degrees', GH_Path(count))
+                        windDirectionAtHeight.Add(epwStr[4], GH_Path(count))
                         if analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
                             windSpeedAtHeight.Add(analysisPeriod[0], GH_Path(count))
                             windSpeedAtHeight.Add(analysisPeriod[1], GH_Path(count))
+                            windDirectionAtHeight.Add(analysisPeriod[0], GH_Path(count))
+                            windDirectionAtHeight.Add(analysisPeriod[1], GH_Path(count))
                         else:
                             windSpeedAtHeight.Add(epwStr[5], GH_Path(count))
                             windSpeedAtHeight.Add(epwStr[6], GH_Path(count))
+                            windDirectionAtHeight.Add(epwStr[5], GH_Path(count))
+                            windDirectionAtHeight.Add(epwStr[6], GH_Path(count))
                 
                 #Evaluate each height.
                 windSpdHeight = []
                 for height in heightAboveGround:
                     initWindSpd = []
                     for speed in hrWindSpd:
-                        initWindSpd.append(calcWindSpeedBasedOnHeight(speed, height, roughLength))
+                        initWindSpd.append(lb_wind.calcWindSpeedBasedOnHeight(speed, height, roughLength))
                     windSpdHeight.append(initWindSpd)
-                 
+                
+                #Declare the wind direction.
+                windDirHeight = []
+                for height in heightAboveGround:
+                   windDirHeight.append(hrWindDir)
+                
                 #Make the wind vectors.
                 windVec = []
                 for list in windSpdHeight:
                     initWindVec = []
                     for count, speed in enumerate(list):
                         vec = rc.Geometry.Vector3d(0, speed, 0)
-                        vec.Rotate(hrWindDir[count], rc.Geometry.Vector3d.ZAxis)
+                        vec.Rotate(hrWindDir[count]*0.0174532925, rc.Geometry.Vector3d.ZAxis)
                         initWindVec.append(vec)
                     windVec.append(initWindVec)
                 
@@ -279,17 +299,17 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
                             vec.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis)
                 else: pass
             
-            return windSpdHeight, windVec
+            return windSpdHeight, windVec, windDirHeight
         else:
             print "You have not connected a correct Terrain type."
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct Terrain type.")
-            return [], []
+            return [], [], []
     else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return [], []
+        return [], [], []
 
 
 
@@ -298,7 +318,7 @@ checkData, heightAboveGround, analysisPeriod, terrainType, averageData, windSpee
 
 #Run the function.
 if checkData == True:
-    windSpdAtHght, windVecAtHght = main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed, windDir, epwData, epwStr)
+    windSpdAtHght, windVecAtHght, windDirHeight = main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed, windDir, epwData, epwStr)
     
     #Unpack the lists of lists in Python.
     for count, list in enumerate(windSpdAtHght):
@@ -308,3 +328,7 @@ if checkData == True:
     for count, list in enumerate(windVecAtHght):
         for item in list:
             windVectorAtHeight.Add(item, GH_Path(count))
+    
+    for count, list in enumerate(windDirHeight):
+        for item in list:
+            windDirectionAtHeight.Add(item, GH_Path(count))
