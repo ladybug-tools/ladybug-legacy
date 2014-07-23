@@ -16,14 +16,20 @@ Provided by Ladybug 0.0.57
         _windDirection: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
         _terrainType: The logarithmic model for wind speed varies with the type of terrain. The user may enter values from a slider or a string of text indicating the type of landscape to be evaluated, note that strings of text are case sensistive and therefore capitalization must match exactly the following terms. 0 = "water", 0.5 = "concrete", 1 = "agricultural", 1.5 = "orchard", 2 = "rural", 2.5 = "sprawl", 3 = "suburban", 3.5 = "town", 4 = "urban".
         -------------------------: ...
-        stepOfList_ : Use this input to select out specific indices of a list of values connected for wind speed and wind direction.  If you have connected hourly EPW data, this is the equivalent of a "HOY" input and you can use the "Ladybug_DOY_HOY" component to select out a specific hour and date.  Note that this overrides the analysisPeriod_ input below.
+        HOY_ : Use this input to select out specific indices of a list of values connected for wind speed and wind direction.  If you have connected hourly EPW data, this is the equivalent of a "HOY" input and you can use the "Ladybug_DOY_HOY" component to select out a specific hour and date.  Note that this overrides the analysisPeriod_ input below.
         analysisPeriod_: If you have connected data from an EPW component, plug in an analysis period from the Ladybug_Analysis Period component to calculate data for just a portion of the year. The default is Jan 1st 00:00 - Dec 31st 24:00, the entire year.
-        averageData_: Set to "True" to average all of the wind data that you have connected into a single wind profile curve. Set to False to return a list of wind profile curves for all connected data or hours within the analysis period.  The default is set to "True" as many wind profile curves can easily become unmanagable. 
+        annualHourlyData_: An optional list of hourly data from the Import epw component, which will be overlaid on wind rose (e.g. dryBulbTemperature)
+        conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the wind rose. To use this input correctly, hourly data, such as temperature or humidity, must be plugged into the annualHourlyData_ input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
+                              The current version of this component accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
+                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<a<23 and b<80 (without quotation marks).
+                              For the windRose component, the variable "a" always represents windSpeed.
+        averageData_: Set to "True" to average all of the wind data that you have connected into a single wind profile curve. Set to False to return a list of wind profile curves for all connected data or hours within the analysis period.  The default is set to "True" as many wind profile curves can easily become unmanagable.
         -------------------------: ...
         groundBasePt_: An optional point that can be used to change the base point at shich the wind profile curves are generated.  By default, the wond profile curves generate at the Rhino model origin.
         windVectorScale_: An optional number that can be used to change the scale of the wind vectors in relation to the height of the wind profile curve.  The default is set to 2 so that it is easier to see how the wind speed is changing with height.
         windProfileHeight_: An optional number in Rhino model units that can be used to change the height of the wind profile curve.  By default, the height of the curve is set to 20 meters (or the equivalent distance in your Rhino model units).  You may want to move this number higher or lower depending on the wind effects that you are interested in.
         distBetweenVec_: An optional number in rhino model units that represents the distance between wind vectors in the profile curve.  The default is set to 2 meters (or the equivalent distance in your Rhino model units).
+        legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
     Returns:
         readMe!: ...
         --------------------: ...
@@ -32,11 +38,13 @@ Provided by Ladybug 0.0.57
         vectorAnchorPts: Anchor points for each of the vectors above, which correspond to the height above the ground for each of the vectors.  Connect this along with the output above to a Grasshopper "Vector Display" component to see the vectors as a grasshopper vector display (as opposed to the vector mesh below).
         --------------------: ...
         windVectorMesh: A mesh displaying the wind vectors that were used to make the profile curve.
-        windProfileCurve: A curve outlining the wind speed as it changes with height.  This may also be a list of wind profile curves if multiple "stepOfList_" inputs are connected or "averageData_" is set to False."
+        windProfileCurve: A curve outlining the wind speed as it changes with height.  This may also be a list of wind profile curves if multiple "HOY_" inputs are connected or "averageData_" is set to False."
+        legend: A legend of the wind profile curves. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        legendBasePt: The legend base point(s), which can be used to move the legend in relation to the wind profile with the grasshopper "move" component.
 """
 ghenv.Component.Name = "Ladybug_Wind Profile Curve Visualizer"
 ghenv.Component.NickName = 'WindProfileCurve'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_22_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_23_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
@@ -164,14 +172,14 @@ def checkTheInputs():
         else:
             calcLength = 0
         
-        #If the user has input a stepOfList_ that is longer than the calculation length, throw a warning.
+        #If the user has input a HOY_ that is longer than the calculation length, throw a warning.
         checkData7 = True
-        if stepOfList_ == []: pass
+        if HOY_ == []: pass
         else:
-            for item in stepOfList_:
+            for item in HOY_:
                 if item > calcLength or item < 1:
                     checkData7 = False
-                    warning = 'You cannot input a stepOfList_ that is less than 1 or greater than the length of values in the _windSpeed or _windDirection lists.'
+                    warning = 'You cannot input a HOY_ that is less than 1 or greater than the length of values in the _windSpeed or _windDirection lists.'
                     print warning
                     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 else: pass
@@ -270,24 +278,133 @@ def checkTheInputs():
         return False, None, None, None, None, None, None, None, None, None, None,  None
 
 
+
+def checkConditionalStatement(annualHourlyData, conditionalStatement):
+        lb_preparation = sc.sticky["ladybug_Preparation"]()
+        indexList, listInfo = lb_preparation.separateList(annualHourlyData, lb_preparation.strToBeFound)
+        
+        letters = [chr(i) for i in xrange(ord('a'), ord('z')+1)]
+        # remove 'and' and 'or' from conditional statements
+        csCleaned = conditionalStatement.replace('and', '',20000)
+        csCleaned = csCleaned.replace('or', '',20000)
+        
+        # find the number of the lists that have assigned conditional statements
+        listNum = []
+        for count, let in enumerate(letters):
+            if csCleaned.find(let)!= -1: listNum.append(count)
+        
+        # check if all the conditions are actually applicable
+        for num in listNum:
+            if num>len(listInfo) - 1:
+                warning = 'A conditional statement is assigned for list number ' + `num + 1` + '  which is not existed!\n' + \
+                          'Please remove the letter "' + letters[num] + '" from the statements to solve this problem!\n' + \
+                          'Number of lists are ' + `len(listInfo)` + '. Please fix this issue and try again.'
+                          
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1, -1
+        
+        selList = [[]] * len(listInfo)
+        for i in range(len(listInfo)):
+            selList[i] = annualHourlyData[indexList[i]+7:indexList[i+1]]
+            if listInfo[i][4]!='Hourly' or listInfo[i][5]!=(1,1,1) or  listInfo[i][6]!=(12,31,24) or len(selList[i])!=8760:
+                warning = 'At least one of the input data lists is not a valis ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1, -1
+        
+        # replace the right list in the conditional statement
+        statement = conditionalStatement.split(' ')
+        finalStatement = 'pattern = '
+        titleStatement = '...                         ...                         ...\n' +\
+                         'Conditional Selection Applied:\n'
+        
+        for statemntPart in statement:
+            statementCopy = str.Copy(statemntPart)
+            if statemntPart!='and' and statemntPart!='or':
+                for num in listNum:
+                    toBeReplacedWith = 'selList[this][HOY]'.replace('this', `num`)
+                    titleToBeReplacedWith = listInfo[num][2]
+                    statemntPart = statemntPart.replace(letters[num], toBeReplacedWith, 20000)
+                    statementCopy = statementCopy.replace(letters[num], titleToBeReplacedWith, 20000)
+                    if statementCopy.find(letters[num])!=-1: break
+                    
+                titleStatement = titleStatement + ' ' + statementCopy
+            else:
+                titleStatement = titleStatement + '\n' + statementCopy 
+            finalStatement = finalStatement + ' ' + statemntPart
+        print titleStatement
+        
+        # check for the pattern
+        patternList = []
+        try:
+            for HOY in range(8760):
+                exec(finalStatement)
+                patternList.append(pattern)
+        except Exception,e:
+            warning = 'There is an error in the conditional statement:\n' + `e`
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1, -1
+        
+        return titleStatement, patternList
+
+
 def main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
+    #Read the legend parameters.
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar_, False)
+    
     #If epw data is connected, get the data for the analysis period and strip the header off.
-    if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)] and stepOfList_ == []:
+    if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)] and HOY_ == []:
         HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
         hrWindDir = []
         hrWindSpd = []
         for count in HOYS:
-            hrWindSpd.append(windSpeed[count-1])
-            hrWindDir.append(windDir[count-1])
+            hrWindSpd.append(windSpeed[count])
+            hrWindDir.append(windDir[count])
     else:
         hrWindSpd = windSpeed
         hrWindDir = windDir
     
-    #If the user has specified a stepOfList_, use this to select out values.
-    if stepOfList_ != []:
+    #Check the conditional statement and apply it.
+    if epwData == True:
+        titleStatement = -1
+        annualHourlyData = _windSpeed_tenMeters + annualHourlyData_
+        if conditionalStatement_ and len(annualHourlyData)!=0 and annualHourlyData[0]!=None:
+            print 'Checking conditional statements...'
+            # send all data and statement to a function and return back
+            # True, False Pattern and condition statement
+            titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement_)
+        
+        if titleStatement != -1 and True not in patternList:
+            warning = 'No hour meets the conditional statement.' 
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        
+        if titleStatement == -1:
+            patternList = [True] * 8760
+            titleStatement = False
+        patternListFinal = []
+        if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)] and HOY_ == []:
+            for count in HOYS:
+                patternListFinal.append(patternList[count])
+        else: patternListFinal = patternList
+        
+        newHrWindDir = []
+        newHrWindSpd = []
+        for count, bool in enumerate(patternListFinal):
+            if bool == True:
+                newHrWindSpd.append(hrWindSpd[count])
+                newHrWindDir.append(hrWindDir[count])
+            else: pass
+        hrWindSpd = newHrWindSpd
+        hrWindDir = newHrWindDir
+    
+    #If the user has specified a HOY_, use this to select out values.
+    if HOY_ != []:
         hrWindDir = []
         hrWindSpd = []
-        for num in stepOfList_:
+        for num in HOY_:
             hrWindDir.append(windDir[num-1])
             hrWindSpd.append(windSpeed[num-1])
     else: pass
@@ -341,15 +458,16 @@ def main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed
             profileCrv = rc.Geometry.Curve.CreateInterpolatedCurve(profilePts, 3)
         
         #Get colors for the und profile mesh.
-        customColors = [System.Drawing.Color.FromArgb(250,250,255), System.Drawing.Color.FromArgb(225,225,255), System.Drawing.Color.FromArgb(200,200,255), System.Drawing.Color.FromArgb(175,175,255), System.Drawing.Color.FromArgb(150,150,255), System.Drawing.Color.FromArgb(125,125,255), System.Drawing.Color.FromArgb(100,100,255), System.Drawing.Color.FromArgb(75,75,255), System.Drawing.Color.FromArgb(50,50,255)]
-        values = windSpdHeight[0][:]
-        values.sort()
-        lowB = values[0]
-        highB = values[-1]
-        colors = lb_visualization.gradientColor(windSpdHeight[0], lowB, highB, customColors)
+        if legendPar_ == []:
+            customColors = [System.Drawing.Color.FromArgb(200,200,255), System.Drawing.Color.FromArgb(175,175,255), System.Drawing.Color.FromArgb(150,150,255), System.Drawing.Color.FromArgb(125,125,255), System.Drawing.Color.FromArgb(100,100,255), System.Drawing.Color.FromArgb(75,75,255), System.Drawing.Color.FromArgb(50,50,255)]
+        values = windSpdHeight[0][1:]
+        #values.sort()
+        #lowB = values[0]
+        #highB = values[-1]
+        colors = lb_visualization.gradientColor(windSpdHeight[0][1:], lowB, highB, customColors)
         
         #Create the wind profile mesh.
-        windVecMesh = rc.Geometry.Mesh()
+        totalMesh = rc.Geometry.Mesh()
         for count, point in enumerate(anchorPts[0][1:]):
             circle = rc.Geometry.Circle(rc.Geometry.Plane(point, windVec[0][count+1]), scaleFactor*0.05).ToNurbsCurve()
             extruVec = rc.Geometry.Vector3d(windVec[0][count+1].X, windVec[0][count+1].Y, 0)
@@ -362,8 +480,9 @@ def main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed
             arrowMesh = rc.Geometry.Mesh()
             arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(extrusion)[0])
             arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(cone)[0])
-            arrowMesh.VertexColors.CreateMonotoneMesh(colors[count+1])
-            windVecMesh.Append(arrowMesh)
+            arrowMesh.VertexColors.CreateMonotoneMesh(colors[count])
+            totalMesh.Append(arrowMesh)
+        windVecMesh = [totalMesh]
     else:
         #Evaluate each height.
         windSpdHeight = []
@@ -420,18 +539,20 @@ def main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed
                 profileCrv.append(rc.Geometry.Curve.CreateInterpolatedCurve(profilePts[listCount], 3))
         
         #Get colors for the und profile mesh.
-        customColors = [System.Drawing.Color.FromArgb(250,250,255), System.Drawing.Color.FromArgb(225,225,255), System.Drawing.Color.FromArgb(200,200,255), System.Drawing.Color.FromArgb(175,175,255), System.Drawing.Color.FromArgb(150,150,255), System.Drawing.Color.FromArgb(125,125,255), System.Drawing.Color.FromArgb(100,100,255), System.Drawing.Color.FromArgb(75,75,255), System.Drawing.Color.FromArgb(50,50,255)]
+        if legendPar_ == []:
+            customColors = [System.Drawing.Color.FromArgb(200,200,255), System.Drawing.Color.FromArgb(175,175,255), System.Drawing.Color.FromArgb(150,150,255), System.Drawing.Color.FromArgb(125,125,255), System.Drawing.Color.FromArgb(100,100,255), System.Drawing.Color.FromArgb(75,75,255), System.Drawing.Color.FromArgb(50,50,255)]
         values = []
         for list in windSpdHeight:
-            for value in list:
+            for value in list[1:]:
                 values.append(value)
         values.sort()
-        lowB = values[0]
-        highB = values[-1]
+        if str(lowB) == "min":
+            lowB = values[0]
+        if str(highB) == "max":
+            highB = values[-1]
         colors = []
         for list in windSpdHeight:
-            colors.append(lb_visualization.gradientColor(list, lowB, highB, customColors))
-        
+            colors.append(lb_visualization.gradientColor(list[1:], lowB, highB, customColors))
         
         #Create the wind profile mesh.
         windVecMesh = []
@@ -451,13 +572,43 @@ def main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed
                     arrowMesh = rc.Geometry.Mesh()
                     arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(extrusion)[0])
                     arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(cone)[0])
-                    arrowMesh.VertexColors.CreateMonotoneMesh(colors[listCount][count+1])
+                    arrowMesh.VertexColors.CreateMonotoneMesh(colors[listCount][count])
                     vectorMesh.Append(arrowMesh)
             windVecMesh.append(vectorMesh)
     
+    #Calculate a bounding box around everything that will help place the legend ad title.
+    allGeo = []
+    for item in profileCrv:
+        allGeo.append(item)
+    lb_visualization.calculateBB(allGeo, True)
+    
+    #Create a legend.
+    legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values
+                    , lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    # generate legend colors
+    legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
+    # color legend surfaces
+    legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
+    #Flaten the text list
+    legend = lb_preparation.flattenList(legendTextSrf)
+    legend.append(legendSrfs)
+    #Get the legend base point.
+    if legendBasePoint == None:
+        legendBasePoint = lb_visualization.BoundingBoxPar[0]
+    
+    #If the user has specified a base point, use this to move everything.
+    if groundBasePt_ != None:
+        transformMtx = rc.Geometry.Transform.Translation(groundBasePt_.X, groundBasePt_.Y, groundBasePt_.Z)
+        for geo in profileCrv: geo.Transform(transformMtx)
+        for geo in windVecMesh: geo.Transform(transformMtx)
+        legendBasePoint.Transform(transformMtx)
+        for geo in legend: geo.Transform(transformMtx)
+        for list in anchorPts:
+            for geo in list:
+                geo.Transform(transformMtx)
     
     
-    return profileCrv, windVecMesh, windSpdHeight, windVec, anchorPts
+    return profileCrv, windVecMesh, windSpdHeight, windVec, anchorPts, legend, legendBasePoint
 
 
 
@@ -467,7 +618,7 @@ checkData, heightsAboveGround, analysisPeriod, roughLength, averageData, windSpe
 
 #Get the wind profile curve if everything looks good.
 if checkData == True:
-    windProfileCurve, windVectorMesh, speeds, vectors, anchorPts = main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
+    windProfileCurve, windVectorMesh, speeds, vectors, anchorPts, legend, legendBasePt = main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
     
     #Unpack the lists of lists in Python.
     for count, list in enumerate(speeds):
@@ -484,3 +635,4 @@ if checkData == True:
 
 #Hide the anchor points.
 ghenv.Component.Params.Output[4].Hidden = True
+ghenv.Component.Params.Output[9].Hidden = True
