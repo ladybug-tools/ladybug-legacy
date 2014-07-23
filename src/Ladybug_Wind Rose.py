@@ -40,10 +40,10 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_20_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_22_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
 

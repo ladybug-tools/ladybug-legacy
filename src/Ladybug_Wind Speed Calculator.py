@@ -181,7 +181,7 @@ def checkTheInputs():
     else:
         averageData = averageData_
     
-    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData4 == True:
+    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True:
         checkData = True
     else:
         checkData = False
@@ -202,7 +202,6 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
             #Get the data for the analysis period and strip the header off.
             if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
                 HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
-                hourlyWindDirection = _windDirection[7:]
                 hrWindDir = []
                 hrWindSpd = []
                 for count in HOYS:
@@ -240,7 +239,7 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
                 if north_ != None:
                     northAngle, northVector = lb_preparation.angle2north(north_)
                     for vec in windVec:
-                        vec.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis)
+                        vec[0].Rotate(northAngle, rc.Geometry.Vector3d.ZAxis)
                 else: pass
                 
             else:
