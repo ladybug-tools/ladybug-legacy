@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_24_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -110,9 +110,9 @@ if outSet == True:
             ghenv.Component.Params.Output[output].Name = "indoorEquivalentPMV"
             ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the PMV values out of this component are only meaninful in terms of how much the outdoor condtions should be changed in order to make indoor conditions comfortable.  They do not indicate whether someone will actually be comfortable outdoors."
         elif output == 3:
-            ghenv.Component.Params.Output[output].NickName = "indoorEquivalentPPD"
-            ghenv.Component.Params.Output[output].Name = "indoorEquivalentPPD"
-            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the PPD values out of this component are only meaninful in terms of how much the outdoor condtions should be changed in order to make indoor conditions comfortable.  They do not indicate the actual percentage of people who will be comfortable outdoors."
+            ghenv.Component.Params.Output[output].NickName = "--------------------"
+            ghenv.Component.Params.Output[output].Name = "--------------------"
+            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the PPD values out of this component are not meaninful."
         elif output == 4:
             ghenv.Component.Params.Output[output].NickName = "OUT_SET"
             ghenv.Component.Params.Output[output].Name = "OUT_SET"
