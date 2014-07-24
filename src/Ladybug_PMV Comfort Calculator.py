@@ -106,9 +106,9 @@ if outSet == True:
 if outSet == True:
     for output in range(numOutputs):
         if output == 2:
-            ghenv.Component.Params.Output[output].NickName = "indoorEquivalentPMV"
-            ghenv.Component.Params.Output[output].Name = "indoorEquivalentPMV"
-            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the PMV values out of this component are only meaninful in terms of how much the outdoor condtions should be changed in order to make indoor conditions comfortable.  They do not indicate whether someone will actually be comfortable outdoors."
+            ghenv.Component.Params.Output[output].NickName = "--------------------"
+            ghenv.Component.Params.Output[output].Name = "--------------------"
+            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the PMV values out of this component are not meaningful."
         elif output == 3:
             ghenv.Component.Params.Output[output].NickName = "--------------------"
             ghenv.Component.Params.Output[output].Name = "--------------------"
@@ -118,13 +118,13 @@ if outSet == True:
             ghenv.Component.Params.Output[output].Name = "OUT_SET"
             ghenv.Component.Params.Output[output].Description = "The Outdoor Standard Effective Temperature (OUT_SET) in degrees Celcius.  OUT_SET is an ajusted temperature scale meant to reflect the heat stress or cold felt by an individual and has passed peer review as an indicator of outdoor comfort.  HOWEVER, if you are interested in knowing whether outdoor conditions are actually comfortable, it is highly recommended that you use the Ladybug UTCI Comfort Calculator.  OUT-SET has been shown to be a poor indicator of outdoor comfort and is better used as a tool to help understand what clothing and metabolic rate a comfortable person might have in the outdoors AFTER running a UTCI study."
         elif output == 6:
-            ghenv.Component.Params.Output[output].NickName = "indoorEQComfOrNot"
-            ghenv.Component.Params.Output[output].Name = "indoorEQComfOrNot"
-            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the comfortableOrNot values out of this component are only meaninful in terms of how much the outdoor condtions should be changed in order to make indoor conditions comfortable.  They do not indicate whether people will actually be comfortable or uncomfortable outdoors."
+            ghenv.Component.Params.Output[output].NickName = "restrictedComfOrNot"
+            ghenv.Component.Params.Output[output].Name = "restrictedComfOrNot"
+            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the comfortableOrNot values out of this component should be taken with a grain of salt.  The comfort here represents a very narrow range because you are restricting the theoretical person's clothing and metabolic rate, which is normally unrestricted in the outdoors."
         elif output == 7:
-            ghenv.Component.Params.Output[output].NickName = "indoorEQPercentComf"
-            ghenv.Component.Params.Output[output].Name = "indoorEQPercentComf"
-            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the percentOfTimeComfortable values out of this component are only meaninful in terms of how much the outdoor condtions should be changed in order to make indoor conditions comfortable.  They do not indicate the actual percentage of time that people will be comfortable or uncomfortable outdoors."
+            ghenv.Component.Params.Output[output].NickName = "restrictedPercentComf"
+            ghenv.Component.Params.Output[output].Name = "restrictedPercentComf"
+            ghenv.Component.Params.Output[output].Description = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the percentOfTimeComfortable values out of this component should be taken with a grain of salt.  The comfort here represents a very narrow range because you are restricting the theoretical person's clothing and metabolic rate, which is normally unrestricted in the outdoors."
         else: pass
 else:
     for output in range(numOutputs):
@@ -493,7 +493,7 @@ if _runIt == True and outSet == True:
     indoorEquivalentPMV = predictedMeanVote
     indoorEquivalentPPD = percentPeopleDissatisfied
     OUT_SET = standardEffectiveTemperature
-    indoorEQComfOrNot = comfortableOrNot
-    indoorEQPercentComf = percentOfTimeComfortable
+    restrictedComfOrNot = comfortableOrNot
+    restrictedPercentComf = percentOfTimeComfortable
 
 
