@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_05_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -103,7 +103,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         for i in range(len(listInfo)):
             selList[i] = annualHourlyData[indexList[i]+7:indexList[i+1]]
             if listInfo[i][4]!='Hourly' or listInfo[i][5]!=(1,1,1) or  listInfo[i][6]!=(12,31,24) or len(selList[i])!=8760:
-                warning = 'At least one of the input data lists is not a valis ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
+                warning = 'At least one of the input data lists is not a valid ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1, -1
@@ -435,12 +435,14 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     selList = [];
                     modifiedsunPosInfo = []
                     [selList.append(float(x)) for x in annualHourlyData[indexList[i]+7:indexList[i+1]]]
-                    if listInfo[i][4]!='Hourly' or listInfo[i][5]!=(1,1,1) or  listInfo[i][6]!=(12,31,24) or len(selList)!=8760:
+                    if listInfo[i][4]!='Hourly' or str(listInfo[i][5])!="(1, 1, 1)" or  str(listInfo[i][6])!="(12, 31, 24)" or len(selList)!=8760:
                         warning = 'At least one of the input data lists is not a valid ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
                         print warning
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                         return -1
                     else:
+                        listInfo[i][5] = (1,1,1)
+                        listInfo[i][6] = (12,31,24)
                         #find the numbers
                         for h, hr in enumerate(sunUpHours):
                             value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
