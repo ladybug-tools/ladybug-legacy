@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -61,7 +61,7 @@ try:
         outdoorConditions = True
 except: pass
 try:
-    if meanRadiantTemperature_[2] == "Dry Bulb Temperature":
+    if meanRadiantTemperature_[2] == "Dry Bulb Temperature" or meanRadiantTemperature_[2] == "Solar-Adjusted Mean Radiant Temperature":
         outdoorConditions = True
 except: pass
 try:

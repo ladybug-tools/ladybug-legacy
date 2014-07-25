@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_24_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -85,7 +85,7 @@ try:
         outSet = True
 except: pass
 try:
-    if meanRadiantTemperature_[2] == "Dry Bulb Temperature":
+    if meanRadiantTemperature_[2] == "Dry Bulb Temperature" or meanRadiantTemperature_[2] == "Solar-Adjusted Mean Radiant Temperature":
         outSet = True
 except: pass
 try:
