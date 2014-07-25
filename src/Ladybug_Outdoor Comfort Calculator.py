@@ -277,6 +277,12 @@ def main():
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
+                    #If the difference between the air and rad temperatures is greater than 70 (because of solar radiation), move each closer to the average of the two.
+                    if radTemp[count] - airTemp[count] >= 70.0:
+                        distToMove = ((radTemp[count] - airTemp[count]) - 69.0)/2
+                        radTemp[count] = radTemp[count]-distToMove
+                        airTemp[count] = airTemp[count]+distToMove
+                        print "Index " + str(count) + " had a difference between air temperature and radiant temperature greater than 70.  Both temperatures wee moved closer to their average to prevent the comfort model from failing."
                     utci, comf, condition = lb_comfortModels.comfUTCI(airTemp[count], radTemp[count], windSpeed[count], relHumid[count])
                     utciList.append(utci)
                     comfOrNot.append(comf)
