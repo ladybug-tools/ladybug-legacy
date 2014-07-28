@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_27_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2241,7 +2241,7 @@ class ComfortModels(object):
             return res[0]
         
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
-        def utilBisect(a, b, fn, epsilon, target):
+        def utilBisect(a, b, epsilon, target):
             def fn(t):
                 return (set - self.comfPierceSET(t, tr, 0.15, rh, met, clo, wme))
             while abs(b - a) > (2 * epsilon):
