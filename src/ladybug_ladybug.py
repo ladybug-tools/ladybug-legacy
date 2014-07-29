@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_27_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -3000,6 +3000,19 @@ class ComfortModels(object):
         
         #Return all of the results
         return humidityRatio, enthalpy, partialPressure, saturationPressure
+    
+    def outlineCurve(self, curve):
+        solidBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
+        try:
+            offsetCrv = curve.OffsetOnSurface(solidBrep.Faces[0], 0.25, sc.doc.ModelAbsoluteTolerance)[0]
+            finalBrep = (rc.Geometry.Brep.CreatePlanarBreps([curve, offsetCrv])[0])
+        except:
+            finalBrep = solidBrep
+            warning = "Creating an outline of one of the comfort or strategy curves failed.  Component will return a solid brep."
+            print warning
+            w = gh.GH_RuntimeMessageLevel.Warning
+        return finalBrep
+    
     
     def getSeatedMannequinData(self):
         seatedData = [[(-0.0495296, 0.284129, 0.450062), (-0.0495296, 0.284129, 0.973663), (-0.175068, 0.166825, 0.973663), (-0.175068, 0.166825, 0.38225)],
