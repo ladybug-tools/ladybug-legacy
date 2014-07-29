@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
         metabolicRate_: A number representing the metabolic rate of the human subject in met.  This input can also accept text inputs for different activities.  Acceptable text inputs include Sleeping, Reclining, Sitting, Typing, Standing, Driving, Cooking, House Cleaning, Walking, Walking 2mph, Walking 3mph, Walking 4mph, Running 9mph, Lifting 10lbs, Lifting 100lbs, Shoveling, Dancing, and Basketball.  If no value is input here, the component will assume a metabolic rate of 1 met, which is the metabolic rate of a seated human being.  This input can also accept lists of metabolic rates.
         clothingLevel_: A number representing the clothing level of the human subject in clo.  If no value is input here, the component will assume a clothing level of 1 clo, which is roughly the insulation provided by a 3-piece suit. A person dressed in shorts and a T-shirt has a clothing level of roughly 0.5 clo and a person in a thick winter jacket can have a clothing level as high as 2 to 4 clo.  This input can also accept lists of clothing levels.
         ------------------------------: ...
-        eightyPercentComfortable_: Set to "True" to have the comfort standard be 80 percent of occupants comfortable and set to "False" to have the comfort standard be 90 percent of all occupants comfortable.  The default is set to "True" for 80 percent, which is what most HVAC engineers aim for.  However some projects will occasionally use 90%.
+        comfortPar_: Optional comfort parameters from the "Ladybug_PMV Comfort Parameters" component.  Use this to adjust maximum and minimum acceptable humidity ratios.  These comfortPar can also change whether comfort is defined by eighty or ninety percent of people comfortable.  By default, comfort is defined as 90% of the occupants comfortable and there are no limits on humidity when there is no thermal stress.
         analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
         calcBalanceTemperature_: Set to "True" to have the component calculate the balance temperature for the input windSpeed_, _relativeHumidity, metabolicRate_, and clothingLevel_.  The balance temperature is essentially the temperature for these conditions at which the PMV is equal to 0 (or the energy flowing into the human body is equal to the energy flowing out).  Note that calculating the balance temperature for a whole year with epw windspeed can take as long as 10 minutes and so, by default, this option is set to "False".
         _runIt: Set to "True" to run the component and calculate the PMV comfort metrics.
@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_28_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -374,14 +374,35 @@ def checkTheInputs():
         calcLength = 0
         exWork = []
     
+    #If there are comfort parameters hooked up, read them out.
+    checkData8 = True
+    print comfortPar_
+    if comfortPar_ != []:
+        try:
+            eightyPercentComfortable = bool(comfortPar_[0])
+            humidRatioUp = float(comfortPar_[1])
+            humidRatioLow = float(comfortPar_[2])
+        except:
+            eightyPercentComfortable = False
+            humidRatioUp = 0.03
+            humidRatioLow = 0.0
+            checkData8 = False
+            warning = 'The comfortPar are not valid comfort parameters from the Ladybug_Comfort Parameters component.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    else:
+        eightyPercentComfortable = False
+        humidRatioUp = 0.03
+        humidRatioLow = 0.0
+    
     #If all of the checkDatas have been good to go, let's give a final go ahead.
-    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True:
+    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True:
         checkData = True
     else:
         checkData = False
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork
+    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercentComfortable, humidRatioUp, humidRatioLow
 
 
 
@@ -393,7 +414,7 @@ def main():
         
         #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
         checkData = False
-        checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork = checkTheInputs()
+        checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercentComfortable, humidRatioUp, humidRatioLow = checkTheInputs()
         
         #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
         if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
@@ -433,14 +454,21 @@ def main():
                     predictedMeanVote.append(pmv)
                     percentPeopleDissatisfied.append(ppd)
                     standardEffectiveTemperature.append(set)
-                    if eightyPercentComfortable_ == True:
-                        if ppd < 20:
-                            comfortableOrNot.append(1)
-                        else: comfortableOrNot.append(0)
+                    if humidRatioUp != 0.03 or humidRatioLow != 0.0:
+                        HR, EN, vapPress, satPress = lb_comfortModels.calcHumidRatio(airTemp[count], relHumid[count], 101325)
+                        if eightyPercentComfortable == True:
+                            if ppd < 20 and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
+                            else: comfortableOrNot.append(0)
+                        else:
+                            if ppd < 10 and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
+                            else: comfortableOrNot.append(0)
                     else:
-                        if ppd < 10:
-                            comfortableOrNot.append(1)
-                        else: comfortableOrNot.append(0)
+                        if eightyPercentComfortable == True:
+                            if ppd < 20: comfortableOrNot.append(1)
+                            else: comfortableOrNot.append(0)
+                        else:
+                            if ppd < 10: comfortableOrNot.append(1)
+                            else: comfortableOrNot.append(0)
                 if epwData == True:
                     percentOfTimeComfortable = ((sum(comfortableOrNot[7:]))/calcLength)*100
                 else: percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100

@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_27_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_28_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -383,7 +383,7 @@ def checkTheInputs():
             humidRatioUp = 0.030
             humidRatioLow = 0.0
             checkData10 = False
-            warning = 'The comfortaAr are not valid comfort parameters from the Ladybug_Comfort Parameters component.'
+            warning = 'The comfortPar_ are not valid comfort parameters from the Ladybug_Comfort Parameters component.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
