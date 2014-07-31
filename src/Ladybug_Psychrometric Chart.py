@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_28_2014'
+ghenv.Component.Message = 'VER 0.0.57\nJUL_30_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -884,420 +884,426 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         upperBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(upperBoundary, rc.Geometry.Vector3d.ZAxis))
         lowerBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(lowerBoundary, rc.Geometry.Vector3d.ZAxis))
         splitCurve = chartBoundary.Split(upperBrep, sc.doc.ModelAbsoluteTolerance)[0]
-        bottomCurve = splitCurve.Split(lowerBrep, sc.doc.ModelAbsoluteTolerance)[0]
-        topCurve = splitCurve.Split(lowerBrep, sc.doc.ModelAbsoluteTolerance)[2]
-        joinedCurves = rc.Geometry.Curve.JoinCurves([upperBoundary, topCurve, lowerBoundary, bottomCurve])[0]
-        comfortCrvSegments.append([upperBoundary, lowerBoundary, topCurve, bottomCurve])
-        comfortCurves.append(joinedCurves)
-    
-    #If the user has speified a max or a min humidity ratio, use that to trim the comfort boundary.
-    if humidRatioUp != 0.03:
-        splittingLineUp = rc.Geometry.LineCurve(rc.Geometry.Point3d(-30, humidRatioUp*scaleFactor, 0), rc.Geometry.Point3d(60, humidRatioUp*scaleFactor, 0))
-        splittingBrepUp = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(splittingLineUp, rc.Geometry.Vector3d.ZAxis))
-        for count, curve in enumerate(comfortCurves):
-            try:
-                splitCurves = curve.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)
-                if len(splitCurves) > 1:
-                    joinedComfBound = rc.Geometry.Curve.JoinCurves([splitCurves[0], rc.Geometry.LineCurve(splitCurves[0].PointAtStart, splitCurves[0].PointAtEnd)])[0]
-                    comfortCurves[count] = joinedComfBound
-                else: pass
-            except: pass
-    
-    if humidRatioLow != 0:
-        splittingLineLow = rc.Geometry.LineCurve(rc.Geometry.Point3d(-30, humidRatioLow*scaleFactor, 0), rc.Geometry.Point3d(60, humidRatioLow*scaleFactor, 0))
-        splittingBrepLow = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(splittingLineLow, rc.Geometry.Vector3d.ZAxis))
-        for count, curve in enumerate(comfortCurves):
-            try:
-                splitCurves = curve.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)
-                if len(splitCurves) > 1:
-                    joinedComfBound = rc.Geometry.Curve.JoinCurves([splitCurves[1], rc.Geometry.LineCurve(splitCurves[1].PointAtStart, splitCurves[1].PointAtEnd)])[0]
-                    comfortCurves[count] = joinedComfBound
-                else: pass
-            except: pass
-    
-    #If the user has multiple comfort polygons and has selected to merge them, them merge them.
-    mergedCurvesFinal = comfortCurves
-    if len(comfortCurves) > 1 and mergeComfPolygons_ == True:
-        listLength = len(comfortCurves)
-        count  = 0
-        while len(mergedCurvesFinal) > 1 and count < int(listLength/2) + 1:
-            mergedCurvesFinal = unionAllCurves(mergedCurvesFinal)
-            count += 1
-        
-        if mergedCurvesFinal == None:
-            mergedCurvesFinal = comfortCurves
-            print "Attempt to merge comfort curves failed.  Component will return multiple comfort boundaries."
-    
-    #Add the comfort polygons to the strategy list.
-    strategyListTest = []
-    if len(mergedCurvesFinal) == 1:
-        strategyListTest.append("Comfort")
-    else:
-        for count, curve in enumerate(mergedCurvesFinal):
-            strategyListTest.append("Comfort " + str(count))
-    
-    #Organize data to be used to construct the strategy curves
-    windSpeed.sort()
-    windSpeed[0] = windSpeed[-1]
-    cloLevel.sort()
-    cloLevel[0] = cloLevel[0]
-    upBoundXList = []
-    upBoundCrv = []
-    lowBoundXList = []
-    lowBoundCrv = []
-    for crvList in comfortCrvSegments:
-        upBoundXList.append(crvList[0].PointAtStart.X)
-        upBoundCrv.append(crvList[0])
-        lowBoundXList.append(crvList[1].PointAtEnd.X)
-        lowBoundCrv.append(crvList[1])
-    upBoundXList, upBoundCrv = zip(*sorted(zip(upBoundXList, upBoundCrv)))
-    comfortCrvSegments[0][0] = upBoundCrv[-1]
-    lowBoundXList, lowBoundCrv = zip(*sorted(zip(lowBoundXList, lowBoundCrv)))
-    comfortCrvSegments[0][1] = lowBoundCrv[0]
-    
-    #Define a function to offset curves and return things that will stand out on the psychrometric chart.
-    def outlineCurve(curve):
-        solidBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
         try:
-            offsetCrv = curve.OffsetOnSurface(solidBrep.Faces[0], 0.25, sc.doc.ModelAbsoluteTolerance)[0]
-            finalBrep = (rc.Geometry.Brep.CreatePlanarBreps([curve, offsetCrv])[0])
+            bottomCurve = splitCurve.Split(lowerBrep, sc.doc.ModelAbsoluteTolerance)[0]
+            topCurve = splitCurve.Split(lowerBrep, sc.doc.ModelAbsoluteTolerance)[2]
+            joinedCurves = rc.Geometry.Curve.JoinCurves([upperBoundary, topCurve, lowerBoundary, bottomCurve])[0]
+            comfortCrvSegments.append([upperBoundary, lowerBoundary, topCurve, bottomCurve])
+            comfortCurves.append(joinedCurves)
         except:
-            finalBrep = solidBrep
-            warning = "Creating an outline of one of the comfort or strategy curves failed.  Component will return a solid brep."
+            warning = 'Comfort polygon has fallen completely off of the psych chart.'
             print warning
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-        return finalBrep
-    
-    #Define a function that will extract the points from a polycurve line
-    def getCurvePoints(curve):
-        exploCurve = rc.Geometry.PolyCurve.DuplicateSegments(curve)
-        individPts = []
-        for line in exploCurve:
-            individPts.append(line.PointAtStart)
-        return individPts
-    
-    #Turn the comfort curve into a brep that will show up well on the chart.
-    finalComfortBreps = []
-    for curve in mergedCurvesFinal:
-        finalComfortBreps.append(outlineCurve(curve))
-    
-    #Evaluate each of the connected strategies and draw polygons for them on the chart.
-    passiveStrategyCurves = []
-    passiveStrategyBreps = []
-    
-    if len(passiveStrategy) != 0:
-        #If the user has connected strategy parameters, read them out.
-        if strategyPar_ != []:
-            if len(strategyPar_) == 4:
-                tempAboveComf = strategyPar_[0]
-                tempBelowComf = strategyPar_[1]
-                maxWindSpeed = strategyPar_[2]
-                bldgBalPt = strategyPar_[3]
-            else:
-                warning = 'The strategyPar_ list does not contain valid data.  StrategyPar_ must come from the "Ladybug_Passive Strategy Parameters" component.'
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    if comfortCurves != []:
+        #If the user has speified a max or a min humidity ratio, use that to trim the comfort boundary.
+        if humidRatioUp != 0.03:
+            splittingLineUp = rc.Geometry.LineCurve(rc.Geometry.Point3d(-30, humidRatioUp*scaleFactor, 0), rc.Geometry.Point3d(60, humidRatioUp*scaleFactor, 0))
+            splittingBrepUp = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(splittingLineUp, rc.Geometry.Vector3d.ZAxis))
+            for count, curve in enumerate(comfortCurves):
+                try:
+                    splitCurves = curve.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)
+                    if len(splitCurves) > 1:
+                        joinedComfBound = rc.Geometry.Curve.JoinCurves([splitCurves[0], rc.Geometry.LineCurve(splitCurves[0].PointAtStart, splitCurves[0].PointAtEnd)])[0]
+                        comfortCurves[count] = joinedComfBound
+                    else: pass
+                except: pass
+        
+        if humidRatioLow != 0:
+            splittingLineLow = rc.Geometry.LineCurve(rc.Geometry.Point3d(-30, humidRatioLow*scaleFactor, 0), rc.Geometry.Point3d(60, humidRatioLow*scaleFactor, 0))
+            splittingBrepLow = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(splittingLineLow, rc.Geometry.Vector3d.ZAxis))
+            for count, curve in enumerate(comfortCurves):
+                try:
+                    splitCurves = curve.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)
+                    if len(splitCurves) > 1:
+                        joinedComfBound = rc.Geometry.Curve.JoinCurves([splitCurves[1], rc.Geometry.LineCurve(splitCurves[1].PointAtStart, splitCurves[1].PointAtEnd)])[0]
+                        comfortCurves[count] = joinedComfBound
+                    else: pass
+                except: pass
+        
+        #If the user has multiple comfort polygons and has selected to merge them, them merge them.
+        mergedCurvesFinal = comfortCurves
+        if len(comfortCurves) > 1 and mergeComfPolygons_ == True:
+            listLength = len(comfortCurves)
+            count  = 0
+            while len(mergedCurvesFinal) > 1 and count < int(listLength/2) + 1:
+                mergedCurvesFinal = unionAllCurves(mergedCurvesFinal)
+                count += 1
+            
+            if mergedCurvesFinal == None:
+                mergedCurvesFinal = comfortCurves
+                print "Attempt to merge comfort curves failed.  Component will return multiple comfort boundaries."
+        
+        #Add the comfort polygons to the strategy list.
+        strategyListTest = []
+        if len(mergedCurvesFinal) == 1:
+            strategyListTest.append("Comfort")
+        else:
+            for count, curve in enumerate(mergedCurvesFinal):
+                strategyListTest.append("Comfort " + str(count))
+        
+        #Organize data to be used to construct the strategy curves
+        windSpeed.sort()
+        windSpeed[0] = windSpeed[-1]
+        cloLevel.sort()
+        cloLevel[0] = cloLevel[0]
+        upBoundXList = []
+        upBoundCrv = []
+        lowBoundXList = []
+        lowBoundCrv = []
+        for crvList in comfortCrvSegments:
+            upBoundXList.append(crvList[0].PointAtStart.X)
+            upBoundCrv.append(crvList[0])
+            lowBoundXList.append(crvList[1].PointAtEnd.X)
+            lowBoundCrv.append(crvList[1])
+        upBoundXList, upBoundCrv = zip(*sorted(zip(upBoundXList, upBoundCrv)))
+        comfortCrvSegments[0][0] = upBoundCrv[-1]
+        lowBoundXList, lowBoundCrv = zip(*sorted(zip(lowBoundXList, lowBoundCrv)))
+        comfortCrvSegments[0][1] = lowBoundCrv[0]
+        
+        #Define a function to offset curves and return things that will stand out on the psychrometric chart.
+        def outlineCurve(curve):
+            try:
+                offsetCrv = curve.Offset(rc.Geometry.Plane.WorldXY, 0.25, sc.doc.ModelAbsoluteTolerance, rc.Geometry.CurveOffsetCornerStyle.Sharp)[0]
+                finalBrep = (rc.Geometry.Brep.CreatePlanarBreps([curve, offsetCrv])[0])
+            except:
+                finalBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
+                warning = "Creating an outline of one of the comfort or strategy curves failed.  Component will return a solid brep."
                 print warning
                 w = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(w, warning)
+            return finalBrep
+        
+        #Define a function that will extract the points from a polycurve line
+        def getCurvePoints(curve):
+            exploCurve = rc.Geometry.PolyCurve.DuplicateSegments(curve)
+            individPts = []
+            for line in exploCurve:
+                individPts.append(line.PointAtStart)
+            return individPts
+        
+        #Turn the comfort curve into a brep that will show up well on the chart.
+        finalComfortBreps = []
+        for curve in mergedCurvesFinal:
+            finalComfortBreps.append(outlineCurve(curve))
+        
+        #Evaluate each of the connected strategies and draw polygons for them on the chart.
+        passiveStrategyCurves = []
+        passiveStrategyBreps = []
+        
+        if len(passiveStrategy) != 0:
+            #If the user has connected strategy parameters, read them out.
+            if strategyPar_ != []:
+                if len(strategyPar_) == 4:
+                    tempAboveComf = strategyPar_[0]
+                    tempBelowComf = strategyPar_[1]
+                    maxWindSpeed = strategyPar_[2]
+                    bldgBalPt = strategyPar_[3]
+                else:
+                    warning = 'The strategyPar_ list does not contain valid data.  StrategyPar_ must come from the "Ladybug_Passive Strategy Parameters" component.'
+                    print warning
+                    w = gh.GH_RuntimeMessageLevel.Warning
+                    ghenv.Component.AddRuntimeMessage(w, warning)
+                    tempAboveComf = 16.7
+                    tempBelowComf = 2.8
+                    maxWindSpeed = 1.5
+                    bldgBalPt = 12.8
+            else:
                 tempAboveComf = 16.7
                 tempBelowComf = 2.8
                 maxWindSpeed = 1.5
                 bldgBalPt = 12.8
+            
+            for comfCount, comfortCurve in enumerate([mergedCurvesFinal[0]]):
+                
+                #If the user has hooked up evaporative cooling, add an evaporative cooling curve to the chart.
+                if "Evaporative Cooling" in passiveStrategy:
+                    comfPolygonPts = getCurvePoints(comfortCurve)
+                    ptXYSum = []
+                    for point in comfPolygonPts:
+                        ptXYSum.append(point.X + point.Y)
+                    ptXYSum, comfPolygonPts = zip(*sorted(zip(ptXYSum, comfPolygonPts)))
+                    startPt = comfPolygonPts[-1]
+                    #Calculate the enthalpy at the start point.
+                    enthalpy = (startPt.X * (1.01 + 0.00189*((startPt.Y/scaleFactor)*1000))) + 2.5*((startPt.Y/scaleFactor)*1000)
+                    #If the temperature at the edge of the chart is 50C, use that to find another point of the line.
+                    newHR = (((enthalpy - 50.5) / 2.5945)/1000)* scaleFactor
+                    endPt = rc.Geometry.Point3d(50, newHR, 0)
+                    evapCoolLine = rc.Geometry.LineCurve(startPt, endPt)
+                    #If there is a minimum humidity ratio, use the comfort upper curve. otherwise, use the comfort bottom curve.
+                    if humidRatioLow == 0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                        boundaryLine = comfortCrvSegments[comfCount][0]
+                        joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, boundaryLine])[0]
+                    elif humidRatioLow == 0:
+                        boundaryLine = comfortCrvSegments[comfCount][0]
+                        boundaryLine = boundaryLine.Split(rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(evapCoolLine, rc.Geometry.Vector3d.ZAxis)), sc.doc.ModelAbsoluteTolerance)[0]
+                        joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, boundaryLine])[0]
+                    elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                        boundaryLine = comfortCrvSegments[comfCount][1]
+                        boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
+                        transVector = rc.Geometry.Vector3d.Subtract(rc.Geometry.Vector3d(boundaryLine.PointAtEnd.X, boundaryLine.PointAtEnd.Y,boundaryLine.PointAtEnd.Z), rc.Geometry.Vector3d(evapCoolLine.PointAtStart.X, evapCoolLine.PointAtStart.Y,evapCoolLine.PointAtStart.Z))
+                        evapLine2 = evapCoolLine.DuplicateCurve()
+                        evapLine2.Translate(transVector)
+                        evapLine2 = evapLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                        comfLine2 = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        comfLine1 = rc.Geometry.LineCurve(comfLine2.PointAtStart, boundaryLine.PointAtEnd)
+                        joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, evapLine2, comfLine1, comfLine2])[0]
+                    else:
+                        boundaryLine = comfortCrvSegments[comfCount][1]
+                        boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
+                        transVector = rc.Geometry.Vector3d.Subtract(rc.Geometry.Vector3d(boundaryLine.PointAtEnd.X, boundaryLine.PointAtEnd.Y,boundaryLine.PointAtEnd.Z), rc.Geometry.Vector3d(evapCoolLine.PointAtStart.X, evapCoolLine.PointAtStart.Y,evapCoolLine.PointAtStart.Z))
+                        evapLine2 = evapCoolLine.DuplicateCurve()
+                        evapLine2.Translate(transVector)
+                        evapLine2 = evapLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                        comfLine2 = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        comfLine2 = comfLine2.Split(rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(evapCoolLine, rc.Geometry.Vector3d.ZAxis)), sc.doc.ModelAbsoluteTolerance)[0]
+                        comfLine1 = rc.Geometry.LineCurve(comfLine2.PointAtStart, boundaryLine.PointAtEnd)
+                        joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, evapLine2, comfLine1, comfLine2])[0]
+                    joinedEvapBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(joinedEvapBound, rc.Geometry.Vector3d.ZAxis))
+                    chartBoundSegments = chartBoundary.Split(joinedEvapBrep, sc.doc.ModelAbsoluteTolerance)
+                    if len(chartBoundSegments) == 3:
+                        segment = chartBoundSegments[2]
+                    else: segment = chartBoundSegments[1]
+                    joinedEvapCoolBound = rc.Geometry.Curve.JoinCurves([joinedEvapBound, segment])[0]
+                    passiveStrategyCurves.append(joinedEvapCoolBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedEvapCoolBound))
+                    strategyListTest.append("Evaporative Cooling")
+                
+                #If the user has hooked up thermal mass and night flushing, add an thernal mass curve to the chart.
+                if "Thermal Mass + Night Vent" in passiveStrategy:
+                    #If there is a minimum humidity ratio, use the comfort upper curve. Otherwise, use the comfort bottom curve.
+                    ChartBoundCheck = 0
+                    if humidRatioLow == 0.0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                        strategyLine = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(comfortCrvSegments[comfCount][0].PointAtEnd.X+tempAboveComf, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0))
+                        boundaryLine = comfortCrvSegments[comfCount][0]
+                        transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
+                        boundaryLine2 = boundaryLine.DuplicateCurve()
+                        boundaryLine2.Transform(transformMass)
+                        splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
+                        if len(splitCrv) == 2:
+                            boundaryLine2 = splitCrv[1]
+                            ChartBoundCheck = 2
+                        else: ChartBoundCheck = 1
+                        joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine, boundaryLine, boundaryLine2])[0]
+                    elif humidRatioLow == 0.0:
+                        cornerPt = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineUp, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
+                        strategyLine = rc.Geometry.LineCurve(cornerPt, rc.Geometry.Point3d(cornerPt.X+tempAboveComf, humidRatioUp*scaleFactor, 0))
+                        boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
+                        transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
+                        boundaryLine2 = boundaryLine.DuplicateCurve()
+                        boundaryLine2.Transform(transformMass)
+                        splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
+                        if len(splitCrv) == 2:
+                            boundaryLine2 = splitCrv[1]
+                            ChartBoundCheck = 2
+                        else: ChartBoundCheck = 1
+                        joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine, boundaryLine, boundaryLine2])[0]
+                    elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                        strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(comfortCrvSegments[comfCount][0].PointAtEnd.X+tempAboveComf, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0))
+                        cornerPt = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineLow, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
+                        strategyLine2 = rc.Geometry.LineCurve(cornerPt, rc.Geometry.Point3d(cornerPt.X+tempAboveComf, humidRatioLow*scaleFactor, 0))
+                        splitCrv1 = strategyLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
+                        if len(splitCrv1) == 2:
+                            strategyLine2 = splitCrv1[0]
+                        boundaryLine = comfortCrvSegments[comfCount][0]
+                        boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[-1]
+                        transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
+                        boundaryLine2 = boundaryLine.DuplicateCurve()
+                        boundaryLine2.Transform(transformMass)
+                        splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
+                        if len(splitCrv) == 2:
+                            boundaryLine2 = splitCrv[1]
+                            ChartBoundCheck = 0
+                        else: ChartBoundCheck = 3
+                        joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, boundaryLine2])[0]
+                    else:
+                        cornerPt1 = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineUp, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
+                        cornerPt2 = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineLow, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
+                        strategyLine1 = rc.Geometry.LineCurve(cornerPt1, rc.Geometry.Point3d(cornerPt1.X+tempAboveComf, humidRatioUp*scaleFactor, 0))
+                        strategyLine2 = rc.Geometry.LineCurve(cornerPt2, rc.Geometry.Point3d(cornerPt2.X+tempAboveComf, humidRatioLow*scaleFactor, 0))
+                        splitCrv1 = strategyLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
+                        if len(splitCrv1) == 2:
+                            strategyLine2 = splitCrv1[0]
+                        boundaryLine = comfortCrvSegments[comfCount][0]
+                        boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[-1]
+                        boundaryLine = boundaryLine.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
+                        transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
+                        boundaryLine2 = boundaryLine.DuplicateCurve()
+                        boundaryLine2.Transform(transformMass)
+                        splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
+                        if len(splitCrv) == 2:
+                            boundaryLine2 = splitCrv[1]
+                            ChartBoundCheck = 0
+                        else: ChartBoundCheck = 3
+                        joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, boundaryLine2])[0]
+                    
+                    joinedMassBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(joinedMassBound, rc.Geometry.Vector3d.ZAxis))
+                    chartBoundSegments = chartBoundary.Split(joinedMassBrep, sc.doc.ModelAbsoluteTolerance)
+                    if ChartBoundCheck == 1:
+                        segment = chartBoundSegments[0]
+                    elif ChartBoundCheck == 2:
+                        segment = chartBoundSegments[2]
+                    elif ChartBoundCheck == 0: segment = chartBoundSegments[1]
+                    if len(chartBoundSegments) != 0: joinedMassCoolBound = rc.Geometry.Curve.JoinCurves([joinedMassBound, segment])[0]
+                    else: joinedMassCoolBound = joinedMassBound
+                    passiveStrategyCurves.append(joinedMassCoolBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedMassCoolBound))
+                    strategyListTest.append("Thermal Mass + Night Vent")
+                    #passiveStrategyBreps.append(joinedMassCoolBound)
+                
+                #If the user has hooked up natural ventilation, add a natural ventilation curve to the chart.
+                if "Occupant Use of Fans" in passiveStrategy and windSpeed[comfCount] < maxWindSpeed:
+                    #Calculate the upper boundary of Natural ventilation.
+                    upTemperPts = []
+                    for count, humidity in enumerate(range(0,150,50)):
+                        upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], eightyPercentComfort)
+                        
+                        if upTemper < 50:
+                            if upTemper > -20:
+                                upIntersect = rc.Geometry.Intersect.Intersection.CurvePlane(relHumidLines[count], rc.Geometry.Plane(rc.Geometry.Point3d(upTemper, 0,0), rc.Geometry.Vector3d.XAxis), sc.doc.ModelAbsoluteTolerance)[0].PointA
+                            else: upIntersect = relHumidLines[count].PointAtStart
+                        else: upIntersect = relHumidLines[count].PointAtEnd
+                        upTemperPts.append(upIntersect)
+                    natVentBoundary = rc.Geometry.Curve.CreateInterpolatedCurve(upTemperPts, 3)
+                    try: natVentBoundary = upperBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                    except: pass
+                    
+                    if humidRatioLow == 0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                        strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
+                        strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
+                        boundaryLine = comfortCrvSegments[comfCount][0]
+                        natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                    elif humidRatioLow == 0:
+                        strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd, natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd)
+                        strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
+                        boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
+                        natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
+                    elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                        strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
+                        natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
+                    else:
+                        natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        strategyLine1 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
+                        strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtEnd, natVentLine.PointAtEnd)
+                    joinedNatVentBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, natVentLine])[0]
+                    passiveStrategyCurves.append(joinedNatVentBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedNatVentBound))
+                    strategyListTest.append("Occupant Use of Fans")
+                
+                #If the user has hooked up internal gain, add an internal gain curve to the chart.
+                if "Internal Heat Gain" in passiveStrategy:
+                    heatBoundary = rc.Geometry.LineCurve(rc.Geometry.Point3d(bldgBalPt, 0, 0), rc.Geometry.Point3d(bldgBalPt, scaleFactor*0.03, 0))
+                    heatBoundary = heatBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                    
+                    if humidRatioLow == 0:
+                        boundaryLine = comfortCrvSegments[comfCount][1]
+                        strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                        strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        joinedHeatBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, heatBoundary])[0]
+                    else:
+                        boundaryLine = comfortCrvSegments[comfCount][1].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        heatBoundaryNew = heatBoundary.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(comfortCrvSegments[comfCount][1], rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, heatBoundaryNew.PointAtStart)
+                        joinedHeatBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, heatBoundaryNew])[0]
+                    
+                    passiveStrategyCurves.append(joinedHeatBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedHeatBound))
+                    strategyListTest.append("Internal Heat Gain")
+                
+                #If the user has hooked up humidification only, add a humidification only curve to the chart.
+                if "Humidification Only" in passiveStrategy and humidRatioLow != 0:
+                    boundary1 = comfortCrvSegments[comfCount][1].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
+                    boundary2 = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
+                    boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
+                    boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
+                    
+                    joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
+                    
+                    passiveStrategyCurves.append(joinedHumidBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
+                    strategyListTest.append("Humidification Only")
+                
+                #If the user has hooked up dehumidification only, add a dehumidification only curve to the chart.
+                if "Dessicant Dehumidification" in passiveStrategy and humidRatioUp*scaleFactor <= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                    comfPolygonPts = getCurvePoints(comfortCurve)
+                    ptXYSum = []
+                    for point in comfPolygonPts:
+                        ptXYSum.append(point.X + point.Y)
+                    ptXYSum, comfPolygonPts = zip(*sorted(zip(ptXYSum, comfPolygonPts)))
+                    startPt = comfPolygonPts[-1]
+                    #Calculate the enthalpy at the start point.
+                    enthalpy = (startPt.X * (1.01 + 0.00189*((startPt.Y/scaleFactor)*1000))) + 2.5*((startPt.Y/scaleFactor)*1000)
+                    #If the temperature at the edge of the chart is 50C, use that to find another point of the line.
+                    newHR = (((enthalpy + 20.2) / 2.4622)/1000)* scaleFactor
+                    endPt = rc.Geometry.Point3d(-20, newHR, 0)
+                    dessicantLine = rc.Geometry.LineCurve(startPt, endPt)
+                    boundary1 = dessicantLine.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                    try:
+                        boundary2 = comfortCrvSegments[comfCount][1].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
+                        boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
+                        boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
+                        joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
+                        
+                    except:
+                        boundary2 = chartBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                        boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
+                        joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3])[0]
+                    
+                    passiveStrategyCurves.append(joinedHumidBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
+                    strategyListTest.append("Dessicant Dehumidification")
+                
+                #If the user has hooked up dessicant dehumidification, add a dessicant dehumidification curve to the chart.
+                if "Dehumidification Only" in passiveStrategy and humidRatioUp*scaleFactor <= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                    boundary1 = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
+                    try:
+                        boundary2 = comfortCrvSegments[comfCount][1].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
+                        boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
+                        boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
+                        joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
+                        
+                    except:
+                        boundary2 = chartBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                        boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
+                        joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3])[0]
+                    
+                    passiveStrategyCurves.append(joinedHumidBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
+                    strategyListTest.append("Dehumidification Only")
         else:
-            tempAboveComf = 16.7
             tempBelowComf = 2.8
-            maxWindSpeed = 1.5
-            bldgBalPt = 12.8
         
-        for comfCount, comfortCurve in enumerate([mergedCurvesFinal[0]]):
-            
-            #If the user has hooked up evaporative cooling, add an evaporative cooling curve to the chart.
-            if "Evaporative Cooling" in passiveStrategy:
-                comfPolygonPts = getCurvePoints(comfortCurve)
-                ptXYSum = []
-                for point in comfPolygonPts:
-                    ptXYSum.append(point.X + point.Y)
-                ptXYSum, comfPolygonPts = zip(*sorted(zip(ptXYSum, comfPolygonPts)))
-                startPt = comfPolygonPts[-1]
-                #Calculate the enthalpy at the start point.
-                enthalpy = (startPt.X * (1.01 + 0.00189*((startPt.Y/scaleFactor)*1000))) + 2.5*((startPt.Y/scaleFactor)*1000)
-                #If the temperature at the edge of the chart is 50C, use that to find another point of the line.
-                newHR = (((enthalpy - 50.5) / 2.5945)/1000)* scaleFactor
-                endPt = rc.Geometry.Point3d(50, newHR, 0)
-                evapCoolLine = rc.Geometry.LineCurve(startPt, endPt)
-                #If there is a minimum humidity ratio, use the comfort upper curve. otherwise, use the comfort bottom curve.
-                if humidRatioLow == 0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                    boundaryLine = comfortCrvSegments[comfCount][0]
-                    joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, boundaryLine])[0]
-                elif humidRatioLow == 0:
-                    boundaryLine = comfortCrvSegments[comfCount][0]
-                    boundaryLine = boundaryLine.Split(rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(evapCoolLine, rc.Geometry.Vector3d.ZAxis)), sc.doc.ModelAbsoluteTolerance)[0]
-                    joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, boundaryLine])[0]
-                elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                    boundaryLine = comfortCrvSegments[comfCount][1]
-                    boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
-                    transVector = rc.Geometry.Vector3d.Subtract(rc.Geometry.Vector3d(boundaryLine.PointAtEnd.X, boundaryLine.PointAtEnd.Y,boundaryLine.PointAtEnd.Z), rc.Geometry.Vector3d(evapCoolLine.PointAtStart.X, evapCoolLine.PointAtStart.Y,evapCoolLine.PointAtStart.Z))
-                    evapLine2 = evapCoolLine.DuplicateCurve()
-                    evapLine2.Translate(transVector)
-                    evapLine2 = evapLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
-                    comfLine2 = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    comfLine1 = rc.Geometry.LineCurve(comfLine2.PointAtStart, boundaryLine.PointAtEnd)
-                    joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, evapLine2, comfLine1, comfLine2])[0]
-                else:
-                    boundaryLine = comfortCrvSegments[comfCount][1]
-                    boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
-                    transVector = rc.Geometry.Vector3d.Subtract(rc.Geometry.Vector3d(boundaryLine.PointAtEnd.X, boundaryLine.PointAtEnd.Y,boundaryLine.PointAtEnd.Z), rc.Geometry.Vector3d(evapCoolLine.PointAtStart.X, evapCoolLine.PointAtStart.Y,evapCoolLine.PointAtStart.Z))
-                    evapLine2 = evapCoolLine.DuplicateCurve()
-                    evapLine2.Translate(transVector)
-                    evapLine2 = evapLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
-                    comfLine2 = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    comfLine2 = comfLine2.Split(rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(evapCoolLine, rc.Geometry.Vector3d.ZAxis)), sc.doc.ModelAbsoluteTolerance)[0]
-                    comfLine1 = rc.Geometry.LineCurve(comfLine2.PointAtStart, boundaryLine.PointAtEnd)
-                    joinedEvapBound = rc.Geometry.Curve.JoinCurves([evapCoolLine, evapLine2, comfLine1, comfLine2])[0]
-                joinedEvapBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(joinedEvapBound, rc.Geometry.Vector3d.ZAxis))
-                chartBoundSegments = chartBoundary.Split(joinedEvapBrep, sc.doc.ModelAbsoluteTolerance)
-                if len(chartBoundSegments) == 3:
-                    segment = chartBoundSegments[2]
-                else: segment = chartBoundSegments[1]
-                joinedEvapCoolBound = rc.Geometry.Curve.JoinCurves([joinedEvapBound, segment])[0]
-                passiveStrategyCurves.append(joinedEvapCoolBound)
-                passiveStrategyBreps.append(outlineCurve(joinedEvapCoolBound))
-                strategyListTest.append("Evaporative Cooling")
-            
-            #If the user has hooked up thermal mass and night flushing, add an thernal mass curve to the chart.
-            if "Thermal Mass + Night Vent" in passiveStrategy:
-                #If there is a minimum humidity ratio, use the comfort upper curve. Otherwise, use the comfort bottom curve.
-                ChartBoundCheck = 0
-                if humidRatioLow == 0.0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                    strategyLine = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(comfortCrvSegments[comfCount][0].PointAtEnd.X+tempAboveComf, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0))
-                    boundaryLine = comfortCrvSegments[comfCount][0]
-                    transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
-                    boundaryLine2 = boundaryLine.DuplicateCurve()
-                    boundaryLine2.Transform(transformMass)
-                    splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
-                    if len(splitCrv) == 2:
-                        boundaryLine2 = splitCrv[1]
-                        ChartBoundCheck = 2
-                    else: ChartBoundCheck = 1
-                    joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine, boundaryLine, boundaryLine2])[0]
-                elif humidRatioLow == 0.0:
-                    cornerPt = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineUp, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
-                    strategyLine = rc.Geometry.LineCurve(cornerPt, rc.Geometry.Point3d(cornerPt.X+tempAboveComf, humidRatioUp*scaleFactor, 0))
-                    boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
-                    transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
-                    boundaryLine2 = boundaryLine.DuplicateCurve()
-                    boundaryLine2.Transform(transformMass)
-                    splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
-                    if len(splitCrv) == 2:
-                        boundaryLine2 = splitCrv[1]
-                        ChartBoundCheck = 2
-                    else: ChartBoundCheck = 1
-                    joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine, boundaryLine, boundaryLine2])[0]
-                elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                    strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(comfortCrvSegments[comfCount][0].PointAtEnd.X+tempAboveComf, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0))
-                    cornerPt = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineLow, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
-                    strategyLine2 = rc.Geometry.LineCurve(cornerPt, rc.Geometry.Point3d(cornerPt.X+tempAboveComf, humidRatioLow*scaleFactor, 0))
-                    splitCrv1 = strategyLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
-                    if len(splitCrv1) == 2:
-                        strategyLine2 = splitCrv1[0]
-                    boundaryLine = comfortCrvSegments[comfCount][0]
-                    boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[-1]
-                    transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
-                    boundaryLine2 = boundaryLine.DuplicateCurve()
-                    boundaryLine2.Transform(transformMass)
-                    splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
-                    if len(splitCrv) == 2:
-                        boundaryLine2 = splitCrv[1]
-                        ChartBoundCheck = 0
-                    else: ChartBoundCheck = 3
-                    joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, boundaryLine2])[0]
-                else:
-                    cornerPt1 = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineUp, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
-                    cornerPt2 = rc.Geometry.Intersect.Intersection.CurveCurve(splittingLineLow, comfortCrvSegments[comfCount][0], sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA
-                    strategyLine1 = rc.Geometry.LineCurve(cornerPt1, rc.Geometry.Point3d(cornerPt1.X+tempAboveComf, humidRatioUp*scaleFactor, 0))
-                    strategyLine2 = rc.Geometry.LineCurve(cornerPt2, rc.Geometry.Point3d(cornerPt2.X+tempAboveComf, humidRatioLow*scaleFactor, 0))
-                    splitCrv1 = strategyLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
-                    if len(splitCrv1) == 2:
-                        strategyLine2 = splitCrv1[0]
-                    boundaryLine = comfortCrvSegments[comfCount][0]
-                    boundaryLine = boundaryLine.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[-1]
-                    boundaryLine = boundaryLine.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
-                    transformMass = rc.Geometry.Transform.Translation(tempAboveComf, 0, 0)
-                    boundaryLine2 = boundaryLine.DuplicateCurve()
-                    boundaryLine2.Transform(transformMass)
-                    splitCrv = boundaryLine2.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)
-                    if len(splitCrv) == 2:
-                        boundaryLine2 = splitCrv[1]
-                        ChartBoundCheck = 0
-                    else: ChartBoundCheck = 3
-                    joinedMassBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, boundaryLine2])[0]
-                
-                joinedMassBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(joinedMassBound, rc.Geometry.Vector3d.ZAxis))
-                chartBoundSegments = chartBoundary.Split(joinedMassBrep, sc.doc.ModelAbsoluteTolerance)
-                if ChartBoundCheck == 1:
-                    segment = chartBoundSegments[0]
-                elif ChartBoundCheck == 2:
-                    segment = chartBoundSegments[2]
-                elif ChartBoundCheck == 0: segment = chartBoundSegments[1]
-                if len(chartBoundSegments) != 0: joinedMassCoolBound = rc.Geometry.Curve.JoinCurves([joinedMassBound, segment])[0]
-                else: joinedMassCoolBound = joinedMassBound
-                passiveStrategyCurves.append(joinedMassCoolBound)
-                passiveStrategyBreps.append(outlineCurve(joinedMassCoolBound))
-                strategyListTest.append("Thermal Mass + Night Vent")
-                #passiveStrategyBreps.append(joinedMassCoolBound)
-            
-            #If the user has hooked up natural ventilation, add a natural ventilation curve to the chart.
-            if "Occupant Use of Fans" in passiveStrategy and windSpeed[comfCount] < maxWindSpeed:
-                #Calculate the upper boundary of Natural ventilation.
-                upTemperPts = []
-                for count, humidity in enumerate(range(0,150,50)):
-                    upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], eightyPercentComfort)
-                    
-                    if upTemper < 50:
-                        if upTemper > -20:
-                            upIntersect = rc.Geometry.Intersect.Intersection.CurvePlane(relHumidLines[count], rc.Geometry.Plane(rc.Geometry.Point3d(upTemper, 0,0), rc.Geometry.Vector3d.XAxis), sc.doc.ModelAbsoluteTolerance)[0].PointA
-                        else: upIntersect = relHumidLines[count].PointAtStart
-                    else: upIntersect = relHumidLines[count].PointAtEnd
-                    upTemperPts.append(upIntersect)
-                natVentBoundary = rc.Geometry.Curve.CreateInterpolatedCurve(upTemperPts, 3)
-                try: natVentBoundary = upperBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
-                except: pass
-                
-                if humidRatioLow == 0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                    strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
-                    strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
-                    boundaryLine = comfortCrvSegments[comfCount][0]
-                    natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
-                elif humidRatioLow == 0:
-                    strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd, natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd)
-                    strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
-                    boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
-                    natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
-                elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                    strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
-                    natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
-                else:
-                    natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    strategyLine1 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
-                    strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtEnd, natVentLine.PointAtEnd)
-                joinedNatVentBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, natVentLine])[0]
-                passiveStrategyCurves.append(joinedNatVentBound)
-                passiveStrategyBreps.append(outlineCurve(joinedNatVentBound))
-                strategyListTest.append("Occupant Use of Fans")
-            
-            #If the user has hooked up internal gain, add an internal gain curve to the chart.
-            if "Internal Heat Gain" in passiveStrategy:
-                heatBoundary = rc.Geometry.LineCurve(rc.Geometry.Point3d(bldgBalPt, 0, 0), rc.Geometry.Point3d(bldgBalPt, scaleFactor*0.03, 0))
-                heatBoundary = heatBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
-                
-                if humidRatioLow == 0:
-                    boundaryLine = comfortCrvSegments[comfCount][1]
-                    strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
-                    strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
-                    joinedHeatBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, heatBoundary])[0]
-                else:
-                    boundaryLine = comfortCrvSegments[comfCount][1].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    heatBoundaryNew = heatBoundary.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                    strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(comfortCrvSegments[comfCount][1], rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
-                    strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, heatBoundaryNew.PointAtStart)
-                    joinedHeatBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, heatBoundaryNew])[0]
-                
-                passiveStrategyCurves.append(joinedHeatBound)
-                passiveStrategyBreps.append(outlineCurve(joinedHeatBound))
-                strategyListTest.append("Internal Heat Gain")
-            
-            #If the user has hooked up humidification only, add a humidification only curve to the chart.
-            if "Humidification Only" in passiveStrategy and humidRatioLow != 0:
-                boundary1 = comfortCrvSegments[comfCount][1].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
-                boundary2 = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
-                boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
-                boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
-                
-                joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
-                
-                passiveStrategyCurves.append(joinedHumidBound)
-                passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
-                strategyListTest.append("Humidification Only")
-            
-            #If the user has hooked up dehumidification only, add a dehumidification only curve to the chart.
-            if "Dessicant Dehumidification" in passiveStrategy and humidRatioUp*scaleFactor <= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                comfPolygonPts = getCurvePoints(comfortCurve)
-                ptXYSum = []
-                for point in comfPolygonPts:
-                    ptXYSum.append(point.X + point.Y)
-                ptXYSum, comfPolygonPts = zip(*sorted(zip(ptXYSum, comfPolygonPts)))
-                startPt = comfPolygonPts[-1]
-                #Calculate the enthalpy at the start point.
-                enthalpy = (startPt.X * (1.01 + 0.00189*((startPt.Y/scaleFactor)*1000))) + 2.5*((startPt.Y/scaleFactor)*1000)
-                #If the temperature at the edge of the chart is 50C, use that to find another point of the line.
-                newHR = (((enthalpy + 20.2) / 2.4622)/1000)* scaleFactor
-                endPt = rc.Geometry.Point3d(-20, newHR, 0)
-                dessicantLine = rc.Geometry.LineCurve(startPt, endPt)
-                boundary1 = dessicantLine.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
-                try:
-                    boundary2 = comfortCrvSegments[comfCount][1].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
-                    boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
-                    boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
-                    joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
-                    
-                except:
-                    boundary2 = chartBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
-                    boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
-                    joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3])[0]
-                
-                passiveStrategyCurves.append(joinedHumidBound)
-                passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
-                strategyListTest.append("Dessicant Dehumidification")
-            
-            #If the user has hooked up dessicant dehumidification, add a dessicant dehumidification curve to the chart.
-            if "Dehumidification Only" in passiveStrategy and humidRatioUp*scaleFactor <= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                boundary1 = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
-                try:
-                    boundary2 = comfortCrvSegments[comfCount][1].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
-                    boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
-                    boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
-                    joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
-                    
-                except:
-                    boundary2 = chartBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
-                    boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
-                    joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3])[0]
-                
-                passiveStrategyCurves.append(joinedHumidBound)
-                passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
-                strategyListTest.append("Dehumidification Only")
+        maxComfortPolyTemp = comfortCrvSegments[0][0].PointAt(0.5).X
+        
+        #Try to boolean all of the strategy and comfort curves together so that we can get a sense of comfort over the whole graph.
+        allCurves = []
+        for crv in mergedCurvesFinal:
+            allCurves.append(crv)
+        for crv in passiveStrategyCurves:
+            allCurves.append(crv)
+        
+        if len(allCurves) > 1:
+            listLength = len(allCurves)
+            count  = 0
+            while len(allCurves) > 1 and count < int(listLength/2) + 1:
+                allCurves = unionAllCurves(allCurves)
+                count += 1
+        
+        
+        #Move the strategy outlines up just a bit so that they can be seen over the mesh.
+        transformMatrix = rc.Geometry.Transform.Translation(0,0,sc.doc.ModelAbsoluteTolerance*5)
+        for brep in finalComfortBreps:
+            brep.Transform(transformMatrix)
+        for brep in passiveStrategyBreps:
+            brep.Transform(transformMatrix)
+        
+        
+        return mergedCurvesFinal, finalComfortBreps, passiveStrategyCurves, passiveStrategyBreps, strategyListTest, allCurves, tempBelowComf, maxComfortPolyTemp
     else:
-        tempBelowComf = 2.8
-    
-    maxComfortPolyTemp = comfortCrvSegments[0][0].PointAt(0.5).X
-    
-    #Try to boolean all of the strategy and comfort curves together so that we can get a sense of comfort over the whole graph.
-    allCurves = []
-    for crv in mergedCurvesFinal:
-        allCurves.append(crv)
-    for crv in passiveStrategyCurves:
-        allCurves.append(crv)
-    
-    if len(allCurves) > 1:
-        listLength = len(allCurves)
-        count  = 0
-        while len(allCurves) > 1 and count < int(listLength/2) + 1:
-            allCurves = unionAllCurves(allCurves)
-            count += 1
-    
-    
-    #Move the strategy outlines up just a bit so that they can be seen over the mesh.
-    transformMatrix = rc.Geometry.Transform.Translation(0,0,sc.doc.ModelAbsoluteTolerance*5)
-    for brep in finalComfortBreps:
-        brep.Transform(transformMatrix)
-    for brep in passiveStrategyBreps:
-        brep.Transform(transformMatrix)
-    
-    
-    return mergedCurvesFinal, finalComfortBreps, passiveStrategyCurves, passiveStrategyBreps, strategyListTest, allCurves, tempBelowComf, maxComfortPolyTemp
+        return [], [], [], [], [], [], 2.8, 0
 
 
 def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList):
