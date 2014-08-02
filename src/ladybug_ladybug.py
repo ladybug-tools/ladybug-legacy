@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_29_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -50,6 +50,7 @@ import time
 from itertools import chain
 import datetime
 import urllib
+import ghpythonlib.components as ghcomp
 
 PI = math.pi
 letItFly = True
@@ -1207,46 +1208,77 @@ class Sunpath(object):
         self.basePlane = rc.Geometry.Plane(cenPt, rc.Geometry.Vector3d.ZAxis)
         self.cenPt = cenPt
         self.scale = scale
-
-    def JulianDate(self, month, day):
-        numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
-        self.JD = numOfDays[int(month)-1] + int(day)
-
-    def solarTime(self, hour):
-        self.solTime = (0.170 * math.sin((4 * PI/373) * (self.JD - 80))
-        - 0.129 * math.sin((2 * PI/355) * (self.JD - 8))
-        + 12 * (self.s_meridian - self.s_longtitude) / PI) - hour  # Here!
-
-    def solarDeclination(self):
-        self.solDec = 0.4093 * math.sin((2 * PI / 368) * (self.JD - 81))
-
-    def solarAlt(self):
-        self.solAlt = math.asin(math.sin(self.solLat) * math.sin(self.solDec)
-        - math.cos(self.solLat) * math.cos(self.solDec) * math.cos(self.solTime * (PI/12)))
-
-    def solarAz(self):
-        self.solAz = -math.atan2(math.cos(self.solDec) * math.sin(self.solTime * (PI/12)),
-        -math.cos(self.solLat) * math.sin(self.solDec) - math.sin(self.solLat)
-        * math.cos(self.solDec) * math.cos(self.solTime * (PI/12)))
-
+        self.timeZone = timeZone
+    
     def solInitOutput(self, month, day, hour):
-        self.JulianDate(month, day)
-        self.solarTime(hour)
-        self.solarDeclination()
-        # there is an issue here which I can't figutr it out
-        # azimuth number for south hemisphere are wrong!
-        # the solar position is true though! So confusing.
-        # for now I just recalculate the number in sunpath component based
-        # on the vector however I need to address this issue at some point
-        self.solarAlt()
-        self.solarAz()
-
+        year = 2014
+        self.time = hour
+        
+        a = 1 if (month < 3) else 0
+        y = year + 4800 - a
+        m = month + 12*a - 3
+        self.julianDay = day + math.floor((153*m + 2)/5) + 59
+        
+        self.julianDay += (self.time - self.timeZone)/24.0  + 365*y + math.floor(y/4) \
+            - math.floor(y/100) + math.floor(y/400) - 32045.5 - 59
+        
+        julianCentury = (self.julianDay - 2451545) / 36525
+        #degrees
+        geomMeanLongSun = (280.46646 + julianCentury * (36000.76983 + julianCentury*0.0003032)) % 360
+        #degrees
+        geomMeanAnomSun = 357.52911 + julianCentury*(35999.05029 - 0.0001537*julianCentury)
+        eccentOrbit = 0.016708634 - julianCentury*(0.000042037 + 0.0000001267*julianCentury)
+        sunEqOfCtr = math.sin(math.radians(geomMeanAnomSun))*(1.914602 - julianCentury*(0.004817+0.000014*julianCentury)) + \
+            math.sin(math.radians(2*geomMeanAnomSun))*(0.019993-0.000101*julianCentury) + \
+            math.sin(math.radians(3*geomMeanAnomSun))*0.000289
+        #degrees
+        sunTrueLong = geomMeanLongSun + sunEqOfCtr
+        #AUs
+        sunTrueAnom = geomMeanAnomSun + sunEqOfCtr
+        #AUs
+        sunRadVector = (1.000001018*(1 - eccentOrbit**2))/ \
+            (1 + eccentOrbit*math.cos(math.radians(sunTrueLong)))
+        #degrees
+        sunAppLong = sunTrueLong - 0.00569 - 0.00478*math.sin(math.radians(125.04-1934.136*julianCentury))
+        #degrees
+        meanObliqEcliptic = 23 + (26 + ((21.448 - julianCentury*(46.815 + \
+            julianCentury*(0.00059 - julianCentury*0.001813))))/60)/60
+        #degrees
+        obliqueCorr = meanObliqEcliptic + 0.00256*math.cos(math.radians(125.04 - 1934.136*julianCentury))
+        #degrees
+        sunRightAscen = math.degrees(math.atan2(math.cos(math.radians(obliqueCorr))* \
+            math.sin(math.radians(sunAppLong)), math.cos(math.radians(sunAppLong))))
+        #RADIANS
+        self.solDec = math.asin(math.sin(math.radians(obliqueCorr))*math.sin(math.radians(sunAppLong)))
+        
+        varY = math.tan(math.radians(obliqueCorr/2))*math.tan(math.radians(obliqueCorr/2))
+        #minutes
+        eqOfTime = 4*math.degrees(varY*math.sin(2*math.radians(geomMeanLongSun)) \
+            - 2*eccentOrbit*math.sin(math.radians(geomMeanAnomSun)) \
+            + 4*eccentOrbit*varY*math.sin(math.radians(geomMeanAnomSun))*math.cos(2*math.radians(geomMeanLongSun)) \
+            - 0.5*(varY**2)*math.sin(4*math.radians(geomMeanLongSun)) \
+            - 1.25*(eccentOrbit**2)*math.sin(2*math.radians(geomMeanAnomSun)))
+        #hours
+        self.solTime = ((self.time*60 + eqOfTime + 4*math.degrees(self.s_longtitude) - 60*self.timeZone) % 1440)/60
+        #degrees
+        hourAngle = (self.solTime*15 + 180) if (self.solTime*15 < 0) else (self.solTime*15 - 180)
+        #RADIANS
+        self.zenith = math.acos(math.sin(self.solLat)*math.sin(self.solDec) \
+            + math.cos(self.solLat)*math.cos(self.solDec)*math.cos(math.radians(hourAngle)))
+        self.solAlt = (math.pi/2) - self.zenith
+        
+        self.solAz = ((math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
+            - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith))) + math.pi) % (2*math.pi)) \
+            if (hourAngle > 0) else \
+                ((3*math.pi - math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
+                - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith)))) % (2*math.pi))
+    
     def sunPosPt(self, sunScale = 1):
-        # print 'altitude is:', math.degrees(solAlt), 'and azimuth is:', math.degrees(solAz)
+        #print 'altitude is:', math.degrees(self.solAlt), 'and azimuth is:', math.degrees(self.solAz)
         basePoint = rc.Geometry.Point3d.Add(self.cenPt,rc.Geometry.Vector3f(0,self.scale,0))
         basePoint = rc.Geometry.Point(basePoint)
         basePoint.Rotate(self.solAlt, rc.Geometry.Vector3d.XAxis, self.cenPt)
-        basePoint.Rotate((self.angle2North + self.solAz) + PI, rc.Geometry.Vector3d.ZAxis, self.cenPt)
+        basePoint.Rotate(-(self.solAz - self.angle2North), rc.Geometry.Vector3d.ZAxis, self.cenPt)
         sunVector = rc.Geometry.Vector3d(self.cenPt - basePoint.Location)
         sunVector.Unitize()
         
@@ -1356,6 +1388,311 @@ class Sunpath(object):
             lines.append(shortNorthLine.ToNurbsCurve())
         
         return lines
+
+
+class Vector:
+    
+    def __init__(self, items):
+        self.v = items
+    
+    def dot(self, u):
+        if (len(self.v) == len(u.v)):
+            t = 0
+            for i,j in zip(self.v, u.v):
+                t += i*j
+            return t
+        else:
+            return None
+    
+    def __add__(self, b):
+        v = []
+        for i,j in zip(self.v, b.v):
+            v.append(i+j)
+        return Vector(v)
+    
+    def __sub__(self, b):
+        v = []
+        for i, v in zip(self.v, b.v):
+            v.append(i-j)
+        return Vector(v)
+    
+    def __mul__(self, other):
+        return self.__class__(self.v).__imul__(other)
+    
+    def __rmul__(self, other):
+        # The __rmul__ is called in scalar * vector case; it's commutative.
+        return self.__class__(self.v).__imul__(other)
+    
+    def __imul__(self, other):
+        '''Vectors can be multipled by a scalar. Two 3d vectors can cross.'''
+        if isinstance(other, Vector):
+            self.v = self.cross(other).v
+        else:
+            self.v = [i * other for i in self.v]
+        return self
+
+class Sky:
+    def __init__(self):
+        pass
+    
+    def createSky(self, doy, day, month, year, hour, timeZone, latitude, longitude, turbidity):
+        self.doy = doy
+        self.day = day
+        self.month = month
+        self.year = year
+        self.hour = hour
+        self.timeZone = timeZone
+        self.latitude = latitude
+        self.longitude = longitude
+        self.turbidity = turbidity
+        
+        self.sun = Sun()
+        
+        self.setTime()
+        
+        self.setSunPosition()
+        
+        self.setZenitalAbsolutes()
+        
+        self.setCoefficents()
+    
+    def info(self):
+        print(  "doy: {0}\n"
+                "julian day: {9}\n"
+                "year: {10}\n"
+                "time: {1}\n"
+                "solar time: {2}\n"
+                "latitude: {3}\n"
+                "longitude: {4}\n"
+                "turbidity: {5}\n"
+                "sun azimuth: {6}\n"
+                "sun zenith: {7}\n"
+                "sun declination: {8}\n" \
+                .format(self.doy, self.time, self.sun.time, self.latitude, \
+                self.longitude, self.turbidity, self.sun.azimuth, self.sun.zenith, \
+                self.sun.declination, self.julianDay, self.year))
+    
+    def setZenitalAbsolutes(self):
+        Yz = (4.0453*self.turbidity - 4.9710) \
+            * math.tan((4/9 - self.turbidity /120) * (math.pi - 2*self.sun.zenith)) \
+            - 0.2155*self.turbidity + 2.4192
+        Y0 = (4.0453*self.turbidity - 4.9710) \
+            * math.tan((4/9 - self.turbidity /120) * (pi)) \
+            - 0.2155*self.turbidity + 2.4192
+        self.Yz = Yz/Y0
+     
+        z3 = self.sun.zenith ** 3
+        z2 = self.sun.zenith ** 2
+        z = self.sun.zenith
+        T_vec = Vector([self.turbidity ** 2, self.turbidity, 1])
+     
+        x = Vector([0.00166 * z3 - 0.00375 * z2 + 0.00209 * z,
+            -0.02903 * z3 + 0.06377 * z2 - 0.03202 * z + 0.00394,
+            0.11693 * z3 - 0.21196 * z2 + 0.06052 * z + 0.25886])
+        self.xz = T_vec.dot(x)
+        
+        y = Vector([0.00275 * z3 - 0.00610 * z2 + 0.00317 * z,
+            -0.04214 * z3 + 0.08970 * z2 - 0.04153 * z + 0.00516,
+            0.15346 * z3 - 0.26756 * z2 + 0.06670 * z + 0.26688])
+        self.yz = T_vec.dot(y)
+     
+    def setCoefficents(self):
+        #A: darkening or brightening of the horizon
+        #B: luminance gradient near the horizon
+        #C: relative intensity of the circumsolar region
+        #D: width of the circumsolar region
+        #E: relative backscattered light
+        
+        #values derived by 
+        self.coeffsY = Coeff()
+        self.coeffsY.A = 0.1787 * self.turbidity - 1.4630
+        self.coeffsY.B = -0.3554 * self.turbidity + 0.4275
+        self.coeffsY.C = -0.0227 * self.turbidity + 5.3251
+        self.coeffsY.D = 0.1206 * self.turbidity - 2.5771
+        self.coeffsY.E = -0.0670 * self.turbidity + 0.3703
+     
+        self.coeffsx = Coeff()
+        self.coeffsx.A = -0.0193 * self.turbidity - 0.2592
+        self.coeffsx.B = -0.0665 * self.turbidity + 0.0008
+        self.coeffsx.C = -0.0004 * self.turbidity + 0.2125
+        self.coeffsx.D = -0.0641 * self.turbidity - 0.8989
+        self.coeffsx.E = -0.0033 * self.turbidity + 0.0452
+     
+        self.coeffsy = Coeff()
+        self.coeffsy.A = -0.0167 * self.turbidity - 0.2608
+        self.coeffsy.B = -0.0950 * self.turbidity + 0.0092
+        self.coeffsy.C = -0.0079 * self.turbidity + 0.2102
+        self.coeffsy.D = -0.0441 * self.turbidity - 1.6537
+        self.coeffsy.E = -0.0109 * self.turbidity + 0.0529
+    
+    def perez(self, zen, g, coeffs):
+        return (1 + coeffs.A*math.exp(coeffs.B/math.cos(zen))) * \
+        (1 + coeffs.C*math.exp(coeffs.D*g) + coeffs.E*(math.cos(g) ** 2))
+    
+    def YxyToXYZ(self, vec):
+        Y = vec.v[0]
+        x = vec.v[1]
+        y = vec.v[2]
+        
+        X = x/y*Y
+        Z = (1-x-y)/y*Y
+        
+        return Vector([X, Y, Z])
+    
+    def YxyToRGB(self, vec):
+        [X,Y,Z] = self.YxyToXYZ(vec).v
+        
+        return Vector([3.2406 * X - 1.5372 * Y - 0.4986 * Z, \
+            -0.9689 * X + 1.8758 * Y + 0.0415 * Z, \
+            0.0557 * X - 0.2040 * Y + 1.0570 * Z])
+    
+    def gamma(self, zenith, azimuth):
+        return math.acos(math.sin(self.sun.zenith)*math.sin(zenith)*math.cos(azimuth-self.sun.azimuth)+math.cos(self.sun.zenith)*math.cos(zenith))
+    
+    def sunlight(self):
+        optMass = 1/(math.cos(self.sun.zenith) + 0.15*(98.885 - self.sun.zenith)**(-1.253))
+        
+        #constants
+        a = 1.3 #wavelength exponent (sunsky: suggested by Angstrom?)
+        w = 2 #(sunsky)
+        l = 35 #ozone_thickness (sunsky)
+        
+        turbCoeff = 0.04608*self.turbidity - 0.04586 #sunsky: approximation
+        
+        trans_rayleigh = math.exp(-0.008735*wavelength**(-4.08*optMass))
+        
+        trans_aerosol = math.exp(-turbCoeff*wavelength**(-a*optMass))
+        
+        trans_ozone = math.exp(-k_o*l*optMass)
+        
+        trans_gass = math.exp(-1.41*k_g*optMass / (1 + 118.93*k_g*optMass)**0.45)
+        
+        trans_vapor = math.exp(-0.2385*k_wa*w*optMass / (1 + 20.07*k_wa*w*optMass)**0.45)
+    
+    def setTime(self):
+        self.time = self.hour
+        
+        if self.doy:
+            self.julianDay = self.doy
+            y = self.year + 4800
+        else:
+            a = 1 if (self.month < 3) else 0
+            y = self.year + 4800 - a
+            m = self.month + 12*a - 3
+            self.julianDay = self.day + math.floor((153*m + 2)/5) + 59
+        
+        self.julianDay += (self.time - self.timeZone)/24.0  + 365*y + math.floor(y/4) \
+            - math.floor(y/100) + math.floor(y/400) - 32045.5 - 59
+    
+    def setSunPosition(self):
+        julianCentury = (self.julianDay - 2451545) / 36525
+        #degrees
+        geomMeanLongSun = (280.46646 + julianCentury * (36000.76983 + julianCentury*0.0003032)) % 360
+        #degrees
+        geomMeanAnomSun = 357.52911 + julianCentury*(35999.05029 - 0.0001537*julianCentury)
+        eccentOrbit = 0.016708634 - julianCentury*(0.000042037 + 0.0000001267*julianCentury)
+        sunEqOfCtr = math.sin(math.radians(geomMeanAnomSun))*(1.914602 - julianCentury*(0.004817+0.000014*julianCentury)) + \
+            math.sin(math.radians(2*geomMeanAnomSun))*(0.019993-0.000101*julianCentury) + \
+            math.sin(math.radians(3*geomMeanAnomSun))*0.000289
+        #degrees
+        sunTrueLong = geomMeanLongSun + sunEqOfCtr
+        #AUs
+        sunTrueAnom = geomMeanAnomSun + sunEqOfCtr
+        #AUs
+        sunRadVector = (1.000001018*(1 - eccentOrbit**2))/ \
+            (1 + eccentOrbit*math.cos(math.radians(sunTrueLong)))
+        #degrees
+        sunAppLong = sunTrueLong - 0.00569 - 0.00478*math.sin(math.radians(125.04-1934.136*julianCentury))
+        #degrees
+        meanObliqEcliptic = 23 + (26 + ((21.448 - julianCentury*(46.815 + \
+            julianCentury*(0.00059 - julianCentury*0.001813))))/60)/60
+        #degrees
+        obliqueCorr = meanObliqEcliptic + 0.00256*math.cos(math.radians(125.04 - 1934.136*julianCentury))
+        #degrees
+        sunRightAscen = math.degrees(math.atan2(math.cos(math.radians(obliqueCorr))* \
+            math.sin(math.radians(sunAppLong)), math.cos(math.radians(sunAppLong))))
+        #RADIANS
+        self.sun.declination = math.asin(math.sin(math.radians(obliqueCorr))*math.sin(math.radians(sunAppLong)))
+        
+        varY = math.tan(math.radians(obliqueCorr/2))*math.tan(math.radians(obliqueCorr/2))
+        #minutes
+        eqOfTime = 4*math.degrees(varY*math.sin(2*math.radians(geomMeanLongSun)) \
+            - 2*eccentOrbit*math.sin(math.radians(geomMeanAnomSun)) \
+            + 4*eccentOrbit*varY*math.sin(math.radians(geomMeanAnomSun))*math.cos(2*math.radians(geomMeanLongSun)) \
+            - 0.5*(varY**2)*math.sin(4*math.radians(geomMeanLongSun)) \
+            - 1.25*(eccentOrbit**2)*math.sin(2*math.radians(geomMeanAnomSun)))
+        #hours
+        self.sun.time = ((self.time*60 + eqOfTime + 4*self.longitude - 60*self.timeZone) % 1440)/60
+        #degrees
+        hourAngle = (self.sun.time*15 + 180) if (self.sun.time*15 < 0) else (self.sun.time*15 - 180)
+        #RADIANS
+        self.sun.zenith = math.acos(math.sin(math.radians(self.latitude))*math.sin(self.sun.declination) \
+            + math.cos(math.radians(self.latitude))*math.cos(self.sun.declination)*math.cos(math.radians(hourAngle)))
+        #degrees
+        atmosphRefrac = 0 if (self.sun.zenith < 0.087) else \
+            (58.1/math.tan(math.pi/2 - self.sun.zenith) \
+            - 0.07/(math.tan(math.pi/2 - self.sun.zenith))**3 \
+            + 0.000086/(tan(math.pi/2 - self.sun.zenith))**5)/3600 \
+            if (self.sun.zenith < 1.484) else \
+                (1735 + (90-math.degrees(self.sun.zenith)) \
+                *(-518.2 + (90-math.degrees(self.sun.zenith)) \
+                *(103.4+(90-math.degrees(self.sun.zenith)) \
+                *(-12.79+(90-math.degrees(self.sun.zenith))*0.711))))/3600 \
+                if (self.sun.zenith < -1.581) else \
+                    (-20.772/math.tan(math.pi/2 - self.sun.zenith))/3600
+        #RADIANS
+        self.sun.zenithCorr = self.sun.zenith - math.radians(atmosphRefrac)
+        #RADIANS cw from N
+        self.sun.azimuth = ((math.acos(((math.sin(math.radians(self.latitude))*math.cos(self.sun.zenith)) \
+            - math.sin(self.sun.declination))/(math.cos(math.radians(self.latitude))*math.sin(self.sun.zenith))) + math.pi) % (2*math.pi)) \
+            if (hourAngle > 0) else \
+                ((3*math.pi - math.acos(((math.sin(math.radians(self.latitude))*math.cos(self.sun.zenith)) \
+                - math.sin(self.sun.declination))/(math.cos(math.radians(self.latitude))*math.sin(self.sun.zenith)))) % (2*math.pi))
+    
+    def calcSkyColor(self, azimuth, zenith):
+        gamma = self.gamma(zenith, azimuth)
+        zenith = min(zenith, math.pi)
+        Yp = self.Yz * self.perez(zenith, gamma, self.coeffsY) / self.perez(0, self.sun.zenith, self.coeffsY)
+        xp = self.xz * self.perez(zenith, gamma, self.coeffsx) / self.perez(0, self.sun.zenith, self.coeffsx)
+        yp = self.yz * self.perez(zenith, gamma, self.coeffsy) / self.perez(0, self.sun.zenith, self.coeffsy)
+        
+        return Vector([Yp, xp, yp])
+    
+    def calcLightColor(self):
+        nightColor = Vector([0.2, 0.2, 0.5])
+        
+        if (self.sun.zenith > math.pi/2):
+            return self.YxyToRGB(nightColor)
+        
+        Ys = self.Yz * self.perez(self.sun.zenith, 0, self.coeffsY) / self.perez(0, self.sun.zenith, self.coeffsY)
+        xs = self.xz * self.perez(self.sun.zenith, 0, self.coeffsx) / self.perez(0, self.sun.zenith, self.coeffsx)
+        ys = self.yz * self.perez(self.sun.zenith, 0, self.coeffsy) / self.perez(0, self.sun.zenith, self.coeffsy)
+        dayColor = self.YxyToRGB(Vector([Ys, xs, ys]))
+        
+        interpolation = max(0, min(1, (self.sun.zenith - math.pi/2 + 0.2) / 0.2))
+        return interpolation * nightColor + (1 - interpolation) * dayColor
+    
+    def calcFullSky(self, res):
+        self.fullSky = []
+        for j in range(4*res):
+            az = j/(4*res) * 2*math.pi
+            for i in range(res):
+                zen = (res-i)/res * math.pi/2
+                color = self.YxyToXYZ(self.calcSkyColor(az, zen))
+                self.fullSky.append(ghcomp.ColourXYZ(1, *color.v))
+        
+        return self.fullSky
+    
+    def calcSkyAvg(self, res):
+        self.colorAvg = Vector([0, 0, 0])
+        fac = 1/(4 * res**2)
+        for j in range(4*res):
+            az = j/(4*res) * 2*math.pi
+            for i in range(res):
+                zen = (res-i)/res * math.pi/2
+                self.colorAvg = self.colorAvg + (self.calcSkyColor(az, zen) * fac)
+        
+        return self.colorAvg
 
 
 class MeshPreparation(object):
@@ -3414,6 +3751,8 @@ if letItFly:
     sc.sticky["ladybug_Export2Radiance"] = ExportAnalysis2Radiance
     sc.sticky["ladybug_ResultVisualization"] = ResultVisualization
     sc.sticky["ladybug_SunPath"] = Sunpath
+    sc.sticky["ladybug_SkyColor"] = Sky
+    sc.sticky["ladybug_Vector"] = Vector
     sc.sticky["ladybug_ComfortModels"] = ComfortModels
     sc.sticky["ladybug_WindSpeed"] = WindSpeed
         

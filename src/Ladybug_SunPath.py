@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -373,6 +373,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     sunSpheres.append(sunSphere)
                     sunVectors.append(sunVector)
                     sunAlt.append(math.degrees(lb_sunpath.solAlt))
+                    #print math.degrees(lb_sunpath.angle2North)
                     solAz = getAzimuth(sunVector, northVector)
                     sunAzm.append(solAz)
             
