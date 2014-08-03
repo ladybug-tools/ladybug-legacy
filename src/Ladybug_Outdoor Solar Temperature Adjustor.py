@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_03_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -99,6 +99,7 @@ def checkTheInputs():
         checkData2 = False
         radTemp = []
         radMultVal = False
+        epwStr = ""
         if len(meanRadTemperature_) != 0:
             try:
                 if "Temperature" in meanRadTemperature_[2]:
@@ -106,7 +107,8 @@ def checkTheInputs():
                     checkData2 = True
                     epwData = True
                     epwStr = meanRadTemperature_[0:7]
-            except: pass
+            except:
+                pass
             if checkData2 == False:
                 for item in meanRadTemperature_:
                     try:
