@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAUG_01_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_02_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1431,14 +1431,25 @@ class Vector:
             self.v = [i * other for i in self.v]
         return self
 
+
+class Sun:
+    pass
+
+
+class Coeff:
+    A = None
+    B = None
+    C = None
+    D = None
+    E = None
+
+
 class Sky:
     def __init__(self):
         pass
     
-    def createSky(self, doy, day, month, year, hour, timeZone, latitude, longitude, turbidity):
+    def createSky(self, doy, year, hour, timeZone, latitude, longitude, turbidity):
         self.doy = doy
-        self.day = day
-        self.month = month
         self.year = year
         self.hour = hour
         self.timeZone = timeZone
@@ -1469,15 +1480,15 @@ class Sky:
                 "sun zenith: {7}\n"
                 "sun declination: {8}\n" \
                 .format(self.doy, self.time, self.sun.time, self.latitude, \
-                self.longitude, self.turbidity, self.sun.azimuth, self.sun.zenith, \
-                self.sun.declination, self.julianDay, self.year))
+                self.longitude, self.turbidity, math.degrees(self.sun.azimuth), math.degrees(self.sun.zenith), \
+                math.degrees(self.sun.declination), self.julianDay, self.year))
     
     def setZenitalAbsolutes(self):
         Yz = (4.0453*self.turbidity - 4.9710) \
             * math.tan((4/9 - self.turbidity /120) * (math.pi - 2*self.sun.zenith)) \
             - 0.2155*self.turbidity + 2.4192
         Y0 = (4.0453*self.turbidity - 4.9710) \
-            * math.tan((4/9 - self.turbidity /120) * (pi)) \
+            * math.tan((4/9 - self.turbidity /120) * (math.pi)) \
             - 0.2155*self.turbidity + 2.4192
         self.Yz = Yz/Y0
      
@@ -1572,14 +1583,8 @@ class Sky:
     def setTime(self):
         self.time = self.hour
         
-        if self.doy:
-            self.julianDay = self.doy
-            y = self.year + 4800
-        else:
-            a = 1 if (self.month < 3) else 0
-            y = self.year + 4800 - a
-            m = self.month + 12*a - 3
-            self.julianDay = self.day + math.floor((153*m + 2)/5) + 59
+        self.julianDay = self.doy
+        y = self.year + 4800
         
         self.julianDay += (self.time - self.timeZone)/24.0  + 365*y + math.floor(y/4) \
             - math.floor(y/100) + math.floor(y/400) - 32045.5 - 59
@@ -1632,7 +1637,7 @@ class Sky:
         atmosphRefrac = 0 if (self.sun.zenith < 0.087) else \
             (58.1/math.tan(math.pi/2 - self.sun.zenith) \
             - 0.07/(math.tan(math.pi/2 - self.sun.zenith))**3 \
-            + 0.000086/(tan(math.pi/2 - self.sun.zenith))**5)/3600 \
+            + 0.000086/(math.tan(math.pi/2 - self.sun.zenith))**5)/3600 \
             if (self.sun.zenith < 1.484) else \
                 (1735 + (90-math.degrees(self.sun.zenith)) \
                 *(-518.2 + (90-math.degrees(self.sun.zenith)) \
@@ -1674,14 +1679,16 @@ class Sky:
     
     def calcFullSky(self, res):
         self.fullSky = []
+        self.fullSkyXYZ = []
         for j in range(4*res):
             az = j/(4*res) * 2*math.pi
-            for i in range(res):
+            for i in range(res+1):
                 zen = (res-i)/res * math.pi/2
                 color = self.YxyToXYZ(self.calcSkyColor(az, zen))
+                self.fullSkyXYZ.append(str(color.v[0]) + ", " + str(color.v[1]) + ", " + str(color.v[2]))
                 self.fullSky.append(ghcomp.ColourXYZ(1, *color.v))
         
-        return self.fullSky
+        return self.fullSky, self.fullSkyXYZ
     
     def calcSkyAvg(self, res):
         self.colorAvg = Vector([0, 0, 0])
