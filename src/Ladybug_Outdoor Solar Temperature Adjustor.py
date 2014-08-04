@@ -103,7 +103,6 @@ def checkTheInputs():
         checkData2 = False
         radTemp = []
         radMultVal = False
-        epwStr = ""
         if len(meanRadTemperature_) != 0:
             try:
                 if "Temperature" in meanRadTemperature_[2]:
@@ -111,8 +110,7 @@ def checkTheInputs():
                     checkData2 = True
                     epwData = True
                     epwStr = meanRadTemperature_[0:7]
-            except:
-                pass
+            except: pass
             if checkData2 == False:
                 for item in meanRadTemperature_:
                     try:
