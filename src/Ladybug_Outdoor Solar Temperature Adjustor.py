@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_25_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_03_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -66,6 +66,7 @@ import System
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
+import System.Threading.Tasks as tasks
 
 
 def checkTheInputs():
@@ -76,7 +77,10 @@ def checkTheInputs():
         lb_mesh = sc.sticky["ladybug_Mesh"]()
         lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()
         lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
+        lb_sunpath = sc.sticky["ladybug_SunPath"]()
         
+        #Set a default value for epwStr.
+        epwStr = []
         
         #Check to see if the user has connected valid air temperature data.
         checkData1 = False
@@ -124,7 +128,7 @@ def checkTheInputs():
             if len (radTemp) > 1: radMultVal = True
             print 'No value connected for meanRadiantTemperature_.  It will be assumed that the radiant temperature is the same as the air temperature.'
         #If there is only one value for MRT, duplicate it 8760 times.
-        if len (radTemp) < 8760:
+        if len(radTemp) < 8760 and len(radTemp) !=0:
             if len(radTemp) == 1:
                 dupData = []
                 for count in range(8760):
@@ -266,6 +270,7 @@ def checkTheInputs():
             northAngle, northVector = lb_preparation.angle2north(north_)
         else:
             northVector = rc.Geometry.Vector3d.YAxis
+            northAngle = 0.0
         
         #Check if everything is good.
         if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True:
@@ -273,10 +278,9 @@ def checkTheInputs():
         else:
             checkData = False
         
-        return checkData, airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels
+        return checkData, airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
     else:
         return False, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
-
 
 
 def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH):
@@ -432,17 +436,13 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 
 
-def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels):
+def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
     solarAdjustedMRT = []
     solarAdjOperativeTemp = []
-    
-    ERF.extend([epwStr[0], epwStr[1], 'Effective Radiant Field', 'kWh/m2', epwStr[4], analysisPeriod[0], analysisPeriod[1]])
-    MRTDelta.extend([epwStr[0], epwStr[1], 'Solar Mean Radiant Temp Delta', 'C', epwStr[4], analysisPeriod[0], analysisPeriod[1]])
-    solarAdjustedMRT.extend([epwStr[0], epwStr[1], 'Solar-Adjusted Mean Radiant Temperature', 'C', epwStr[4], analysisPeriod[0], analysisPeriod[1]])
-    solarAdjOperativeTemp.extend([epwStr[0], epwStr[1], 'Solar-Adjusted Operative Temp', 'C', epwStr[4], analysisPeriod[0], analysisPeriod[1]])
+    hourOrder = []
     
     #Define the fraction of the body visible to radiation.
     if bodyPosture_ == 0:
@@ -473,11 +473,19 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
         erf = fracEff * radTransCoeff *(temp - airTemp[count])
         currentERF.append(erf)
     
-    #Process the cumulative sky into an initial elected sky.
+    #Calculate the sun-up hours of the year to help make things faster down the road.
+    lb_sunpath.initTheClass(float(_cumulativeSkyMtx.lat), northAngle, rc.Geometry.Point3d.Origin, 100, float(_cumulativeSkyMtx.lngt), float(_cumulativeSkyMtx.timeZone))
+    altitudes = []
+    for hour in HOYS:
+        d, m, t = lb_preparation.hour2Date(hour, True)
+        lb_sunpath.solInitOutput(d, m, t)
+        altitude = lb_sunpath.solAlt
+        altitudes.append(altitude)
+    
+    #Process the cumulative sky into an initial selected sky.
     skyMtxLists = []
-    if _cumulativeSkyMtx:
-        skyMtxLists = getCumulativeSky(_cumulativeSkyMtx.d, analysisPeriod)
-        unit = 'kWh/m2'
+    skyMtxLists = getCumulativeSky(_cumulativeSkyMtx.d, analysisPeriod)
+    unit = 'kWh/m2'
     
     if len(skyMtxLists)!=0:
         selectedSkyMtx = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
@@ -522,50 +530,165 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
         personMeshAreas = meshSrfAreas[:-1]
         totalPersonArea = sum(personMeshAreas)
         
+        #Define functions for computing the radiation for each hour, which is in parallal and not in parallel.
+        def nonParallelRadCalc():
+            for count, hour in enumerate(HOYS):
+                if count != len(HOYS)-1: lastVal = 1
+                else: lastVal = 0
+                if altitudes[count] > 0 or altitudes[count-1] > 0 or altitudes[count+lastVal] > 0:
+                    skyMtxLists, _analysisPeriod_ = getHourlySky(_cumulativeSkyMtx.d, hour)
+                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
+                    
+                    indexList, listInfo = lb_preparation.separateList(selSkyMatrix, lb_preparation.strToBeFound)
+                    #separate total, diffuse and direct radiations
+                    separatedLists = []
+                    for i in range(len(indexList)-1):
+                        selList = []
+                        [selList.append(float(x)) for x in selSkyMatrix[indexList[i] + 7:indexList[i+1]]]
+                        separatedLists.append(selList)
+                    
+                    skyMatrix = separatedLists[0]
+                    
+                    radiationResult = []
+                    for ptCount in  intDict.keys():
+                        radValue = 0
+                        for patchCount in intDict[ptCount].keys():
+                            if intDict[ptCount][patchCount]['isIntersect']:
+                                radValue = radValue + (skyMatrix[patchCount] * math.cos(intDict[ptCount][patchCount]['vecAngle']))
+                        radiationResult.append(radValue)
+                    
+                    personRad = radiationResult[:-1]
+                    groundRad = radiationResult[-1]
+                    totalPersonBeamDiffRad = sum([a*b for a,b in zip(personRad,personMeshAreas)])
+                    
+                    #Calculate the additional radiation reflected to the person by the ground.
+                    groundRefRad = 0.5 * groundRad * fracEff * groundR
+                    
+                    #Calculate the total person radiation and the ERF.
+                    totalPersonRad = totalPersonBeamDiffRad + groundRefRad
+                    radiantFlux = totalPersonRad/totalPersonArea
+                    hourSolERF = (radiantFlux * cloA)/0.95
+                    hourERF = hourSolERF + currentERF[count]
+                    ERF.append(hourERF/1000)
+                    
+                    #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
+                    hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
+                    hourOp = (hourMRT+airTemp[count])/2
+                    solarAdjustedMRT.append(hourMRT)
+                    solarAdjOperativeTemp.append(hourOp)
+                    mrtDelt = hourMRT - radTemp[count]
+                    MRTDelta.append(mrtDelt)
+                else:
+                    ERF.append(currentERF[count])
+                    solarAdjustedMRT.append(radTemp[count])
+                    solarAdjOperativeTemp.append((radTemp[count] + airTemp[count])/2)
+                    MRTDelta.append(0)
+            return True
+        
+        def parallelRadCalc():
+            def radCalc(count):
+                if count != len(HOYS)-1: lastVal = 1
+                else: lastVal = 0
+                if altitudes[count] > 0 or altitudes[count-1] > 0 or altitudes[count+lastVal] > 0:
+                    skyMtxLists, _analysisPeriod_ = getHourlySky(_cumulativeSkyMtx.d, HOYS[count])
+                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
+                    
+                    indexList, listInfo = lb_preparation.separateList(selSkyMatrix, lb_preparation.strToBeFound)
+                    #separate total, diffuse and direct radiations
+                    separatedLists = []
+                    for i in range(len(indexList)-1):
+                        selList = []
+                        [selList.append(float(x)) for x in selSkyMatrix[indexList[i] + 7:indexList[i+1]]]
+                        separatedLists.append(selList)
+                    
+                    skyMatrix = separatedLists[0]
+                    
+                    radiationResult = []
+                    for ptCount in  intDict.keys():
+                        radValue = 0
+                        for patchCount in intDict[ptCount].keys():
+                            if intDict[ptCount][patchCount]['isIntersect']:
+                                radValue = radValue + (skyMatrix[patchCount] * math.cos(intDict[ptCount][patchCount]['vecAngle']))
+                        radiationResult.append(radValue)
+                    
+                    personRad = radiationResult[:-1]
+                    groundRad = radiationResult[-1]
+                    totalPersonBeamDiffRad = sum([a*b for a,b in zip(personRad,personMeshAreas)])
+                    
+                    #Calculate the additional radiation reflected to the person by the ground.
+                    groundRefRad = 0.5 * groundRad * fracEff * groundR
+                    
+                    #Calculate the total person radiation and the ERF.
+                    totalPersonRad = totalPersonBeamDiffRad + groundRefRad
+                    radiantFlux = totalPersonRad/totalPersonArea
+                    hourSolERF = (radiantFlux * cloA)/0.95
+                    hourERF = hourSolERF + currentERF[count]
+                    ERF.append(hourERF/1000)
+                    
+                    #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
+                    hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
+                    hourOp = (hourMRT+airTemp[count])/2
+                    solarAdjustedMRT.append(hourMRT)
+                    solarAdjOperativeTemp.append(hourOp)
+                    mrtDelt = hourMRT - radTemp[count]
+                    MRTDelta.append(mrtDelt)
+                else:
+                    ERF.append(currentERF[count])
+                    solarAdjustedMRT.append(radTemp[count])
+                    solarAdjOperativeTemp.append((radTemp[count] + airTemp[count])/2)
+                    MRTDelta.append(0)
+                hourOrder.append(count)
+            
+            tasks.Parallel.ForEach(range(len(HOYS)), radCalc)
+            
+            return True
+        
         # Compute the radiation for each hour of the year.
-        for count, hour in enumerate(HOYS):
-            skyMtxLists, _analysisPeriod_ = getHourlySky(_cumulativeSkyMtx.d, hour)
-            selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
-            
-            indexList, listInfo = lb_preparation.separateList(selSkyMatrix, lb_preparation.strToBeFound)
-            #separate total, diffuse and direct radiations
-            separatedLists = []
-            for i in range(len(indexList)-1):
-                selList = []
-                [selList.append(float(x)) for x in selSkyMatrix[indexList[i] + 7:indexList[i+1]]]
-                separatedLists.append(selList)
-            
-            skyMatrix = separatedLists[0]
-            
-            radiationResult = []
-            for ptCount in  intDict.keys():
-                radValue = 0
-                for patchCount in intDict[ptCount].keys():
-                    if intDict[ptCount][patchCount]['isIntersect']:
-                        radValue = radValue + (skyMatrix[patchCount] * math.cos(intDict[ptCount][patchCount]['vecAngle']))
-                radiationResult.append(radValue)
-            
-            personRad = radiationResult[:-1]
-            groundRad = radiationResult[-1]
-            totalPersonBeamDiffRad = sum([a*b for a,b in zip(personRad,personMeshAreas)])
-            
-            #Calculate the additional radiation reflected to the person by the ground.
-            groundRefRad = 0.5 * groundRad * fracEff * groundR
-            
-            #Calculate the total person radiation and the ERF.
-            totalPersonRad = totalPersonBeamDiffRad + groundRefRad
-            radiantFlux = totalPersonRad/totalPersonArea
-            hourSolERF = (radiantFlux * cloA)/0.95
-            hourERF = hourSolERF + currentERF[count]
-            ERF.append(hourERF/1000)
-            
-            #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
-            hourMRT = (hourERF/(fracEff*radTransCoeff)) + (airTemp[count])
-            hourOp = (hourMRT+airTemp[count])/2
-            solarAdjustedMRT.append(hourMRT)
-            solarAdjOperativeTemp.append(hourOp)
-            mrtDelt = hourMRT - radTemp[count]
-            MRTDelta.append(mrtDelt)
+        if parallel == False:
+            runSuccess = nonParallelRadCalc()
+        else:
+            runSuccess = parallelRadCalc()
+        
+        #If the process above was run in parallel, re-order the numbers correctly (instead of by when they finished calculating).
+        if parallel == True:
+            ERF = [x for (y,x) in sorted(zip(hourOrder, ERF))]
+            MRTDelta = [x for (y,x) in sorted(zip(hourOrder, MRTDelta))]
+            solarAdjustedMRT = [x for (y,x) in sorted(zip(hourOrder, solarAdjustedMRT))]
+            solarAdjOperativeTemp = [x for (y,x) in sorted(zip(hourOrder, solarAdjOperativeTemp))]
+        
+        
+        #Add the headers to the computed lists.
+        ERF.insert(0,analysisPeriod[1])
+        ERF.insert(0,analysisPeriod[0])
+        ERF.insert(0,epwStr[4])
+        ERF.insert(0,'kWh/m2')
+        ERF.insert(0,'Effective Radiant Field')
+        ERF.insert(0,epwStr[1])
+        ERF.insert(0,epwStr[0])
+        
+        MRTDelta.insert(0,analysisPeriod[1])
+        MRTDelta.insert(0,analysisPeriod[0])
+        MRTDelta.insert(0,epwStr[4])
+        MRTDelta.insert(0,'C')
+        MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
+        MRTDelta.insert(0,epwStr[1])
+        MRTDelta.insert(0,epwStr[0])
+        
+        solarAdjustedMRT.insert(0,analysisPeriod[1])
+        solarAdjustedMRT.insert(0,analysisPeriod[0])
+        solarAdjustedMRT.insert(0,epwStr[4])
+        solarAdjustedMRT.insert(0,'C')
+        solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
+        solarAdjustedMRT.insert(0,epwStr[1])
+        solarAdjustedMRT.insert(0,epwStr[0])
+        
+        solarAdjOperativeTemp.insert(0,analysisPeriod[1])
+        solarAdjOperativeTemp.insert(0,analysisPeriod[0])
+        solarAdjOperativeTemp.insert(0,epwStr[4])
+        solarAdjOperativeTemp.insert(0,'C')
+        solarAdjOperativeTemp.insert(0,'Solar-Adjusted Operative Temp')
+        solarAdjOperativeTemp.insert(0,epwStr[1])
+        solarAdjOperativeTemp.insert(0,epwStr[0])
         
         
         return ERF, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, resultColored, legend, legendBasePoint
@@ -579,11 +702,11 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
 
 
 #Check the inputs
-checkData, airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, cloA, parallel, analysisPeriod, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels = checkTheInputs()
+checkData, airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath = checkTheInputs()
 
-#Run the analysis
+#Run the analysis.
 if _runIt == True and checkData == True:
-    effectiveRadiantField, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, mannequinMesh, legend, legendBasePt = main(airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, cloA, parallel, analysisPeriod, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels)
+    effectiveRadiantField, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, mannequinMesh, legend, legendBasePt = main(airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath)
 
 #Hide the legend base point.
 ghenv.Component.Params.Output[9].Hidden = True

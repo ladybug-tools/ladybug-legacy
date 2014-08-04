@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_03_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -163,7 +163,7 @@ def main(epwFile, skyType, workingDir, useOldRes):
         
                 os.system(batchFile)
             
-            return outputFileDif, outputFileDir, newLocName
+            return outputFileDif, outputFileDir, newLocName, lat, lngt, timeZone
             
         else:
             print "epwWeatherFile address is not a valid .epw file"
@@ -176,7 +176,7 @@ def main(epwFile, skyType, workingDir, useOldRes):
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
         
-def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName):
+def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZone):
     # All the patches on top high get the same values so maybe
     # I should re-create the geometry 577 instead of 580
     
@@ -243,11 +243,14 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName):
     resFileDir.close()
     
     class SkyResultsCollection(object):
-        def __init__(self, valuesDict, locationName):
+        def __init__(self, valuesDict, locationName, lat, lngt, timeZone):
             self.d = valuesDict
             self.location = locationName
+            self.lat = lat
+            self.lngt = lngt
+            self.timeZone = timeZone
         
-    return SkyResultsCollection(radValuesDict, newLocName)
+    return SkyResultsCollection(radValuesDict, newLocName, lat, lngt, timeZone)
     
 if _runIt and _epwFile!=None:
     
@@ -268,8 +271,8 @@ if _runIt and _epwFile!=None:
     elif result == -1:
         pass
     else:
-        daylightMtxDiffueFile, daylightMtxDirectFile, newLocName = result
-        cumulativeSkyMtx = readMTXFile(daylightMtxDiffueFile, daylightMtxDirectFile, n, newLocName)
+        daylightMtxDiffueFile, daylightMtxDirectFile, newLocName, lat, lngt, timeZone = result
+        cumulativeSkyMtx = readMTXFile(daylightMtxDiffueFile, daylightMtxDirectFile, n, newLocName, lat, lngt, timeZone)
 else:
     warn = "Set runIt to True and connect a valid epw file address"
     print warn
