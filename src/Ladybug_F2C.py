@@ -17,7 +17,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_F2C"
 ghenv.Component.NickName = 'F2C'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
@@ -26,7 +26,8 @@ except: pass
 
 C = []
 for num in _F:
-    if num == 'F': F.append('C')
+    if num == 'F': C.append('C')
+    elif num == 'F': C.append('C')
     else:
         try: C.append((float(num)-32) * 5 / 9)
         except: C.append(num)
