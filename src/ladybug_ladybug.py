@@ -1210,6 +1210,7 @@ class Sunpath(object):
         self.scale = scale
         self.timeZone = timeZone
     
+    #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
     def solInitOutput(self, month, day, hour):
         year = 2014
         self.time = hour
