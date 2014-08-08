@@ -20,14 +20,14 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'Open EPW + STAT'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_29_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_09_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
 
-
+import scriptcontext as sc
 import urllib
 import os
 import zipfile,os.path
@@ -40,27 +40,35 @@ import time
 doc = gh.GH_Document()
 
 def checkTheInputs():
-    #Check the inputs to make sure that a valid DOE URL has been connected.
-    if _weatherFileURL and _weatherFileURL.startswith('http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/') and _weatherFileURL.endswith('.zip') and  _weatherFileURL != 'http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/Example.zip':
-        folderName = _weatherFileURL.split('/')[-1].split('.')[0]
-        checkData = True
-    elif _weatherFileURL == 'http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/Example.zip':
-        checkData = False
+    # import the classes
+    if sc.sticky.has_key('ladybug_release'):
+        lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
+        #Check the inputs to make sure that a valid DOE URL has been connected.
+        if _weatherFileURL and _weatherFileURL.startswith('http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/') and _weatherFileURL.endswith('.zip') and  _weatherFileURL != 'http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/Example.zip':
+            folderName = _weatherFileURL.split('/')[-1].split('.')[0]
+            checkData = True
+        elif _weatherFileURL == 'http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/Example.zip':
+            checkData = False
+        else:
+            checkData = False
+            warning = "_weatherFileURL is not a valid web address to a DOE weather file. "
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+        
+        #If no working directory is specified, default to C:\ladybug.
+        if workingDir_ != None and checkData == True:
+            workingDir = workingDir_
+        elif workingDir_ == None and checkData == True:
+            workingDir = lb_defaultFolder + folderName + '\\'
+        else:
+            workingDir = None
+        
+        return checkData, workingDir
     else:
-        checkData = False
-        warning = "_weatherFileURL is not a valid web address to a DOE weather file. "
+        print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, warning)
-    
-    #If no working directory is specified, default to C:\ladybug.
-    if workingDir_ != None and checkData == True:
-        workingDir = workingDir_
-    elif workingDir_ == None and checkData == True:
-        workingDir = 'C:/ladybug/' + folderName + '/'
-    else:
-        workingDir = None
-    
-    return checkData, workingDir
+        ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
+        return False, None
 
 def download(url, workingDir):
     try:
@@ -87,7 +95,7 @@ def unzip(source_filename, dest_dir):
         for member in zf.infolist():
             # Path traversal defense copied from
             # http://hg.python.org/cpython/file/tip/Lib/http/server.py#l789
-            words = member.filename.split('/')
+            words = member.filename.split('\\')
             path = dest_dir
             for word in words[:-1]:
                 drive, word = os.path.splitdrive(word)
@@ -98,12 +106,8 @@ def unzip(source_filename, dest_dir):
 
 def addresses(filename, directory):
     filenamewords = filename.split('.zip')[-2]
-    filenamewords2 = filenamewords.split('/')
-    if len(filenamewords2) == 1:
-        filenamewords2 = filenamewords.split('\\')
-    filenamewords3 = filenamewords2[0] + '\\' + filenamewords2[1] + '\\' + filenamewords2[2] + '\\' + filenamewords2[3]
-    epw = filenamewords3 + '.epw'
-    stat = filenamewords3 + '.stat'
+    epw = filenamewords + '.epw'
+    stat = filenamewords + '.stat'
     return epw, stat
 
 def checkIfAlreadyDownloaded(workingDir, url):
@@ -125,12 +129,12 @@ if checkData == True:
 else: checkData2 = True
 
 #Download the zip file to the directory.
-if checkData2 == False:
+if checkData == True and checkData2 == False:
     zipFileAddress = download(_weatherFileURL, workingDir)
 else: pass
 
 #Unzip the file and load it into Grasshopper!!!!
-if checkData2 == False and zipFileAddress:
+if checkData == True and checkData2 == False and zipFileAddress:
     unzip(zipFileAddress, workingDir)
     epwFile, statFile = addresses(zipFileAddress, workingDir)
 else: pass
