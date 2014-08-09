@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_15_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_09_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -131,8 +131,12 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, colors, yCount):
     #If there is no yCount, define it as 24
     if yCount == []:
-        yCount = 24
-    else: yCount = yCount[0]
+        if len(values) == 24:
+            yCount = 1
+        else:
+            yCount = 24
+    else:
+        yCount = yCount[0]
     
     # make a monocolor mesh without webbing between the primary faces.
     ySize = int(len(values)/xSize)
@@ -335,8 +339,9 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
         
         conversionFac = lb_preparation.checkUnits()
         # copy the custom code here
+        if len(inputData)== 0: return -1
         
-        if len(inputData)!=0 and inputData[0]!=None and str(inputData[0]) != "Connect input data here":
+        if len(inputData)!= 0 and inputData[0]!=None and str(inputData[0]) != "Connect input data here":
             
             # check conditional statement for the whole year
             titleStatement = -1
