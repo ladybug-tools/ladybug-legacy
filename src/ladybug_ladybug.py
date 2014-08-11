@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAUG_02_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -50,7 +50,6 @@ import time
 from itertools import chain
 import datetime
 import urllib
-import ghpythonlib.components as ghcomp
 
 PI = math.pi
 letItFly = True
@@ -1679,6 +1678,7 @@ class Sky:
         return interpolation * nightColor + (1 - interpolation) * dayColor
     
     def calcFullSky(self, res):
+        import ghpythonlib.components as ghcomp
         self.fullSky = []
         self.fullSkyXYZ = []
         for j in range(4*res):
