@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_16_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_07_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -63,18 +63,30 @@ inputsDict = {
 # manage component inputs
 
 numInputs = ghenv.Component.Params.Input.Count
-try:
-    depthTest = float(_depthOrVector[0])
-    method = 0
-    
-except:
- method = 1
+if len(_depthOrVector) != 0:
+    try:
+        depthTest = float(_depthOrVector[0])
+        method = 0
+    except:
+     method = 1
+else:
+    method = 2
 
 if method == 0:
     for input in range(numInputs):
         if input == 6 or input == 7 or input == 8:
-            ghenv.Component.Params.Input[input].NickName = "............................"
-            ghenv.Component.Params.Input[input].Name = "............................"
+            ghenv.Component.Params.Input[input].NickName = "."
+            ghenv.Component.Params.Input[input].Name = "."
+            ghenv.Component.Params.Input[input].Description = " "
+        else:
+            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+elif method == 1:
+    for input in range(numInputs):
+        if input == 11 or input == 12:
+            ghenv.Component.Params.Input[input].NickName = "."
+            ghenv.Component.Params.Input[input].Name = "."
             ghenv.Component.Params.Input[input].Description = " "
         else:
             ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
@@ -82,14 +94,9 @@ if method == 0:
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 else:
     for input in range(numInputs):
-        if input == 11 or input == 12:
-            ghenv.Component.Params.Input[input].NickName = "............................"
-            ghenv.Component.Params.Input[input].Name = "............................"
-            ghenv.Component.Params.Input[input].Description = " "
-        else:
-            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
-            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
-            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+        ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
     
 ghenv.Component.Attributes.Owner.OnPingDocument()
 
