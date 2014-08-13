@@ -26,7 +26,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Capture View"
 ghenv.Component.NickName = 'captureView'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_08_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_12_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -90,11 +90,20 @@ def viewCapture(fileName, directory, viewNames, image_width, image_height, dispM
         
         viewSize = System.Drawing.Size(int(image_w), int(image_h))
         
-        pic = rc.Display.RhinoView.CaptureToBitmap(viewtoCapture , viewSize, False, False)
+        pic = rc.Display.RhinoView.CaptureToBitmap(viewtoCapture , viewSize)
         
         fullPath = os.path.join(directory, fileName +'_'+ viewName + '.png')
         
-        System.Drawing.Bitmap.Save(pic , fullPath)
+        try:
+            System.Drawing.Bitmap.Save(pic , fullPath)
+        except:
+            try:
+                fullPath = os.path.join(directory, fileName +'_'+ viewName + '_1.png')
+                System.Drawing.Bitmap.Save(pic , fullPath)
+            except:
+                print "Failed!"
+                return
+                pass
         
         return fullPath
 
@@ -106,5 +115,5 @@ if _capture and _fileName!=None:
     if len(viewNames_)==0: viewNames_ = [sc.doc.Views.ActiveView.ActiveViewport.Name]
     
     fullPath = viewCapture(_fileName, directory, viewNames_, imageWidth_, imageHeight_, displayMode_, keepAspectR_)
-    
-    print fullPath
+    if fullPath:
+        print fullPath
