@@ -7,6 +7,7 @@
 """
 Use this component to capture Rhino views and save them to your hard drive as as a .png files.
 This is particularly useful if you are trying to create animations of Grasshopper geometry and want to automate the capturing of views.
+Note that your images will have a Rhino world axes icon in the lower left of the image unless you go to Options > Grid > and uncheck "Show world axes icon" in Rhino.
 
 -
 Provided by Ladybug 0.0.57
