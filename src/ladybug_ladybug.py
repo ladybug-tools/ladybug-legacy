@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAUG_11_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2279,8 +2279,13 @@ class ResultVisualization(object):
         
         # numbers
         # rs.frange(0, 1, round(1/(numofColors-1),6))
-        if round((highB - lowB)) == 0: numbers = [highB]; numOfSeg = 1
-        else: numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
+        try:
+            numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
+        except:
+            if highB - lowB < 10**(-12):
+                numbers = [lowB]; numOfSeg = 1
+            else:
+                numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
         ###
         if len(numbers) != numOfSeg: numbers.append(highB)
         numbersStr = [("%.2f" % x) for x in numbers]
