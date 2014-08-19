@@ -29,11 +29,12 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_26_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_19_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
+#compatibleLBVersion = VER 0.0.57\nAUG_19_2014
 
 
 import scriptcontext as sc
@@ -49,6 +50,17 @@ import Grasshopper.Kernel as gh
 def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeIt, layerName):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
+        try:
+            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+        except:
+            warning = "You need a newer version of Ladybug to use this compoent." + \
+                     "Use updateLadybug component to update userObjects.\n" + \
+                     "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+                     "into canvas and try again."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
+            
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         

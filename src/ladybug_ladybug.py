@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.57\nAUG_18_2014'
+ghenv.Component.Message = 'VER 0.0.57\nAUG_19_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -38,7 +38,6 @@ import rhinoscriptsyntax as rs
 import Rhino as rc
 import scriptcontext as sc
 from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import math
 import shutil
@@ -165,6 +164,49 @@ class CheckIn():
             
 
 checkIn = CheckIn()
+
+
+class versionCheck(object):
+    
+    def __init__(self):
+        self.version = self.getVersion(ghenv.Component.Message)
+    
+    def getVersion(self, LBComponentMessage):
+        monthDict = {'JAN':'01', 'FEB':'02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06',
+                     'JUL':'07', 'AUG':'08', 'SEP':'09', 'OCT':'10', 'NOV':'11', 'DEC':'12'}
+        # convert component version to standard versioning
+        try: ver, verDate = LBComponentMessage.split("\n")
+        except: ver, verDate = LBComponentMessage.split("\\n")
+        ver = ver.split(" ")[1].strip()
+        month, day, year = verDate.split("_")
+        month = monthDict[month.upper()]
+        version = ".".join([year, month, day, ver])
+        return version
+    
+    def isCurrentVersionNewer(self, desiredVersion):
+        return int(self.version.replace(".", "")) >= int(desiredVersion.replace(".", ""))
+    
+    def isCompatible(self, LBComponent):
+        code = LBComponent.Code
+        # find the version that is supposed to be flying
+        try: version = code.split("compatibleLBVersion")[1].split("=")[1].split("\n")[0].strip()
+        except: self.giveWarning(LBComponent)
+        
+        desiredVersion = self.getVersion(version)
+        
+        if not self.isCurrentVersionNewer(desiredVersion):
+            self.giveWarning(LBComponent)
+            return False
+        
+        return True
+        
+    def giveWarning(self, GHComponent):
+        warningMsg = "You need a newer version of Ladybug to use this compoent." + \
+                     "Use updateLadybug component to update userObjects.\n" + \
+                     "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+                     "into canvas and try again."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        GHComponent.AddRuntimeMessage(w, warningMsg)
 
 
 class Preparation(object):
@@ -3757,7 +3799,7 @@ if not checkGHPythonVersion(GHPythonTargetVersion):
 if letItFly:
     # let's just overwrite it every time
     #if not sc.sticky.has_key("ladybug_release"):
-    sc.sticky["ladybug_release"] = True        
+    sc.sticky["ladybug_release"] = versionCheck()       
     sc.sticky["ladybug_Preparation"] = Preparation
     sc.sticky["ladybug_Mesh"] = MeshPreparation
     sc.sticky["ladybug_RunAnalysis"] = RunAnalysisInsideGH
