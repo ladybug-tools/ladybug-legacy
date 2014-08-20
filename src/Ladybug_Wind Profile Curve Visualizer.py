@@ -625,7 +625,13 @@ def main(heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed
 
 
 #Check the inputs.
-checkData, heightsAboveGround, analysisPeriod, roughLength, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor = checkTheInputs()
+checkData = False
+check = checkTheInputs()
+
+if check != -1:
+    checkData, heightsAboveGround, analysisPeriod, roughLength, averageData, \
+    windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, \
+    lb_wind, windVectorScale, scaleFactor = checkTheInputs()
 
 #Get the wind profile curve if everything looks good.
 if checkData == True:

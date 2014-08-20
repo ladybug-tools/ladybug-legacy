@@ -34,7 +34,7 @@ import math
 def main(intDict, selSkyMatrix):
     if sc.sticky.has_key('ladybug_release'):
         try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -42,7 +42,7 @@ def main(intDict, selSkyMatrix):
             "into canvas and try again."
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
+            return
         lb_preparation = sc.sticky["ladybug_Preparation"]()
     else:
         return

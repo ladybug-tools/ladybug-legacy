@@ -134,7 +134,7 @@ def isLadybugFlying():
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return False
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -142,7 +142,7 @@ def isLadybugFlying():
             "into canvas and try again."
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
+            return False
         return True
     else:
         print "You should first let the Ladybug fly..."

@@ -237,7 +237,9 @@ def main(testPt, skyDensity, contextMesh, scale):
         return -1, -1, -1, -1
 
 if _testPt and _context and scale_:
-    masked, percMasked, visible, skyView = main(_testPt, _skyDensity_, _context, 200*scale_)
+    results = main(_testPt, _skyDensity_, _context, 200*scale_)
+    if results!=-1:
+        masked, percMasked, visible, skyView = results
 elif _testPt == None and _context == []:
     print "Connect a test point and context geometry."
 else:

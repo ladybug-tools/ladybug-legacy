@@ -272,6 +272,7 @@ def main():
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
         
@@ -364,7 +365,10 @@ def main():
 
 
 if _runIt == True:
-    comfortableOrNot, conditionOfPerson, percentOfTimeComfortable, percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound = main()
+    results = main()
+    if results!=-1:
+        comfortableOrNot, conditionOfPerson, percentOfTimeComfortable, \
+        percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound = results
 
 
 

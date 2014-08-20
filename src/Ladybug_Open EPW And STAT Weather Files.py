@@ -53,6 +53,7 @@ def checkTheInputs():
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+        
         lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
         #Check the inputs to make sure that a valid DOE URL has been connected.
         if _weatherFileURL and _weatherFileURL.startswith('http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/') and _weatherFileURL.endswith('.zip') and  _weatherFileURL != 'http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/Example.zip':
@@ -131,8 +132,12 @@ def checkIfAlreadyDownloaded(workingDir, url):
 
 
 
+checkData = False
 #Check the inputs to make sure that they are the correct syntax.
-checkData, workingDir = checkTheInputs()
+res = checkTheInputs()
+
+if res!= -1:
+    checkData, workingDir = res
 
 #Check to see if the file has already been downloaded to the C:\ladybug drive.
 if checkData == True:

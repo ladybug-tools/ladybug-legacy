@@ -384,23 +384,27 @@ def main(domeOrRect, doy, days, months, year, hours, timeZone, latitude, longitu
 
 checkData = False
 if _location:
-    checkData, domeOrRect, doy, day, month, year, hour, timeZone, latitude, longitude, turbidity, scale, resolution = checkTheInputs()
+    checkData, domeOrRect, doy, day, month, year, hour, timeZone, latitude,\
+    longitude, turbidity, scale, resolution = checkTheInputs()
 
 if checkData == True:
-    coloredMesh, colorsRGB, colorXYZ, skyTextLabels = main(domeOrRect, doy, day, month, year, hour, timeZone, latitude, longitude, turbidity, scale, resolution)
+    results = main(domeOrRect, doy, day, month, year, hour, timeZone, latitude, longitude, turbidity, scale, resolution)
     
-    #Unpack the lists of colors and text surfaces.
-    skyColorRGB = DataTree[Object]()
-    for count, list in enumerate(colorsRGB):
-        for item in list:
-            skyColorRGB.Add(item, GH_Path(count))
-    
-    skyColorXYZ = DataTree[Object]()
-    for count, list in enumerate(colorXYZ):
-        for item in list:
-            skyColorXYZ.Add(item, GH_Path(count))
-    
-    meshLabels = DataTree[Object]()
-    for count, list in enumerate(skyTextLabels):
-        for item in list:
-            meshLabels.Add(item, GH_Path(count))
+    if results!=-1:
+        coloredMesh, colorsRGB, colorXYZ, skyTextLabels = results
+        
+        #Unpack the lists of colors and text surfaces.
+        skyColorRGB = DataTree[Object]()
+        for count, list in enumerate(colorsRGB):
+            for item in list:
+                skyColorRGB.Add(item, GH_Path(count))
+        
+        skyColorXYZ = DataTree[Object]()
+        for count, list in enumerate(colorXYZ):
+            for item in list:
+                skyColorXYZ.Add(item, GH_Path(count))
+        
+        meshLabels = DataTree[Object]()
+        for count, list in enumerate(skyTextLabels):
+            for item in list:
+                meshLabels.Add(item, GH_Path(count))

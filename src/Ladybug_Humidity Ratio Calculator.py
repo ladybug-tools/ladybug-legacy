@@ -74,6 +74,7 @@ def main():
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
         lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
         
         #Separate the numbers from the header strings
@@ -172,7 +173,9 @@ def main():
 checkData = checkTheData()
 
 if checkData == True:
-    humidityRatio, enthalpy, partialPressure, saturationPressure = main()
-    print 'Humidity ratio calculation completed successfully!'
+    res = main()
+    if res!=-1:
+        humidityRatio, enthalpy, partialPressure, saturationPressure = res
+        print 'Humidity ratio calculation completed successfully!'
 else:
     print 'Please provide all of the required annual data inputs.'

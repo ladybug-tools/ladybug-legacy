@@ -83,6 +83,7 @@ def checkTheInputs():
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         lb_mesh = sc.sticky["ladybug_Mesh"]()
@@ -713,11 +714,22 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
 
 
 #Check the inputs
-checkData, airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath = checkTheInputs()
+
+results = checkTheInputs()
+
+if results!= -1:
+    checkData, airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, \
+    cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, \
+    lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels,\
+    lb_sunpath = results
 
 #Run the analysis.
 if _runIt == True and checkData == True:
-    effectiveRadiantField, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, mannequinMesh, legend, legendBasePt = main(airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath)
+    effectiveRadiantField, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, \
+    mannequinMesh, legend, legendBasePt = main(airTemp, radTemp, mannequinMesh, \
+    groundMesh, context, groundR, cloA, parallel, analysisPeriod, northAngle, \
+    northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, \
+    lb_runStudy_GH, lb_comfortModels, lb_sunpath)
 
 #Hide the legend base point.
 ghenv.Component.Params.Output[9].Hidden = True

@@ -1462,6 +1462,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
@@ -1604,26 +1605,39 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
 #Check the inputs.
 checkData = False
 if _runIt == True:
-    checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, eightyPercentComfortable, titleStatement, patternList = checkTheInputs()
+    checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
+    avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, \
+    humidRatioLow, calcLengthComf, eightyPercentComfortable, titleStatement, \
+    patternList = checkTheInputs()
 
 #If the inputs are good, run the function.
 if checkData == True:
-    totalComfortPercent, totalComfortOrNot, strategyNames, strategyPercentOfTime, initStrategyOrNot, chartCurvesAndTxt, psychChartMesh, legend, legendBasePt, comfortPolygons, strategyPolygons, chartHourPoints, pointColors, pointLegends = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, eightyPercentComfortable, titleStatement, patternList)
     
-    #Unpack the data tree of the strategyOrNot.
-    strategyOrNot = DataTree[Object]()
-    for listCount, list in enumerate(initStrategyOrNot):
-        for item in list:
-            strategyOrNot.Add(item, GH_Path(listCount))
-    #Unpack the data tree of point colors and their legends.
-    hourPointColors = DataTree[Object]()
-    for listCount, list in enumerate(pointColors):
-        for item in list:
-            hourPointColors.Add(item, GH_Path(listCount))
-    hourPointLegend = DataTree[Object]()
-    for listCount, list in enumerate(pointLegends):
-        for item in list:
-            hourPointLegend.Add(item, GH_Path(listCount))
+    restlts = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
+                   avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, \
+                   humidRatioUp, humidRatioLow, calcLengthComf, \
+                   eightyPercentComfortable, titleStatement, patternList)
+                   
+    if results != -1:
+        totalComfortPercent, totalComfortOrNot, strategyNames, strategyPercentOfTime, \
+        initStrategyOrNot, chartCurvesAndTxt, psychChartMesh, legend, legendBasePt, \
+        comfortPolygons, strategyPolygons, chartHourPoints, pointColors, \
+        pointLegends = results
+    
+        #Unpack the data tree of the strategyOrNot.
+        strategyOrNot = DataTree[Object]()
+        for listCount, list in enumerate(initStrategyOrNot):
+            for item in list:
+                strategyOrNot.Add(item, GH_Path(listCount))
+        #Unpack the data tree of point colors and their legends.
+        hourPointColors = DataTree[Object]()
+        for listCount, list in enumerate(pointColors):
+            for item in list:
+                hourPointColors.Add(item, GH_Path(listCount))
+        hourPointLegend = DataTree[Object]()
+        for listCount, list in enumerate(pointLegends):
+            for item in list:
+                hourPointLegend.Add(item, GH_Path(listCount))
 
 
 

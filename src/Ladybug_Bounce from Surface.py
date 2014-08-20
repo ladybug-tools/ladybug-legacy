@@ -50,6 +50,7 @@ def main(sourceSrfs, gridSizeOrPoints, sunVectors, context, numOfBounce, firstBo
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_mesh = sc.sticky["ladybug_Mesh"]()
         lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()
@@ -58,7 +59,7 @@ def main(sourceSrfs, gridSizeOrPoints, sunVectors, context, numOfBounce, firstBo
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return -1, -1
+        return -1
     
     # Check the geometry
     
@@ -157,7 +158,10 @@ def main(sourceSrfs, gridSizeOrPoints, sunVectors, context, numOfBounce, firstBo
     return rays, initialTestPoints
 
 if (_sourceSrfs and _sourceSrfs[0]!=None) and (_sunVectors and _sunVectors[0]!=None) and (_gridSizeOrPoints and _gridSizeOrPoints[0]!=None):
-    rays, bouncePts = main(_sourceSrfs, _gridSizeOrPoints, _sunVectors, context_, _numOfBounce_, firstBounceLen_, _lastBounceLen_)
+    results = main(_sourceSrfs, _gridSizeOrPoints, _sunVectors, context_, _numOfBounce_, firstBounceLen_, _lastBounceLen_)
+    if results!=-1:
+        rays, bouncePts = results
+        
     ghenv.Component.Params.Output[1].Hidden= True
     
 elif _sourceSrfs == [] and _gridSizeOrPoints == [] and _sunVectors == []:

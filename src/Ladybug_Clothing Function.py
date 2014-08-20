@@ -221,6 +221,7 @@ def main():
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
         lb_preparation = sc.sticky["ladybug_Preparation"]()
     
     #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
@@ -252,3 +253,5 @@ def main():
 
 if _outdoorAirTemperature:
     cloValues = main()
+    if cloValues == -1:
+        cloValues = []

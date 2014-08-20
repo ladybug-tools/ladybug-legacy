@@ -203,6 +203,7 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         lb_wind = sc.sticky["ladybug_WindSpeed"]()
@@ -328,17 +329,20 @@ checkData, heightAboveGround, analysisPeriod, terrainType, averageData, windSpee
 
 #Run the function.
 if checkData == True:
-    windSpdAtHght, windVecAtHght, windDirHeight = main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed, windDir, epwData, epwStr)
+    res = main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed, windDir, epwData, epwStr)
     
-    #Unpack the lists of lists in Python.
-    for count, list in enumerate(windSpdAtHght):
-        for item in list:
-            windSpeedAtHeight.Add(item, GH_Path(count))
-    
-    for count, list in enumerate(windVecAtHght):
-        for item in list:
-            windVectorAtHeight.Add(item, GH_Path(count))
-    
-    for count, list in enumerate(windDirHeight):
-        for item in list:
-            windDirectionAtHeight.Add(item, GH_Path(count))
+    if res!=-1:
+        windSpdAtHght, windVecAtHght, windDirHeight = res
+        
+        #Unpack the lists of lists in Python.
+        for count, list in enumerate(windSpdAtHght):
+            for item in list:
+                windSpeedAtHeight.Add(item, GH_Path(count))
+        
+        for count, list in enumerate(windVecAtHght):
+            for item in list:
+                windVectorAtHeight.Add(item, GH_Path(count))
+        
+        for count, list in enumerate(windDirHeight):
+            for item in list:
+                windDirectionAtHeight.Add(item, GH_Path(count))
