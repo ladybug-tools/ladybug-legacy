@@ -20,7 +20,7 @@ The default set to 3) June 21 to September 21.
 Note that extremely complicated concave shapes will take a long time to calculate a solar fan for.
 
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.58
     
     Args:
         _boundary:  closed boundary curve representing a piece of land (such as a park) or a window for which solar access is desired.
@@ -50,9 +50,10 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_SolarFan_alt"
 ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -995,6 +996,16 @@ def checkConcaveConvex(curve):
 
 def main(north,_boundary,timeperiod,monthRange,location,height):
     if sc.sticky.has_key('ladybug_release'):
+        try:
+            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+        except:
+            warning = "You need a newer version of Ladybug to use this compoent." + \
+            "Use updateLadybug component to update userObjects.\n" + \
+            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+            "into canvas and try again."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
         latitude,longitude,timeZone,elevation = readLocation(location)
         year = datetime.datetime.now().year
         day = 21

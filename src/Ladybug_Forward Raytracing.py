@@ -8,7 +8,7 @@ Use this component to get a sense of how sunlight is reflected by a set of conte
 Examples where this component might be useful include the evaluation of the diffusion of light by a light shelf, or testing to see whether a parabolic building geometry (like a Ghery building) might focus sunlight to dangerous levels at certain times of the year.
 Note that this component assumes that all sun light is reflected off of these geometries specularly (as if they were a mirror) and, for more detailed raytrace analysis, the Honeybee daylight components should be used.
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.58
     
     Args:
         _startPts: Points from which the sun rays will be cast towards the _context geometry.  You may want to connect a grid of points here to mimic the fact that direct sun will be streaming evenly from the sky.
@@ -23,9 +23,10 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Forward Raytracing"
 ghenv.Component.NickName = 'forwardRaytracing'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_28_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -40,6 +41,16 @@ import scriptcontext as sc
 def main(startPts, startVectors, context, numOfBounce, lastBounceLen):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
+        try:
+            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+        except:
+            warning = "You need a newer version of Ladybug to use this compoent." + \
+            "Use updateLadybug component to update userObjects.\n" + \
+            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+            "into canvas and try again."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_mesh = sc.sticky["ladybug_Mesh"]()
         lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()

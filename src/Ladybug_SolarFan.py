@@ -9,7 +9,7 @@ Use this component to generate a solar fan for a given test surface and set of s
 Solar fans are typically used to ensure solar access for park vegetation in the midst of large developments constructed around it.  It can be also used to ensure solar access for windows that might want to use the sun for heating for ceratin hours of the year.
 
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.58
     
     Args:
         _baseSrf: A surface representing a piece of land (such as a park) or a window for which solar access is desired.
@@ -22,9 +22,10 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.57\nAPR_09_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -245,6 +246,16 @@ def unionAllFans(solarFans):
 def main(sunVectors):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
+        try:
+            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+        except:
+            warning = "You need a newer version of Ladybug to use this compoent." + \
+            "Use updateLadybug component to update userObjects.\n" + \
+            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+            "into canvas and try again."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_mesh = sc.sticky["ladybug_Mesh"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()

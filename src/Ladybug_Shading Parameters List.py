@@ -9,7 +9,7 @@ Each of the ouput lists should be plugged into the corresponding list of the "Sh
 For exmaple, the _depthList goes to the _depthOrVector input, the _numOfShdsList goes to the _numOfShds input, the _horOrVertList_ goes to the _horOrVertical_ input, and the _shdAngleList_ goes to the _shdAngle_ input.
 
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.58
 
     Args:
         _northDepth: A number representing the shading depth in Rhino model units for north-facing glazing.
@@ -40,9 +40,10 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Shading Parameters List"
 ghenv.Component.NickName = 'shdParamList'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
+#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 

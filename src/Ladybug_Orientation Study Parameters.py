@@ -13,7 +13,7 @@ An Orientation Study will automatically rotate your geometry around several time
 
 
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.58
     
     Args:
         _divisionAngle: A number between 0 and 180 that represents the degrees to rotate the geometry for each step of the Orientation Study.
@@ -28,9 +28,10 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Orientation Study Parameters"
 ghenv.Component.NickName = 'orientationStudyPar'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
+#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -61,29 +62,44 @@ def orientaionStr(divisionAngle, totalAngle):
 
 
 # import the classes
-if sc.sticky.has_key('ladybug_release'):
-    lb_preparation = sc.sticky["ladybug_Preparation"]()
-    if rotateContext_==[] or rotateContext_[0]==False: rotateContext_ = False
-    elif rotateContext_[0]==True: rotateContext_ = True
+def main(_divisionAngle, _totalAngle, basePoint_, rotateContext_, _runTheStudy):
+    if sc.sticky.has_key('ladybug_release'):
+        try:
+            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+        except:
+            warning = "You need a newer version of Ladybug to use this compoent." + \
+            "Use updateLadybug component to update userObjects.\n" + \
+            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+            "into canvas and try again."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return
+            
+        lb_preparation = sc.sticky["ladybug_Preparation"]()
+        if rotateContext_==[] or rotateContext_[0]==False: rotateContext_ = False
+        elif rotateContext_[0]==True: rotateContext_ = True
+        else:
+            # just carry the geometries to next component
+            contextMesh, contextBrep = lb_preparation.cleanAndCoerceList(rotateContext_)
+            rotateContext_ = contextMesh, contextBrep
+        
+        if not _runTheStudy!=None: _runTheStudy = False
+        # if not basePoint!=None: basePoint = rc.Geometry.Point3d(0,0,0)
+        if (_divisionAngle and _totalAngle):
+            if orientaionStr(_divisionAngle, _totalAngle)!=0:
+                orientationStudyPar = _runTheStudy, rotateContext_, basePoint_, orientaionStr(_divisionAngle, _totalAngle)
+                return orientationStudyPar
+        elif _divisionAngle == None and _totalAngle ==None:
+            print "Please provide both a _divisionAngle and a _totalAngle."
+        else:
+            print "Either the _divisionAngle or the _totalAngle is missing."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, "Either the _divisionAngle or the _totalAngle is missing.")
     else:
-        # just carry the geometries to next component
-        contextMesh, contextBrep = lb_preparation.cleanAndCoerceList(rotateContext_)
-        rotateContext_ = contextMesh, contextBrep
-    
-    if not _runTheStudy!=None: _runTheStudy = False
-    # if not basePoint!=None: basePoint = rc.Geometry.Point3d(0,0,0)
-    if (_divisionAngle and _totalAngle):
-        if orientaionStr(_divisionAngle, _totalAngle)!=0:
-            orientationStudyPar = _runTheStudy, rotateContext_, basePoint_, orientaionStr(_divisionAngle, _totalAngle)
-        ghenv.Component.Params.Output[0].Hidden = True
-    elif _divisionAngle == None and _totalAngle ==None:
-        print "Please provide both a _divisionAngle and a _totalAngle."
-    else:
-        print "Either the _divisionAngle or the _totalAngle is missing."
+        print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, "Either the _divisionAngle or the _totalAngle is missing.")
-else:
-    print "You should first let the Ladybug fly..."
-    w = gh.GH_RuntimeMessageLevel.Warning
-    ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
+        ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
 
+
+orientationStudyPar = main(_divisionAngle, _totalAngle, basePoint_, rotateContext_, _runTheStudy)
+ghenv.Component.Params.Output[0].Hidden = True

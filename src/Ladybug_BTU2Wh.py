@@ -7,7 +7,7 @@
 """
 Use this component to convert energy values in BTU to Wh or BTU/ft2 to Wh/m2.
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.58
     
     Args:
         _Wh: An energy value or list of energy values in BTU or BTU/ft2.  Note that, for the component to recognize flux or floor normalization, the input must have a Ladybug header.
@@ -17,9 +17,10 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_BTU2Wh"
 ghenv.Component.NickName = 'BTU2Wh'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_29_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
+#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 

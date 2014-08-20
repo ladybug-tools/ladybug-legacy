@@ -8,7 +8,7 @@
 Use this component to set the camera location and direction for the Rhino "Perspective" viewport.
 Here is the video that shows how it works: http://www.youtube.com/watch?v=7Mmhz867zY8
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.58
     
     Args:
         _cameraLocation: A point representing the location of the viewport camera.
@@ -21,9 +21,10 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Set the View"
 ghenv.Component.NickName = 'setTheView'
-ghenv.Component.Message = 'VER 0.0.57\nMAR_26_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
+#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
