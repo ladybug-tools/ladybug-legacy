@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_21_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1613,7 +1613,7 @@ if _runIt == True:
 #If the inputs are good, run the function.
 if checkData == True:
     
-    restlts = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
+    results = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
                    avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, \
                    humidRatioUp, humidRatioLow, calcLengthComf, \
                    eightyPercentComfortable, titleStatement, patternList)
