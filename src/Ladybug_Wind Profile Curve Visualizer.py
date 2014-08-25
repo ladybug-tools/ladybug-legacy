@@ -6,7 +6,9 @@
 
 """
 Use this component to visualize a wind profile curve for a given terrain type.  Wind speed increases logarithmically as one leaves the ground and wind profiles are a means of visualizing this change in wind speed with height.
-
+-
+More information on the logarithmic wind profile can be found here: http://en.wikipedia.org/wiki/Log_wind_profile
+The specific numbers that were used to make this component can be found here: http://wind-data.ch/tools/profile.php?lng=en
 -
 Provided by Ladybug 0.0.58
     
@@ -44,7 +46,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Profile Curve Visualizer"
 ghenv.Component.NickName = 'WindProfileCurve'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_23_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
