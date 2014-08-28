@@ -1803,15 +1803,28 @@ class ResultVisualization(object):
             return meshAndCrv
         else: return -1
     
-    def text2crv(self, text, textPt, font = 'Verdana', textHeight = 20):
+    def text2crv(self, text, textPt, font = 'Verdana', textHeight = 20, justIndex = 0):
         # Thanks to Giulio Piacentino for his version of text to curve
+        
+        # justIndex (justification and alignment indexes):
+        # 0 - bottom left(default)
+        # 2 - bottom center
+        # 4 - bottom right
+        # 131072 - middle left
+        # 262144 - top left
+        # 131074 - center
+        # 131076 - middle right
+        # 262146 - top middle
+        # 262148 - top right
+        
         textCrvs = []
+        just = System.Enum.ToObject(Rhino.Geometry.TextJustification, justIndex)
         for n in range(len(text)):
             plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
             if type(text[n]) is not str:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, True, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, True, False, just)
             else:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, True, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, True, False, just)
                 
             postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
             TG = postText.Geometry
