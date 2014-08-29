@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -3689,83 +3689,33 @@ class WindSpeed(object):
     def readTerrainType(self, terrainType):
         checkData = True
         roughLength = None
-        try:
-            if round(terrainType, 1) == 0.0:
-                print "Terrain set to water."
-                roughLength = 0.0002
-            elif round(terrainType, 1) == 0.5:
-                print "Terrain set to concrete."
-                roughLength = 0.0024
-            elif round(terrainType, 1) == 1.0:
-                print "Terrain set to agriculture."
-                roughLength = 0.03
-            elif round(terrainType, 1) == 1.5:
-                print "Terrain set to orchard."
-                roughLength = 0.055
-            elif round(terrainType, 1) == 2.0:
-                print "Terrain set to rural."
-                roughLength = 0.1
-            elif round(terrainType, 1) == 2.5:
-                print "Terrain set to sprawl."
-                roughLength = 0.2
-            elif round(terrainType, 1) == 3.0:
-                print "Terrain set to suburban."
-                roughLength = 0.4
-            elif round(terrainType, 1) == 3.5:
-                print "Terrain set to town."
-                roughLength = 0.6
-            elif round(terrainType, 1) == 4.0:
-                print "Terrain set to urban."
-                roughLength = 1.6
-            else:
-                roughLength = None
-                checkData = False
-        except:
-            if terrainType == "water":
-                print "Terrain set to water."
-                roughLength = 0.0002
-            elif terrainType == "concrete":
-                print "Terrain set to concrete."
-                roughLength = 0.0024
-            elif terrainType == "agriculture":
-                print "Terrain set to agriculture."
-                roughLength = 0.03
-            elif terrainType == "orchard":
-                print "Terrain set to orchard."
-                roughLength = 0.055
-            elif terrainType == "rural":
-                print "Terrain set to rural."
-                roughLength = 0.1
-            elif terrainType == "sprawl":
-                print "Terrain set to sprawl."
-                roughLength = 0.2
-            elif terrainType == "suburban":
-                print "Terrain set to suburban."
-                roughLength = 0.4
-            elif terrainType == "town":
-                print "Terrain set to town."
-                roughLength = 0.6
-            elif terrainType == "urban":
-                print "Terrain set to urban."
-                roughLength = 1.6
-            else:
-                roughLength = None
-                checkData = False
         
-        return checkData, roughLength
+        if round(terrainType, 1) == 3.0 or terrainType == "water":
+            print "Terrain set to water."
+            d = 210
+            a = 0.10
+        elif round(terrainType, 1) == 2.0 or terrainType == "country":
+            print "Terrain set to country."
+            d = 270
+            a = 0.14
+        elif round(terrainType, 1) == 1.0 or terrainType == "suburban":
+            print "Terrain set to suburban."
+            d = 370
+            a = 0.22
+        elif round(terrainType, 1) == 0.0 or terrainType == "urban":
+            print "Terrain set to urban."
+            d = 460
+            a = 0.33
+        else:
+            d = None
+            a = None
+            checkData = False
+        
+        return checkData, d, a
     
-    def calcWindSpeedBasedOnHeight(self, vMet, height, roughLength):
-        #Caclculate the wind speed at the boundary layer (a half-kilometer into the sky) assuming airport flat terrain for the weather file.
-        vBound = vMet * ((math.log(500/0.03))/(math.log(10/0.03)))
-        
-        #Calculate the velocity at the specified height.
-        if height != 0:
-            vHeight = vBound * ((math.log(height/roughLength))/(math.log(500/roughLength)))
-        else: vHeight = 0
-        
-        #If the speed is negative, that means that the wind speed is 0.
-        if vHeight < 0:
-            vHeight = 0
+    def calcWindSpeedBasedOnHeight(self, vMet, height, d, a):
+        #Calculate the wind speed.
+        vHeight = ((height / d) ** a) * (vMet * (270 / 10) ** 0.14)
         
         return vHeight
 

@@ -14,7 +14,11 @@ Provided by Ladybug 0.0.58
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _windSpeed_tenMeters: The wind speed from the import EPW component or a number representing the wind speed at 10 meters off the ground in agricultural or airport terrian.  This input also accepts lists of numbers representing different speeds at 10 meters.
         _windDirection: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
-        _terrainType: The logarithmic model for wind speed varies with the type of terrain. The user may enter values from a slider or a string of text indicating the type of landscape to be evaluated, note that strings of text are case sensistive and therefore capitalization must match exactly the following terms. 0 = "water", 0.5 = "concrete", 1 = "agricultural", 1.5 = "orchard", 2 = "rural", 2.5 = "sprawl", 3 = "suburban", 3.5 = "town", 4 = "urban".
+        _terrainType: The model for wind speed varies with the type of terrain. The user may enter values from a slider or a string of text indicating the type of landscape to be evaluated:
+            0 = City: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
+            1 = Urban: suburbs, wooded areas.
+            2 = Country: open, with scattered objects generally less than 10m high.
+            3 = Water: Flat, unobstructed areas exposed to wind flowing over a large water body (no more than 500m inland).
         heightAboveGround_ : Optional. This is the height above ground for which you would like to measure wind speed. Providing more than one value will generate a list of speeds at each given height. Default height is 1 m above ground, which is what a person standing on the ground would feel.
         analysisPeriod_: If you have connected data from an EPW component, plug in an analysis period from the Ladybug_Analysis Period component to calculate data for just a portion of the year. The default is Jan 1st 00:00 - Dec 31st 24:00, the entire year.
         averageData_: Set to "True" to average all of the wind data that you have connected into a single speed and wind vector. The default is False, which means the component will return a list of all hours within the analysis period.  If se tot Ture, the wind data will be averaged for the entire analysis period into a single value. 
@@ -26,7 +30,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Speed Calculator"
 ghenv.Component.NickName = 'WindSpeedCalculator'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -208,7 +212,7 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         lb_wind = sc.sticky["ladybug_WindSpeed"]()
         
-        checkData, roughLength = lb_wind.readTerrainType(terrainType)
+        checkData, d, a = lb_wind.readTerrainType(terrainType)
         
         if checkData == True:
             #Get the data for the analysis period and strip the header off.
@@ -233,7 +237,7 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
                 #Evaluate each height.
                 windSpdHeight = []
                 for count, height in enumerate(heightAboveGround):
-                    windSpdHeight.append([lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height, roughLength)])
+                    windSpdHeight.append([lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height, d, a)])
                 
                 #Declare the wind direction.
                 windDirHeight = []
@@ -284,7 +288,7 @@ def main(heightAboveGround, analysisPeriod, terrainType, averageData, windSpeed,
                 for height in heightAboveGround:
                     initWindSpd = []
                     for speed in hrWindSpd:
-                        initWindSpd.append(lb_wind.calcWindSpeedBasedOnHeight(speed, height, roughLength))
+                        initWindSpd.append(lb_wind.calcWindSpeedBasedOnHeight(speed, height, d, a))
                     windSpdHeight.append(initWindSpd)
                 
                 #Declare the wind direction.
