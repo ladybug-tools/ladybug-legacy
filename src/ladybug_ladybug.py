@@ -1316,6 +1316,16 @@ class Sunpath(object):
                 ((3*math.pi - math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
                 - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith)))) % (2*math.pi))
     
+    def sunReverseVectorCalc(self):
+        basePoint = rc.Geometry.Point3d.Add(rc.Geometry.Point3d.Origin,rc.Geometry.Vector3f(0,1,0))
+        basePoint = rc.Geometry.Point(basePoint)
+        basePoint.Rotate(self.solAlt, rc.Geometry.Vector3d.XAxis, rc.Geometry.Point3d.Origin)
+        basePoint.Rotate(-(self.solAz - self.angle2North), rc.Geometry.Vector3d.ZAxis, rc.Geometry.Point3d.Origin)
+        sunVector = rc.Geometry.Vector3d(rc.Geometry.Point3d.Origin - basePoint.Location)
+        sunVector.Unitize()
+        
+        return sunVector
+    
     def sunPosPt(self, sunScale = 1):
         #print 'altitude is:', math.degrees(self.solAlt), 'and azimuth is:', math.degrees(self.solAz)
         basePoint = rc.Geometry.Point3d.Add(self.cenPt,rc.Geometry.Vector3f(0,self.scale,0))
