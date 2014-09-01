@@ -1,6 +1,6 @@
 # Wind Speed Calculator
-# By Chris Mackey and Alex Jacobson
-# Chris@MackeyArchitecture.com and Jacobson@gsd.harvard.edu
+# By Chris Mackey, Alex Jacobson and Djordje Spasic
+# Chris@MackeyArchitecture.com, Jacobson@gsd.harvard.edu and issworld2000@yahoo.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
@@ -30,7 +30,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Speed Calculator"
 ghenv.Component.NickName = 'WindSpeedCalculator'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_29_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_30_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014

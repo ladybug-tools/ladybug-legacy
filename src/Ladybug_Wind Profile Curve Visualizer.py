@@ -1,6 +1,6 @@
 # Wind Profile Curve Visualizer
-# By Chris Mackey
-# Chris@MackeyArchitecture.com
+# By Chris Mackey and Djordje Spasic
+# Chris@MackeyArchitecture.com and issworld2000@yahoo.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
@@ -49,7 +49,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Profile Curve Visualizer"
 ghenv.Component.NickName = 'WindProfileCurve'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_29_2014'
+ghenv.Component.Message = 'VER 0.0.58\nAUG_30_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
