@@ -20,23 +20,9 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_03_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
@@ -99,6 +85,10 @@ def exportToUserObject(component, targetFolder, lb_preparation):
                 try: UOVersion = map(int, version.split("VER ")[1].split("."))
                 except: return True
                 month, day, UOYear  = date.split("_")
+                
+                # should find the reason and fix it later
+                if month == "SEPT": month = "SEP"
+                
                 month = lb_preparation.monthList.index(month.upper()) + 1
                 UODate = int(lb_preparation.getJD(month, day))
                 break
