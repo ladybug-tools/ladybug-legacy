@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_21_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1566,7 +1566,11 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList)
         
         #Generate colors for the points.
-        pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_visualization)
+        if len(totalComfOrNot) > 1:
+            pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_visualization)
+        else:
+            pointColors = []
+            pointLegends = []
         
         #If the user has selected to scale or move the geometry, scale it all and/or move it all.
         if basePoint_ != None:
