@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_29_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_07_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1321,7 +1321,7 @@ class Sunpath(object):
         basePoint = rc.Geometry.Point(basePoint)
         basePoint.Rotate(self.solAlt, rc.Geometry.Vector3d.XAxis, rc.Geometry.Point3d.Origin)
         basePoint.Rotate(-(self.solAz - self.angle2North), rc.Geometry.Vector3d.ZAxis, rc.Geometry.Point3d.Origin)
-        sunVector = rc.Geometry.Vector3d(rc.Geometry.Point3d.Origin - basePoint.Location)
+        sunVector = rc.Geometry.Vector3d(basePoint.Location - rc.Geometry.Point3d.Origin)
         sunVector.Unitize()
         
         return sunVector
