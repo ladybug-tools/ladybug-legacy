@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_07_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -187,6 +187,10 @@ def checkTheInputs():
                     surface = rc.Geometry.Brep.CreateFromCornerPoints(surfacePts[0], surfacePts[1], surfacePts[2], sc.doc.ModelAbsoluteTolerance)
                 mannequinMeshBreps.append(surface)
             mannequinMesh = rc.Geometry.Brep.JoinBreps(mannequinMeshBreps, sc.doc.ModelAbsoluteTolerance)[0]
+            #Scale the Mannequin based on the model units.
+            conversionFac = lb_preparation.checkUnits()
+            scale = rc.Geometry.Transform.Scale(rc.Geometry.Plane.WorldXY, 1/conversionFac, 1/conversionFac, 1/conversionFac)
+            mannequinMesh.Transform(scale)
             #If the user has selected a mannequin laying down, rotate the standing mannequin.
             if bodyPosture == 2:
                 lieDownTransform = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.ZAxis, rc.Geometry.Vector3d.YAxis, rc.Geometry.Point3d.Origin)
@@ -290,9 +294,9 @@ def checkTheInputs():
         else:
             checkData = False
         
-        return checkData, airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
+        return checkData, airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, conversionFac, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
     else:
-        return False, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
+        return -1
 
 
 def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH):
@@ -448,7 +452,7 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 
 
-def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
+def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, conversionFac, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
@@ -502,7 +506,6 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
     if len(skyMtxLists)!=0:
         selectedSkyMtx = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
         cumSky_radiationStudy = selectedSkyMtx
-        conversionFac = 1
         
         #Set defaults.
         disFromBase = 0.01
@@ -539,7 +542,9 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
             legend.append(item)
         
         intDict = intersectionMtx
-        personMeshAreas = meshSrfAreas[:-1]
+        personMeshAreas = []
+        for area in meshSrfAreas[:-1]:
+            personMeshAreas.append(area*conversionFac*conversionFac)
         totalPersonArea = sum(personMeshAreas)
         
         #Define functions for computing the radiation for each hour, which is in parallal and not in parallel.
@@ -714,12 +719,12 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
 
 
 #Check the inputs
-
+checkData = False
 results = checkTheInputs()
 
 if results!= -1:
     checkData, airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, \
-    cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, \
+    cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, conversionFac, \
     lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels,\
     lb_sunpath = results
 
@@ -728,7 +733,7 @@ if _runIt == True and checkData == True:
     effectiveRadiantField, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, \
     mannequinMesh, legend, legendBasePt = main(airTemp, radTemp, mannequinMesh, \
     groundMesh, context, groundR, cloA, parallel, analysisPeriod, northAngle, \
-    northVector, epwStr, lb_preparation, lb_visualization, lb_mesh, \
+    northVector, epwStr, conversionFac, lb_preparation, lb_visualization, lb_mesh, \
     lb_runStudy_GH, lb_comfortModels, lb_sunpath)
 
 #Hide the legend base point.
