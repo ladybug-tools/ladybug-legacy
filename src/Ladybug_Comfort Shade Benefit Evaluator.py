@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_06_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -169,7 +169,13 @@ def checkTheInputs():
     
     def checkDataHeaders(dataBranch, dataType, dataType2, dataName, bCount, numKey):
         if str(dataBranch[0]) == "key:location/dataType/units/frequency/startsAt/endsAt":
-            analysisPeriods.append([dataBranch[5], dataBranch[6]])
+            analysisStart = dataBranch[5].split(')')[0].split('(')[-1].split(',')
+            analysisEnd = dataBranch[6].split(')')[0].split('(')[-1].split(',')
+            anaS = []
+            anaE = []
+            for item in analysisStart:anaS.append(int(item))
+            for item in analysisEnd:anaE.append(int(item))
+            analysisPeriods.append([tuple(anaS), tuple(anaE)])
             locations.append(dataBranch[1])
             if dataType in dataBranch[2] or dataType2 in dataBranch[2]:
                 if dataBranch[4] == "Hourly":
@@ -227,7 +233,7 @@ def checkTheInputs():
     if balanceTemperature_ == None:
         balanceTemp = 20
         print "A default balanceTemperature_ of 20 C has been set, which is a comfortable outdoor temperature for most mid-lattitde climates."
-    elif balanceTemperature_ >= 9 and _balanceTemperature <= 26: balanceTemp = _balanceTemperature
+    elif balanceTemperature_ >= 9 and balanceTemperature_ <= 26: balanceTemp = balanceTemperature_
     else:
         checkData7 = False
         balanceTemp = None
@@ -322,8 +328,8 @@ def meshTheShade(gridSize, testShades):
 def generateTestPoints(gridSize, testRegion):
     #Generate a Grid of Points Along the Window
     regionMeshPar = rc.Geometry.MeshingParameters.Default
-    regionMeshPar.MinimumEdgeLength = (gridSize/10)
-    regionMeshPar.MaximumEdgeLength = (gridSize/10)
+    regionMeshPar.MinimumEdgeLength = (gridSize/1.75)
+    regionMeshPar.MaximumEdgeLength = (gridSize/1.75)
     regionMesh = rc.Geometry.Mesh.CreateFromBrep(testRegion, regionMeshPar)[0]
     
     vertices = regionMesh.Vertices
@@ -350,7 +356,7 @@ def generateTestPoints(gridSize, testRegion):
         testPtsWihtout = list(regionTestPts)
         del testPtsWihtout[pointCount]
         for othPt in testPtsWihtout:
-            if point.DistanceTo(othPt) < (gridSize/20):
+            if point.DistanceTo(othPt) < (gridSize/4):
                 pointOK = False
             else:pass
         if pointOK == True:
@@ -390,19 +396,24 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
     
     #Get all of the sun vectors for the analysis period.
     sunVectors = []
+    sunUpHoys = []
     lb_sunpath.initTheClass(latitude, north, rc.Geometry.Point3d.Origin, 1, longitude, timeZone)
-    
-    HOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+    if analysisPeriod != [(1,1,1), (12,31,24)]:
+        HOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+    else:
+        HOYs = range(8760)
     
     for hoy in HOYs:
-        month, day, hour = lb_preparation.hour2Date(hoy, True)
-        lb_sunpath.solInitOutput(month, day, hour)
-        sunVec = lb_sunpath.sunReverseVectorCalc()
-        if sunVec.Z > 0:
+        d, m, h = lb_preparation.hour2Date(hoy, True)
+        m += 1
+        lb_sunpath.solInitOutput(m, d, h)
+        
+        if lb_sunpath.solAlt >= 0:
+            sunVec = lb_sunpath.sunReverseVectorCalc()
             sunVectors.append(sunVec)
-            
+            sunUpHoys.append(hoy)
             for path in allDataDict:
-                allDataDict[path]["tempertureSun"].append(allDataDict[path]["temperture"][hoy-1])
+                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][hoy]))
     
     #Check to see if the user has requested the highest resolution and, if not, consolidate the sun vectors into sky patches.
     finalSunVecs = []
@@ -426,12 +437,11 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
             newVecs.append(newVec)
             finalPatchHOYs.append([])
         
-        
         for vecCount, vector in enumerate(sunVectors):
             ray = rc.Geometry.Ray3d(rc.Geometry.Point3d.Origin, vector)
             for patchCount, patch in enumerate(skyPatchMeshes):
                 if rc.Geometry.Intersect.Intersection.MeshRay(patch, ray) >= 0:
-                    finalPatchHOYs[patchCount].append(vecCount)
+                    finalPatchHOYs[patchCount].append(sunUpHoys[vecCount])
         
         vecCount = -1
         for patchCount, hourList in enumerate(finalPatchHOYs):
@@ -444,11 +454,12 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
                 
                 for hour in hourList:
                     for path in allDataDict:
-                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + allDataDict[path]["tempertureSun"][hour]
+                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + float(allDataDict[path]["temperture"][hour])
                         allDataDict[path]["divisor"][vecCount] += 1
-                for path in allDataDict:
-                    for vecCount2, tempSum in enumerate(allDataDict[path]["tempertureFinal"]):
-                        allDataDict[path]["tempertureFinal"][vecCount2] = allDataDict[path]["tempertureFinal"][vecCount2]/allDataDict[path]["divisor"][vecCount2]
+        
+        for path in allDataDict:
+            for vecCount2, tempSum in enumerate(allDataDict[path]["tempertureFinal"]):
+                allDataDict[path]["tempertureFinal"][vecCount2] = tempSum/allDataDict[path]["divisor"][vecCount2]
     else:
         finalSunVecs = sunVectors
         for path in allDataDict:
