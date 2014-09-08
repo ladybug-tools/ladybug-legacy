@@ -329,46 +329,56 @@ def meshTheShade(gridSize, testShades):
 
 
 def generateTestPoints(gridSize, testRegion):
-    #Generate a Grid of Points Along the Window
-    regionMeshPar = rc.Geometry.MeshingParameters.Default
-    regionMeshPar.MinimumEdgeLength = (gridSize/1.75)
-    regionMeshPar.MaximumEdgeLength = (gridSize/1.75)
-    regionMesh = rc.Geometry.Mesh.CreateFromBrep(testRegion, regionMeshPar)[0]
+    def getPts(gridSiz):
+        #Generate a Grid of Points Along the Window
+        regionMeshPar = rc.Geometry.MeshingParameters.Default
+        regionMeshPar.MinimumEdgeLength = (gridSiz/1.75)
+        regionMeshPar.MaximumEdgeLength = (gridSiz/1.75)
+        regionMesh = rc.Geometry.Mesh.CreateFromBrep(testRegion, regionMeshPar)[0]
+        
+        vertices = regionMesh.Vertices
+        
+        # Convert window Point3f to Point3d
+        regionTestPtsInit = []
+        for item in vertices:
+            regionTestPtsInit.append(rc.Geometry.Point3d(item))
+        
+        #Get rid of the points that lie along the boundary of the shape.
+        regionTestPts = []
+        edges = testRegion.DuplicateEdgeCurves()
+        boundary = rc.Geometry.Curve.JoinCurves(edges)
+        for point in regionTestPtsInit:
+            closestPtInit =  rc.Geometry.Curve.ClosestPoint(boundary[0], point)
+            closestPt = boundary[0].PointAt(closestPtInit[1])
+            if point.DistanceTo(closestPt) < sc.doc.ModelAbsoluteTolerance: pass
+            else: regionTestPts.append(point)
+        
+        #If there is a dense collection of points that are too close to each other, get rid of it.
+        regionTestPtsFinal = []
+        for pointCount, point in enumerate(regionTestPts):
+            pointOK = True
+            testPtsWihtout = list(regionTestPts)
+            del testPtsWihtout[pointCount]
+            for othPt in testPtsWihtout:
+                if point.DistanceTo(othPt) < (gridSiz/4):
+                    pointOK = False
+                else:pass
+            if pointOK == True:
+                regionTestPtsFinal.append(point)
+        return regionTestPtsFinal
     
-    vertices = regionMesh.Vertices
+    regionTestPtsFin = getPts(gridSize)
     
-    # Convert window Point3f to Point3d
-    regionTestPtsInit = []
-    for item in vertices:
-        regionTestPtsInit.append(rc.Geometry.Point3d(item))
+    if len(regionTestPtsFin) < 10:
+        bbox = rc.Geometry.Box(testRegion.GetBoundingBox(False))
+        bboxDim = [(bbox.X[1] - bbox.X[0]), (bbox.Y[1] - bbox.Y[0]), (bbox.Z[1] - bbox.Z[0])]
+        bboxDim.sort()
+        if bboxDim[0] < sc.doc.ModelAbsoluteTolerance: smallestDim = bboxDim[1]
+        else: smallestDim = bboxDim[0]
+        newGridSize = smallestDim/10
+        regionTestPtsFin = getPts(newGridSize)
     
-    #Get rid of the points that lie along the boundary of the shape.
-    regionTestPts = []
-    edges = testRegion.DuplicateEdgeCurves()
-    boundary = rc.Geometry.Curve.JoinCurves(edges)
-    for point in regionTestPtsInit:
-        closestPtInit =  rc.Geometry.Curve.ClosestPoint(boundary[0], point)
-        closestPt = boundary[0].PointAt(closestPtInit[1])
-        if point.DistanceTo(closestPt) < sc.doc.ModelAbsoluteTolerance: pass
-        else: regionTestPts.append(point)
-    
-    #If there is a dense collection of points that are too close to each other, get rid of it.
-    regionTestPtsFinal = []
-    for pointCount, point in enumerate(regionTestPts):
-        pointOK = True
-        testPtsWihtout = list(regionTestPts)
-        del testPtsWihtout[pointCount]
-        for othPt in testPtsWihtout:
-            if point.DistanceTo(othPt) < (gridSize/4):
-                pointOK = False
-            else:pass
-        if pointOK == True:
-            regionTestPtsFinal.append(point)
-    
-    if regionTestPtsFinal == []:
-        regionTestPtsFinal.append(rc.Geometry.AreaMassProperties.Compute(testRegion).Centroid)
-    
-    return regionTestPtsFinal
+    return regionTestPtsFin
 
 
 def prepareGeometry(gridSize, allDataDict):
