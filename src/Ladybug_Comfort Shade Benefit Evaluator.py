@@ -169,13 +169,16 @@ def checkTheInputs():
     
     def checkDataHeaders(dataBranch, dataType, dataType2, dataName, bCount, numKey):
         if str(dataBranch[0]) == "key:location/dataType/units/frequency/startsAt/endsAt":
-            analysisStart = dataBranch[5].split(')')[0].split('(')[-1].split(',')
-            analysisEnd = dataBranch[6].split(')')[0].split('(')[-1].split(',')
-            anaS = []
-            anaE = []
-            for item in analysisStart:anaS.append(int(item))
-            for item in analysisEnd:anaE.append(int(item))
-            analysisPeriods.append([tuple(anaS), tuple(anaE)])
+            try:
+                analysisStart = dataBranch[5].split(')')[0].split('(')[-1].split(',')
+                analysisEnd = dataBranch[6].split(')')[0].split('(')[-1].split(',')
+                anaS = []
+                anaE = []
+                for item in analysisStart:anaS.append(int(item))
+                for item in analysisEnd:anaE.append(int(item))
+                analysisPeriods.append([tuple(anaS), tuple(anaE)])
+            except:
+                analysisPeriods.append([dataBranch[5], dataBranch[6]])
             locations.append(dataBranch[1])
             if dataType in dataBranch[2] or dataType2 in dataBranch[2]:
                 if dataBranch[4] == "Hourly":
