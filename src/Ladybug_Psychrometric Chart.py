@@ -964,10 +964,12 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         #Define a function to offset curves and return things that will stand out on the psychrometric chart.
         def outlineCurve(curve):
             try:
-                offsetCrv = curve.Offset(rc.Geometry.Plane.WorldXY, 0.25, sc.doc.ModelAbsoluteTolerance, rc.Geometry.CurveOffsetCornerStyle.Sharp)[0]
+                offsetCrv = curve.Offset(rc.Geometry.Plane.WorldXY, 0.15, sc.doc.ModelAbsoluteTolerance, rc.Geometry.CurveOffsetCornerStyle.Sharp)[0]
                 finalBrep = (rc.Geometry.Brep.CreatePlanarBreps([curve, offsetCrv])[0])
+                if finalBrep.Edges.Count < 3:
+                    finalBrep = curve
             except:
-                finalBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
+                finalBrep = curve
                 warning = "Creating an outline of one of the comfort or strategy curves failed.  Component will return a solid brep."
                 print warning
                 w = gh.GH_RuntimeMessageLevel.Warning
@@ -1142,7 +1144,8 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     if ChartBoundCheck == 1:
                         segment = chartBoundSegments[0]
                     elif ChartBoundCheck == 2:
-                        segment = chartBoundSegments[2]
+                        try: segment = chartBoundSegments[2]
+                        except: segment = chartBoundSegments[1]
                     elif ChartBoundCheck == 0: segment = chartBoundSegments[1]
                     if len(chartBoundSegments) != 0: joinedMassCoolBound = rc.Geometry.Curve.JoinCurves([joinedMassBound, segment])[0]
                     else: joinedMassCoolBound = joinedMassBound
@@ -1582,6 +1585,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for geo in comfortPolygon: geo.Transform(transformMtx)
             for geo in strategyPolygons: geo.Transform(transformMtx)
             for geo in hourPts: geo.Transform(transformMtx)
+            for list in pointLegends:
+                for geo in list:
+                    geo.Transform(transformMtx)
             basePoint = basePoint_
         else: basePoint = rc.Geometry.Point3d(0,0,0)
         
