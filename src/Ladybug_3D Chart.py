@@ -135,7 +135,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
         if len(values) == 24:
             yCount = 1
         else:
-            yCount = 24
+            yCount = xSize
     else:
         yCount = yCount[0]
     
@@ -208,6 +208,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
             joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
         elif srfNum >= len(values)*2 - yCount:
             extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
+            if yCount == 2: extraVal = extraVal+2
             joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
             joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
             joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
@@ -285,8 +286,8 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     for monthDays in daysList:
         Point1 = rc.Geometry.Point3d(basePoint.X+i, basePoint.Y-xScale, zMax)
         Point2 = rc.Geometry.Point3d(basePoint.X+i+(monthDays*yScale), basePoint.Y-xScale, zMax)
-        Point3 = rc.Geometry.Point3d(basePoint.X+i+(monthDays*yScale), basePoint.Y+yHeight-xScale, zMax)
-        Point4 = rc.Geometry.Point3d(basePoint.X+i, basePoint.Y+yHeight-xScale, zMax)
+        Point3 = rc.Geometry.Point3d(basePoint.X+i+(monthDays*yScale), basePoint.Y+yHeight-xScale-((24-xSize)*xScale), zMax)
+        Point4 = rc.Geometry.Point3d(basePoint.X+i, basePoint.Y+yHeight-xScale-((24-xSize)*xScale), zMax)
         curveVertices.append([Point1, Point2, Point3, Point4])
         i+=(monthDays*yScale)
     
