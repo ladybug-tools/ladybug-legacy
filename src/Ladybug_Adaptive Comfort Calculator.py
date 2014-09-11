@@ -33,7 +33,10 @@ Provided by Ladybug 0.0.58
         ------------------------------: ...
         comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether occupants are comfortable under the input conditions given the fact that these occupants tend to adapt themselves to the prevailing mean monthly temperature. 0 indicates that a person is not comfortable while 1 indicates that a person is comfortable.
         conditionOfPerson: A stream of interger values from -1 to +2 that correspond to each hour of the input data and indicate the following: -1 = The average monthly temperature is too extreme for the adaptive model. 0 = The input conditions are too cold for occupants. 1 = The input conditions are comfortable for occupants. 2 = The input conditions are too hot for occupants.
-        upperTemperatureBound: A stream of temperature values in degrees Celcius indicating the highest possible temperature in the comfort range for each hour of the input conditions.  
+        degreesFromTarget: A stream of temperature values in degrees Celcius indicating how far from the target temperature the conditions of the people are.  Positive values indicate conditions hotter than the target temperature while negative values indicate degrees below the target temperture.
+        ------------------------------: ...
+        targetTemperature: A stream of temperature values in degrees Celcius indicating the mean target temperture or neutral temperature that the most people will find comfortable.
+        upperTemperatureBound: A stream of temperature values in degrees Celcius indicating the highest possible temperature in the comfort range for each hour of the input conditions.
         lowerTemperatureBound: A stream of temperature values in degrees Celcius indicating the lowest possible temperature in the comfort range for each hour of the input conditions.
         ------------------------------: ...
         percentOfTimeComfortable: The percent of the input data for which the occupants are comfortable.  Comfortable conditions are when the indoor temperature is within the comfort range determined by the prevailing outdoor temperature.
@@ -171,7 +174,8 @@ def checkTheInputs():
                 prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[8023:])/744)], 744))
                 checkData3 = True
                 epwData = True
-                epwStr = _prevailingOutdoorTemp[0:7]
+                if epwStr == []:
+                    epwStr = _prevailingOutdoorTemp[0:7]
         except: pass
         if checkData3 == False:
             for item in _prevailingOutdoorTemp:
@@ -198,7 +202,8 @@ def checkTheInputs():
                 windSpeed = windSpeed_[7:]
                 checkData4 = True
                 epwData = True
-                epwStr = windSpeed_[0:7]
+                if epwStr == []:
+                    epwStr = windSpeed_[0:7]
         except: pass
         if checkData4 == False:
             for item in windSpeed_:
@@ -297,14 +302,20 @@ def main():
         extremeColdComfortableHot = []
         upperTemperatureBound = []
         lowerTemperatureBound = []
+        targetTemperature = []
+        degreesFromTarget = []
         percentOfTimeComfortable = None
         percentHotColdAndExtreme = []
-        if checkData == True and epwData == True:
+        if checkData == True and epwData == True and 'for' not in epwStr[2]:
+            targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not', 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
             extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
             upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         elif checkData == True and epwData == True and 'for' in epwStr[2]:
+            targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
             extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
             upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
@@ -315,16 +326,21 @@ def main():
                 extColdComfHot = []
                 upperTemp = []
                 lowerTemp = []
+                comfortTemp = []
+                degreesTarget = []
                 for count in HOYS:
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
-                    lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(airTemp[count], radTemp[count], prevailTemp[count], windSpeed[count], eightyPercentComfortable_)
+                    comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(airTemp[count], radTemp[count], prevailTemp[count], windSpeed[count], eightyPercentComfortable_)
+                    
                     if comf == True:comfOrNot.append(1)
                     else: comfOrNot.append(0)
                     extColdComfHot.append(condition)
                     upperTemp.append(upTemp)
                     lowerTemp.append(lowTemp)
+                    comfortTemp.append(comfTemp)
+                    degreesTarget.append(distFromTarget)
                 percentOfTimeComfortable = ((sum(comfOrNot))/calcLength)*100
                 extreme = []
                 hot = []
@@ -342,11 +358,15 @@ def main():
                 extremeColdComfortableHot.extend(extColdComfHot)
                 upperTemperatureBound.extend(upperTemp)
                 lowerTemperatureBound.extend(lowerTemp)
+                targetTemperature.extend(comfortTemp)
+                degreesFromTarget.extend(degreesTarget)
             except:
                 comfortableOrNot = []
                 extremeColdComfortableHot = []
                 upperTemperatureBound = []
                 lowerTemperatureBound = []
+                targetTemperature = []
+                degreesFromTarget = []
                 percentOfTimeComfortable = None
                 percentHotColdAndExtreme = []
                 print "The calculation has been terminated by the user!"
@@ -354,12 +374,12 @@ def main():
                 ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
         
         #Return all of the info.
-        return comfortableOrNot, extremeColdComfortableHot, percentOfTimeComfortable, percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound
+        return comfortableOrNot, extremeColdComfortableHot, percentOfTimeComfortable, percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget
     else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return [None, None, None, None, None, None]
+        return -1
 
 
 
@@ -368,7 +388,7 @@ if _runIt == True:
     results = main()
     if results!=-1:
         comfortableOrNot, conditionOfPerson, percentOfTimeComfortable, \
-        percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound = results
+        percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget = results
 
 
 

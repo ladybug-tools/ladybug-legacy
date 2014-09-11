@@ -2990,14 +2990,13 @@ class ComfortModels(object):
     
     def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety):
         r = []
+        # Define the variables that will be used throughout the calculation.
+        coolingEffect = 0
+        if eightyOrNinety == True: offset = 3.5
+        else: offset = 2.5
+        to = (ta + tr) / 2
         # See if the running mean temperature is between 10 C and 33.5 C and, if not, label the data as too extreme for the adaptive method.
         if runningMean > 10.0 and runningMean < 33.5:
-            # Define the variables that will be used throughout the calculation.
-            to = (ta + tr) / 2
-            coolingEffect = 0
-            if eightyOrNinety == True: offset = 3.5
-            else: offset = 2.5
-            
             # Define a function to tell if values are in the comfort range.
             def comfBetween (x, l, r):
                 return (x > l and x < r)
@@ -3016,6 +3015,8 @@ class ComfortModels(object):
             tComf = 0.31 * runningMean + 17.8
             tComfLower = tComf - offset
             tComfUpper = tComf + offset + coolingEffect
+            r.append(tComf)
+            r.append(to - tComf)
             r.append(tComfLower)
             r.append(tComfUpper)
             
@@ -3033,9 +3034,25 @@ class ComfortModels(object):
             elif to > tComfUpper: r.append(2)
             else: r.append(0)
             
+        elif runningMean < 10.0:
+            # The prevailing temperature is too cold for the adaptive method.
+            tComf = 0.31 * 10 + 17.8
+            tempDiff = to - tComf
+            tComfLower = tComf - offset
+            tComfUpper = tComf + offset
+            if to > tComfLower and to < tComfUpper: acceptability = True
+            else: acceptability = False
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, -1]
+            r.extend(outputs)
         else:
-            # The prevailing temperature is too extreme for the adaptive method.
-            outputs = [None, None, False, -1]
+            # The prevailing temperature is too hot for the adaptive method.
+            tComf = 0.31 * 33.5 + 17.8
+            tempDiff = to - tComf
+            tComfLower = tComf - offset
+            tComfUpper = tComf + offset
+            if to > tComfLower and to < tComfUpper: acceptability = True
+            else: acceptability = False
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, -1]
             r.extend(outputs)
         
         return r
