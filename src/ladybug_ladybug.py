@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -3063,7 +3063,7 @@ class ComfortModels(object):
         def es(ta):
             g = [-2836.5744, -6028.076559, 19.54263612, -0.02737830188, 0.000016261698, (7.0229056*(10**(-10))), (-1.8680009*(10**(-13)))]      
             tk = ta + 273.15 # air temp in K
-            es = 2.7150305 * math.log1p(tk)
+            es = 2.7150305 * math.log(tk)
             for count, i in enumerate(g):
                 es = es + (i * (tk**(count-2)))
             es = math.exp(es)*0.01	# convert Pa to hPa
