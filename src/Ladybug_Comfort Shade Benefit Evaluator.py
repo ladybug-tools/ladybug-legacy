@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -203,7 +203,7 @@ def checkTheInputs():
             ghenv.Component.AddRuntimeMessage(w, warning)
     
     for branchCount, branch in enumerate(newAllDataDict):
-        checkDataHeaders(newAllDataDict[branch]["temperatures"], "Temperture", "Universal Thermal Climate Index", "_temperatures", branchCount, "temperture")
+        checkDataHeaders(newAllDataDict[branch]["temperatures"], "Temperature", "Universal Thermal Climate Index", "_temperatures", branchCount, "temperture")
     
     #Make sure that the analysis periods and locations are all the same.
     checkData5 = True
