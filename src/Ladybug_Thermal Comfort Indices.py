@@ -5,14 +5,14 @@
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to calculate different thermal comfort indices frequently used by weather reporters.
+Use this component to calculate different thermal comfort indices
 
 Provided by Ladybug 0.0.58
     
     input:
         _comfortIndex: Choose one of the comfort indices:
                        0 - HI (Heat Index)
-                       1 - humidex
+                       1 - humidex (humidity index)
                        2 - DI (Discomfort Index)
                        3 - WCT (Wind Chill Temperature)
                        4 - WBGT (Wet-Bulb Globe Temperature) indoors
@@ -25,14 +25,16 @@ Provided by Ladybug 0.0.58
         _location: Input data from Ladybug's "Import epw" "location" output.
         _dryBulbTemperature: Hourly Dry Bulb Temperature (air temperature), in Celsius
         dewPointTemperature_: Hourly Dew Point Temperature, in Celsius
+                              If not supplied, it will be calculated from dryBulbTemperature and relativeHumidity
         _relativeHumidity: Hourly Relative Humidity, in percent (from 0% to 110%)
         windSpeed_: Hourly Wind Speed, in meters/second
+                    If not supplied, default value of 0.3 m/s is used.
         globalHorizontalRadiation_:  Total amount of direct and diffuse solar radiation received on a horizontal surface, in Wh/m2.
-                                     Default value is 100 Wh/m2
+                                     If not supplied, default value of 0 Wh/m2 is used.
         totalSkyCover_: Amount of sky dome in tenths covered by clouds or obscuring phenomena, in tenths of coverage (from 1 to 10). For example: 1 is 1/10 covered. 10 is total coverage (10/10).
-			Default value is 8 (8/10)
+                        If not supplied, dfault value of 8 (8/10) is used.
         HOY_: An hour of the year for which you would like to calculate thermal indices.  This must be a value between 1 and 8760.
-	      This input will override the analysisPeriod_ input below.
+	          This input will override the analysisPeriod_ input below.
         analysisPeriod_: An optional analysis period from the Analysis Period component. 
         _runIt: ...
         
@@ -40,9 +42,9 @@ Provided by Ladybug 0.0.58
         readMe!: ...
 """
 
-ghenv.Component.Name = "Ladybug_Outdoor Thermal Comfort Indices"
+ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = 'ThermalComfortIndices'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_26_2014'
+ghenv.Component.Message = 'VER 0.0.58\nSEP_07_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
@@ -95,25 +97,23 @@ def getLocationData(location):
     else:
         latitude = longitude = timeZone = locationName = None
         validLocationData = False
-        printMsg = "Please input 'location' ouput of Ladybug 'Import epw' component, or\nmake your own location data using Ladybug's 'Contruct Location' and plug it into '_location' input of this component."
+        printMsg = "Please input 'location' ouput of Ladybug 'Import epw' component, or make your own location data using Ladybug's 'Contruct Location' and plug it into '_location' input of this component."
 
     return latitude, longitude, timeZone, locationName, validLocationData, printMsg
 
 
-def getWeatherData(comfortIndex, Ta, Tdp, rh, ws, SR, N):
-    if not comfortIndex:
-        comfortIndex = 0
+def getWeatherData(Ta, Tdp, rh, ws, SR, N):
 
-    if (not Ta):
+    if (len(Ta) == 0) or (Ta[0] is ""):
         Ta = Tdp = rh = ws = SR = N = None
         printMsg = "Please input _dryBulbTemperature"
         validWeatherData = False
-        return comfortIndex, Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
-    elif (not rh):
+        return Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
+    if (len(rh) == 0) or (rh[0] is ""):
         Ta = Tdp = rh = ws = SR = N = None
         printMsg = "Please input _relativeHumidity"
         validWeatherData = False
-        return comfortIndex, Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
+        return Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
 
     # combination of lists(inputed from "Ladybug import epw" component" and single values:
     try:
@@ -136,51 +136,71 @@ def getWeatherData(comfortIndex, Ta, Tdp, rh, ws, SR, N):
         SRLlength = len(SR)
     except:
         SRLlength = 1
+    try:
+        NLlength = len(N)
+    except:
+        NLlength = 1
 
-    maximalListLength = max(TaLlength, TdpLlength, rhLlength, wsLlength, SRLlength)
+    maximalListLength = max(TaLlength, TdpLlength, rhLlength, wsLlength, SRLlength, NLlength)
 
     # at least one of inputed dryBulbTemperature_, relativeHumidity_ comes from "Ladybug import epw" component". The rest are single values
     if maximalListLength == 8767:
+        
+        for list in Ta, Tdp, rh, ws, SR, N:
+            try:
+                if len(list) == maximalListLength:
+                    inputList = list
+            except:
+                pass
+        
+        if len(Ta) == 1:
+            try:
+                item = float(Ta[0])
+                Ta = inputList[:7]
+                for i in range(maximalListLength-7):
+                    Ta.append(item)
+            except:
+                pass
+        
         # this is for calculating Tdp , in case dewPointTemperature_ has not been inputted
         if len(rh) == 1:
             try:
                 item = float(rh[0])
-                rh = []
+                rh = inputList[:7]
                 for i in range(maximalListLength-7):
-                    rh.append(item) # default value 0.3 m/s
+                    rh.append(item)
             except:
                 pass
     
-        if not Tdp:
+        if (len(Tdp) == 0) or (Tdp[0] is ""):
+            nm = 0
             try:
-                Td = []
-                #Tdp = Ta[:7]
+                Tdp = inputList[:7]
                 for i in range(maximalListLength-7):
                     dewPoint = dewPointTemperature(Ta[i+7], rh[i+7])
                     Tdp.append(dewPoint)
-    
             except:
                 pass
     
-        if not ws:
+        if (len(ws) == 0) or (ws[0] is ""):
             try:
-                ws = Ta[:7]
+                ws = inputList[:7]
                 for i in range(maximalListLength-7):
                     ws.append(0.3) # default value 0.3 m/s
             except:
                 pass
     
-        if not SR:
+        if (len(SR) == 0) or (SR[0] is ""):
             try:
-                SR = Ta[:7]
+                SR = inputList[:7]
                 for i in range(maximalListLength-7):
-                    SR.append(100) # default value 100 Wh/m2(%)
+                    SR.append(0) # default value 0 Wh/m2(%)
             except:
                 pass
     
-        if not N:
+        if (len(N) == 0) or (N[0] is ""):
             try:
-                N = Ta[:7]
+                N = inputList[:7]
                 for i in range(maximalListLength-7):
                     N.append(8) # default value 8 tens (%)
             except:
@@ -231,7 +251,7 @@ def getWeatherData(comfortIndex, Ta, Tdp, rh, ws, SR, N):
                 
         printMsg = "ok"
         validWeatherData = True
-        return comfortIndex, Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
+        return Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
 
 
     # all inputs come as a single value (maximalListLength != 8767)
@@ -239,44 +259,38 @@ def getWeatherData(comfortIndex, Ta, Tdp, rh, ws, SR, N):
         TaL = [float(Ta[0]) for i in range(8760)]
         rhL = [float(rh[0]) for i in range(8760)]
 
-        if not Tdp:
+        if (len(Tdp) == 0) or (Tdp[0] is ""):
             dewPoint = dewPointTemperature(float(Ta[0]), float(rh[0]))
-            TdpL = []
-            for i in range(8760):
-                TdpL.append(dewPoint)
+            TdpL = [dewPoint for i in range(8760)]
         else:
             TdpL = [float(Tdp[0]) for i in range(8760)]
-        if not ws:
-            wsL = []
-            for i in range(8760):
-                wsL.append(0.3) # default value 0.3 m/s
+        
+        if (len(ws) == 0) or (ws[0] is ""):
+            wsL = [0.3 for i in range(8760)] # default value 0.3 m/s
         else:
             wsL = [float(ws[0]) for i in range(8760)]
-        if not SR:
-            SRL = []
-            for i in range(8760):
-                SRL.append(8) # default value 8 (tens)
+        
+        if (len(SR) == 0) or (SR[0] is ""):
+            SRL = [0 for i in range(8760)] # default value 0 W/m2
         else:
             SRL = [float(SR[0]) for i in range(8760)]
-
-        if not N:
-            NL = []
-            for i in range(8760):
-                NL.append(8) # default value 8 (tens)
+        
+        if (len(N) == 0) or (N[0] is ""):
+            NL = [8 for i in range(8760)] # default value 8 (tens)
         else:
             NL = [float(N[0]) for i in range(8760)]
 
         printMsg = "ok"
         validWeatherData = True
 
-        return comfortIndex, TaL, TdpL, rhL, wsL, SRL, NL, validWeatherData, printMsg
+        return TaL, TdpL, rhL, wsL, SRL, NL, validWeatherData, printMsg
 
     # some inputs come as a single value, but some as list of at least 2 values (list of 2 values not supported)
     else:
         Ta = Tdp = rh = ws = SR = N = None
         printMsg = "Something is wrong with your dryBulbTemperature_, relativeHumidity_, globalHorizontalRadiation_ input data."
         validWeatherData = False
-        return comfortIndex, Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
+        return Ta, Tdp, rh, ws, SR, N, validWeatherData, printMsg
 
 
 #angle units conversion
@@ -301,7 +315,7 @@ def celsiusToKelvin(Tc):
 
 # thermal comfort indices
 def heatIndex(Ta, rh):
-
+    # formula by (NWS) National Weather Service
     Tf = celsiusToFahrenheit(Ta)
 
     if Tf < 80:
@@ -349,14 +363,11 @@ def dewPointTemperature(Ta, rh):
     b = 237.7
     rh = rh/100  # 0.01 < rh < 1.00
     Tdp = (b * ( ((a*Ta)/(b+Ta))+math.log(rh) ))/(a-( ((a*Ta)/(b+Ta))+math.log(rh) ))  # in Celius degrees
-    
+
     return Tdp
 
-def Humidex(Ta, rh, Tdp=None):
-
-    if not Tdp:
-        Tdp = dewPointTemperature(Ta, rh)  # in Celius degrees
-
+def Humidex(Ta, Tdp):
+    # formula by Environment Canada
     dewpointK = celsiusToKelvin(Tdp)  # to Kelvin
     e = 6.11 * math.exp(5417.7530 * ((1/273.16) - (1/dewpointK)))
     h = (0.5555)*(e - 10.0)
@@ -417,20 +428,26 @@ def windChillTemperature(Ta, ws):
 
     Twc = 13.12 + 0.6215*Ta - 11.37*(ws_km_h**0.16) + 0.3965*Ta*(ws_km_h**0.16)   # in Celius degrees
 
-    if Twc >= -27:
+    if Twc >= 0:
         effectTwc = 0
         comfortable = 1
-    elif Twc < -27 and Twc >= -39:
+    elif Twc < 0 and Twc >= -9:
         effectTwc = -1
         comfortable = 0
-    elif Twc < -39 and Twc >= -47:
+    elif Twc < -9 and Twc >= -27:
         effectTwc = -2
         comfortable = 0
-    elif Twc < -47 and Twc >= -54:
+    elif Twc < -27 and Twc >= -39:
         effectTwc = -3
         comfortable = 0
-    elif Twc < -54:
+    elif Twc < -39 and Twc >= -47:
         effectTwc = -4
+        comfortable = 0
+    elif Twc < -47 and Twc >= -54:
+        effectTwc = -5
+        comfortable = 0
+    elif Twc < -54:
+        effectTwc = -6
         comfortable = 0
     return Twc, effectTwc, comfortable
 
@@ -546,7 +563,7 @@ def actualSensationModel(Ta, ws, rh, S):
     ASV = 0.049*Ta + 0.001*S - 0.051*ws + 0.014*rh - 2.079
     
     #Classification of human thermal sensation according to TS levels and ASV scale
-    #(Givoni and Noguchi, 2000; Nikolopoulou et al., 2004
+    #Givoni and Noguchi, 2000; Nikolopoulou et al., 2004
     if ASV < -2:
         effectASV = -2
         comfortable = 0
@@ -592,6 +609,8 @@ def solarZenithAngle(latitude, longitude, timeZone, month, day, hour):
 
 def solarRadiationNudeMan(Kglob, hSl):
     # formula from: Bioclimatic principles of recreation and tourism in Poland, 2nd edition, Blazejczyk, Kunert, 2011 (MENEX_2005 model)
+    if hSl < 0:
+        hSl = 0
     Kt = Kglob / (-0.0015*(hSl**3) + 0.1796*(hSl**2) + 9.6375*hSl - 11.9)
     
     ac = 31  # default value
@@ -607,6 +626,9 @@ def solarRadiationNudeMan(Kglob, hSl):
         Rprim = 43.426*ac_*(Kglob**0.2326)
     elif hSl > 12 and Kt >1.2:
         Rprim = 8.9281*ac_*(Kglob**0.4861)
+        
+    if Rprim < 0:
+        Rprim = 0
     
     return Rprim
 
@@ -615,7 +637,7 @@ def groundTemperature(Ta, N):
     # formula from: Assessment of bioclimatic differentiation of Poland. Based on the human heat balance, Geographia Polonica, Matzarakis, Blazejczyk, 2007
     N100 = N *10 #converting weather data totalSkyCover from 0 to 10% to 0 to 100%
 
-    if (not N100) or (N100 >= 80):
+    if (N100 == None) or (N100 >= 80):
         Tground = Ta
     elif (N100 < 80) and (Ta >= 0):
         Tground = 1.25*Ta
@@ -652,11 +674,7 @@ def meanRadiantTemperature(Ta, Tground, Rprim, e):
     return MRT
 
 
-def wbgt_indoors(Ta, ws, rh, e, MRT, Tdp=None):
-    
-    if not Tdp:
-        Tdp = dewPointTemperature(Ta, rh)  # in Celius degrees
-    
+def wbgt_indoors(Ta, ws, rh, e, MRT, Tdp):
     # WBGT indoor formula by Bernard
     # formula from: "Calculating Workplace WBGT from Meteorological Data: A Tool for Climate Change Assessment", Lemke, Kjellstrom, 2012
     ed = 0.6106 * math.exp(17.27 * Tdp / (237.7 + Tdp))
@@ -810,7 +828,7 @@ def createHeaders(comfortIndex, Ta, Tdp, rh, ws, SR, N, locationName):
     ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot", "Boolean value"], \
     ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"], \
     ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"], \
-    ["C", "-4 = Extreme risk of frostbite,  -3 = Very high risk of frostbite,  -2 = High risk of frostbite,  -1 = Moderate risk of frostbite,  0 = Low risk of frostbite", "Boolean value"], \
+    ["C", "-6 = Extreme risk of frostbite,  -5 = Very high risk of frostbite,  -4 = High risk of frostbite,  -3 = Moderate risk of frostbite,  -2 = Low risk of frostbite,  -1 = Very low risk of frostbite, 0 = No risk of frostbite", "Boolean value"], \
     ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"], \
     ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"], \
     ["C", "-4 = Very cold,  -3 = Cold,  -2 = Cool,  -1 = Fresh,  0 = Comfortable,  1 = Warm, 2 = Hot", "Boolean value"], \
@@ -898,14 +916,16 @@ def createHeaders(comfortIndex, Ta, Tdp, rh, ws, SR, N, locationName):
     
     ,
     
-    ["(WCT) Wind Chill Temperature (index/factor) (C) - the perceived decrease in air temperature felt by the body on exposed skin due to the flow of air.\nIt's used by both National Weather Service (NSW) in US and Canadian Meteorologist service. This is new (2001 by JAG/TI) WCT.\nWind chill index does not take into account the effect of sunshine.\nBright sunshine may reduce the effect of wind chill (make it feel warmer) by 6 to 10 units(C or F)!\nWindchill temperature is defined only for temperatures at or below 10C (50F) and for wind speeds at and above 1.3 m/s (or 4.8 km/h or 3.0 mph)",  #comfortIndexValues
+    ["Wind Chill Temperature (index/factor) (C) - the perceived decrease in air temperature felt by the body on exposed skin due to the flow of air.\nIt's used by both National Weather Service (NSW) in US and Canadian Meteorologist service. This is new (2001 by JAG/TI) WCT.\nWind chill index does not take into account the effect of sunshine.\nBright sunshine may reduce the effect of wind chill (make it feel warmer) by 6 to 10 units(C or F)!\nWindchill temperature is defined only for temperatures at or below 10C (50F) and for wind speeds at and above 1.3 m/s (or 4.8 km/h or 3.0 mph)",  #comfortIndexValues
     
     "Each number (from -4 to 0) represents a certain WCT thermal sensation category. With categories being the following:\
-    \n- category 0 (>-27C) Low risk of frostbite for most people\
-    \n- category -1 (-27-(-39)C) Increasing risk of frostbite for most people in 10 to 30 minutes of exposure\
-    \n- category -2 (-39-(-47)C) High risk of frostbite for most people in 5 to 10 minutes of exposure\
-    \n- category -3 (-47-(-54)C) High risk of frostbite for most people in 2 to 5 minutes of exposure\
-    \n- category -4 (<-54C) High risk of frostbite for most people in 2 minutes of exposure or less",  #comfortIndexCategory
+    \n- category 0 (>0C) No discomfort. No risk of frostbite for most people\
+    \n- category -1 (0-(-9)C) Slight increase in discomfort. Low risk of frostbite for most people\
+    \n- category -2 (-9-(-27)C) Risk of hypothermia if outside for long periods without adequate protection. Low risk of frostbite for most people\
+    \n- category -3 (-27-(-39)C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. Increasing risk of frostbite for most people in 10 to 30 minutes of exposure\
+    \n- category -4 (-39-(-47)C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 5 to 10 minutes of exposure\
+    \n- category -5 (-47-(-54)C) Serious risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 2 to 5 minutes of exposure\
+    \n- category -6 (<-54C) Danger! Outdoor conditions are hazardous. High risk of frostbite for most people in 2 minutes of exposure or less",  #comfortIndexCategory
     
     "Outputs 0 or 1. 0 indicates that there is danger of frostbite, 1 there is not danger of frostbite at that hour (meaning WCT temperature is in range: >-27C)",  #comfortableOrNot
     
@@ -1054,33 +1074,33 @@ level = gh.GH_RuntimeMessageLevel.Warning
 if (_comfortIndex != None) and _comfortIndex in range(11):
     latitude, longitude, timeZone, locationName, validLocationData, printMsgLocation = getLocationData(_location)
     if validLocationData:
-        comfortIndex, TaL, TdpL, rhL, wsL, SRL, NL, validWeatherData, printMsgWeather = getWeatherData(_comfortIndex, _dryBulbTemperature, dewPointTemperature_, _relativeHumidity, windSpeed_, globalHorizontalRadiation_, totalSkyCover_)
+        TaL, TdpL, rhL, wsL, SRL, NL, validWeatherData, printMsgWeather = getWeatherData(_dryBulbTemperature, dewPointTemperature_, _relativeHumidity, windSpeed_, globalHorizontalRadiation_, totalSkyCover_)
         if validWeatherData:
             if _runIt:
                 HOYs, days, months, hours, newAnalysisPeriod = HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY_, analysisPeriod_)
                 comfortIndexValue, comfortIndexCategory, comfortableOrNot, outputNickNames, outputDescriptions = createHeaders(_comfortIndex, _dryBulbTemperature, dewPointTemperature_, _relativeHumidity, windSpeed_, globalHorizontalRadiation_, totalSkyCover_, locationName)
                 for i,hoy in enumerate(HOYs):
-                    if comfortIndex == 0:
+                    if _comfortIndex == 0:
                         hi,cat,cnc = heatIndex(TaL[int(hoy)-1], rhL[int(hoy)-1]);  comfortIndexValue.append(hi);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 4
-                    elif comfortIndex == 1:
-                        humi,cat,cnc = Humidex(TaL[int(hoy)-1], rhL[int(hoy)-1], TdpL[int(hoy)-1]);  comfortIndexValue.append(humi);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
+                    elif _comfortIndex == 1:
+                        humi,cat,cnc = Humidex(TaL[int(hoy)-1], TdpL[int(hoy)-1]);  comfortIndexValue.append(humi);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 5
-                    elif comfortIndex == 2:
+                    elif _comfortIndex == 2:
                         di,cat,cnc = discomfortIndex(TaL[int(hoy)-1], rhL[int(hoy)-1]);  comfortIndexValue.append(di);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 5
-                    elif comfortIndex == 3:
+                    elif _comfortIndex == 3:
                         wct,cat,cnc = windChillTemperature(TaL[int(hoy)-1], wsL[int(hoy)-1]);  comfortIndexValue.append(wct);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         ColdExtremeCategory = -4
-                    elif comfortIndex == 4:
+                    elif _comfortIndex == 4:
                         Tground = groundTemperature(TaL[int(hoy)-1], NL[int(hoy)-1])
                         solarZenithAngleR, solarAltitudeC = solarZenithAngle(latitude, longitude, timeZone, months[i], days[i], hours[i])
                         Rprim = solarRadiationNudeMan(SRL[int(hoy)-1], solarAltitudeC)
                         vapourPressure = VapourPressure(TaL[int(hoy)-1], rhL[int(hoy)-1])
                         mrt = meanRadiantTemperature(TaL[int(hoy)-1], Tground, Rprim, vapourPressure)
-                        wbgt,cat,cnc = wbgt_indoors(TaL[int(hoy)-1], wsL[int(hoy)-1], rhL[int(hoy)-1], vapourPressure, mrt);  comfortIndexValue.append(wbgt);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
+                        wbgt,cat,cnc = wbgt_indoors(TaL[int(hoy)-1], wsL[int(hoy)-1], rhL[int(hoy)-1], vapourPressure, mrt, TdpL[int(hoy)-1]);  comfortIndexValue.append(wbgt);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 5
-                    elif comfortIndex == 5:
+                    elif _comfortIndex == 5:
                         Tground = groundTemperature(TaL[int(hoy)-1], NL[int(hoy)-1])
                         solarZenithAngleR, solarAltitudeC = solarZenithAngle(latitude, longitude, timeZone, months[i], days[i], hours[i])
                         Rprim = solarRadiationNudeMan(SRL[int(hoy)-1], solarAltitudeC)
@@ -1088,37 +1108,37 @@ if (_comfortIndex != None) and _comfortIndex in range(11):
                         mrt = meanRadiantTemperature(TaL[int(hoy)-1], Tground, Rprim, vapourPressure)
                         wbgt,cat,cnc = wbgt_outdoors(TaL[int(hoy)-1], wsL[int(hoy)-1], rhL[int(hoy)-1], vapourPressure, mrt);  comfortIndexValue.append(wbgt);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 5
-                    elif comfortIndex == 6:
+                    elif _comfortIndex == 6:
                         et,cat,cnc = effectiveTemperature(TaL[int(hoy)-1], wsL[int(hoy)-1], rhL[int(hoy)-1]);  comfortIndexValue.append(et);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 2
                         ColdExtremeCategory = -4
-                    elif comfortIndex == 7:
+                    elif _comfortIndex == 7:
                         at,cat,cnc = apparentTemperature(TaL[int(hoy)-1], wsL[int(hoy)-1], rhL[int(hoy)-1]);  comfortIndexValue.append(at);  comfortIndexCategory.append(cat); comfortableOrNot.append(cnc)
                         HotExtremeCategory = 4
                         ColdExtremeCategory = -6
-                    elif comfortIndex == 8:
+                    elif _comfortIndex == 8:
                         Tground = groundTemperature(TaL[int(hoy)-1], NL[int(hoy)-1])
                         ts,cat,cnc = thermalSensation(TaL[int(hoy)-1], wsL[int(hoy)-1], rhL[int(hoy)-1], SRL[int(hoy)-1], Tground);  comfortIndexValue.append(ts);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 3
                         ColdExtremeCategory = -3
-                    elif comfortIndex == 9:
+                    elif _comfortIndex == 9:
                         asv,cat,cnc = actualSensationModel(TaL[int(hoy)-1], wsL[int(hoy)-1], rhL[int(hoy)-1], SRL[int(hoy)-1]);  comfortIndexValue.append(asv);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                         HotExtremeCategory = 2
                         ColdExtremeCategory = -2
-                    elif comfortIndex == 10:
+                    elif _comfortIndex == 10:
                         Tground = groundTemperature(TaL[int(hoy)-1], NL[int(hoy)-1])
                         solarZenithAngleR, solarAltitudeC = solarZenithAngle(latitude, longitude, timeZone, months[i], days[i], hours[i])
                         Rprim = solarRadiationNudeMan(SRL[int(hoy)-1], solarAltitudeC)
                         vapourPressure = VapourPressure(TaL[int(hoy)-1], rhL[int(hoy)-1])
                         mrt = meanRadiantTemperature(TaL[int(hoy)-1], Tground, Rprim, vapourPressure);  comfortIndexValue.append(mrt)
                 
-                if comfortIndex != 10:  # not for MRT
+                if _comfortIndex != 10:  # not for MRT
                     percentComfortable = (comfortableOrNot[7:].count(1))/(len(comfortIndexValue[7:]))*100
-                    if comfortIndex != 3:
+                    if _comfortIndex != 3:
                         percentHotExtreme = (comfortIndexCategory[7:].count(HotExtremeCategory))/(len(comfortIndexCategory[7:]))*100
                     else: # remove percentHotExtreme for WCT
                         percentHotExtreme = []
-                    if comfortIndex not in [0,1,2,4,5]:
+                    if _comfortIndex not in [0,1,2,4,5]:
                         percentColdExtreme = (comfortIndexCategory[7:].count(ColdExtremeCategory))/(len(comfortIndexCategory[7:]))*100
                     else:  # remove percentColdExtreme
                         percentColdExtreme = []
@@ -1145,3 +1165,5 @@ if (_comfortIndex != None) and _comfortIndex in range(11):
 else:
     printMsgComfortIndex = "Please input _comfortIndex from 0 to 10"
     print printMsgComfortIndex
+    ghenv.Component.AddRuntimeMessage(level, printMsgComfortIndex)
+    
