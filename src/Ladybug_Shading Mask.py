@@ -13,7 +13,7 @@ Provided by Ladybug 0.0.58
     Args:
         _testPt: A view point for which one wants to see the portion of the sky masked by the context geometry surrounding this point.
         _context: Context geometry surrounding the _testPt that could block the view to the sky.  Geometry must be a Brep or list of Breps.
-        _skyDensity_: Set to 0 to view a sky mask of the Tregenza sky, which will divide up the sky with a coarse density of 145 sky patches.  Set to 1 to view a sky mask of a Reinhart sky, which will divide up tthe sky with a very fine density of 580 sky patches.  Note that, while the Reinhart sky is more accurate, it will result in considerably longer calculation times.  Accordingly, the default is set to 0 for a Tregenza sky.
+        _skyDensity_: An integer that is greater than or equal to 0, which to sets the number of times that the Tergenza sky patches are split.  Set to 0 to view a sky mask with the typical Tregenza sky, which will divide up the sky with a coarse density of 145 sky patches.  Set to 1 to view a sky mask of a Reinhart sky, which will divide up each of these Tergenza patches into 4 patches to make a sky with a total of 580 sky patches. Higher numbers input here will ensure a greater accuracy but will also take longer. The default is set to 3 to give you a high accuracy.
         scale: Use this input to change the scale of the sky dome.  The default is set to 1.
         
     Returns:
@@ -25,7 +25,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014

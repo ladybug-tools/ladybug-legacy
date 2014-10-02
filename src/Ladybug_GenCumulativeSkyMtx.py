@@ -18,7 +18,7 @@ Provided by Ladybug 0.0.58
     Args:
         _epwFile: The output of the Ladybug Open EPW component or the file path location of the epw weather file on your system.
         _skyDensity_: Set to 0 to generate a Tregenza sky, which will divide up the sky dome with a coarse density of 145 sky patches.  Set to 1 to generate a Reinhart sky, which will divide up the sky dome using a very fine density of 580 sky patches.  Note that, while the Reinhart sky is more accurate, it will result in considerably longer calculation times.  Accordingly, the default is set to 0 for a Tregenza sky.
-        workingDir_: An optional working directory in your system where the sky will be generated. Default is set to C:\Ladybug and any valid file path location can be connected.
+        workingDir_: An optional working directory in your system where the sky will be generated. Default is set to C:\Ladybug or C:\Users\yourUserName\AppData\Roaming\Ladybug.  The latter is used if you cannot write to the C:\ drive of your computer.  Any valid file path location can be connected.
         useOldRes_: Set this to "True" if you have already run this component previously and you want to use the already-generated data for this weather file.
         _runIt: Set to "True" to run the component and generate a sky matrix.
     Returns:
@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
