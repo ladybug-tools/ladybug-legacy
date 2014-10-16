@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1495,7 +1495,8 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if analysisPeriod_ != [] and epwData == True and calcLength == 8760:
             airTemp = lb_preparation.selectHourlyData(_dryBulbTemperature, analysisPeriod_)[7:]
             relHumid = lb_preparation.selectHourlyData(_relativeHumidity, analysisPeriod_)[7:]
-            if len(barPress) == 8760: barPress = lb_preparation.selectHourlyData(barometricPressure_, analysisPeriod_)[7:]
+            if len(barPress) == 8760:
+                barPress = lb_preparation.selectHourlyData(barPress, analysisPeriod_)[7:]
             else:
                 barPress2 = []
                 for num in range(len(airTemp)):
