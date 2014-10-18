@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_17_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
@@ -112,7 +112,7 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
                 newLayerIndex, l = lb_visualization.setupLayers('Modified Version', 'LADYBUG', layerName, studyLayerName)
                 lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont)
                 
-            return coloredChart, [legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]], legendBasePoint
+            return coloredChart, [legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]], legendBasePoint, colors
         else:
             warning = 'Connect inputData!'
             print warning
@@ -145,6 +145,7 @@ if _inputMesh and len(_analysisResult)!=0:
         newMesh = result[0]
         [newLegend.append(item) for item in openLegend(result[1])]
         legendBasePt = result[2]
+        meshColors = result[3]
         
         # Hide output
         ghenv.Component.Params.Output[3].Hidden = True
