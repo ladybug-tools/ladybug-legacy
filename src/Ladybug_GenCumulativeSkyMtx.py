@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_01_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_22_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -42,6 +42,7 @@ from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 from itertools import izip
+import shutil
 
 def date2Hour(month, day, hour):
     # fix the end day
@@ -128,8 +129,19 @@ def main(epwFile, skyType, workingDir, useOldRes):
         workingDrive = workingDir[0:1]
         
         # GenCumulativeSky
-        lb_preparation.downloadGendaymtx(workingDir)
-        if not os.path.isfile(workingDir + '\gendaymtx.exe'): return -3
+        gendaymtxFile = os.path.join(workingDir, 'gendaymtx.exe')
+        
+        if not os.path.isfile(gendaymtxFile):
+            # let's see if we can grab it from radiance folder
+            if os.path.isfile("c:/radiance/bin/gendaymtx.exe"):
+                # just copy this file
+                shutil.copyfile("c:/radiance/bin/gendaymtx.exe", gendaymtxFile)
+            else:
+                # download the file
+                lb_preparation.downloadGendaymtx(workingDir)
+        
+        #check if the file is there
+        if not os.path.isfile(gendaymtxFile) or  os.path.getsize(gendaymtxFile)< 15000 : return -3
         
         ## check for epw file to be connected
         if epwFile != None and epwFile[-3:] == 'epw':
