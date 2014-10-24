@@ -591,6 +591,11 @@ def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windD
     allGeo = []
     for item in profileCrv:
         allGeo.append(item)
+    if groundBasePt_ == None: basept = rc.Geometry.Point3d.Origin
+    else: basept = groundBasePt_
+    secondPt = rc.Geometry.Point3d.Add(basept, rc.Geometry.Vector3d(0,((1/scaleFactor)*3),0))
+    extraLine = rc.Geometry.LineCurve(basept, secondPt)
+    allGeo.append(extraLine)
     lb_visualization.calculateBB(allGeo, True)
     
     #Create a legend.
@@ -613,7 +618,8 @@ def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windD
         for geo in profileCrv: geo.Transform(transformMtx)
         for geo in windVecMesh: geo.Transform(transformMtx)
         legendBasePoint.Transform(transformMtx)
-        for geo in legend: geo.Transform(transformMtx)
+        for geo in legend:
+            if geo != -1: geo.Transform(transformMtx)
         for list in anchorPts:
             for geo in list:
                 geo.Transform(transformMtx)
