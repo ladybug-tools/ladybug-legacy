@@ -7,7 +7,7 @@
 """
 Use this component to adjust an existing Mean Radiant Temperature for shortwave solar radiation.  This adjusted mean radiant temperature can then be used in comfort studies.
 _
-Note that this component assumes that you have already accounted for longwave radiation in the form of the meanRadTemperature_ input.  If you do not hook up a meanRadTemperature_, this component will assume that the surrounding radiant temperature is the same as the air temperature, which is a decent assumption for someone standing in an unobstructed field.  However, the more obstacles that surround the person (and the more "context" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.  Also note that this component is not meant to account for shortwave radiation passing through glass.
+Note that this component assumes that you have already accounted for longwave radiation in the form of the _meanRadTemperature input.  If you do not hook up a _meanRadTemperature, this component will assume that the surrounding radiant temperature is the same as the air temperature, which is a decent assumption for someone standing in an unobstructed field.  However, the more obstacles that surround the person (and the more "context" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.  Also note that this component is not meant to account for shortwave radiation passing through glass.
 _
 This component uses Radiance functions in order to determine the amount of direct and diffuse solar radiation falling on a comfort mannequin.  The portion reflected off of the ground to the comfort mannequin is derived from these values of direct and diffuse radiation.
 
@@ -18,18 +18,20 @@ http://escholarship.org/uc/item/89m1h2dg#page-4
 Provided by Ladybug 0.0.58
     
     Args:
-        _cumulativeSkyMtx: The output from a GenCumulativeSkyMtx component.
-        _dryBulbTemperature: The direct output of dryBulbTemperature from the Import EPW component or air temperatures from an hourly annual EnergyPlus simulation.
-        meanRadiantTemperature_: A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  If no value is plugged in here, this component will assume that the mean radiant temperature is equal to air temperature value above, which is a decent assumption for someone standing in an unobstructed field.  However, the more obstacles that surround the person (and the more "context" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.
+        _location: The location output from the "Ladybug_Import epw" component.
+        _cumSkyMtxOrDirNormRad: Either the output from a GenCumulativeSkyMtx component (for high-resolution analysis) or the directNormalRadiation ouput from the "Ladybug_Import epw" component (for simple, low-resolution analsysis).
+        _diffuseHorizRad: If you are running a simple analysis without the GenCumulativeSkyMtx component, you must provide the diffuseHorizaontalRadiation ouput from the "Ladybug_Import epw" component here.
+        _meanRadTemperature: A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can also accept air temperature data from the Import_epw component and will follow the assumption that the radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more "contextShading_" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.
         -------------------------: ...
-        bodyPosture_: An interger to set the posture of the comfort mannequin, which can have a large effect on the radiation striking the mannequin.  0 = Standing, 1 = Sitting, and 2 = Lying Down.  The default is set to 1 for sitting.
+        bodyPosture_: An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting.
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
         bodyLocation_: An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. The default is set to the Rhino origin.
-        contextShading_: Optional breps or meshes that represent shading and solar obstructions around the mannequin.  Note that, if you end up having a lot of these, you should make sure that you input a starting meanRadTemperature_ derived from an energy simulation.
+        contextShading_: Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  Note that, if you end up having a lot of these, you should make sure that you input a starting _meanRadTemperature that accounts for the temperature of all these shading surfaces.  Note that, if you are using this for indoor analysis, you should not include windows as shading and instead factor them into the windowTransmissivity_ below.
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         -------------------------: ...
         groundReflectivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation reflected off of the ground.  By default, this is set to 0.25, which is characteristic of outdoor grass or dry bare soil.  You may want to increase this value for concrete or decrease it for water or dark soil.
         clothingAbsorptivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.67 for (white) skin and average clothing.  You may want to increase this value for darker skin or darker clothing.
+        windowTransmissivity_: An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions. 
         -------------------------: ...
         analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
@@ -40,8 +42,7 @@ Provided by Ladybug 0.0.58
         --------------------: ...
         effectiveRadiantField: The estimated effective radiant field of the comfort mannequin induced by the sun for each hour of the analysis period.  This is in W/m2.
         MRTDelta: The estimated change in mean radiant temperature for the comfort mannequin induced by the solar radiation.  This is in degreed Celcius.
-        solarAdjustedMRT: The estimated solar adjusted mean radiant temperature for each hour of the analysis period.  This is essentially the change in mean radiant temperature above added to the hourly meanRadTemperature_ input.  This is in degreed Celcius and can be plugged into any comfort components for comfort studies.
-        solarAdjOperativeTemp: The estimated change in operative temperature for each hour of the analysis period.  This is essentially an average of the solarAdjustedMRT above and the input dryBulbTemperature_.  This is in degrees celcius.
+        solarAdjustedMRT: The estimated solar adjusted mean radiant temperature for each hour of the analysis period.  This is essentially the change in mean radiant temperature above added to the hourly _meanRadTemperature input.  This is in degreed Celcius and can be plugged into any comfort components for comfort studies.
         --------------------: ...
         mannequinMesh: A colored mesh of a comfort mannequin showing the amount of radiation falling over the mannequin's body.
         legend: A legend that corresponds to the colors on the mannequinMesh and shows the relative W/m2.
@@ -50,11 +51,11 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_25_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 
@@ -68,6 +69,44 @@ from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
 import System.Threading.Tasks as tasks
+
+
+inputsDict = {
+    
+0: ["_location", "The location output from the 'Ladybug_Import epw' component."],
+1: ["_cumSkyMtxOrDirNormRad", "Either the output from a GenCumulativeSkyMtx component (for high-resolution analysis) or the directNormallRadiation ouput from the 'Ladybug_Import epw' component (for simple, low-resolution analsysis)."],
+2: ["_diffuseHorizRad", "If you are running a simple analysis without the GenCumulativeSkyMtx component, you must provide the diffuseHorizaontalRadiation ouput from the 'Ladybug_Import epw' component here."],
+3: ["_meanRadTemperature", "A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can also accept air temperature data from the Import_epw component and will follow the assumption that the radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more 'contextShading_' that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation."],
+4: ["-------------------------", "..."],
+5: ["bodyPosture_", "An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting."],
+6: ["rotationAngle_", "An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature."],
+7: ["bodyLocation_", "An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. The default is set to the Rhino origin."],
+8: ["contextShading_", "Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  Note that, if you end up having a lot of these, you should make sure that you input a starting _meanRadTemperature that accounts for the temperature of all these shading surfaces.  Note that, if you are using this for indoor analysis, you should not include windows as shading and instead factor them into the windowTransmissivity_ below."],
+9: ["north_", "Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees)."],
+10: ["-------------------------", "..."],
+11: ["groundReflectivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation reflected off of the ground.  By default, this is set to 0.25, which is characteristic of outdoor grass or dry bare soil.  You may want to increase this value for concrete or decrease it for water or dark soil."],
+12: ["clothingAbsorptivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.67 for (white) skin and average clothing.  You may want to increase this value for darker skin or darker clothing."],
+13: ["windowTransmissivity_", "An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions. "],
+14: ["-------------------------", "..."],
+15: ["analysisPeriod_", "An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year."],
+16: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
+17: ["parallel_", "Set to 'True' to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine."],
+18: ["_runIt", "The legend base point, which can be used to move the legend in relation to the chart with the grasshopper 'move' component."]
+}
+
+
+outputsDict = {
+    
+0: ["readMe!", "..."],
+1: ["--------------------", "..."],
+2: ["effectiveRadiantField", "The estimated effective radiant field of the comfort mannequin induced by the sun for each hour of the analysis period.  This is in W/m2."],
+3: ["MRTDelta", "The estimated change in mean radiant temperature for the comfort mannequin induced by the solar radiation.  This is in degreed Celcius."],
+4: ["solarAdjustedMRT", "The estimated solar adjusted mean radiant temperature for each hour of the analysis period.  This is essentially the change in mean radiant temperature above added to the hourly _meanRadTemperature input.  This is in degreed Celcius and can be plugged into any comfort components for comfort studies."],
+5: ["--------------------", "..."],
+6: ["mannequinMesh", "A colored mesh of a comfort mannequin showing the amount of radiation falling over the mannequin's body."],
+7: ["legend", "A legend that corresponds to the colors on the mannequinMesh and shows the relative W/m2."],
+8: ["legendBasePt", "The input data normalized by the floor area of it corresponding zone."]
+}
 
 
 def checkTheInputs():
@@ -94,51 +133,32 @@ def checkTheInputs():
         #Set a default value for epwStr.
         epwStr = []
         
-        #Check to see if the user has connected valid air temperature data.
+        #Check to see if the user has connected valid MRT data.
         checkData1 = False
-        airTemp = []
-        if len(_dryBulbTemperature) != 0:
+        radTemp = []
+        if len(_meanRadTemperature) != 0:
             try:
-                if "Temperature" in _dryBulbTemperature[2]:
-                    airTemp = _dryBulbTemperature[7:]
+                if "Temperature" in _meanRadTemperature[2]:
+                    radTemp = _meanRadTemperature[7:]
                     checkData1 = True
-                    epwStr = _dryBulbTemperature[0:7]
+                    epwData = True
+                    epwStr = _meanRadTemperature[0:7]
             except: pass
             if checkData1 == False:
-                warning = '_dryBulbTemperature input does not contain valid temperature values from the ImportEPW component or a Honeybee energy simulation.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        else:
-            print 'Connect a list of temperature data for _dryBulbTemperature'
-        
-        #Check to see if the user has connected valid MRT data.
-        checkData2 = False
-        radTemp = []
-        radMultVal = False
-        if len(meanRadTemperature_) != 0:
-            try:
-                if "Temperature" in meanRadTemperature_[2]:
-                    radTemp = meanRadTemperature_[7:]
-                    checkData2 = True
-                    epwData = True
-                    epwStr = meanRadTemperature_[0:7]
-            except: pass
-            if checkData2 == False:
-                for item in meanRadTemperature_:
+                for item in _meanRadTemperature:
                     try:
                         radTemp.append(float(item))
-                        checkData2 = True
-                    except: checkData2 = False
-            if len(radTemp) > 1: radMultVal = True
-            if checkData2 == False:
-                warning = 'meanRadTemperature_ input does not contain valid temperature values in degrees Celcius.'
+                        checkData1 = True
+                    except: checkData1 = False
+            if checkData1 == False:
+                warning = '_meanRadTemperature input does not contain valid temperature values in degrees Celcius.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         else:
-            checkData2 = True
-            radTemp = airTemp
-            if len (radTemp) > 1: radMultVal = True
-            print 'No value connected for meanRadiantTemperature_.  It will be assumed that the radiant temperature is the same as the air temperature.'
+            print 'Connect a value for meanRadiantTemperature_.'
+            if _runIt == True:
+                warning = 'Connect a value for meanRadiantTemperature_.'
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         #If there is only one value for MRT, duplicate it 8760 times.
         if len(radTemp) < 8760 and len(radTemp) !=0:
             if len(radTemp) == 1:
@@ -147,20 +167,96 @@ def checkTheInputs():
                     dupData.append(data[0])
                 radTemp = dupData
             else:
-                checkData2 = False
-                warning = 'Input for meanRadTemperature_ must be either the output of an energy simulation, a list of 8760 values, or a single MRT to be applied for every hour of the year..'
+                checkData1 = False
+                warning = 'Input for _meanRadTemperature must be either the output of an energy simulation, a list of 8760 values, or a single MRT to be applied for every hour of the year.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         
+        #Check to be sure the there is a _cumSkyMtxOrDirNormRad and use it to set the method of the component.
+        checkData2 = False
+        cumSkyMtx = None
+        location = None
+        methodInit = 0
+        directSolarRad = []
+        if len(_cumSkyMtxOrDirNormRad) > 0:
+            if _cumSkyMtxOrDirNormRad != [None]:
+                if "SkyResultsCollection object" in str(_cumSkyMtxOrDirNormRad[0]):
+                    checkData2 = True
+                    cumSkyMtx = _cumSkyMtxOrDirNormRad[0]
+                    location = cumSkyMtx.location
+                elif str(_cumSkyMtxOrDirNormRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
+                    try:
+                        if 'Direct Normal Radiation' in _cumSkyMtxOrDirNormRad[2] and len(_cumSkyMtxOrDirNormRad) == 8767:
+                            location = _cumSkyMtxOrDirNormRad[1]
+                            methodInit = 2
+                            checkData2 = True
+                            directSolarRad = _cumSkyMtxOrDirNormRad[7:]
+                        else:
+                            warning = 'Weather data connected to _cumSkyMtxOrDirNormRad is not Direct Normal Radiation or is not hourly data for a full year.'
+                            print warning
+                            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    except:
+                        warning = 'Invalid value for _cumSkyMtxOrDirNormRad.'
+                        print warning
+                        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                else:
+                    warning = 'Invalid value for _cumSkyMtxOrDirNormRad.'
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            else:
+                warning = 'Null value connected for _cumSkyMtxOrDirNormRad.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        
+        # Get the diffuse Horizontal radiation.
+        checkData8 = True
+        diffSolarRad = []
+        if methodInit == 2:
+            if len(_diffuseHorizRad) > 0:
+                if _diffuseHorizRad != [None]:
+                    if str(_diffuseHorizRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
+                        try:
+                            if 'Diffuse Horizontal Radiation' in _diffuseHorizRad[2] and len(_diffuseHorizRad) == 8767:
+                                diffSolarRad = _diffuseHorizRad[7:]
+                            else:
+                                checkData8 = False
+                                warning = 'Weather data connected to _diffuseHorizRad is not Diffuse Horizontal Radiation or is not hourly data for a full year.'
+                                print warning
+                                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                        except:
+                            checkData8 = False
+                            warning = 'Invalid value for _diffuseHorizRad.'
+                            print warning
+                            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    else:
+                        checkData8 = False
+                        warning = 'Invalid value for _diffuseHorizRad.'
+                        print warning
+                        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                else:
+                    checkData8 = False
+                    warning = 'Null value connected for _diffuseHorizRad.'
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        
         #Check the bodyPosture_ input to be sure that it is a valid interger.
-        if bodyPosture_ != 0 and bodyPosture_ != 1 and bodyPosture_ != 2 and bodyPosture_ != None:
-            checkData3 = False
-            warning = 'Input for bodyPosture_ is not an accepted input interger.'
-            print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        else: checkData3 = True
-        if bodyPosture_ == None: bodyPosture = 1
-        else: bodyPosture = bodyPosture_
+        checkData3 = True
+        if methodInit == 0:
+            if bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2:
+                bodyPosture = bodyPosture_
+            elif bodyPosture_ == 3 or bodyPosture_ == 4 or bodyPosture_ == 5:
+                bodyPosture = bodyPosture_
+                methodInit = 1
+            elif bodyPosture_ == None:
+                bodyPosture = 1
+            else:
+                checkData3 = False
+                warning = 'Input for bodyPosture_ is not an accepted input interger.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        else:
+            bodyPosture = -1
+        
         
         #Convert the rotation angle to radians or set a default of 0 if there is none.
         if rotationAngle_ != None:
@@ -169,11 +265,16 @@ def checkTheInputs():
             rotateAngle = 0.0
         
         #Create the comfort mannequin.
-        if checkData3 == True:
+        conversionFac = lb_preparation.checkUnits()
+        if checkData3 == True and methodInit != 2:
             if bodyPosture == 1:
                 mannequinData = lb_comfortModels.getSeatedMannequinData()
-            else:
+            elif bodyPosture == 0 or bodyPosture == 2:
                 mannequinData = lb_comfortModels.getStandingMannequinData()
+            elif bodyPosture == 4:
+                mannequinData = lb_comfortModels.getSeatedMannequinSimple()
+            elif bodyPosture == 3 or bodyPosture == 5:
+                mannequinData = lb_comfortModels.getStandingMannequinSimple()
             #Construct the mannequin from the point data.
             mannequinMeshBreps = []
             for faceList in mannequinData:
@@ -187,12 +288,11 @@ def checkTheInputs():
                     surface = rc.Geometry.Brep.CreateFromCornerPoints(surfacePts[0], surfacePts[1], surfacePts[2], sc.doc.ModelAbsoluteTolerance)
                 mannequinMeshBreps.append(surface)
             mannequinMesh = rc.Geometry.Brep.JoinBreps(mannequinMeshBreps, sc.doc.ModelAbsoluteTolerance)[0]
-            #Scale the Mannequin based on the model units.
-            conversionFac = lb_preparation.checkUnits()
+            #Scale the mannequin based on the model units.
             scale = rc.Geometry.Transform.Scale(rc.Geometry.Plane.WorldXY, 1/conversionFac, 1/conversionFac, 1/conversionFac)
             mannequinMesh.Transform(scale)
             #If the user has selected a mannequin laying down, rotate the standing mannequin.
-            if bodyPosture == 2:
+            if bodyPosture == 2 or bodyPosture == 5:
                 lieDownTransform = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.ZAxis, rc.Geometry.Vector3d.YAxis, rc.Geometry.Point3d.Origin)
                 moveUpTransform = rc.Geometry.Transform.Translation(0,-.85,.15)
                 mannequinMesh.Transform(lieDownTransform)
@@ -208,9 +308,13 @@ def checkTheInputs():
                 moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z)
                 mannequinMesh.Transform(moveTransform)
             else: pass
-            #Turn the mannequin mesh into a brep.
+            #Turn the mannequin brep into a mesh.
             mannequinMesh = rc.Geometry.Mesh.CreateFromBrep(mannequinMesh, rc.Geometry.MeshingParameters.Coarse)
-        else: mannequinMesh = None
+        elif methodInit == 2:
+            if bodyLocation_ != None: mannequinMesh = bodyLocation_
+            elif bodyPosture_ == 0 or bodyPosture_ == 3: mannequinMesh = rc.Geometry.Point3d(0,0, 0.75)
+            elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None: mannequinMesh = rc.Geometry.Point3d(0,0, 0.56)
+            else: mannequinMesh = rc.Geometry.Point3d(0,0, 0.1)
         
         #Create a ground mesh.
         groundMesh = rc.Geometry.Mesh()
@@ -230,7 +334,7 @@ def checkTheInputs():
         # Mesh the context.
         if len(contextShading_)!=0:
             ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
-            contextMesh, contextBrep = lb_preparation.cleanAndCoerceList(context)
+            contextMesh, contextBrep = lb_preparation.cleanAndCoerceList(contextShading_)
             
             ## mesh Brep
             contextMeshedBrep = lb_mesh.parallel_makeContextMesh(contextBrep)
@@ -270,6 +374,21 @@ def checkTheInputs():
             cloA = 0.67
             print 'No value found for clothingAbsorptivity_.  The clothing absorptivity will be set to 0.67 for (white) skin and average clothing.'
         
+        #Check the windowTransmissivity_.
+        checkData6 = True
+        if windowTransmissivity_ != None:
+            if windowTransmissivity_ <= 1.0 and windowTransmissivity_ >= 0.0:
+                winTrans = windowTransmissivity_
+            else:
+                winTrans = None
+                checkData6 = False
+                warning = 'windowTransmissivity_ must be a value between 0 and 1.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        else:
+            winTrans = 1
+            print 'No value found for windowTransmissivity_.  The window transmissivity will be set to 1.0 for a fully outdoor calculation.'
+        
         #Set the default parallel to true.
         if parallel_ == None:
             parallel = True
@@ -288,15 +407,91 @@ def checkTheInputs():
             northVector = rc.Geometry.Vector3d.YAxis
             northAngle = 0.0
         
+        #Pull the location data from the inputs.
+        checkData7 = True
+        latitude = None
+        longitude = None
+        timeZone = None
+        if _location != None:
+            try:
+                locList = _location.split('\n')
+                for line in locList:
+                    if "Latitude" in line: latitude = float(line.split(',')[0])
+                    elif "Longitude" in line: longitude = float(line.split(',')[0])
+                    elif "Time Zone" in line: timeZone = float(line.split(',')[0])
+            except:
+                checkData7 = False
+                warning = 'The connected _location is not a valid location from the "Ladybug_Import EWP" component or the "Ladybug_Construct Location" component.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(w, warning)
+        else:
+            checkData7 = False
+            print 'Connect a _location from the "Ladybug_Import EWP" component or the "Ladybug_Construct Location" component.'
+        
+        
         #Check if everything is good.
-        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True:
+        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True:
             checkData = True
         else:
             checkData = False
         
-        return checkData, airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, conversionFac, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
+        return checkData, methodInit, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
     else:
         return -1
+
+
+def manageInputOutput(method):
+    #If some of the component inputs and outputs are not right, blot them out or change them.
+    for input in range(19):
+        if input == 2:
+            if method == 0 or method == 1:
+                ghenv.Component.Params.Input[input].NickName = "."
+                ghenv.Component.Params.Input[input].Name = "."
+                ghenv.Component.Params.Input[input].Description = " "
+            else:
+                ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+                ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+                ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+        elif input == 6 and method == 2:
+            ghenv.Component.Params.Input[input].NickName = "."
+            ghenv.Component.Params.Input[input].Name = "."
+            ghenv.Component.Params.Input[input].Description = " "
+        elif input == 16 and method == 2:
+            ghenv.Component.Params.Input[input].NickName = "."
+            ghenv.Component.Params.Input[input].Name = "."
+            ghenv.Component.Params.Input[input].Description = " "
+        else:
+            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+    
+    for output in range(9):
+        if output == 7 and method == 2:
+            ghenv.Component.Params.Output[output].NickName = "."
+            ghenv.Component.Params.Output[output].Name = "."
+            ghenv.Component.Params.Output[output].Description = " "
+        elif output == 8 and method == 2:
+            ghenv.Component.Params.Output[output].NickName = "."
+            ghenv.Component.Params.Output[output].Name = "."
+            ghenv.Component.Params.Output[output].Description = " "
+        else:
+            ghenv.Component.Params.Output[output].NickName = outputsDict[output][0]
+            ghenv.Component.Params.Output[output].Name = outputsDict[output][0]
+            ghenv.Component.Params.Output[output].Description = outputsDict[output][1]
+    
+    return True
+
+def restoreInputOutput():
+    for input in range(19):
+        ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+    
+    for output in range(9):
+        ghenv.Component.Params.Output[output].NickName = outputsDict[output][0]
+        ghenv.Component.Params.Output[output].Name = outputsDict[output][0]
+        ghenv.Component.Params.Output[output].Description = outputsDict[output][1]
+
 
 
 def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH):
@@ -452,21 +647,20 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 
 
-def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, conversionFac, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
+def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, location, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
     solarAdjustedMRT = []
-    solarAdjOperativeTemp = []
     hourOrder = []
     
     #Define the fraction of the body visible to radiation.
-    if bodyPosture_ == 0:
+    if bodyPosture_ == 0 or bodyPosture_ == 3:
         fracEff = 0.725
-    elif bodyPosture_ == 1:
+    elif bodyPosture_ == 1 or bodyPosture_ == 4:
         fracEff = 0.696
     else:
-        fracEff = 0.5
+        fracEff = 0.68
     
     #Define a good guess of a radiative heat transfer coefficient.
     radTransCoeff = 6.012
@@ -479,18 +673,15 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
         newAirTemp = []
         newRadTemp = []
         for hour in HOYS:
-            newAirTemp.append(airTemp[hour-1])
             newRadTemp.append(radTemp[hour-1])
-        airTemp = newAirTemp
         radTemp = newRadTemp
     
     currentERF = []
-    for count, temp in enumerate(radTemp):
-        erf = fracEff * radTransCoeff *(temp - airTemp[count])
-        currentERF.append(erf)
+    for temp in radTemp:
+        currentERF.append(0)
     
     #Calculate the sun-up hours of the year to help make things faster down the road.
-    lb_sunpath.initTheClass(float(_cumulativeSkyMtx.lat), northAngle, rc.Geometry.Point3d.Origin, 100, float(_cumulativeSkyMtx.lngt), float(_cumulativeSkyMtx.timeZone))
+    lb_sunpath.initTheClass(float(latitude), northAngle, rc.Geometry.Point3d.Origin, 100, float(longitude), float(timeZone))
     altitudes = []
     for hour in HOYS:
         d, m, t = lb_preparation.hour2Date(hour, True)
@@ -500,11 +691,11 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
     
     #Process the cumulative sky into an initial selected sky.
     skyMtxLists = []
-    skyMtxLists = getCumulativeSky(_cumulativeSkyMtx.d, analysisPeriod)
+    skyMtxLists = getCumulativeSky(cumSkyMtx.d, analysisPeriod)
     unit = 'kWh/m2'
     
     if len(skyMtxLists)!=0:
-        selectedSkyMtx = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
+        selectedSkyMtx = prepareLBList(skyMtxLists, analysisPeriod, location, unit, False, False)
         cumSky_radiationStudy = selectedSkyMtx
         
         #Set defaults.
@@ -545,7 +736,11 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
         personMeshAreas = []
         for area in meshSrfAreas[:-1]:
             personMeshAreas.append(area*conversionFac*conversionFac)
-        totalPersonArea = sum(personMeshAreas)
+        if method == 0:
+            totalPersonArea = sum(personMeshAreas)
+        elif method == 1:
+            totalPersonArea = 1.775
+        
         
         #Define functions for computing the radiation for each hour, which is in parallal and not in parallel.
         def nonParallelRadCalc():
@@ -553,8 +748,8 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
                 if count != len(HOYS)-1: lastVal = 1
                 else: lastVal = 0
                 if altitudes[count] > 0 or altitudes[count-1] > 0 or altitudes[count+lastVal] > 0:
-                    skyMtxLists, _analysisPeriod_ = getHourlySky(_cumulativeSkyMtx.d, hour)
-                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
+                    skyMtxLists, _analysisPeriod_ = getHourlySky(cumSkyMtx.d, hour)
+                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, location, unit, False, False)
                     
                     indexList, listInfo = lb_preparation.separateList(selSkyMatrix, lb_preparation.strToBeFound)
                     #separate total, diffuse and direct radiations
@@ -578,6 +773,11 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
                     groundRad = radiationResult[-1]
                     totalPersonBeamDiffRad = sum([a*b for a,b in zip(personRad,personMeshAreas)])
                     
+                    #Account for the transmissivity of glass.
+                    if winTrans != 1:
+                        groundRad = groundRad*winTrans
+                        totalPersonBeamDiffRad = totalPersonBeamDiffRad*winTrans
+                    
                     #Calculate the additional radiation reflected to the person by the ground.
                     groundRefRad = 0.5 * groundRad * fracEff * groundR
                     
@@ -590,15 +790,12 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
                     
                     #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
                     hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
-                    hourOp = (hourMRT+airTemp[count])/2
                     solarAdjustedMRT.append(hourMRT)
-                    solarAdjOperativeTemp.append(hourOp)
                     mrtDelt = hourMRT - radTemp[count]
                     MRTDelta.append(mrtDelt)
                 else:
                     ERF.append(currentERF[count])
                     solarAdjustedMRT.append(radTemp[count])
-                    solarAdjOperativeTemp.append((radTemp[count] + airTemp[count])/2)
                     MRTDelta.append(0)
             return True
         
@@ -607,8 +804,8 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
                 if count != len(HOYS)-1: lastVal = 1
                 else: lastVal = 0
                 if altitudes[count] > 0 or altitudes[count-1] > 0 or altitudes[count+lastVal] > 0:
-                    skyMtxLists, _analysisPeriod_ = getHourlySky(_cumulativeSkyMtx.d, HOYS[count])
-                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, _cumulativeSkyMtx.location, unit, False, False)
+                    skyMtxLists, _analysisPeriod_ = getHourlySky(cumSkyMtx.d, HOYS[count])
+                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, location, unit, False, False)
                     
                     indexList, listInfo = lb_preparation.separateList(selSkyMatrix, lb_preparation.strToBeFound)
                     #separate total, diffuse and direct radiations
@@ -632,6 +829,11 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
                     groundRad = radiationResult[-1]
                     totalPersonBeamDiffRad = sum([a*b for a,b in zip(personRad,personMeshAreas)])
                     
+                    #Account for the transmissivity of glass.
+                    if winTrans != 1:
+                        groundRad = groundRad*winTrans
+                        totalPersonBeamDiffRad = totalPersonBeamDiffRad*winTrans
+                    
                     #Calculate the additional radiation reflected to the person by the ground.
                     groundRefRad = 0.5 * groundRad * fracEff * groundR
                     
@@ -644,15 +846,12 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
                     
                     #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
                     hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
-                    hourOp = (hourMRT+airTemp[count])/2
                     solarAdjustedMRT.append(hourMRT)
-                    solarAdjOperativeTemp.append(hourOp)
                     mrtDelt = hourMRT - radTemp[count]
                     MRTDelta.append(mrtDelt)
                 else:
                     ERF.append(currentERF[count])
                     solarAdjustedMRT.append(radTemp[count])
-                    solarAdjOperativeTemp.append((radTemp[count] + airTemp[count])/2)
                     MRTDelta.append(0)
                 hourOrder.append(count)
             
@@ -671,7 +870,6 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
             ERF = [x for (y,x) in sorted(zip(hourOrder, ERF))]
             MRTDelta = [x for (y,x) in sorted(zip(hourOrder, MRTDelta))]
             solarAdjustedMRT = [x for (y,x) in sorted(zip(hourOrder, solarAdjustedMRT))]
-            solarAdjOperativeTemp = [x for (y,x) in sorted(zip(hourOrder, solarAdjOperativeTemp))]
         
         
         #Add the headers to the computed lists.
@@ -699,21 +897,150 @@ def main(airTemp, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA
         solarAdjustedMRT.insert(0,epwStr[1])
         solarAdjustedMRT.insert(0,epwStr[0])
         
-        solarAdjOperativeTemp.insert(0,analysisPeriod[1])
-        solarAdjOperativeTemp.insert(0,analysisPeriod[0])
-        solarAdjOperativeTemp.insert(0,epwStr[4])
-        solarAdjOperativeTemp.insert(0,'C')
-        solarAdjOperativeTemp.insert(0,'Solar-Adjusted Operative Temp')
-        solarAdjOperativeTemp.insert(0,epwStr[1])
-        solarAdjOperativeTemp.insert(0,epwStr[0])
         
-        
-        return ERF, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, resultColored, legend, legendBasePoint
+        return ERF, MRTDelta, solarAdjustedMRT, resultColored, legend, legendBasePoint
     else:
-        return None, None, None, None, None, None, None
+        return None, None, None, None, None, None
         warning = "cumulativeSkyMtx failed to collect data."
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+
+
+def checkViewResolution(viewResolution, lb_preparation):
+    newVecs = []
+    skyPatches = lb_preparation.generateSkyGeo(rc.Geometry.Point3d.Origin, viewResolution, 1)
+    for patch in skyPatches:
+        patchPt = rc.Geometry.AreaMassProperties.Compute(patch).Centroid
+        Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
+        newVecs.append(Vec)
+    
+    return newVecs
+
+def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, lb_preparation, lb_comfortModels, lb_sunpath):
+    #Define lists to be filled and put headers on them.
+    ERF = []
+    MRTDelta = []
+    solarAdjustedMRT = []
+    hourOrder = []
+    
+    #Define the fraction of the body visible to radiation.
+    if bodyPosture_ == 0 or bodyPosture_ == 3:
+        fracEff = 0.725
+    elif bodyPosture_ == 1 or bodyPosture_ == 4:
+        fracEff = 0.696
+    else:
+        fracEff = 0.68
+    
+    #Define a good guess of a radiative heat transfer coefficient.
+    radTransCoeff = 6.012
+    
+    #Get a list of HOYs for the analysis period
+    HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+    
+    #Compute the existing ERF for the analysis period.
+    if analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
+        newAirTemp = []
+        newRadTemp = []
+        for hour in HOYS:
+            newRadTemp.append(radTemp[hour-1])
+        radTemp = newRadTemp
+    
+    currentERF = []
+    for temp in radTemp:
+        currentERF.append(0)
+    
+    #Calculate the skyview factor of the occupant.
+    if len(context) > 0:
+        viewVectors = checkViewResolution(1, lb_preparation)
+        totalVecNum = len(viewVectors)
+        vecBlockedList = []
+        for viewVec in viewVectors:
+            viewRay = rc.Geometry.Ray3d(mannequinMesh, viewVec)
+            viewBlocked = False
+            for mesh in context:
+                rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, viewRay)
+                if rayIntersect > 0: viewBlocked = True
+            if viewBlocked == True: vecBlockedList.append(1)
+        skyViewFac = 1 - sum(vecBlockedList)/totalVecNum
+    else: skyViewFac = 1
+    
+    #Calculate the sun-up hours of the year in order to understand whether the context geometry will block the sun.
+    lb_sunpath.initTheClass(float(latitude), northAngle, rc.Geometry.Point3d.Origin, 100, float(longitude), float(timeZone))
+    altitudes = []
+    sunVectors = []
+    for hour in HOYS:
+        d, m, t = lb_preparation.hour2Date(hour, True)
+        lb_sunpath.solInitOutput(d, m, t)
+        altitude = lb_sunpath.solAlt
+        altitudes.append(altitude)
+        if altitude > 0:
+            sunVec = lb_sunpath.sunReverseVectorCalc()
+            sunVectors.append(sunVec)
+        else: sunVectors.append(None)
+    
+    #ProjAreaFac should vary for seated and standing postures but, for now I will approximate it.
+    ProjAreaFac = 0.35
+    #Right now, we are going to estimate the Fraction of body exposed to sun as 0.5 but, in the future, I will do this by moving the test points.
+    fBes = 0.5
+    
+    
+    for count, hour in enumerate(HOYS):
+        if altitudes[count] > 0:
+            #Test to see if the sun at that hour is falling on the occupant or is blocked by the context.
+            sunRay = rc.Geometry.Ray3d(mannequinMesh, sunVectors[count])
+            sunBlocked = False
+            for mesh in context:
+                rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, sunRay)
+                if rayIntersect > 0: sunBlocked = True
+            if sunBlocked == False:
+                #Calculate the ERF of the occupant.
+                diffRad = diffSolarRad[hour-1]
+                dirNormRad = directSolarRad[hour-1]
+                globHorizRad = dirNormRad*(math.sin(altitudes[count])) + diffRad
+                hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*dirNormRad))*winTrans)*(cloA/0.95)
+                
+                ERF.append(hourERF)
+                #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
+                hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
+                solarAdjustedMRT.append(hourMRT)
+                mrtDelt = hourMRT - radTemp[count]
+                MRTDelta.append(mrtDelt)
+            else:
+                ERF.append(0)
+                solarAdjustedMRT.append(radTemp[count])
+                MRTDelta.append(0)
+        else:
+                ERF.append(0)
+                solarAdjustedMRT.append(radTemp[count])
+                MRTDelta.append(0)
+    
+    #Add the headers to the computed lists.
+    ERF.insert(0,analysisPeriod[1])
+    ERF.insert(0,analysisPeriod[0])
+    ERF.insert(0,epwStr[4])
+    ERF.insert(0,'kWh/m2')
+    ERF.insert(0,'Effective Radiant Field')
+    ERF.insert(0,epwStr[1])
+    ERF.insert(0,epwStr[0])
+    
+    MRTDelta.insert(0,analysisPeriod[1])
+    MRTDelta.insert(0,analysisPeriod[0])
+    MRTDelta.insert(0,epwStr[4])
+    MRTDelta.insert(0,'C')
+    MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
+    MRTDelta.insert(0,epwStr[1])
+    MRTDelta.insert(0,epwStr[0])
+    
+    solarAdjustedMRT.insert(0,analysisPeriod[1])
+    solarAdjustedMRT.insert(0,analysisPeriod[0])
+    solarAdjustedMRT.insert(0,epwStr[4])
+    solarAdjustedMRT.insert(0,'C')
+    solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
+    solarAdjustedMRT.insert(0,epwStr[1])
+    solarAdjustedMRT.insert(0,epwStr[0])
+    
+    
+    return ERF, MRTDelta, solarAdjustedMRT
 
 
 
@@ -723,18 +1050,27 @@ checkData = False
 results = checkTheInputs()
 
 if results!= -1:
-    checkData, airTemp, radTemp, mannequinMesh, groundMesh, context, groundR, \
-    cloA, parallel, analysisPeriod, northAngle, northVector, epwStr, conversionFac, \
+    checkData, method, radTemp, mannequinMesh, groundMesh, context, groundR, \
+    cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, \
     lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels,\
     lb_sunpath = results
 
+#Change the inputs or outputs based on what is connected.
+checkInputOutput = False
+if checkData == True and results!= -1:
+    checkInputOutput = manageInputOutput(method)
+else: restoreInputOutput()
+
 #Run the analysis.
-if _runIt == True and checkData == True:
-    effectiveRadiantField, MRTDelta, solarAdjustedMRT, solarAdjOperativeTemp, \
-    mannequinMesh, legend, legendBasePt = main(airTemp, radTemp, mannequinMesh, \
-    groundMesh, context, groundR, cloA, parallel, analysisPeriod, northAngle, \
-    northVector, epwStr, conversionFac, lb_preparation, lb_visualization, lb_mesh, \
-    lb_runStudy_GH, lb_comfortModels, lb_sunpath)
+if _runIt == True and checkData == True and checkInputOutput == True:
+    if method == 0 or method == 1:
+        effectiveRadiantField, MRTDelta, solarAdjustedMRT, \
+        mannequinMesh, legend, legendBasePt = main(method, radTemp, mannequinMesh, \
+        groundMesh, context, groundR, cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, \
+        northVector, epwStr, conversionFac, cumSkyMtx, location, lb_preparation, lb_visualization, lb_mesh, \
+        lb_runStudy_GH, lb_comfortModels, lb_sunpath)
+    else:
+        effectiveRadiantField, MRTDelta, solarAdjustedMRT = mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, lb_preparation, lb_comfortModels, lb_sunpath)
 
 #Hide the legend base point.
-ghenv.Component.Params.Output[9].Hidden = True
+ghenv.Component.Params.Output[8].Hidden = True
