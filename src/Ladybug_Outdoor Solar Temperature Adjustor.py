@@ -20,12 +20,12 @@ Provided by Ladybug 0.0.58
     Args:
         _location: The location output from the "Ladybug_Import epw" component.
         _cumSkyMtxOrDirNormRad: Either the output from a GenCumulativeSkyMtx component (for high-resolution analysis) or the directNormalRadiation ouput from the "Ladybug_Import epw" component (for simple, low-resolution analsysis).
-        _diffuseHorizRad: If you are running a simple analysis without the GenCumulativeSkyMtx component, you must provide the diffuseHorizaontalRadiation ouput from the "Ladybug_Import epw" component here.
+        _diffuseHorizRad: If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the "Ladybug_Import epw" component here.  Otherwise, this input is not required.
         _meanRadTemperature: A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can be air temperature data from the 'Import_epw' component and will follow the assumption that the surrounding mean radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more "contextShading_" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.
         -------------------------: ...
         bodyPosture_: An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting.
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
-        bodyLocation_: An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. The default is set to the Rhino origin.
+        bodyLocation_: An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. Note that this point should be the center of gravity of your person.  The default is set to a person just above the Rhino origin.
         contextShading_: Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  If you are using this component for indoor studies, windows or any transparent materials should not be included in this geometry.  You should factor the transmissivity of these materials in with the windowTransmissivity_ input.  Also, note that, if you have a lot of this context geometry, you should make sure that you input a starting _meanRadTemperature that accounts for the temperature of all the temperture of these shading surfaces.
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         -------------------------: ...
@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.58
         -------------------------: ...
         analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
-        parallel_: Set to "True" to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
+        parallel_: Set to "True" to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'
         _runIt: Set to "True" to run the component and calculate solar-adjusted Mean Radiant Temperature.
     Returns:
         readMe!: ...
@@ -75,12 +75,12 @@ inputsDict = {
     
 0: ["_location", "The location output from the 'Ladybug_Import epw' component."],
 1: ["_cumSkyMtxOrDirNormRad", "Either the output from a GenCumulativeSkyMtx component (for high-resolution analysis) or the directNormallRadiation ouput from the 'Ladybug_Import epw' component (for simple, low-resolution analsysis)."],
-2: ["_diffuseHorizRad", "If you are running a simple analysis without the GenCumulativeSkyMtx component, you must provide the diffuseHorizaontalRadiation ouput from the 'Ladybug_Import epw' component here."],
+2: ["_diffuseHorizRad", "If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the 'Ladybug_Import epw' component here.  Otherwise, this input is not required."],
 3: ["_meanRadTemperature", "A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can be air temperature data from the 'Import_epw' component and will follow the assumption that the surrounding mean radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more 'contextShading_' that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation."],
 4: ["-------------------------", "..."],
 5: ["bodyPosture_", "An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting."],
 6: ["rotationAngle_", "An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature."],
-7: ["bodyLocation_", "An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. The default is set to the Rhino origin."],
+7: ["bodyLocation_", "An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. Note that this point should be the center of gravity of your person.  The default is set to a person just above the Rhino origin."],
 8: ["contextShading_", "Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  If you are using this component for indoor studies, windows or any transparent materials should not be included in this geometry.  You should factor the transmissivity of these materials in with the windowTransmissivity_ input.  Also, note that, if you have a lot of this context geometry, you should make sure that you input a starting _meanRadTemperature that accounts for the temperature of all the temperture of these shading surfaces."],
 9: ["north_", "Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees)."],
 10: ["-------------------------", "..."],
@@ -90,7 +90,7 @@ inputsDict = {
 14: ["-------------------------", "..."],
 15: ["analysisPeriod_", "An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year."],
 16: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
-17: ["parallel_", "Set to 'True' to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine."],
+17: ["parallel_", "Set to 'True' to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'"],
 18: ["_runIt", "The legend base point, which can be used to move the legend in relation to the chart with the grasshopper 'move' component."]
 }
 
@@ -305,7 +305,9 @@ def checkTheInputs():
             else: pass
             #Change the location of the mannequin as the user wants.
             if bodyLocation_ != None:
-                moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z)
+                if bodyPosture_ == 0 or bodyPosture_ == 3: moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z - 1/conversionFac)
+                elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None: moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z - 0.56/conversionFac)
+                else: moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z - 0.1/conversionFac)
                 mannequinMesh.Transform(moveTransform)
             else: pass
             #Turn the mannequin brep into a mesh.
@@ -450,8 +452,7 @@ def checkTheInputs():
             print 'No value found for windowTransmissivity_.  The window transmissivity will be set to 1.0 for a fully outdoor calculation.'
         
         #Set the default parallel to true.
-        if parallel_ == None:
-            parallel = True
+        if parallel_ == None: parallel = True
         else: parallel = parallel_
         
         #Make the default analyisis period for the whole year if the user has not input one.
