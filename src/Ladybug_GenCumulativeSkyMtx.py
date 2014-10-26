@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_22_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_26_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -228,13 +228,26 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
         return value
         
     lineCount = 0
+    extraHeadingLines = 0 # no heading
     warnOff = False
     failedHours = {}
     for difLine, dirLine in izip(resFileDif, resFileDir):
-        # that line is an empty line to separate patches
-        hour = (lineCount+1)% 8761
+        # new version of gendaymtx genrates a header
+        # this is a check to make sure the component will work for both versions
+        if lineCount == 0 and difLine.startswith("#?RADIANCE"):
+            # the file has a header
+            extraHeadingLines = -8
+            
+        if lineCount + extraHeadingLines < 0:
+            # pass heading line
+            lineCount += 1
+            continue
+        
+        # these lines is an empty line to separate patches do let's pass them
+        hour = (lineCount + 1 + extraHeadingLines)% 8761
+        
         if hour != 0:
-            patchNumber = int((lineCount + 1) /8761)
+            patchNumber = int((lineCount + 1 + extraHeadingLines) /8761)
             
             #
             for rowCount, patchCountInRow in enumerate(numOfPatchesInEachRow[n]):
@@ -255,7 +268,7 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
                 day, month, time = hour2Date(hour - 1)
                 if hour-1 not in failedHours.keys():
                     failedHours[hour-1] = [day, month, time]
-                    print month + "/" + day + " @" + time
+                    print "Failed to read the results > " + month + "/" + day + " @" + time
                 
             try: radValuesDict[patchNumber][hour] = [difValue, dirValue]
             except: print patchNumber, hour, value
