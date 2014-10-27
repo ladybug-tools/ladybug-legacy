@@ -325,7 +325,8 @@ def checkTheInputs():
                     mannequinX = 0
                     mannequinY = 0
                 offsetDist = 0.9/conversionFac
-                offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/9), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/9), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/9), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/9, (mannequinAvgHeight + offsetDist)]
+                if bodyPosture_ == 0: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/9), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/9), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/9), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/9, (mannequinAvgHeight + offsetDist)]
+                else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
                 for height in offsetHeights:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
             elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
@@ -338,7 +339,8 @@ def checkTheInputs():
                     mannequinX = 0
                     mannequinY = 0
                 offsetDist = 0.5/conversionFac
-                offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/9), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/9), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/9), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/9, (mannequinAvgHeight + offsetDist)]
+                if bodyPosture_ == 1 or bodyPosture_ == None: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/9), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/9), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/9), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/9, (mannequinAvgHeight + offsetDist)]
+                else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
                 for height in offsetHeights:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
             else:
@@ -351,7 +353,8 @@ def checkTheInputs():
                     mannequinX = 0
                     mannequinY = 0
                 offsetDist = 0.9/conversionFac
-                offsetY = [mannequinY - offsetDist, (mannequinY - offsetDist)+((offsetDist*2)/9), (mannequinY - offsetDist)+((offsetDist*4)/9), (mannequinY - offsetDist)+((offsetDist*6)/9), mannequinY, (mannequinY + offsetDist)-((offsetDist*6)/9), (mannequinY + offsetDist)-((offsetDist*4)/9), (mannequinY + offsetDist)-(offsetDist*2)/9, (mannequinY + offsetDist)]
+                if bodyPosture_ == 2: offsetY = [mannequinY - offsetDist, (mannequinY - offsetDist)+((offsetDist*2)/9), (mannequinY - offsetDist)+((offsetDist*4)/9), (mannequinY - offsetDist)+((offsetDist*6)/9), mannequinY, (mannequinY + offsetDist)-((offsetDist*6)/9), (mannequinY + offsetDist)-((offsetDist*4)/9), (mannequinY + offsetDist)-(offsetDist*2)/9, (mannequinY + offsetDist)]
+                else: offsetY = [mannequinY - offsetDist, mannequinY, mannequinY + offsetDist]
                 for yTrans in offsetY:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, yTrans, mannequinAvgHeight))
                 
@@ -1428,9 +1431,10 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                         rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, ray)
                         if rayIntersect > 0: sunBlocked = True
                     if sunBlocked == False:fBesList.append(1)
+                    else: fBesList.append(0)
                 
                 #Finally, calculate Fbes from that which was blocked.
-                fBes = sum(fBesList)/9
+                fBes = sum(fBesList)/len(fBesList)
             else:
                 fBes = 1
             
