@@ -1379,6 +1379,9 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
         currentERF.append(0)
     
     #Calculate the skyview factor of the occupant.
+    if bodyPosture_ == None or bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2: middlePt = mannequinMesh[4]
+    else: middlePt = mannequinMesh[1]
+    
     if len(context) > 0:
         viewVectors = []
         viewTuples = lb_preparation.TregenzaPatchesNormalVectors
@@ -1387,7 +1390,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
         totalVecNum = len(viewVectors)
         vecBlockedList = []
         for viewVec in viewVectors:
-            viewRay = rc.Geometry.Ray3d(mannequinMesh[4], viewVec)
+            viewRay = rc.Geometry.Ray3d(middlePt, viewVec)
             viewBlocked = False
             for mesh in context:
                 rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, viewRay)
