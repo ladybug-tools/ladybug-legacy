@@ -164,7 +164,7 @@ def checkTheInputs():
             if len(radTemp) == 1:
                 dupData = []
                 for count in range(8760):
-                    dupData.append(data[0])
+                    dupData.append(radTemp[0])
                 radTemp = dupData
             else:
                 checkData1 = False
@@ -360,19 +360,22 @@ def checkTheInputs():
                 offsetDist = 0.9/conversionFac
         
         #Create a ground mesh.
-        groundMesh = rc.Geometry.Mesh()
-        point1 = rc.Geometry.Point3d(-.5, -1, 0)
-        point2 = rc.Geometry.Point3d(-.5, -2, 0)
-        point3 = rc.Geometry.Point3d(.5, -2, 0)
-        point4 = rc.Geometry.Point3d(.5, -1, 0)
-        groundMesh.Vertices.Add(point1)
-        groundMesh.Vertices.Add(point2)
-        groundMesh.Vertices.Add(point3)
-        groundMesh.Vertices.Add(point4)
-        groundMesh.Faces.AddFace(0, 1, 2, 3)
-        if bodyLocation_ != None:
-            groundMesh.Transform(moveTransform)
-        else: pass
+        if checkData3 == True and methodInit != 2:
+            groundMesh = rc.Geometry.Mesh()
+            point1 = rc.Geometry.Point3d(-.5, -1, 0)
+            point2 = rc.Geometry.Point3d(-.5, -2, 0)
+            point3 = rc.Geometry.Point3d(.5, -2, 0)
+            point4 = rc.Geometry.Point3d(.5, -1, 0)
+            groundMesh.Vertices.Add(point1)
+            groundMesh.Vertices.Add(point2)
+            groundMesh.Vertices.Add(point3)
+            groundMesh.Vertices.Add(point4)
+            groundMesh.Faces.AddFace(0, 1, 2, 3)
+            if bodyLocation_ != None:
+                groundMesh.Transform(moveTransform)
+            else: pass
+        else:
+            groundMesh = None
         
         # Mesh the context.
         if len(contextShading_)!=0:
@@ -938,27 +941,27 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
         #Add the headers to the computed lists.
         ERF.insert(0,analysisPeriod[1])
         ERF.insert(0,analysisPeriod[0])
-        ERF.insert(0,epwStr[4])
+        ERF.insert(0,'Hourly')
         ERF.insert(0,'kWh/m2')
         ERF.insert(0,'Effective Radiant Field')
-        ERF.insert(0,epwStr[1])
-        ERF.insert(0,epwStr[0])
+        ERF.insert(0,str(location))
+        ERF.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
         
         MRTDelta.insert(0,analysisPeriod[1])
         MRTDelta.insert(0,analysisPeriod[0])
-        MRTDelta.insert(0,epwStr[4])
+        MRTDelta.insert(0,'Hourly')
         MRTDelta.insert(0,'C')
         MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
-        MRTDelta.insert(0,epwStr[1])
-        MRTDelta.insert(0,epwStr[0])
+        MRTDelta.insert(0,str(location))
+        MRTDelta.insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
         
         solarAdjustedMRT.insert(0,analysisPeriod[1])
         solarAdjustedMRT.insert(0,analysisPeriod[0])
-        solarAdjustedMRT.insert(0,epwStr[4])
+        solarAdjustedMRT.insert(0,'Hourly')
         solarAdjustedMRT.insert(0,'C')
         solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
-        solarAdjustedMRT.insert(0,epwStr[1])
-        solarAdjustedMRT.insert(0,epwStr[0])
+        solarAdjustedMRT.insert(0,str(location))
+        solarAdjustedMRT.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
         
         
         return ERF, MRTDelta, solarAdjustedMRT, resultColored, legend, legendBasePoint
@@ -1474,27 +1477,27 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
     #Add the headers to the computed lists.
     ERF.insert(0,analysisPeriod[1])
     ERF.insert(0,analysisPeriod[0])
-    ERF.insert(0,epwStr[4])
+    ERF.insert(0,'Hourly')
     ERF.insert(0,'kWh/m2')
     ERF.insert(0,'Effective Radiant Field')
-    ERF.insert(0,epwStr[1])
-    ERF.insert(0,epwStr[0])
+    ERF.insert(0,str(location))
+    ERF.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
     
     MRTDelta.insert(0,analysisPeriod[1])
     MRTDelta.insert(0,analysisPeriod[0])
-    MRTDelta.insert(0,epwStr[4])
+    MRTDelta.insert(0,'Hourly')
     MRTDelta.insert(0,'C')
     MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
-    MRTDelta.insert(0,epwStr[1])
-    MRTDelta.insert(0,epwStr[0])
+    MRTDelta.insert(0,str(location))
+    MRTDelta.insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
     
     solarAdjustedMRT.insert(0,analysisPeriod[1])
     solarAdjustedMRT.insert(0,analysisPeriod[0])
-    solarAdjustedMRT.insert(0,epwStr[4])
+    solarAdjustedMRT.insert(0,'Hourly')
     solarAdjustedMRT.insert(0,'C')
     solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
-    solarAdjustedMRT.insert(0,epwStr[1])
-    solarAdjustedMRT.insert(0,epwStr[0])
+    solarAdjustedMRT.insert(0,str(location))
+    solarAdjustedMRT.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
     
     
     return ERF, MRTDelta, solarAdjustedMRT

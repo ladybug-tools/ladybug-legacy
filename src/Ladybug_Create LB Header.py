@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Create LB Header"
 ghenv.Component.NickName = 'CreateHeader'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_24_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_25_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -74,7 +74,7 @@ def setDefaults():
 
 
 def main(location, dataType, units, timeStep, analysisPeriod):
-    header = [location, dataType, units, timeStep]
+    header = ['key:location/dataType/units/frequency/startsAt/endsAt', location, dataType, units, timeStep]
     header.extend(analysisPeriod)
     
     return header
