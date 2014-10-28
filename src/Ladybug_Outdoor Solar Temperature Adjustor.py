@@ -519,10 +519,6 @@ def manageInputOutput(method):
                 ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
                 ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
                 ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
-        elif input == 6 and method == 2:
-            ghenv.Component.Params.Input[input].NickName = "."
-            ghenv.Component.Params.Input[input].Name = "."
-            ghenv.Component.Params.Input[input].Description = " "
         elif input == 16 and method == 2:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
