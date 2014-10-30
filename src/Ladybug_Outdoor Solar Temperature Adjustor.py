@@ -51,7 +51,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_26_2014'
+ghenv.Component.Message = 'VER 0.0.58\nOCT_30_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -212,32 +212,34 @@ def checkTheInputs():
         checkData8 = True
         diffSolarRad = []
         if methodInit == 2:
-            if len(_diffuseHorizRad) > 0:
-                if _diffuseHorizRad != [None]:
-                    if str(_diffuseHorizRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
-                        try:
-                            if 'Diffuse Horizontal Radiation' in _diffuseHorizRad[2] and len(_diffuseHorizRad) == 8767:
-                                diffSolarRad = _diffuseHorizRad[7:]
-                            else:
+            try:
+                if len(_diffuseHorizRad) > 0:
+                    if _diffuseHorizRad != [None]:
+                        if str(_diffuseHorizRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
+                            try:
+                                if 'Diffuse Horizontal Radiation' in _diffuseHorizRad[2] and len(_diffuseHorizRad) == 8767:
+                                    diffSolarRad = _diffuseHorizRad[7:]
+                                else:
+                                    checkData8 = False
+                                    warning = 'Weather data connected to _diffuseHorizRad is not Diffuse Horizontal Radiation or is not hourly data for a full year.'
+                                    print warning
+                                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                            except:
                                 checkData8 = False
-                                warning = 'Weather data connected to _diffuseHorizRad is not Diffuse Horizontal Radiation or is not hourly data for a full year.'
+                                warning = 'Invalid value for _diffuseHorizRad.'
                                 print warning
                                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-                        except:
+                        else:
                             checkData8 = False
                             warning = 'Invalid value for _diffuseHorizRad.'
                             print warning
                             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                     else:
                         checkData8 = False
-                        warning = 'Invalid value for _diffuseHorizRad.'
+                        warning = 'Null value connected for _diffuseHorizRad.'
                         print warning
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-                else:
-                    checkData8 = False
-                    warning = 'Null value connected for _diffuseHorizRad.'
-                    print warning
-                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            except: pass
         
         #Check the bodyPosture_ input to be sure that it is a valid interger.
         checkData3 = True
@@ -259,10 +261,11 @@ def checkTheInputs():
         
         
         #Convert the rotation angle to radians or set a default of 0 if there is none.
-        if rotationAngle_ != None:
-            rotateAngle = rotationAngle_*0.0174532925
-        else:
-            rotateAngle = 0.0
+        rotateAngle = 0.0
+        if methodInit != 2:
+            try:
+                if rotationAngle_ != None: rotateAngle = rotationAngle_*0.0174532925
+            except: pass
         
         #Create the comfort mannequin.
         conversionFac = lb_preparation.checkUnits()
@@ -519,6 +522,10 @@ def manageInputOutput(method):
                 ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
                 ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
                 ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+        elif input == 6 and method == 2:
+            ghenv.Component.Params.Input[input].NickName = "."
+            ghenv.Component.Params.Input[input].Name = "."
+            ghenv.Component.Params.Input[input].Description = " "
         elif input == 16 and method == 2:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
