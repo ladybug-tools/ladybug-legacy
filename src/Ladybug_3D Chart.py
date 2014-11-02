@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -429,7 +429,9 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     try:
                         xC = float(yCount[0])
                     except:
-                        xC = abs(endHour - stHour) + 1
+                        if 'Daily' in listInfo[i][4]: xC = 7
+                        elif listInfo[i][4] == 'Monthly' or listInfo[i][4] == 'Monthly-> averaged': xC = 1
+                        else: xC = abs(endHour - stHour) + 1
                         
                 if xC == 0: xC = abs(endHour - stHour) + 1
                 xC = int(xC)
