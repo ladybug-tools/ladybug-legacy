@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_29_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_03_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -415,6 +415,7 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
         HOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
     else:
         HOYs = range(8760)
+    HOYStart = HOYs[0]
     
     for hoy in HOYs:
         d, m, h = lb_preparation.hour2Date(hoy, True)
@@ -426,7 +427,7 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
             sunVectors.append(sunVec)
             sunUpHoys.append(hoy)
             for path in allDataDict:
-                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][hoy]))
+                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][hoy-HOYStart]))
     
     #Check to see if the user has requested the highest resolution and, if not, consolidate the sun vectors into sky patches.
     finalSunVecs = []
@@ -467,7 +468,7 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
                 
                 for hour in hourList:
                     for path in allDataDict:
-                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + float(allDataDict[path]["temperture"][hour])
+                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + float(allDataDict[path]["temperture"][hour-HOYStart])
                         allDataDict[path]["divisor"][vecCount] += 1
         
         for path in allDataDict:
