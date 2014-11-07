@@ -51,7 +51,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_30_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_06_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -698,7 +698,17 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     # calculate the boundingbox to find the legendPosition
     personGeo = analysisSrfs.DuplicateMesh()
     personGeo.Faces.DeleteFaces([len(results)-1])
-    lb_visualization.calculateBB([personGeo])
+    if sc.doc.ModelAbsoluteTolerance < 0.005: lb_visualization.calculateBB([personGeo])
+    else:
+        warning = 'Your Rhino model tolerance is not small enough and this will cause the legend text to display weirdly or the text function to fail.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        initBoundBox = rc.Geometry.Mesh.GetBoundingBox(personGeo, rc.Geometry.Plane.WorldXY)
+        scalePlane = rc.Geometry.Plane(initBoundBox.Min, rc.Geometry.Vector3d.ZAxis)
+        scaleTrans = rc.Geometry.Transform.Scale(scalePlane, 2, 2, 2)
+        initBoundBox.Transform(scaleTrans)
+        finBBox = initBoundBox.ToBrep()
+        lb_visualization.calculateBB([finBBox])
     
     # legend geometry
     legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
