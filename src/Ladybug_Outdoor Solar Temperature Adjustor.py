@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.58
         clothingAbsorptivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.67 for (white) skin and average clothing.  You may want to increase this value for darker skin or darker clothing.
         windowTransmissivity_: An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions. 
         -------------------------: ...
-        analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year.
+        analysisPeriodOrHOY_: An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         parallel_: Set to "True" to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'
         _runIt: Set to "True" to run the component and calculate solar-adjusted Mean Radiant Temperature.
@@ -47,11 +47,14 @@ Provided by Ladybug 0.0.58
         mannequinMesh: A colored mesh of a comfort mannequin showing the amount of radiation falling over the mannequin's body.
         legend: A legend that corresponds to the colors on the mannequinMesh and shows the relative W/m2.
         legendBasePt: The legend base point, which can be used to move the legend in relation to the chart with the grasshopper "move" component.
+        --------------------: ...
+        meshFaceRadTemp: The estimated solar adjusted radiant temperature for each mesh face of the mannequin in degrees Celcius.  This radiant temperature is averaged over the the entire analysis period.
+        meshFaceArea: The areas of each mesh face of the mannequin in square Rhino model units.  This list corresponds to the meshFaceRadTemp list above and can be used to help inform statistical analysis of the radiant assymmetry over the mannequin.
 
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_06_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -88,7 +91,7 @@ inputsDict = {
 12: ["clothingAbsorptivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.67 for (white) skin and average clothing.  You may want to increase this value for darker skin or darker clothing."],
 13: ["windowTransmissivity_", "An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions."],
 14: ["-------------------------", "..."],
-15: ["analysisPeriod_", "An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year."],
+15: ["analysisPeriodOrHOY_", "An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis.  If no analysis period or HOY is given, the analysis will be run for the enitre year."],
 16: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
 17: ["parallel_", "Set to 'True' to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'"],
 18: ["_runIt", "The legend base point, which can be used to move the legend in relation to the chart with the grasshopper 'move' component."]
@@ -105,7 +108,10 @@ outputsDict = {
 5: ["--------------------", "..."],
 6: ["mannequinMesh", "A colored mesh of a comfort mannequin showing the amount of radiation falling over the mannequin's body."],
 7: ["legend", "A legend that corresponds to the colors on the mannequinMesh and shows the relative W/m2."],
-8: ["legendBasePt", "The input data normalized by the floor area of it corresponding zone."]
+8: ["legendBasePt", "The input data normalized by the floor area of it corresponding zone."],
+9: ["--------------------", "..."],
+10: ["meshFaceRadTemp", "The estimated solar adjusted radiant temperature for each mesh face of the mannequin in degrees Celcius.  This radiant temperature is averaged over the the entire analysis period."],
+11: ["meshFaceArea", "The areas of each mesh face of the mannequin in square Rhino model units.  This list corresponds to the meshFaceRadTemp list above and can be used to help inform statistical analysis of the radiant assymmetry over the mannequin."]
 }
 
 
@@ -239,6 +245,8 @@ def checkTheInputs():
                         warning = 'Null value connected for _diffuseHorizRad.'
                         print warning
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                else:
+                    checkData8 = False
             except: pass
         
         #Check the bodyPosture_ input to be sure that it is a valid interger.
@@ -324,11 +332,11 @@ def checkTheInputs():
                     mannequinX = bodyLocation_.X
                     mannequinY = bodyLocation_.Y
                 else:
-                    mannequinAvgHeight = 1/conversionFac
+                    mannequinAvgHeight = 0.85/conversionFac
                     mannequinX = 0
                     mannequinY = 0
-                offsetDist = 0.9/conversionFac
-                if bodyPosture_ == 0: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/9), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/9), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/9), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/9, (mannequinAvgHeight + offsetDist)]
+                offsetDist = 0.8/conversionFac
+                if bodyPosture_ == 0: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
                 else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
                 for height in offsetHeights:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
@@ -338,11 +346,11 @@ def checkTheInputs():
                     mannequinX = bodyLocation_.X
                     mannequinY = bodyLocation_.Y
                 else:
-                    mannequinAvgHeight = 0.56/conversionFac
+                    mannequinAvgHeight = 0.65/conversionFac
                     mannequinX = 0
                     mannequinY = 0
-                offsetDist = 0.5/conversionFac
-                if bodyPosture_ == 1 or bodyPosture_ == None: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/9), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/9), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/9), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/9), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/9, (mannequinAvgHeight + offsetDist)]
+                offsetDist = 0.58/conversionFac
+                if bodyPosture_ == 1 or bodyPosture_ == None: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
                 else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
                 for height in offsetHeights:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
@@ -355,8 +363,8 @@ def checkTheInputs():
                     mannequinAvgHeight = 0.1
                     mannequinX = 0
                     mannequinY = 0
-                offsetDist = 0.9/conversionFac
-                if bodyPosture_ == 2: offsetY = [mannequinY - offsetDist, (mannequinY - offsetDist)+((offsetDist*2)/9), (mannequinY - offsetDist)+((offsetDist*4)/9), (mannequinY - offsetDist)+((offsetDist*6)/9), mannequinY, (mannequinY + offsetDist)-((offsetDist*6)/9), (mannequinY + offsetDist)-((offsetDist*4)/9), (mannequinY + offsetDist)-(offsetDist*2)/9, (mannequinY + offsetDist)]
+                offsetDist = 0.8/conversionFac
+                if bodyPosture_ == 2: offsetY = [mannequinY - offsetDist, (mannequinY - offsetDist)+((offsetDist*2)/8), (mannequinY - offsetDist)+((offsetDist*4)/8), (mannequinY - offsetDist)+((offsetDist*6)/8), mannequinY, (mannequinY + offsetDist)-((offsetDist*6)/8), (mannequinY + offsetDist)-((offsetDist*4)/8), (mannequinY + offsetDist)-(offsetDist*2)/8, (mannequinY + offsetDist)]
                 else: offsetY = [mannequinY - offsetDist, mannequinY, mannequinY + offsetDist]
                 for yTrans in offsetY:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, yTrans, mannequinAvgHeight))
@@ -465,10 +473,22 @@ def checkTheInputs():
         else: parallel = parallel_
         
         #Make the default analyisis period for the whole year if the user has not input one.
-        if analysisPeriod_ == []:
-            analysisPeriod = [(1, 1, 1), (12, 31, 24)]
+        checkData9 = True
+        periodMethod = 0
+        if analysisPeriodOrHOY_ == []:
+            analysisPeriodOrHOY = [(1, 1, 1), (12, 31, 24)]
         else:
-            analysisPeriod = analysisPeriod_
+            #Check if the analysis period is an hour of the year or an HOY
+            try:
+                analysisPeriodOrHOY = int(analysisPeriodOrHOY_[0])
+                periodMethod = 1
+                if analysisPeriodOrHOY < 1 or analysisPeriodOrHOY > 8760:
+                    checkData9 = False
+                    warning = 'Hour of the year input for analysisPeriodOrHOY_ must be either a value between 1 and 8760.'
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            except:
+                analysisPeriodOrHOY = analysisPeriodOrHOY_
         
         #Set a north vector if there is not oe already.
         if north_ != None:
@@ -500,12 +520,12 @@ def checkTheInputs():
         
         
         #Check if everything is good.
-        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True:
+        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True and checkData9 == True:
             checkData = True
         else:
             checkData = False
         
-        return checkData, methodInit, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
+        return checkData, methodInit, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
     else:
         return -1
 
@@ -535,15 +555,16 @@ def manageInputOutput(method):
             ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
     
-    for output in range(9):
-        if output == 7 and method == 2:
-            ghenv.Component.Params.Output[output].NickName = "."
-            ghenv.Component.Params.Output[output].Name = "."
-            ghenv.Component.Params.Output[output].Description = " "
-        elif output == 8 and method == 2:
-            ghenv.Component.Params.Output[output].NickName = "."
-            ghenv.Component.Params.Output[output].Name = "."
-            ghenv.Component.Params.Output[output].Description = " "
+    for output in range(12):
+        if output == 7 or output == 8 or output == 10 or output == 11:
+            if method == 2:
+                ghenv.Component.Params.Output[output].NickName = "."
+                ghenv.Component.Params.Output[output].Name = "."
+                ghenv.Component.Params.Output[output].Description = " "
+            else:
+                ghenv.Component.Params.Output[output].NickName = outputsDict[output][0]
+                ghenv.Component.Params.Output[output].Name = outputsDict[output][0]
+                ghenv.Component.Params.Output[output].Description = outputsDict[output][1]
         else:
             ghenv.Component.Params.Output[output].NickName = outputsDict[output][0]
             ghenv.Component.Params.Output[output].Name = outputsDict[output][0]
@@ -557,7 +578,7 @@ def restoreInputOutput():
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
     
-    for output in range(9):
+    for output in range(12):
         ghenv.Component.Params.Output[output].NickName = outputsDict[output][0]
         ghenv.Component.Params.Output[output].Name = outputsDict[output][0]
         ghenv.Component.Params.Output[output].Description = outputsDict[output][1]
@@ -612,9 +633,9 @@ def getCumulativeSky(daylightMtxDict, runningPeriod):
     
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     
-    def selectHourlyData(dataList, analysisPeriod):
+    def selectHourlyData(dataList, analysisPeriodOrHOY):
         # read analysis period
-        stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, False)
+        stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriodOrHOY, False)
         
         selHourlyData =[];
         
@@ -656,11 +677,11 @@ def getCumulativeSky(daylightMtxDict, runningPeriod):
     
     return hourlyMtx
 
-def prepareLBList(skyMtxLists, analysisPeriod, locName, unit, removeDiffuse, removeDirect):
+def prepareLBList(skyMtxLists, analysisPeriodOrHOY, locName, unit, removeDiffuse, removeDirect):
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     
     # prepare the final output
-    stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, False)
+    stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriodOrHOY, False)
     totalRad = [lb_preparation.strToBeFound, locName, "Sky Patches' Total Radiation", unit, 'NA', (stMonth, stDay, stHour), (endMonth, endDay, endHour)]
     diffuseRad = [lb_preparation.strToBeFound, locName, "Sky Patches' Diffuse Radiation", unit, 'NA', (stMonth, stDay, stHour), (endMonth, endDay, endHour)]
     directRad = [lb_preparation.strToBeFound, locName, "Sky Patches' Direct Radiation", unit, 'NA', (stMonth, stDay, stHour), (endMonth, endDay, endHour)]
@@ -698,7 +719,14 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     # calculate the boundingbox to find the legendPosition
     personGeo = analysisSrfs.DuplicateMesh()
     personGeo.Faces.DeleteFaces([len(results)-1])
-    if sc.doc.ModelAbsoluteTolerance < 0.005: lb_visualization.calculateBB([personGeo])
+    if sc.doc.ModelAbsoluteTolerance < 0.001: lb_visualization.calculateBB([personGeo])
+    elif sc.doc.ModelAbsoluteTolerance < 0.05:
+        initBoundBox = rc.Geometry.Mesh.GetBoundingBox(personGeo, rc.Geometry.Plane.WorldXY)
+        scalePlane = rc.Geometry.Plane(initBoundBox.Min, rc.Geometry.Vector3d.ZAxis)
+        scaleTrans = rc.Geometry.Transform.Scale(scalePlane, 1.5, 1.5, 1.5)
+        initBoundBox.Transform(scaleTrans)
+        finBBox = initBoundBox.ToBrep()
+        lb_visualization.calculateBB([finBBox])
     else:
         warning = 'Your Rhino model tolerance is not small enough and this will cause the legend text to display weirdly or the text function to fail.'
         print warning
@@ -718,7 +746,7 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     # color legend surfaces
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
 
-    customHeading = '\n\nRadiation Analysis'
+    customHeading = '\n\nSolar Adjusted Radiant Temperature'
     titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[0]], lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize)
     
     if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
@@ -727,7 +755,16 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 
 
-def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, location, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
+def convertFluxToTemp(radiantFlux, cloA, fracEff, radTransCoeff, currentRT, avgWinTrans, energyConvertFac):
+    newFlux = avgWinTrans*radiantFlux*energyConvertFac
+    ERFsolar = (newFlux * cloA)/0.95
+    avgRTDelt = (ERFsolar/(fracEff*radTransCoeff))
+    avgRT = currentRT + avgRTDelt
+    
+    return avgRT
+
+
+def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, location, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
@@ -737,7 +774,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
     #Define the fraction of the body visible to radiation.
     if bodyPosture_ == 0 or bodyPosture_ == 3:
         fracEff = 0.725
-    elif bodyPosture_ == 1 or bodyPosture_ == 4:
+    elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
         fracEff = 0.696
     else:
         fracEff = 0.68
@@ -746,19 +783,16 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
     radTransCoeff = 6.012
     
     #Get a list of HOYs for the analysis period
-    HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+    if periodMethod == 0: HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriodOrHOY, 1)
+    else: HOYS = [analysisPeriodOrHOY]
     
     #Compute the existing ERF for the analysis period.
-    if analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
+    if analysisPeriodOrHOY != [(1, 1, 1), (12, 31, 24)]:
         newAirTemp = []
         newRadTemp = []
         for hour in HOYS:
             newRadTemp.append(radTemp[hour-1])
         radTemp = newRadTemp
-    
-    currentERF = []
-    for temp in radTemp:
-        currentERF.append(0)
     
     #Calculate the sun-up hours of the year to help make things faster down the road.
     lb_sunpath.initTheClass(float(latitude), northAngle, rc.Geometry.Point3d.Origin, 100, float(longitude), float(timeZone))
@@ -773,11 +807,13 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
     
     #Process the cumulative sky into an initial selected sky.
     skyMtxLists = []
-    skyMtxLists = getCumulativeSky(cumSkyMtx.d, analysisPeriod)
-    unit = 'kWh/m2'
+    if periodMethod == 0: skyMtxLists = getCumulativeSky(cumSkyMtx.d, analysisPeriodOrHOY)
+    else: skyMtxLists, analysisPeriodTxt = getHourlySky(cumSkyMtx.d, analysisPeriodOrHOY)
+    unit = 'C'
     
     if len(skyMtxLists)!=0:
-        selectedSkyMtx = prepareLBList(skyMtxLists, analysisPeriod, location, unit, False, False)
+        if periodMethod == 0: selectedSkyMtx = prepareLBList(skyMtxLists, analysisPeriodOrHOY, location, unit, False, False)
+        else: selectedSkyMtx = prepareLBList(skyMtxLists, analysisPeriodTxt, location, unit, False, False)
         cumSky_radiationStudy = selectedSkyMtx
         
         #Set defaults.
@@ -798,12 +834,23 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
         #Get an intersection matrix of the geometry and the sky and some results for the whole analysis period.
         radResults, totalRadResults, listInfo, intersectionMtx = runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH)
         
+        #Convert Rad results to radiant temperature.
+        avgWinTrans = sum(finalWinTransmiss)/len(finalWinTransmiss)
+        currentRT = sum(radTemp)/len(radTemp)
+        tempResults = []
+        for count, flux in enumerate(radResults):
+            if periodMethod == 0: energyConvertFac = 500
+            else: energyConvertFac = 1
+            convertRadTemp = convertFluxToTemp(flux, cloA, fracEff, radTransCoeff, currentRT, avgWinTrans, energyConvertFac)
+            tempResults.append(convertRadTemp)
+        
         #Make a colored mesh of the mannequin for the whole analysis period.
         resultColored = []
         legendColored = []
         studyLayerNames = "RADIATION_STUDIES"
+        
         if radResults!= None:
-            resultColored, legendColored, l, legendBasePoint = resultVisualization(analysisSrfs, radResults, totalRadResults, legendPar_, unit, studyLayerNames, True, 0, listInfo, lb_preparation, lb_visualization)
+            resultColored, legendColored, l, legendBasePoint = resultVisualization(analysisSrfs, tempResults, totalRadResults, legendPar_, unit, studyLayerNames, True, 0, listInfo, lb_preparation, lb_visualization)
         
         #Remove the ground mesh, which is the last one.
         resultColored.Faces.DeleteFaces([len(radResults)-1])
@@ -830,8 +877,8 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                 if count != len(HOYS)-1: lastVal = 1
                 else: lastVal = 0
                 if altitudes[count] > 0 or altitudes[count-1] > 0 or altitudes[count+lastVal] > 0:
-                    skyMtxLists, _analysisPeriod_ = getHourlySky(cumSkyMtx.d, hour)
-                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, location, unit, False, False)
+                    skyMtxLists, _analysisPeriodOrHOY_ = getHourlySky(cumSkyMtx.d, hour)
+                    selSkyMatrix = prepareLBList(skyMtxLists, _analysisPeriodOrHOY_, location, unit, False, False)
                     
                     indexList, listInfo = lb_preparation.separateList(selSkyMatrix, lb_preparation.strToBeFound)
                     #separate total, diffuse and direct radiations
@@ -866,8 +913,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                     #Calculate the total person radiation and the ERF.
                     totalPersonRad = totalPersonBeamDiffRad + groundRefRad
                     radiantFlux = totalPersonRad/totalPersonArea
-                    hourSolERF = (radiantFlux * cloA)/0.95
-                    hourERF = hourSolERF + currentERF[count]
+                    hourERF = (radiantFlux * cloA)/0.95
                     ERF.append(hourERF/1000)
                     
                     #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
@@ -876,7 +922,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                     mrtDelt = hourMRT - radTemp[count]
                     MRTDelta.append(mrtDelt)
                 else:
-                    ERF.append(currentERF[count])
+                    ERF.append(0)
                     solarAdjustedMRT.append(radTemp[count])
                     MRTDelta.append(0)
             return True
@@ -886,8 +932,8 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                 if count != len(HOYS)-1: lastVal = 1
                 else: lastVal = 0
                 if altitudes[count] > 0 or altitudes[count-1] > 0 or altitudes[count+lastVal] > 0:
-                    skyMtxLists, _analysisPeriod_ = getHourlySky(cumSkyMtx.d, HOYS[count])
-                    selSkyMatrix = prepareLBList(skyMtxLists, analysisPeriod, location, unit, False, False)
+                    skyMtxLists, _analysisPeriodOrHOY_ = getHourlySky(cumSkyMtx.d, HOYS[count])
+                    selSkyMatrix = prepareLBList(skyMtxLists, _analysisPeriodOrHOY_, location, unit, False, False)
                     
                     indexList, listInfo = lb_preparation.separateList(selSkyMatrix, lb_preparation.strToBeFound)
                     #separate total, diffuse and direct radiations
@@ -922,8 +968,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                     #Calculate the total person radiation and the ERF.
                     totalPersonRad = totalPersonBeamDiffRad + groundRefRad
                     radiantFlux = totalPersonRad/totalPersonArea
-                    hourSolERF = (radiantFlux * cloA)/0.95
-                    hourERF = hourSolERF + currentERF[count]
+                    hourERF = (radiantFlux * cloA)/0.95
                     ERF.append(hourERF/1000)
                     
                     #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
@@ -932,7 +977,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                     mrtDelt = hourMRT - radTemp[count]
                     MRTDelta.append(mrtDelt)
                 else:
-                    ERF.append(currentERF[count])
+                    ERF.append(0)
                     solarAdjustedMRT.append(radTemp[count])
                     MRTDelta.append(0)
                 hourOrder.append(count)
@@ -955,24 +1000,31 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
         
         
         #Add the headers to the computed lists.
-        ERF.insert(0,analysisPeriod[1])
-        ERF.insert(0,analysisPeriod[0])
+        if periodMethod == 0:
+            analysisStart = analysisPeriodOrHOY[0]
+            analysisEnd = analysisPeriodOrHOY[1]
+        else:
+            analysisStart = analysisPeriodTxt[0]
+            analysisEnd = analysisPeriodTxt[1]
+        
+        ERF.insert(0,analysisEnd)
+        ERF.insert(0,analysisStart)
         ERF.insert(0,'Hourly')
         ERF.insert(0,'kWh/m2')
         ERF.insert(0,'Effective Radiant Field')
         ERF.insert(0,str(location))
         ERF.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
         
-        MRTDelta.insert(0,analysisPeriod[1])
-        MRTDelta.insert(0,analysisPeriod[0])
+        MRTDelta.insert(0,analysisEnd)
+        MRTDelta.insert(0,analysisStart)
         MRTDelta.insert(0,'Hourly')
         MRTDelta.insert(0,'C')
         MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
         MRTDelta.insert(0,str(location))
         MRTDelta.insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
         
-        solarAdjustedMRT.insert(0,analysisPeriod[1])
-        solarAdjustedMRT.insert(0,analysisPeriod[0])
+        solarAdjustedMRT.insert(0,analysisEnd)
+        solarAdjustedMRT.insert(0,analysisStart)
         solarAdjustedMRT.insert(0,'Hourly')
         solarAdjustedMRT.insert(0,'C')
         solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
@@ -980,7 +1032,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
         solarAdjustedMRT.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
         
         
-        return ERF, MRTDelta, solarAdjustedMRT, resultColored, legend, legendBasePoint
+        return ERF, MRTDelta, solarAdjustedMRT, resultColored, legend, legendBasePoint, tempResults, meshSrfAreas
     else:
         return None, None, None, None, None, None
         warning = "cumulativeSkyMtx failed to collect data."
@@ -1358,7 +1410,7 @@ def splineStand(az, alt):
     return spline_stand[az][alt]
 
 
-def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, lb_preparation, lb_comfortModels, lb_sunpath):
+def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, lb_preparation, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
@@ -1368,7 +1420,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
     #Define the fraction of the body visible to radiation.
     if bodyPosture_ == 0 or bodyPosture_ == 3:
         fracEff = 0.725
-    elif bodyPosture_ == 1 or bodyPosture_ == 4:
+    elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
         fracEff = 0.696
     else:
         fracEff = 0.68
@@ -1377,19 +1429,16 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
     radTransCoeff = 6.012
     
     #Get a list of HOYs for the analysis period
-    HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+    if periodMethod == 0: HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriodOrHOY, 1)
+    else: HOYS = [analysisPeriodOrHOY]
     
     #Compute the existing ERF for the analysis period.
-    if analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
+    if analysisPeriodOrHOY != [(1, 1, 1), (12, 31, 24)]:
         newAirTemp = []
         newRadTemp = []
         for hour in HOYS:
             newRadTemp.append(radTemp[hour-1])
         radTemp = newRadTemp
-    
-    currentERF = []
-    for temp in radTemp:
-        currentERF.append(0)
     
     #Calculate the skyview factor of the occupant.
     if bodyPosture_ == None or bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2: middlePt = mannequinMesh[4]
@@ -1471,7 +1520,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                 #Calculate the projected area factor from the altitude and azimuth.
                 if bodyPosture_ == 0 or bodyPosture_ == 3:
                     ProjAreaFac = splineStand(azFinal, altFinal)
-                elif bodyPosture_ == 1 or bodyPosture_ == 4:
+                elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
                     ProjAreaFac = splineSit(azFinal, altFinal)
                 else:
                     ProjAreaFac = splineStand(azFinal, 90-altFinal)
@@ -1481,10 +1530,10 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                 
                 ERF.append(hourERF)
                 #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
-                hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
-                solarAdjustedMRT.append(hourMRT)
-                mrtDelt = hourMRT - radTemp[count]
+                mrtDelt = (hourERF/(fracEff*radTransCoeff))
                 MRTDelta.append(mrtDelt)
+                hourMRT = mrtDelt + (radTemp[count])
+                solarAdjustedMRT.append(hourMRT)
             else:
                 ERF.append(0)
                 solarAdjustedMRT.append(radTemp[count])
@@ -1495,24 +1544,32 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                 MRTDelta.append(0)
     
     #Add the headers to the computed lists.
-    ERF.insert(0,analysisPeriod[1])
-    ERF.insert(0,analysisPeriod[0])
+    if periodMethod == 0:
+        analysisStart = analysisPeriodOrHOY[0]
+        analysisEnd = analysisPeriodOrHOY[1]
+    else:
+        stDate = lb_preparation.hour2Date(analysisPeriodOrHOY)
+        analysisStart = stDate
+        analysisEnd = stDate
+    
+    ERF.insert(0,analysisEnd)
+    ERF.insert(0,analysisStart)
     ERF.insert(0,'Hourly')
     ERF.insert(0,'kWh/m2')
     ERF.insert(0,'Effective Radiant Field')
     ERF.insert(0,str(location))
     ERF.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
     
-    MRTDelta.insert(0,analysisPeriod[1])
-    MRTDelta.insert(0,analysisPeriod[0])
+    MRTDelta.insert(0,analysisEnd)
+    MRTDelta.insert(0,analysisStart)
     MRTDelta.insert(0,'Hourly')
     MRTDelta.insert(0,'C')
     MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
     MRTDelta.insert(0,str(location))
     MRTDelta.insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
     
-    solarAdjustedMRT.insert(0,analysisPeriod[1])
-    solarAdjustedMRT.insert(0,analysisPeriod[0])
+    solarAdjustedMRT.insert(0,analysisEnd)
+    solarAdjustedMRT.insert(0,analysisStart)
     solarAdjustedMRT.insert(0,'Hourly')
     solarAdjustedMRT.insert(0,'C')
     solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
@@ -1531,7 +1588,7 @@ results = checkTheInputs()
 
 if results!= -1:
     checkData, method, radTemp, mannequinMesh, groundMesh, context, groundR, \
-    cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, \
+    cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, \
     lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels,\
     lb_sunpath = results
 
@@ -1545,12 +1602,12 @@ else: restoreInputOutput()
 if _runIt == True and checkData == True and checkInputOutput == True:
     if method == 0 or method == 1:
         effectiveRadiantField, MRTDelta, solarAdjustedMRT, \
-        mannequinMesh, legend, legendBasePt = main(method, radTemp, mannequinMesh, \
-        groundMesh, context, groundR, cloA, winTrans, parallel, analysisPeriod, latitude, longitude, timeZone, northAngle, \
+        mannequinMesh, legend, legendBasePt, meshFaceRadTemp, meshFaceArea = main(method, radTemp, mannequinMesh, \
+        groundMesh, context, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, \
         northVector, epwStr, conversionFac, cumSkyMtx, location, lb_preparation, lb_visualization, lb_mesh, \
         lb_runStudy_GH, lb_comfortModels, lb_sunpath)
     else:
-        effectiveRadiantField, MRTDelta, solarAdjustedMRT = mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriod, latitude, longitude, timeZone, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, lb_preparation, lb_comfortModels, lb_sunpath)
+        effectiveRadiantField, MRTDelta, solarAdjustedMRT = mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, lb_preparation, lb_comfortModels, lb_sunpath)
 
 #Hide the legend base point.
 ghenv.Component.Params.Output[8].Hidden = True
