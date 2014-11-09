@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_26_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -209,8 +209,8 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
     numOfPatchesInEachRow = {1: [30, 30, 24, 24, 18, 12, 6, 1],
                              2: [60, 60, 60, 60, 48, 48, 48, 48, 36, 36, 24, 24, 12, 12, 1]}
                              
-    strConv = {1 : [0.0435449227, 0.0416418006, 0.0473984151, 0.0406730411, 0.0428934136, 0.0445221864, 0.0445221864, 0.0344199465],
-               2: [0.0113221971, 0.0111894547, 0.0109255262, 0.0105335058, 0.0125224872, 0.0117312774, 0.0108025291, 0.00974713106, 0.011436609, 0.00974295956, 0.0119026242, 0.00905126163, 0.0121875626, 0.00612971396]} #steradians conversion
+    strConv = {1 : [0.0344199465, 0.0455168385, 0.0445221864, 0.0428934136, 0.0406730411, 0.0473984151, 0.0416418006, 0.0435449227],
+               2: [0.00921483254, 0.00612971396, 0.0121875626, 0.00905126163, 0.0119026242, 0.00974295956, 0.011436609, 0.00974713106, 0.0108025291, 0.0117312774, 0.0125224872, 0.0105335058, 0.0109255262, 0.0111894547, 0.0113221971]}
     
     numOfSkyPatches = skyPatchesDict[n]
     
