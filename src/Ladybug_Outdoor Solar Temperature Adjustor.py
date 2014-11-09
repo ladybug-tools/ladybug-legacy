@@ -841,7 +841,8 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
         for count, flux in enumerate(radResults):
             if periodMethod == 0: energyConvertFac = 500
             else: energyConvertFac = 1
-            convertRadTemp = convertFluxToTemp(flux, cloA, fracEff, radTransCoeff, currentRT, avgWinTrans, energyConvertFac)
+            avgFlux = flux/len(radTemp)
+            convertRadTemp = convertFluxToTemp(avgFlux, cloA, fracEff, radTransCoeff, currentRT, avgWinTrans, energyConvertFac)
             tempResults.append(convertRadTemp)
         
         #Make a colored mesh of the mannequin for the whole analysis period.
