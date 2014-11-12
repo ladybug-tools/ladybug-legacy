@@ -531,7 +531,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
             legendSrf.Append(mesh)
             
             txtPt = meshVertices[segNum * 2 + 1]
-            textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.3), txtPt.Z))
+            textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.5), txtPt.Z))
         
         return legendSrf, textPt
     
