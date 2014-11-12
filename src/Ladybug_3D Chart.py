@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_01_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -521,6 +521,10 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 titleText.append(titleStr)
                 for item in textStrings:
                     titleText.append(item)
+                
+                #Calculate a bounding box to help size the legend.
+                lb_visualization.calculateBB(chartCrvs, True)
+                lb_visualization.BoundingBoxPar = (lb_visualization.BoundingBoxPar[0], lb_visualization.BoundingBoxPar[1], lb_visualization.BoundingBoxPar[2] - (lb_visualization.BoundingBoxPar[2]/numSeg) , lb_visualization.BoundingBoxPar[3], lb_visualization.BoundingBoxPar[4], lb_visualization.BoundingBoxPar[5], lb_visualization.BoundingBoxPar[6])
                 
                 # create legend geometries
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results

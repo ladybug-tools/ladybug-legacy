@@ -21,7 +21,7 @@ Provided by Ladybug 0.0.58
                         Note that this option is only available when temperature is connected so, by default, it is set to 0 for no comfort range.
         bldgBalancePt_: An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions.
         _______________: ...
-        stackValues_: Set to 'True' to have values of a similar unit stacked on the bar chart.  Otherwise, bars will be placed next to each other.
+        stackValues_: Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other.
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
         _xScale_: The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year).
         _yScale_: The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units.
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_10_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -69,7 +69,7 @@ inputsDict = {
 1: ["comfortModel_", "An optional interger to draw the comfort model on the chart.  Choose from the following: \n 0 - No comfort range \n 1 - PMV comfort range (indoor) \n 2 - Adaptive confort range (naturally ventilated) \n 3 - UTCI Comfort (outdoor) \n Note that this option is only available when temperature is connected so, by default, it is set to 0 for no comfort range."],
 2: ["bldgBalancePt_", "An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions."],
 3: ["_______________", "..."],
-4: ["stackValues_", "Set to 'True' to have values of a similar unit stacked on the bar chart.  Otherwise, bars will be placed next to each other."],
+4: ["stackValues_", "Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other."],
 5: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
 6: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
 7: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
@@ -496,7 +496,6 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     # Group eveything together to use it for the bounding box.
     allGeo = []
     allGeo.extend(chartAxes)
-    allGeo.extend(textSrfs)
     
     #Calculate a bounding box around everything that will help place the legend ad title.
     lb_visualization.calculateBB(allGeo, True)
@@ -532,13 +531,25 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
             legendSrf.Append(mesh)
             
             txtPt = meshVertices[segNum * 2 + 1]
-            textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.4), txtPt.Z))
+            textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.3), txtPt.Z))
         
         return legendSrf, textPt
     
+    #Make Legend Text
     legendSrf, textPt = legend(basePt, legendHeight, legendWidth, len(separatedLists))
     dataTypeListFlat = []
     for list in dataTypeList: dataTypeListFlat.extend(list)
+    dataMethodListFlat = []
+    for list in newDataMethodsList:
+        try: dataMethodListFlat.extend(list)
+        except: dataMethodListFlat.append(list)
+    
+    for legCount, legItem in enumerate(dataTypeListFlat):
+        if dataMethodListFlat[legCount] == 0: dataTypeListFlat[legCount] = legItem + ' \n(Monthly)'
+        if dataMethodListFlat[legCount] == 1: dataTypeListFlat[legCount] = legItem + ' \n(Hourly Average)'
+        if dataMethodListFlat[legCount] == 2: dataTypeListFlat[legCount] = legItem + ' \n(Hourly)'
+        if dataMethodListFlat[legCount] == 3: dataTypeListFlat[legCount] = legItem + ' \n(Daily)'
+    
     legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize)
     
     #Create legend.
@@ -711,7 +722,7 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth):
     return dataMeshes, dataCurves, crvColors
 
 
-def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tempScale, avgMonthTemp, lb_comfortModels):
+def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tempScale, avgMonthTemp, yS, lb_comfortModels):
     comfortBand = []
     
     #Create the comfort bands for the PMV model.
@@ -725,8 +736,8 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
         monthCt = 0
         for month in range(12):
             #Calculate the height of the bar
-            barTop = (highB-tempVals[0])/tempScale
-            barBottom = (lowB-tempVals[0])/tempScale
+            barTop = ((highB-tempVals[0])/tempScale)*yS
+            barBottom = ((lowB-tempVals[0])/tempScale)*yS
             
             #Generate the points that make the face of the mesh
             facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, 0)
@@ -734,16 +745,11 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
             facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, 0)
             facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, 0)
             
-            #Create the mesh
-            barMesh = rc.Geometry.Mesh()
-            for point in [facePt1, facePt2, facePt3, facePt4]:
-                barMesh.Vertices.Add(point)
-            barMesh.Faces.AddFace(0, 1, 2, 3)
-            # color the mesh faces.
-            barMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
+            #Create the comfort Brep
+            barBrep = rc.Geometry.Brep.CreateFromCornerPoints(facePt1, facePt2, facePt3, facePt4, sc.doc.ModelAbsoluteTolerance)
             
             #Add the mesh to the list and increase the bar height for the next item in the stack.
-            comfortBand.append(barMesh)
+            comfortBand.append(barBrep)
             monthCt +=1
     
     #Create the comfort bands for the Adaptive model.
@@ -776,8 +782,8 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
         for month in range(12):
             if avgTemps[month] != None:
                 #Calculate the height of the bar
-                barTop = (avgTemps[month]+offsetDist-tempVals[0])/tempScale
-                barBottom = (avgTemps[month]-offsetDist-tempVals[0])/tempScale
+                barTop = ((avgTemps[month]+offsetDist-tempVals[0])/tempScale)*yS
+                barBottom = ((avgTemps[month]-offsetDist-tempVals[0])/tempScale)*yS
                 
                 #Generate the points that make the face of the mesh
                 facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, 0)
@@ -785,16 +791,11 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
                 facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, 0)
                 facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, 0)
                 
-                #Create the mesh
-                barMesh = rc.Geometry.Mesh()
-                for point in [facePt1, facePt2, facePt3, facePt4]:
-                    barMesh.Vertices.Add(point)
-                barMesh.Faces.AddFace(0, 1, 2, 3)
-                # color the mesh faces.
-                barMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
+                #Create the comfort Brep
+                barBrep = rc.Geometry.Brep.CreateFromCornerPoints(facePt1, facePt2, facePt3, facePt4, sc.doc.ModelAbsoluteTolerance)
                 
                 #Add the mesh to the list and increase the bar height for the next item in the stack.
-                comfortBand.append(barMesh)
+                comfortBand.append(barBrep)
             monthCt +=1
     
     #Create the comfort bands for the UTCI model.
@@ -812,8 +813,8 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
         monthCt = 0
         for month in range(12):
             #Calculate the height of the bar
-            barTop = (highB-tempVals[0])/tempScale
-            barBottom = (lowB-tempVals[0])/tempScale
+            barTop = ((highB-tempVals[0])/tempScale)*yS
+            barBottom = ((lowB-tempVals[0])/tempScale)*yS
             
             #Generate the points that make the face of the mesh
             facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, 0)
@@ -821,16 +822,11 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
             facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, 0)
             facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, 0)
             
-            #Create the mesh
-            barMesh = rc.Geometry.Mesh()
-            for point in [facePt1, facePt2, facePt3, facePt4]:
-                barMesh.Vertices.Add(point)
-            barMesh.Faces.AddFace(0, 1, 2, 3)
-            # color the mesh faces.
-            barMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
+            #Create the comfort Brep
+            barBrep = rc.Geometry.Brep.CreateFromCornerPoints(facePt1, facePt2, facePt3, facePt4, sc.doc.ModelAbsoluteTolerance)
             
             #Add the mesh to the list and increase the bar height for the next item in the stack.
-            comfortBand.append(barMesh)
+            comfortBand.append(barBrep)
             monthCt +=1
     
     
@@ -847,7 +843,7 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
     #If the user has requested a comfort range, then draw it.
     comfortBand = None
     if tempInList == True and comfortModel != 0:
-        comfortBand = drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, (tempScale[0]/50)*yS, avgMonthTemp, lb_comfortModels)
+        comfortBand = drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, (tempScale[0]/50), avgMonthTemp, yS, lb_comfortModels)
     
     #If the basePoint is specified and it's different than the origin, move everything.
     if _basePoint_ != None and _basePoint_ != rc.Geometry.Point3d.Origin:
