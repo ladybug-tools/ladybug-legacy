@@ -736,10 +736,10 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
             barBottom = ((lowB-tempVals[0])/tempScale)*yS
             
             #Generate the points that make the face of the mesh
-            facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, 0)
-            facePt2 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barBottom, 0)
-            facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, 0)
-            facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, 0)
+            facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, -sc.doc.ModelAbsoluteTolerance)
+            facePt2 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barBottom, -sc.doc.ModelAbsoluteTolerance)
+            facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, -sc.doc.ModelAbsoluteTolerance)
+            facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, -sc.doc.ModelAbsoluteTolerance)
             
             #Create the comfort Brep
             barBrep = rc.Geometry.Brep.CreateFromCornerPoints(facePt1, facePt2, facePt3, facePt4, sc.doc.ModelAbsoluteTolerance)
@@ -782,10 +782,10 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
                 barBottom = ((avgTemps[month]-offsetDist-tempVals[0])/tempScale)*yS
                 
                 #Generate the points that make the face of the mesh
-                facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, 0)
-                facePt2 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barBottom, 0)
-                facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, 0)
-                facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, 0)
+                facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, -sc.doc.ModelAbsoluteTolerance)
+                facePt2 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barBottom, -sc.doc.ModelAbsoluteTolerance)
+                facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, -sc.doc.ModelAbsoluteTolerance)
+                facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, -sc.doc.ModelAbsoluteTolerance)
                 
                 #Create the comfort Brep
                 barBrep = rc.Geometry.Brep.CreateFromCornerPoints(facePt1, facePt2, facePt3, facePt4, sc.doc.ModelAbsoluteTolerance)
@@ -813,10 +813,10 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
             barBottom = ((lowB-tempVals[0])/tempScale)*yS
             
             #Generate the points that make the face of the mesh
-            facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, 0)
-            facePt2 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barBottom, 0)
-            facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, 0)
-            facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, 0)
+            facePt1 = rc.Geometry.Point3d((xWidth*monthCt), barBottom, -sc.doc.ModelAbsoluteTolerance)
+            facePt2 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barBottom, -sc.doc.ModelAbsoluteTolerance)
+            facePt3 = rc.Geometry.Point3d((xWidth*monthCt)+xWidth, barTop, -sc.doc.ModelAbsoluteTolerance)
+            facePt4 = rc.Geometry.Point3d((xWidth*monthCt), barTop, -sc.doc.ModelAbsoluteTolerance)
             
             #Create the comfort Brep
             barBrep = rc.Geometry.Brep.CreateFromCornerPoints(facePt1, facePt2, facePt3, facePt4, sc.doc.ModelAbsoluteTolerance)
