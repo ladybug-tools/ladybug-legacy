@@ -539,16 +539,12 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     legendSrf, textPt = legend(basePt, legendHeight, legendWidth, len(separatedLists))
     dataTypeListFlat = []
     for list in dataTypeList: dataTypeListFlat.extend(list)
-    dataMethodListFlat = []
-    for list in newDataMethodsList:
-        try: dataMethodListFlat.extend(list)
-        except: dataMethodListFlat.append(list)
     
     for legCount, legItem in enumerate(dataTypeListFlat):
-        if dataMethodListFlat[legCount] == 0: dataTypeListFlat[legCount] = legItem + ' \n(Monthly)'
-        if dataMethodListFlat[legCount] == 1: dataTypeListFlat[legCount] = legItem + ' \n(Hourly Average)'
-        if dataMethodListFlat[legCount] == 2: dataTypeListFlat[legCount] = legItem + ' \n(Hourly)'
-        if dataMethodListFlat[legCount] == 3: dataTypeListFlat[legCount] = legItem + ' \n(Daily)'
+        if methodsList[legCount] == 0: dataTypeListFlat[legCount] = legItem + ' \n(Monthly)'
+        if methodsList[legCount] == 1: dataTypeListFlat[legCount] = legItem + ' \n(Hourly Average)'
+        if methodsList[legCount] == 2: dataTypeListFlat[legCount] = legItem + ' \n(Hourly)'
+        if methodsList[legCount] == 3: dataTypeListFlat[legCount] = legItem + ' \n(Daily)'
     
     legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize)
     
