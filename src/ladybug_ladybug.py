@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_12_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1883,6 +1883,7 @@ class MeshPreparation(object):
 class RunAnalysisInsideGH(object):
     #
     def calRadRoseRes(self, tiltedRoseVectors, TregenzaPatchesNormalVectors, genCumSkyResult, testPoint = rc.Geometry.Point3d.Origin, bldgMesh = [], 
+
 groundRef = 0):
         radResult = []; sunUpHours = 1
         for vec in tiltedRoseVectors:
@@ -1995,6 +1996,7 @@ groundRef = 0):
     
     
     def parallel_sunlightHoursCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, sunVectors, conversionFac, northVector, 
+
 timeStep = 1):
         # preparing bulk lists
         sunlightHours = [0] * len(testPts)
@@ -3307,8 +3309,8 @@ class ComfortModels(object):
             if UTCI_approx > 9 and UTCI_approx < 26: comfortable = 1
             else: comfortable = 0
             
-            if UTCI_approx < -14.0: stressRange = -2
-            elif UTCI_approx > -14.0 and UTCI_approx < 9.0: stressRange = -1
+            if UTCI_approx < -13.0: stressRange = -2
+            elif UTCI_approx > -13.0 and UTCI_approx < 9.0: stressRange = -1
             elif UTCI_approx > 9.0 and UTCI_approx < 26.0: stressRange = 0
             elif UTCI_approx > 26.0 and UTCI_approx < 32.0: stressRange = 1
             else: stressRange = 2
