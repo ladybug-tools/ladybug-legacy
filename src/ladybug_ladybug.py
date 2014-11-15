@@ -3767,6 +3767,38 @@ class ComfortModels(object):
         [(-0.175068, -0.170931, 0.069916), (-0.175068, -0.170931, 0.0), (-0.175068, -0.0816051, 1.38778e-17), (-0.175068, -0.0816051, 0.069916)]]
         
         return standingData
+    
+    def effectiveTemperature(self, Ta, ws, rh):
+        if ws <= 0.2:
+            # formula by Missenard
+            TE = Ta - 0.4*(Ta - 10)*(1-rh/100)
+        elif ws > 0.2:
+            # modified formula by Gregorczuk (WMO, 1972; Hentschel, 1987)
+            TE = 37 - ( (37-Ta)/(0.68-(0.0014*rh)+(1/(1.76+1.4*(ws**0.75)))) ) - (0.29 * Ta * (1-0.01*rh)) # nije Missenard, drugi je neki
+    
+        if TE < 1:
+            effectTE = -4
+            comfortable = 0
+        elif TE >= 1 and TE < 9:
+            effectTE = -3
+            comfortable = 0
+        elif TE >= 9 and TE < 17:
+            effectTE = -2
+            comfortable = 0
+        elif TE >= 17 and TE < 21:
+            effectTE = -1
+            comfortable = 0
+        elif TE >= 21 and TE < 23:
+            effectTE = 0
+            comfortable = 1
+        elif TE >= 23 and TE < 27:
+            effectTE = 1
+            comfortable = 0
+        elif TE >= 27:
+            effectTE = 2
+            comfortable = 0
+    
+        return TE, effectTE, comfortable
 
 class WindSpeed(object):
     
