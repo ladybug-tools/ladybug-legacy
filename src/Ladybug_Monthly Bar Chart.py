@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -253,7 +253,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
         gridLine = rc.Geometry.Line(0,segHeight,0,width,segHeight,0).ToNurbsCurve()
         gridLines.append(gridLine)
         yAxisLeftPts.append(rc.Geometry.Point3d(-8*legendFontSize,segHeight,0))
-        yAxisRightPts.append(rc.Geometry.Point3d(2*legendFontSize+width,segHeight,0))
+        yAxisRightPts.append(rc.Geometry.Point3d(legendFontSize+width,segHeight,0))
         segHeight = segHeight + (height/(int(numSeg) - 1))
     chartAxes.extend(gridLines)
     
@@ -274,7 +274,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     futureColorsList = []
     dataList = []
     
-    for listCount, list in enumerate(separatedLists):
+    for listCount, lst in enumerate(separatedLists):
         #Make a list of lists to hold monthly data.
         startList = []
         for month in range(12): startList.append([])
@@ -282,7 +282,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
         #Organize data for monthly values.
         if methodsList[listCount] == 0:
             startMonth = listInfo[listCount][5][0]
-            for item in list:
+            for item in lst:
                 startList[startMonth-1].append(item)
                 startMonth +=1
             
@@ -292,7 +292,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
             hourRange = listInfo[listCount][6][2]-listInfo[listCount][5][2]+1
             hourCumulative = 0
             
-            for count, item in enumerate(list):
+            for count, item in enumerate(lst):
                 if count < hourRange+hourCumulative:
                     startList[startMonth-1].append(item)
                 else:
@@ -313,7 +313,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
                 for day in range(daysPerMonth[month]):
                     startList[month].append([])
             
-            for count, item in enumerate(list):
+            for count, item in enumerate(lst):
                 if count < hourCumulative:
                     if totalHr < hourRange:
                         startList[startMonth-1][startDay-1].append(item)
@@ -340,7 +340,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
                 for dayCount in range(dayNum):
                     startList[monthCount].append([])
             
-            for count, item in enumerate(list):
+            for count, item in enumerate(lst):
                 if count < cumulativeDays:
                     startList[startMonth-1][count-cumulativeDays + daysPerMonth[startMonth-1]-1].append(item)
                 else:
@@ -427,7 +427,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     avgMonthTemp = []
     
     #Put in right Y axis labels.
-    basePt = rc.Geometry.Point3d(-10*legendFontSize, 0,0)
+    basePt = rc.Geometry.Point3d(-9*legendFontSize, 0,0)
     yAxisSrf = lb_visualization.text2srf([dataTypeList[0][0] + ' (' + unitsList[0] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
     rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
     for srf in yAxisSrf[0]:
@@ -436,6 +436,13 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     lowVal1, valRange1, finalValues = makeNumberLabels(dataList[0], True, lowB, highB, newDataMethodsList[0])
     startVals.append(lowVal1)
     scaleFacs.append(valRange1/height)
+    #Move the text based on how long it is.
+    for ptCount, point in enumerate(yAxisLeftPts):
+        textLen = str(finalValues[ptCount])
+        textLen = len(list(textLen))
+        ptTransl = rc.Geometry.Transform.Translation(8-textLen, legendFontSize*(-0.5), 0)
+        point.Transform(ptTransl)
+    
     if unitsList[0] == 'C' or unitsList[0] == 'C' or unitsList[0] == 'F' or unitsList[0] == 'F':
         tempVals.append(lowVal1)
         tempScale.append(valRange1)
@@ -455,7 +462,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     for uCount, unit in enumerate(unitsList[1:]):
         if unit != unit1 and done == False:
             unit2 = unitsList[uCount+1]
-            basePt = rc.Geometry.Point3d(10*legendFontSize+width, 0,0)
+            basePt = rc.Geometry.Point3d(9*legendFontSize+width, 0,0)
             yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
             rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
             for srf in yAxisSrf[0]:
@@ -511,7 +518,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     
     #Create a legend for the data types.
     if legendBasePoint == None:
-        basePt = rc.Geometry.Point3d(lb_visualization.BoundingBoxPar[0].X+legendFontSize, lb_visualization.BoundingBoxPar[0].Y, lb_visualization.BoundingBoxPar[0].X)
+        basePt = rc.Geometry.Point3d(lb_visualization.BoundingBoxPar[0].X+legendFontSize, lb_visualization.BoundingBoxPar[0].Y, lb_visualization.BoundingBoxPar[0].Z)
     else: basePt = legendBasePoint
     BBYlength = lb_visualization.BoundingBoxPar[2]
     legendHeight = legendWidth = (BBYlength/10) * legendScale
@@ -545,7 +552,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     #Make Legend Text
     legendSrf, textPt = legend(basePt, legendHeight, legendWidth, len(separatedLists))
     dataTypeListFlat = []
-    for list in dataTypeList: dataTypeListFlat.extend(list)
+    for lst in dataTypeList: dataTypeListFlat.extend(lst)
     
     for legCount, legItem in enumerate(dataTypeListFlat):
         if methodsList[legCount] == 0: dataTypeListFlat[legCount] = legItem + ' \n(Monthly)'
@@ -566,9 +573,9 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     #Reorder the list of colors to align with the dataList.
     newColors = []
     colorCount = 0
-    for listCount, list in enumerate(futureColorsList):
+    for listCount, lst in enumerate(futureColorsList):
         newColors.append([])
-        for color in list:
+        for color in lst:
             newColors[listCount].append(colors[colorCount])
             colorCount += 1
     
@@ -858,10 +865,10 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
         for geo in legend: geo.Transform(moveTransform)
         for geo in comfortBand: geo.Transform(moveTransform)
         legendBasePt.Transform(moveTransform)
-        for list in dataMesh:
-            for geo in list: geo.Transform(moveTransform)
-        for list in dataCurves:
-            for geo in list: geo.Transform(moveTransform)
+        for lst in dataMesh:
+            for geo in lst: geo.Transform(moveTransform)
+        for lst in dataCurves:
+            for geo in lst: geo.Transform(moveTransform)
     
     
     return dataMesh, dataCurves, curveColors, graphAxes, graphLabels, legend, legendBasePt, comfortBand
@@ -888,16 +895,16 @@ if checkData == True:
         dataCurves = DataTree[Object]()
         dataCrvColors = DataTree[Object]()
         
-        for listCount, list in enumerate(dataMeshInit):
-            for item in list:
+        for listCount, lst in enumerate(dataMeshInit):
+            for item in lst:
                 dataMesh.Add(item, GH_Path(listCount))
         
-        for listCount, list in enumerate(dataCurvesInit):
-            for item in list:
+        for listCount, lst in enumerate(dataCurvesInit):
+            for item in lst:
                 dataCurves.Add(item, GH_Path(listCount))
         
-        for listCount, list in enumerate(dataCrvColorsInit):
-            for item in list:
+        for listCount, lst in enumerate(dataCrvColorsInit):
+            for item in lst:
                 dataCrvColors.Add(item, GH_Path(listCount))
 
 

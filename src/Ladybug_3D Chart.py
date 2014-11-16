@@ -11,8 +11,8 @@ Provided by Ladybug 0.0.58
     
     Args:
         _inputData: A list of input data to plot.
-        _xScale_: The scale of the X axis of the graph. The default will plot the X axis with a length of 365 Rhino model units (for 365 days of the year). Connect a list of values for multiple graphs.
-        _yScale_: The scale of the Y axis of the graph. The default will plot the Y axis with a length of 24 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
+        _xScale_: The scale of the X axis of the graph. The default will plot the X axis with a length of 3650 Rhino model units (for 365 days of the year). Connect a list of values for multiple graphs.
+        _yScale_: The scale of the Y axis of the graph. The default will plot the Y axis with a length of 240 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
         _zScale_: The scale of the Z axis of the graph. The default will plot the Z axis with a number of Rhino model units corresponding to the input data values.  Set to 0 to see graphCurves appear on top of the mesh.  Connect a list of values for multiple graphs.
         _yCount_: The number of segments on your y-axis.  The default is set to 24 for 24 hours of the day. This variable is particularly useful for input data that is not for each hour of the year.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -168,29 +168,30 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
         mesh.Faces.AddFace(0, 1, 2, 3)
         joinedMesh.Append(mesh)
     
-    #Create the first webbing in between the primary mesh faces.
-    for listCount, list in enumerate(meshFacePts):
-        if listCount < len(meshFacePts)-yCount:
-            mesh = rc.Geometry.Mesh()
-            mesh.Vertices.Add(list[2])
-            mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
-            mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
-            mesh.Vertices.Add(list[3])
-            
-            mesh.Faces.AddFace(0, 1, 2, 3)
-            joinedMesh.Append(mesh)
-    
-    #Create the second webbing in between the primary mesh faces.
-    for listCount, list in enumerate(meshFacePts):
-        if listCount/yCount != int(listCount/yCount):
-            mesh = rc.Geometry.Mesh()
-            mesh.Vertices.Add(list[2])
-            mesh.Vertices.Add(list[1])
-            mesh.Vertices.Add(meshFacePts[listCount-1][0])
-            mesh.Vertices.Add(meshFacePts[listCount-1][3])
-            
-            mesh.Faces.AddFace(0, 1, 2, 3)
-            joinedMesh.Append(mesh)
+    if zScale > 0.0:
+        #Create the first webbing in between the primary mesh faces.
+        for listCount, list in enumerate(meshFacePts):
+            if listCount < len(meshFacePts)-yCount:
+                mesh = rc.Geometry.Mesh()
+                mesh.Vertices.Add(list[2])
+                mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
+                mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
+                mesh.Vertices.Add(list[3])
+                
+                mesh.Faces.AddFace(0, 1, 2, 3)
+                joinedMesh.Append(mesh)
+        
+        #Create the second webbing in between the primary mesh faces.
+        for listCount, list in enumerate(meshFacePts):
+            if listCount/yCount != int(listCount/yCount):
+                mesh = rc.Geometry.Mesh()
+                mesh.Vertices.Add(list[2])
+                mesh.Vertices.Add(list[1])
+                mesh.Vertices.Add(meshFacePts[listCount-1][0])
+                mesh.Vertices.Add(meshFacePts[listCount-1][3])
+                
+                mesh.Faces.AddFace(0, 1, 2, 3)
+                joinedMesh.Append(mesh)
     
     # color the mesh faces.
     joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
@@ -201,18 +202,20 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
             joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum]
             joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum]
             joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum]
-        elif srfNum >= len(values) and srfNum < len(values)*2 - yCount:
-            joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
-            joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
-            joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
-            joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
-        elif srfNum >= len(values)*2 - yCount:
-            extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
-            if yCount == 2: extraVal = extraVal+2
-            joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-            joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-            joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
-            joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+        if zScale > 0.0:
+            if srfNum >= len(values) and srfNum < len(values)*2 - yCount:
+                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
+                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
+                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
+                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
+            elif srfNum >= len(values)*2 - yCount:
+                extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
+                if yCount == 2: extraVal = extraVal+2
+                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+            else: pass
         else: pass
     
     #Make a copy of the mesh for purposes of placing the legend correctly.
@@ -314,11 +317,11 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
         startPt = rc.Geometry.Point3d(basePoint.X, basePoint.Y+i, zMax)
         endPt = rc.Geometry.Point3d(basePoint.X+(ySize*yScale), basePoint.Y+i, zMax)
         hourLines.append(rc.Geometry.LineCurve(startPt, endPt))
-        hourTextPts.append(rc.Geometry.Point3d(basePoint.X - legendFontSize*6, basePoint.Y+i, zMax))
+        hourTextPts.append(rc.Geometry.Point3d(basePoint.X - legendFontSize*5.5, basePoint.Y+i-legendFontSize*0.5, zMax))
         i+=(xScale)
     
     hoursPerPeriod = [0, 6, 12, 18, 24]
-    hourNames = ["12 AM", "6 AM", "12 PM", "6 PM", "12 AM"]
+    hourNames = ["12 AM", " 6 AM", "12 PM", " 6 PM", "12 AM"]
     
     for hourCount, hour in enumerate(hoursList):
         for count, period in enumerate(hoursPerPeriod):

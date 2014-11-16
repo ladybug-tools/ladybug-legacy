@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -2331,9 +2331,18 @@ class ResultVisualization(object):
                 mesh.Faces.AddFace(0, 1, 3, 2)
                 legendSrf.Append(mesh)
                 
-                textPt.append(meshVertices[segNum * 2 + 1])
-            textPt.append(meshVertices[-1]) # one more point for legend title
+                pt = rc.Geometry.Point3d(meshVertices[segNum * 2 + 1].X + textSize*0.5, meshVertices[segNum * 2 + 1].Y, meshVertices[segNum * 2 + 1].Z)
+                textPt.append(pt)
+            pt = rc.Geometry.Point3d(meshVertices[-1].X + textSize*0.5, meshVertices[-1].Y, meshVertices[-1].Z)
+            textPt.append(pt) # one more point for legend title
             return legendSrf, textPt
+        
+        # check for user input
+        if font == None:
+            font = 'Verdana'
+        legendHeight = legendWidth = (BBYlength/10) * legendScale
+        if  textSize == None:
+            textSize = (legendHeight/3) * legendScale
         
         # numbers
         # rs.frange(0, 1, round(1/(numofColors-1),6))
@@ -2351,16 +2360,9 @@ class ResultVisualization(object):
         numbersStr[-1] = numbersStr[-1] + "<="
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
-        legendHeight = legendWidth = (BBYlength/10) * legendScale
         
         # mesh surfaces and legend text
         legendSrf, textPt = legend(basePt, legendHeight, legendWidth, numOfSeg)
-        
-        # check for user input
-        if font == None:
-            font = 'Verdana'
-        if  textSize == None:
-            textSize = (legendHeight/3) * legendScale
         
         numbersCrv = self.text2srf(numbersStr, textPt, font, textSize, fontBold)
         
