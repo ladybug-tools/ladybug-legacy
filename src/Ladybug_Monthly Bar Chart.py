@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -218,7 +218,7 @@ def restoreInput():
 
 def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb_preparation, lb_visualization):
     #Read legend parameters
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar_, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
     numSeg = int(numSeg)
     
     #Set some defaults.
@@ -262,7 +262,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     textSrfs = []
     for count, monthText in enumerate(monthNames):
-        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize)
+        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize, legendBold)
         textSrfs.extend(textSrf[0])
     
     
@@ -428,7 +428,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     
     #Put in right Y axis labels.
     basePt = rc.Geometry.Point3d(-10*legendFontSize, 0,0)
-    yAxisSrf = lb_visualization.text2srf([dataTypeList[0][0] + ' (' + unitsList[0] + ')'], [basePt], legendFont, legendFontSize*1.5)
+    yAxisSrf = lb_visualization.text2srf([dataTypeList[0][0] + ' (' + unitsList[0] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
     rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
     for srf in yAxisSrf[0]:
         srf.Transform(rotation)
@@ -442,7 +442,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
         if dataTypeList[0][0] == 'Dry Bulb Temperature' or dataTypeList[0][0] == 'Effective Temperature':
             avgMonthTemp = dataList[0]
     for count, valText in enumerate(finalValues):
-        textSrf = lb_visualization.text2srf([valText], [yAxisLeftPts[count]], legendFont, legendFontSize)
+        textSrf = lb_visualization.text2srf([valText], [yAxisLeftPts[count]], legendFont, legendFontSize, legendBold)
         textSrfs.extend(textSrf[0])
     
     #Put in left Y axis label and get scales for the rest of the data.
@@ -450,12 +450,13 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     unit2 = None
     lowVal2 = None
     valRange2 = None
+    axesTextSrf = []
     done = False
     for uCount, unit in enumerate(unitsList[1:]):
         if unit != unit1 and done == False:
             unit2 = unitsList[uCount+1]
             basePt = rc.Geometry.Point3d(10*legendFontSize+width, 0,0)
-            yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5)
+            yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
             rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
             for srf in yAxisSrf[0]:
                 srf.Transform(rotation)
@@ -468,12 +469,16 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
                 tempScale.append(valRange1)
                 if dataTypeList[uCount+1][0] == 'Dry Bulb Temperature' or dataTypeList[uCount+1][0] == 'Effective Temperature': avgMonthTemp = dataList[uCount+1]
             for count, valText in enumerate(finalValues):
-                textSrf = lb_visualization.text2srf([valText], [yAxisRightPts[count]], legendFont, legendFontSize)
-                textSrfs.extend(textSrf[0])
+                axesTextSrf = lb_visualization.text2srf([valText], [yAxisRightPts[count]], legendFont, legendFontSize, legendBold)
+                textSrfs.extend(axesTextSrf[0])
             done = True
         elif unit == unit1:
             startVals.append(lowVal1)
             scaleFacs.append(valRange1/height)
+            if unit1 == 'C' or unit1 == 'C' or unit1 == 'F' or unit1 == 'F':
+                tempVals.append(lowVal1)
+                tempScale.append(valRange1)
+                if dataTypeList[uCount+1][0] == 'Dry Bulb Temperature' or dataTypeList[uCount+1][0] == 'Effective Temperature': avgMonthTemp = dataList[uCount+1]
         elif unit == unit2:
             startVals.append(lowVal2)
             scaleFacs.append(valRange2/height)
@@ -489,13 +494,14 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     #Create a title.
     newlistInfo = str(listInfo[0][1])
     txtPt = rc.Geometry.Point3d(-10*legendFontSize, -7*legendFontSize, 0)
-    titleTextSrfs = lb_visualization.text2srf([newlistInfo], [txtPt], legendFont, legendFontSize*1.5)
+    titleTextSrfs = lb_visualization.text2srf([newlistInfo], [txtPt], legendFont, legendFontSize*1.5, legendBold)
     for txt in titleTextSrfs:
         textSrfs.extend(txt)
     
     # Group eveything together to use it for the bounding box.
     allGeo = []
     allGeo.extend(chartAxes)
+    allGeo.extend(axesTextSrf)
     
     #Calculate a bounding box around everything that will help place the legend ad title.
     lb_visualization.calculateBB(allGeo, True)
@@ -504,7 +510,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     colors = lb_visualization.gradientColor(range(len(separatedLists)), 0, len(separatedLists)-1, customColors)
     
     #Create a legend for the data types.
-    if legendBasePoint == None: basePt = lb_visualization.BoundingBoxPar[0]
+    if legendBasePoint == None:
+        basePt = rc.Geometry.Point3d(lb_visualization.BoundingBoxPar[0].X+legendFontSize, lb_visualization.BoundingBoxPar[0].Y, lb_visualization.BoundingBoxPar[0].X)
     else: basePt = legendBasePoint
     BBYlength = lb_visualization.BoundingBoxPar[2]
     legendHeight = legendWidth = (BBYlength/10) * legendScale
@@ -546,7 +553,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
         if methodsList[legCount] == 2: dataTypeListFlat[legCount] = legItem + ' \n(Hourly)'
         if methodsList[legCount] == 3: dataTypeListFlat[legCount] = legItem + ' \n(Daily)'
     
-    legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize)
+    legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize, legendBold)
     
     #Create legend.
     legend = []
@@ -759,7 +766,8 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
         # Get the average monthly temperatures from the temperature data.
         avgTemps = []
         for month in avgMonthTemp:
-            month = lb_preparation.flattenList(month)
+            try: month = lb_preparation.flattenList(month)
+            except: month[0]
             avgTemp = sum(month)/len(month)
             if farenheitCheck == False:
                 if avgTemp > 10:

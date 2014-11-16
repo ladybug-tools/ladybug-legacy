@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_23_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -512,7 +512,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         return titleStatement, patternList
 
 
-def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, scaleFactor, epwData, epwStr, lb_visualization):
+def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, lb_visualization):
     #Generate a list of temperatures that will be used to make the relative humidity curves.
     tempNum = range(-20, 55, 5)
     relHumidNum = range(10, 110, 10)
@@ -618,12 +618,12 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     # Make the temperature text for the chart.
     tempLabels = []
     for count, text in enumerate(tempText):
-        tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize)[0])
+        tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize, legendBold)[0])
     
     # Make the humidity ratio text for the chart.
     ratioLabels = []
     for count, text in enumerate(ratioText):
-        ratioLabels.extend(lb_visualization.text2srf([text], [ratioBasePt[count]], legendFont, legendFontSize)[0])
+        ratioLabels.extend(lb_visualization.text2srf([text], [ratioBasePt[count]], legendFont, legendFontSize, legendBold)[0])
     
     # Make the relative humidity text for the chart.
     relHumidBasePts = []
@@ -635,18 +635,18 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     for humid in relHumidNum:
         relHumidTxt.append(str(humid)+"%")
     for count, text in enumerate(relHumidTxt[:-1]):
-        relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75)[0])
+        relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75, legendBold)[0])
     
     #Make axis labels for the chart.
     xAxisLabels = []
     xAxisTxt = ["Dry Bulb Temperature"]
     xAxisPt = [rc.Geometry.Point3d(-20.5, -2.5, 0)]
-    xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25)[0])
+    xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     
     yAxisLabels = []
     yAxisTxt = ["Humidity Ratio"]
     yAxisPt = [rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0)]
-    yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25)[0])
+    yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0))
     for geo in yAxisLabels:
         geo.Transform(rotateTransf)
@@ -668,7 +668,7 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     else: titleTxt = ["Psychrometric Chart", "Unlown Location", "Unknown Time Period"]
     titlePt = [rc.Geometry.Point3d(-19, 0.0295*scaleFactor, 0), rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
-        titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5)[0])
+        titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
     
     #Bring all text and curves together in one list.
     chartCrvAndText = []
@@ -1439,7 +1439,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     for listCount, list in enumerate(annualHourlyDataSplit):
         if len(list) != 0:
             legend = []
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
             legendColors = lb_visualization.gradientColor(legendText[:-1], "min", "max", customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)
@@ -1471,11 +1471,11 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         # Read the legend parameters.
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar_, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
         
         # Generate the chart curves.
         scaleFactor = 1500
-        chartCurves, humidityLines = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, scaleFactor, epwData, epwStr, lb_visualization)
+        chartCurves, humidityLines = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, lb_visualization)
         
         #If there is annual hourly data, split it up.
         if annualHourlyData_ != []:
@@ -1545,7 +1545,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             hourPts, coloredMesh, meshFaceValues = colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_visualization, scaleFactor, lowB, highB, customColors)
             legendTitle = "Hours"
             lb_visualization.calculateBB(chartCurves[62:70], True)
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)

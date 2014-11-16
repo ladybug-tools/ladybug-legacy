@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -334,7 +334,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             # initial compass for BB
             textSize = 10
             compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
-            numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+            numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
             compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
             lb_visualization.calculateBB(compassCrvs, True)
             
@@ -342,7 +342,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == None: overwriteScale = True
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.9
             legend = []; legendText = []; textPt = []; legendSrfs = None
@@ -385,7 +385,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         
                         # get the legend done
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(allValues
-                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                         
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -406,7 +406,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             # print resultStr
                             customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
-                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
+                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
                         
                         
                         # find the freq of the numbers in each segment
@@ -521,7 +521,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     textPt.append(titlebasePt)
                     
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
-                    numberCrvs = lb_visualization.text2crv(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
                     

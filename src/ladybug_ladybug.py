@@ -545,7 +545,12 @@ class Preparation(object):
         if legendPar[7] == None: legendFontSize = None
         else: legendFontSize = legendPar[7]
         
-        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize
+        try:
+            if legendPar[8] == None: legendBold = False
+            else: legendBold = legendPar[8]
+        except: legendBold = False
+        
+        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold
     
     def readOrientationParameters(self, orientationStudyP):
         try:
@@ -1883,7 +1888,6 @@ class MeshPreparation(object):
 class RunAnalysisInsideGH(object):
     #
     def calRadRoseRes(self, tiltedRoseVectors, TregenzaPatchesNormalVectors, genCumSkyResult, testPoint = rc.Geometry.Point3d.Origin, bldgMesh = [], 
-
 groundRef = 0):
         radResult = []; sunUpHours = 1
         for vec in tiltedRoseVectors:
@@ -1996,7 +2000,6 @@ groundRef = 0):
     
     
     def parallel_sunlightHoursCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, sunVectors, conversionFac, northVector, 
-
 timeStep = 1):
         # preparing bulk lists
         sunlightHours = [0] * len(testPts)
@@ -2297,7 +2300,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -2359,7 +2362,7 @@ class ResultVisualization(object):
         if  textSize == None:
             textSize = (legendHeight/3) * legendScale
         
-        numbersCrv = self.text2srf(numbersStr, textPt, font, textSize)
+        numbersCrv = self.text2srf(numbersStr, textPt, font, textSize, fontBold)
         
         return legendSrf, numbers, numbersCrv, textPt, textSize
     
@@ -2388,15 +2391,15 @@ class ResultVisualization(object):
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
         return textCrvs
     
-    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20):
+    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False):
         # Thanks to Giulio Piacentino for his version of text to curve
         textSrfs = []
         for n in range(len(text)):
             plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
             if type(text[n]) is not str:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, False, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, bold, False)
             else:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, False, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, bold, False)
                 
             postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
             TG = postText.Geometry
@@ -2422,7 +2425,14 @@ class ResultVisualization(object):
                     projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
                 srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
             
-            textSrfs.append(srfs)
+            #Mesh the surfcaes.
+            meshSrfs = []
+            for srf in srfs:
+                meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
+                meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+                meshSrfs.append(meshSrf)
+            
+            textSrfs.append(meshSrfs)
             
             #if len(text[n].strip()) == len(srfs)+ extraSrfCount:
             #    textSrfs.append(srfs)
@@ -2437,7 +2447,7 @@ class ResultVisualization(object):
             
         return textSrfs
     
-    def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False, font = None, fontSize = None):
+    def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False, font = None, fontSize = None, fontBold = False):
         #Define a function to create surfaces from input curves.
         
         if Heading==None: Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
@@ -2456,7 +2466,7 @@ class ResultVisualization(object):
         
         titlebasePt = boundingBoxPar[-2]
         
-        titleTextSrf = self.text2srf([titleStr], [titlebasePt], font, fontSize)
+        titleTextSrf = self.text2srf([titleStr], [titlebasePt], font, fontSize, fontBold)
         
         return titleTextSrf, titleStr, titlebasePt
 
@@ -3767,38 +3777,6 @@ class ComfortModels(object):
         [(-0.175068, -0.170931, 0.069916), (-0.175068, -0.170931, 0.0), (-0.175068, -0.0816051, 1.38778e-17), (-0.175068, -0.0816051, 0.069916)]]
         
         return standingData
-    
-    def effectiveTemperature(self, Ta, ws, rh):
-        if ws <= 0.2:
-            # formula by Missenard
-            TE = Ta - 0.4*(Ta - 10)*(1-rh/100)
-        elif ws > 0.2:
-            # modified formula by Gregorczuk (WMO, 1972; Hentschel, 1987)
-            TE = 37 - ( (37-Ta)/(0.68-(0.0014*rh)+(1/(1.76+1.4*(ws**0.75)))) ) - (0.29 * Ta * (1-0.01*rh)) # nije Missenard, drugi je neki
-    
-        if TE < 1:
-            effectTE = -4
-            comfortable = 0
-        elif TE >= 1 and TE < 9:
-            effectTE = -3
-            comfortable = 0
-        elif TE >= 9 and TE < 17:
-            effectTE = -2
-            comfortable = 0
-        elif TE >= 17 and TE < 21:
-            effectTE = -1
-            comfortable = 0
-        elif TE >= 21 and TE < 23:
-            effectTE = 0
-            comfortable = 1
-        elif TE >= 23 and TE < 27:
-            effectTE = 1
-            comfortable = 0
-        elif TE >= 27:
-            effectTE = 2
-            comfortable = 0
-    
-        return TE, effectTE, comfortable
 
 class WindSpeed(object):
     

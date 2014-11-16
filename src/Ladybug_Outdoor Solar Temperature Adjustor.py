@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_08_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -708,7 +708,7 @@ def prepareLBList(skyMtxLists, analysisPeriodOrHOY, locName, unit, removeDiffuse
 
 def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, checkTheName, l, listInfo, lb_preparation, lb_visualization):
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
     
     colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
     
@@ -739,7 +739,7 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
         lb_visualization.calculateBB([finBBox])
     
     # legend geometry
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
     
     # legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -747,7 +747,7 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
 
     customHeading = '\n\nSolar Adjusted Radiant Temperature'
-    titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[0]], lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize)
+    titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[0]], lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize, legendBold)
     
     if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
     

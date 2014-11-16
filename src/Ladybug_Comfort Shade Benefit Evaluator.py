@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_03_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -689,7 +689,7 @@ def main(allDataDict, balanceTemp, sunVectors, legendPar, lb_preparation, lb_vis
         #Get the colors for the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
         legendFont = 'Verdana'
         if legendPar:
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
         else:
             lowB = -1 * legendVal
             highB = legendVal
@@ -741,12 +741,12 @@ def main(allDataDict, balanceTemp, sunVectors, legendPar, lb_preparation, lb_vis
         analysisTitle = '\nShade Benefit Analysis'
         if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
         
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(shadeNetEffect, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(shadeNetEffect, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         
         titlebasePt = lb_visualization.BoundingBoxPar[-2]
-        titleTextCurve = lb_visualization.text2srf([analysisTitle], [titlebasePt], legendFont, legendScale * (lb_visualization.BoundingBoxPar[2]/20))
+        titleTextCurve = lb_visualization.text2srf([analysisTitle], [titlebasePt], legendFont, legendScale * (lb_visualization.BoundingBoxPar[2]/20), legendBold)
         
         #Package the final legend together.
         legend = []

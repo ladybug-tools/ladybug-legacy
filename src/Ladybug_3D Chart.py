@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -241,7 +241,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     
     return joinedMesh, originalMesh
 
-def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize, lb_visualization):
+def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize, legendBold, lb_visualization):
     ySize = int(len(values)/xSize)
     # Get a value to set the chart curves with.
     orderedVal = values[:]
@@ -298,7 +298,7 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     #Make the text surfaces for each month.
     textSrfs = []
     for count, monthText in enumerate(textStrings):
-        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize)
+        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize, legendBold)
         textSrfs.extend(textSrf[0])
     
     #Generate curves for each of the major hours.
@@ -326,7 +326,7 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
                 textStrings.append(hourNames[count])
                 monthCurves.append(hourLines[hourCount])
                 textBasePts.append(hourTextPts[hourCount])
-                srfs = lb_visualization.text2srf([hourNames[count]], [hourTextPts[hourCount]], legendFont, legendFontSize)[0]
+                srfs = lb_visualization.text2srf([hourNames[count]], [hourTextPts[hourCount]], legendFont, legendFontSize, legendBold)[0]
                 for srf in srfs:
                     textSrfs.append(srf)
     
@@ -459,7 +459,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 zSC = abs(zSC)
                 
                 # read legend parameters
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
                 
                 # Get the graph colors
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
@@ -473,7 +473,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 if yHeight == 24*xSC:
                     if len(results) == 8760 or listInfo[i][4] == "Hourly":
-                        chartCrvs, textBasePts, textStrings, textSrfs = createChartCrvs(results, listInfo[i][5], listInfo[i][6], xC, xSC, ySC, zSC, rc.Geometry.Point3d.Origin, yHeight, lb_preparation, legendFont, legendFontSize, lb_visualization)
+                        chartCrvs, textBasePts, textStrings, textSrfs = createChartCrvs(results, listInfo[i][5], listInfo[i][6], xC, xSC, ySC, zSC, rc.Geometry.Point3d.Origin, yHeight, lb_preparation, legendFont, legendFontSize, legendBold, lb_visualization)
                     else:
                         chartCrvs = []
                         textBasePts = []
@@ -506,7 +506,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 movingVector = rc.Geometry.Vector3d(0, i * movingDist,0)
                 coloredChart.Translate(movingVector)
-                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]],lb_visualization.BoundingBoxPar, legendScale, None, False, legendFont, legendFontSize)
+                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]],lb_visualization.BoundingBoxPar, legendScale, None, False, legendFont, legendFontSize, legendBold)
                 
                 legendTitle = listInfo[i][3]
                 placeName = listInfo[i][1]
@@ -523,12 +523,16 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     titleText.append(item)
                 
                 #Calculate a bounding box to help size the legend.
-                lb_visualization.calculateBB(chartCrvs, True)
+                allGeoL = []
+                for item in chartCrvs:
+                    allGeoL.append(item)
+                allGeoL.append(originalMesh)
+                lb_visualization.calculateBB(allGeoL, True)
                 lb_visualization.BoundingBoxPar = (lb_visualization.BoundingBoxPar[0], lb_visualization.BoundingBoxPar[1], lb_visualization.BoundingBoxPar[2] - (lb_visualization.BoundingBoxPar[2]/numSeg) , lb_visualization.BoundingBoxPar[3], lb_visualization.BoundingBoxPar[4], lb_visualization.BoundingBoxPar[5], lb_visualization.BoundingBoxPar[6])
                 
                 # create legend geometries
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                 
                 textPt.append(titlebasePt)
                 

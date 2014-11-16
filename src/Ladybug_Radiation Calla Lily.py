@@ -31,7 +31,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Lily"
 ghenv.Component.NickName = 'radiationCallaLily'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -208,7 +208,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
             elif legendPar[-1] == None: overwriteScale = True
             
             # generate the colors
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.85
             
@@ -256,7 +256,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
             
             # get the legend done
             legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(resultsFlatten
-                    , lowB, highB, numSeg, listInfo[0][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                    , lowB, highB, numSeg, listInfo[0][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
             
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -266,7 +266,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale,
             
             # title
             customHeading = '\n\nRadiation Calla Lily (' + listInfo[0][3] + ')'
-            titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle(listInfo, lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize)
+            titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle(listInfo, lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize, legendBold)
             
             cenPtMoved = rc.Geometry.Point3d.Add(cenPt, 0.9*lb_visualization.BoundingBoxPar[3]*rc.Geometry.Vector3d.ZAxis)
             compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPtMoved, northVector, maxHorRadius, roseHAngles, 1.2*textSize)

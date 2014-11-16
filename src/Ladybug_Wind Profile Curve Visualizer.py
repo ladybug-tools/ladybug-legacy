@@ -49,7 +49,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Profile Curve Visualizer"
 ghenv.Component.NickName = 'WindProfileCurve'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_23_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -369,7 +369,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 
 def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
     #Read the legend parameters.
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar_, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
     
     #If epw data is connected, get the data for the analysis period and strip the header off.
     if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)] and HOY_ == []:
@@ -600,7 +600,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windD
     
     #Create a legend.
     legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values
-                    , lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                    , lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces
