@@ -3321,11 +3321,13 @@ class ComfortModels(object):
             if UTCI_approx > 9 and UTCI_approx < 26: comfortable = 1
             else: comfortable = 0
             
-            if UTCI_approx < -13.0: stressRange = -2
-            elif UTCI_approx > -13.0 and UTCI_approx < 9.0: stressRange = -1
-            elif UTCI_approx > 9.0 and UTCI_approx < 26.0: stressRange = 0
-            elif UTCI_approx > 26.0 and UTCI_approx < 32.0: stressRange = 1
-            else: stressRange = 2
+            if UTCI_approx <= -13.0: stressRange = -3
+            elif UTCI_approx > -13.0 and UTCI_approx <= 0.0: stressRange = -2
+            elif UTCI_approx > 0.0 and UTCI_approx <= 9.0: stressRange = -1
+            elif UTCI_approx > 9.0 and UTCI_approx <= 26.0: stressRange = 0
+            elif UTCI_approx > 26.0 and UTCI_approx <= 28.0: stressRange = 1
+            elif UTCI_approx > 28.0 and UTCI_approx <= 32.0: stressRange = 2
+            else: stressRange = 3
             
         else:
             UTCI_approx = None

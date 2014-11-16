@@ -10,9 +10,9 @@ UTCI is this temperature of what the weather "feels like" and it takes into acco
 _
 A UTCI between 9 and 26 degrees Celcius indicates no thermal stress or comfortable conditions outdoors.
 _
-A UTCI between 26 and 32 degrees Celcius indicates slight heat stress (comfortable for short periods of time). Between 32 and 38 degrees, UTCI indicates strong heat stress (not at all comfortable and dangerous beyond short periods of time).  Above 38, UTCI indicates very strong to extreme heat stress (very dangerous).
+A UTCI between 26 and 28 degrees Celcius indicates slight heat stress (comfortable for short periods of time). Between 28 and 32 degrees, UTCI indicates moderate heat stress (hot but not dangerous).  Between 32 and 38 degrees, UTCI indicates strong heat stress (dangerous beyond short periods of time). Above 38, UTCI indicates very strong to extreme heat stress (very dangerous).
 _
-A UTCI between -13 and 9 degrees Celcius indicates slight cold stress (comfortable for short periods of time). Between -13 and -27 degrees, UTCI indicates strong cold stress (not at all comfortable and dangerous beyond short periods of time).  Below -27, UTCI indicates very stong to extreme cold stress (very dangerous).
+A UTCI between 0 and 9 degrees Celcius indicates slight cold stress (comfortable for short periods of time). Between 0 and -13 degrees, UTCI indicates moderate cold stress (cold but not dangerous).  Between -13 and -27 degrees, UTCI indicates strong cold stress (dangerous beyond short periods of time).  Below -27, UTCI indicates very stong to extreme cold stress (very dangerous).
 _
 _
 UTCI is result of the world's leading comfort specailists' attempt to make an interational standard of outdoor temperature sensation that fills the follwoing requirements:
@@ -38,21 +38,23 @@ Provided by Ladybug 0.0.58
         universalThermalClimateIndex: The UTCI of the input conditions in degrees Celcius. Perhaps the most familiar application of Univeral Thermal Climate Index (UTCI) is the temperature given by TV weathermen and women when they say that, even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something higher or lower. UTCI is this temperature of what the weather "feels like" and it takes into account radiant temperature (usually including solar radiation), relative humidity, wind speed and uses them in a human energy balance model to give a temperature value that is indicative of the heat stress or cold stress felt by the human body.
         comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether a person outside is comfortable for each hour of the input conditions.  0 indicates that a person is not comfortable while 1 indicates that a person is comfortable.  A person is considered to be comfortable when he/she experiences no thermal stress (9 < UTCI < 26).
         conditionOfPerson: A stream of interger values from -2 to +2 that indicate the following:
-                       -2 - Strong Cold Stress - the mortality rate is higher than normal (UTCI < -13 C).
-                       -1 - Slight/Moderate Cold Stress - cool but comfortable for short periods of time (-13 < UTCI <9).
+                       -3 - Strong Cold Stress - potential public health hazard with higher-than-normal mortality rates (UTCI < -13 C).
+                       -2 - Moderate Cold Stress - cold but no public health hazard (-13 < UTCI <0).
+                       -1 - Slight Cold Stress - cool but comfortable for short periods of time (0 < UTCI <9)
                        0  - No Thermal Stress  - comfortable conditions (9 < UTCI < 26).
-                       +1 - Slight/Moderate Heat Stress - warm but comfortable for short periods of time (26 < UTCI < 32).
-                       +2 - Strong Heat Stress - the mortality rate is higher than normal (UTCI > 32 C).
+                       +1 - Slight Heat Stress - warm but comfortable for short periods of time (26 < UTCI < 28).
+                       +2 - Moderate Heat Stress - hot but no public health hazard (28 < UTCI < 32).
+                       +3 - Strong Heat Stress - potential public health hazard with higher-than-normal mortality rates (UTCI > 32 C).
         ------------------------------: ...
         percentOfTimeComfortable: The percent of the input data for which the UTCI indicates no thermal stress (comfortable conditions).  Comfortable conditions are when the UTCI is between 9 and 26 degrees Celcius.
-        percentComfForShortPeriod: The percent of the input data for which the UTCI indicates slight-to-moderate heat/cold stress.  This indicates conditions that are comfortable for short periods of time with proper attire.  This includes all conditions are when the UTCI is between -13 and 9 degrees Celcius or between 26 and 32 degrees Celcius.
-        percentHeatStress: The percent of the input data for which the UTCI indicates strong-to-extreme heat stress.  This indicates conditions that are not at all comfortable and for which the mortality rate over a large population will begin to rise.  This includes all conditions are when the UTCI is above 32 degrees Celcius.
-        percentColdStress: The percent of the input data for which the UTCI indicates strong-to-extreme cold stress.  This indicates conditions that are not at all comfortable and for which the mortality rate over a large population will begin to rise.  This includes all conditions are when the UTCI is below -13 degrees Celcius.
+        percentComfForShortPeriod: The percent of the input data for which the UTCI indicates slight heat/cold stress.  This indicates conditions that are comfortable for short periods of time with proper attire.  This includes all conditions when the UTCI is between 0 and 9 degrees Celcius or between 26 and 28 degrees Celcius.
+        percentHeatStress: The percent of the input data for which the UTCI indicates moderate-to-extreme heat stress.  This indicates conditions that are not comfortable.  This includes all conditions are when the UTCI is above 28 degrees Celcius.
+        percentColdStress: The percent of the input data for which the UTCI indicates moderate-to-extreme cold stress.  This indicates conditions that are not comfortable.  This includes all conditions are when the UTCI is below 0 degrees Celcius.
 
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -280,11 +282,11 @@ def main():
         if checkData == True and epwData == True:
             universalThermalClimateIndex.extend([epwStr[0], epwStr[1], 'Universal Thermal Climate Index', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfort or Not', 'Boolean Value', epwStr[4], runPeriod[0], runPeriod[1]])
-            coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort', '-2 = Extremely Cold, -1 = Cold, 0 = Comfortable, 1 = Hot, 2 = Extremely Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+            coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort', '-3 = Extreme Cold | -2 = Cold | -1 = Cool | 0 = Comfort | 1 = Warm | 2 = Hot | -3 = Extreme Heat', epwStr[4], runPeriod[0], runPeriod[1]])
         elif checkData == True and epwData == True and 'for' in epwStr[2]:
             universalThermalClimateIndex.extend([epwStr[0], epwStr[1], 'Universal Thermal Climate Index' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfort or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean Value', epwStr[4], runPeriod[0], runPeriod[1]])
-            coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-2 = Extremely Cold, -1 = Cold, 0 = Comfortable, 1 = Hot, 2 = Extremely Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+            coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-3 = Extreme Cold | -2 = Cold | -1 = Cool | 0 = Comfort | 1 = Warm | 2 = Hot | -3 = Extreme Heat', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
             try:
                 utciList = []
@@ -314,8 +316,8 @@ def main():
                 cold = []
                 for item in coldComfHot:
                     if item == -1 or item == 1: short.append(1.0)
-                    elif item == -2: cold.append(1.0)
-                    elif item == 2: hot.append(1.0)
+                    elif item == -2 or item == -3: cold.append(1.0)
+                    elif item == 2 or item == 3: hot.append(1.0)
                     else: pass
                 percentHeatStress = ((sum(hot))/calcLength)*100
                 percentColdStress = ((sum(cold))/calcLength)*100
