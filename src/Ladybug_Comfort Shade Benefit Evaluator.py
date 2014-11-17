@@ -25,8 +25,9 @@ Provided by Ladybug 0.0.58
     
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
-        _temperatureForVec: The selHourlyData output of the Ladybug_SunPath component when dryBulbTemperature is connected to the SunPath's annualHourlyData_ input.
-        balanceTemperature_: An estimated balance temperature representing median temperture that people find comfortable, which can vary from climate to climate but is usually somewhere around 20C.  The default is set to 20C.
+        _temperatures: The selHourlyData output of the Ladybug_SunPath component when dryBulbTemperature is connected to the SunPath's annualHourlyData_ input.
+        balanceTemperature_: An estimated balance temperature representing median temperture that people find comfortable, which can vary from climate to climate. The default is set to 17.5C, which is the median outdoor comfort temperature (UTCI) that defines the conditions of no thermal stress (9 < UTCI <26).
+        temperatureOffest_: An number represeting the offset from the balanceTemperature_ in degrees Celcius at which point the shade importance begins to have an effect.  The default is set to 8.5 C, which is the range of outdoor comfort temperature (UTCI) that defines the conditions of no thermal stress (9 < UTCI <26).
         ============: ...
         _testShade: A brep or list of breps representing shading to be evaluated in terms of its benefit. Note that, in the case that multiple shading breps are connected, this component does not account for the interaction between the different shading surfaces. Note that only breps with a single surface are supported now and volumetric breps will be included at a later point.
         _testRegion: A brep representing an outdoor area for which shading is being considered or the window of a building that would be affected by the shade. Note that only breps with a single surface are supported now and volumetric breps will be included at a later point.
@@ -53,7 +54,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_17_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -234,14 +235,26 @@ def checkTheInputs():
             ghenv.Component.AddRuntimeMessage(w, warning)
     
     if balanceTemperature_ == None:
-        balanceTemp = 20
-        print "A default balanceTemperature_ of 20 C has been set, which is a comfortable outdoor temperature for most mid-lattitde climates."
+        balanceTemp = 17.5
+        print "A default balanceTemperature_ of 17.5 C has been set, which defines the range of outdoor comfort temperature (UTCI) of no thermal stress (9 < UTCI <26)."
     elif balanceTemperature_ >= 9 and balanceTemperature_ <= 26: balanceTemp = balanceTemperature_
     else:
         checkData7 = False
         balanceTemp = None
         print 'balanceTemperature_ must be between 9 C and 26 C. Anything else is frankly not human.'
         ghenv.Component.AddRuntimeMessage(w, "_balanceTemperature must be between 9 C and 26 C. Anything else is frankly not human.")
+    
+    checkData10 = True
+    if temperatureOffest_ == None:
+        temperatureOffest = 8.5
+        print "A default temperatureOffest_ of 8.5 C has been set, which defines the range of outdoor comfort temperature (UTCI) of no thermal stress (9 < UTCI <26)."
+    elif temperatureOffest_ >= 0: temperatureOffest = temperatureOffest_
+    else:
+        checkData10 = False
+        temperatureOffest = None
+        print 'temperatureOffest_ must be greater than zero.'
+        ghenv.Component.AddRuntimeMessage(w, "temperatureOffest_ must be greater than zero.")
+    
     
     #Check the sky resolution and set a default.
     checkData8 = True
@@ -285,12 +298,12 @@ def checkTheInputs():
     else: north = north_
     
     #Check if all of the above Checks are True
-    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True and checkData9 == True:
+    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True and checkData9 == True and checkData10 == True:
         checkData = True
     else:
         checkData = False
     
-    return checkData, gridSize, newAllDataDict, skyResolution, analysisPeriod, location, latitude, longitude, timeZone, north, balanceTemp
+    return checkData, gridSize, newAllDataDict, skyResolution, analysisPeriod, location, latitude, longitude, timeZone, north, balanceTemp, temperatureOffest
 
 
 def meshTheShade(gridSize, testShades):
@@ -547,7 +560,7 @@ def valCalc(percentBlocked, deltaBal, cellArea):
     return coolEffect, heatEffect, netEffect
 
 
-def evaluateShade(temperatures, balanceTemp, numHrs, analysisMesh, analysisAreas, regionMesh, regionTestPts, sunVectors):
+def evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, analysisMesh, analysisAreas, regionMesh, regionTestPts, sunVectors):
     #Determine the length to make the sun lines based on the scale of the bounding box around the input geometry.
     def joinMesh(meshList):
         joinedMesh = rc.Geometry.Mesh()
@@ -604,7 +617,7 @@ def evaluateShade(temperatures, balanceTemp, numHrs, analysisMesh, analysisAreas
              percentBlocked[faceCount][hour] = counter[hour]/testPtsCount
     
     #Calculate how far the hourly temperatures are from the balance point, allowing for a range of +/- 2C in which people will be comfortable.
-    comfortRange = 2
+    comfortRange = temperatureOffest
     deltaBal = []
     if numHrs == []:
         for hrCount, temp in enumerate(temperatures):
@@ -637,7 +650,7 @@ def evaluateShade(temperatures, balanceTemp, numHrs, analysisMesh, analysisAreas
 
 
 
-def main(allDataDict, balanceTemp, sunVectors, legendPar, lb_preparation, lb_visualization):
+def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar, lb_preparation, lb_visualization):
     #Create lists to be filled.
     totalNetEffect = []
     totalShadeGeo = []
@@ -670,7 +683,7 @@ def main(allDataDict, balanceTemp, sunVectors, legendPar, lb_preparation, lb_vis
                 totalShadeGeo.append(shadeMesh)
                 shadeMeshListInit[regionCount].append(shadeMesh)
                 shadeMeshAreas = allDataDict[path]["shadeMeshAreas"][shadeCount]
-                shadeHelpfulness, shadeHarmfulness, shadeNetEffect = evaluateShade(temperatures, balanceTemp, numHrs, shadeMesh, shadeMeshAreas, regionMesh, regionPoints, sunVectors)
+                shadeHelpfulness, shadeHarmfulness, shadeNetEffect = evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, shadeMesh, shadeMeshAreas, regionMesh, regionPoints, sunVectors)
                 
                 
                 for item in shadeNetEffect: totalNetEffect.append(item)
@@ -782,7 +795,7 @@ else:
 checkData = False
 if _temperatures.BranchCount > 0 and _testShades.BranchCount > 0 and _testRegion.BranchCount > 0 and _location != None:
     if _temperatures.Branch(0)[0] != None and _testShades.Branch(0)[0] != None and _testRegion.Branch(0)[0] != None:
-        checkData, gridSize, allDataDict, skyResolution, analysisPeriod, locationData, latitude, longitude, timeZone, north, balanceTemp = checkTheInputs()
+        checkData, gridSize, allDataDict, skyResolution, analysisPeriod, locationData, latitude, longitude, timeZone, north, balanceTemp, temperatureOffest = checkTheInputs()
 
 #If everything passes above, prepare the geometry for analysis.
 if checkLB == True and checkData == True:
@@ -802,7 +815,7 @@ if checkLB == True and checkData == True:
 #If all of the data is good and the user has set "_runIt" to "True", run the shade benefit calculation to generate all results.
 if checkLB == True and checkData == True and _runIt == True:
     finalAllDataDict, sunVectors = checkSkyResolution(skyResolution, geoAllDataDict, analysisPeriod, latitude, longitude, timeZone, north, lb_sunpath, lb_preparation)
-    result = main(finalAllDataDict, balanceTemp, sunVectors, legendPar_, lb_preparation, lb_visualization)
+    result = main(finalAllDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar_, lb_preparation, lb_visualization)
     
     if result != -1:
         shadeHelpfulnessList, shadeHarmfulnessList, shadeNetEffectList, shadeMeshList, legend, legendBasePt = result
