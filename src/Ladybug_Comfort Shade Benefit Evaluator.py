@@ -709,6 +709,8 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar, lb_
             numSeg = 11
             customColors = [System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(255,51,51), System.Drawing.Color.FromArgb(255,102,102), System.Drawing.Color.FromArgb(255,153,153), System.Drawing.Color.FromArgb(255,204,204), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(204,204,255), System.Drawing.Color.FromArgb(153,153,255), System.Drawing.Color.FromArgb(102,102,255), System.Drawing.Color.FromArgb(51,51,255), System.Drawing.Color.FromArgb(0,0,255)]
             legendBasePoint = None
+            legendFontSize = None
+            legendBold = False
             legendScale = 1
         
         #Color each of the meshes with shade benefit.
