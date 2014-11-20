@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_18_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -238,11 +238,11 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             cenPt = lb_preparation.getCenPt(centerPoint)
             
-            if not numOfDirections or int(numOfDirections) < 4: numOfDirections = 24
+            if not numOfDirections or int(numOfDirections) < 4: numOfDirections = 16
             elif int(numOfDirections)> 360: numOfDirections = 360
             else:
                 try: numOfDirections = int(numOfDirections)
-                except: numOfDirections = 24
+                except: numOfDirections = 16
             
             # define angles
             segAngle = 360/numOfDirections
@@ -285,20 +285,26 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         for angleCount in range(len(roseAngles)-1):
                             # print roseAngles[angleCount], roseAngles[angleCount + 1]
                             #print windDirection
-                            if roseAngles[angleCount]<= windDirection <= roseAngles[angleCount + 1]:
+                            if windDirection == 360.0: windDirection = 0
+                            
+                            if roseAngles[angleCount]-(segAngle/2)<= windDirection < roseAngles[angleCount + 1]-(segAngle/2):
                                 separatedBasedOnAngle[angleCount].append(h)
                                 break
                             elif roseAngles[-1]<= windDirection:
                                 separatedBasedOnAngle[-1].append(h)
                                 break
-            
+            print segAngle
+            print roseAngles
             # calculate the frequency
-            calmFreq = 100*len(calmHour)/len(studyHours)
+            calmFreq = (100*len(calmHour)/len(studyHours))
+            
             comment1 = 'Calm for ' + '%.2f'%calmFreq + '% of the time = ' + `len(calmHour)` + ' hours.'
             print comment1
             windFreq = []
             for angle in separatedBasedOnAngle:
                 windFreq.append(100*len(angle)/len(studyHours))
+            
+            calmFreq = (100*len(calmHour)/len(studyHours))/numOfDirections
             
             # draw the basic geometry for windRose
             
@@ -334,15 +340,18 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             # initial compass for BB
             textSize = 10
             compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
-            numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
-            compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
-            lb_visualization.calculateBB(compassCrvs, True)
+            
+            
             
             # initiate legend parameters
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == None: overwriteScale = True
             lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+            
+            numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
+            compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
+            lb_visualization.calculateBB(compassCrvs, True)
             
             if overwriteScale: legendScale = 0.9
             legend = []; legendText = []; textPt = []; legendSrfs = None
@@ -357,6 +366,8 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 
                 #separate data
                 indexList, listInfo = lb_preparation.separateList(annualHourlyData, lb_preparation.strToBeFound)
+                
+                
                 
                 for i in range(len(listInfo)):
                     customHeading = 'Wind-Rose\n'
@@ -407,7 +418,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
                         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
-                        
                         
                         # find the freq of the numbers in each segment
                         numRanges = legendText[:-1]

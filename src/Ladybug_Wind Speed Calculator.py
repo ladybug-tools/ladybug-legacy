@@ -13,7 +13,7 @@ Provided by Ladybug 0.0.58
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _windSpeed_tenMeters: The wind speed from the import EPW component or a number representing the wind speed at 10 meters off the ground in agricultural or airport terrian.  This input also accepts lists of numbers representing different speeds at 10 meters.
-        _windDirection: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
+        windDirection_: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
         _terrainType: The model for wind speed varies with the type of terrain. The user may enter values from a slider or a string of text indicating the type of landscape to be evaluated:
             0 = City: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
             1 = Urban: suburbs, wooded areas.
@@ -25,7 +25,7 @@ Provided by Ladybug 0.0.58
     Returns:
         readMe!: ...
         windSpeedAtHeight: The wind speed at the connected height above the ground.  If averageData_ = True, this will be a single value representing the average speed for all connected values or values within the analysis period at each height. If averageData_ = False, this returns a list of wind speeds for every hour within the analysis period at each height. Note than when averageData_ =  False, the list will include a header specific to each list. This header can be removed by using the "Ladybug_Separate Data" component.
-        windDirectionAtHeight: The wind direction in degrees at the connected height above the ground.  If averageData_ = True, this will be a single value representing the average direction for connected values or values within the analysis period. If averageData_ = False, this is essentially the same as the _windDirection input but for the analysis period.
+        windDirectionAtHeight: The wind direction in degrees at the connected height above the ground.  If averageData_ = True, this will be a single value representing the average direction for connected values or values within the analysis period. If averageData_ = False, this is essentially the same as the windDirection_ input but for the analysis period.
         windVectorAtHeight: Returns a list of vectors representing wind speed and direction at every hour within the analysis period, at each height provided.
 """
 ghenv.Component.Name = "Ladybug_Wind Speed Calculator"
@@ -88,21 +88,21 @@ def checkTheInputs():
         checkData1 = False
         print "Connect wind speed."
     
-    #Check lenth of the _windDirection list and evaluate the contents.
+    #Check lenth of the windDirection_ list and evaluate the contents.
     checkData2 = False
     windDir = []
     dirMultVal = False
     nonPositive = True
-    if len(_windDirection) != 0:
+    if len(windDirection_) != 0:
         try:
-            if _windDirection[2] == 'Wind Direction':
-                windDir = _windDirection[7:]
+            if windDirection_[2] == 'Wind Direction':
+                windDir = windDirection_[7:]
                 checkData2 = True
                 epwData = True
-                epwStr = _windDirection[0:7]
+                epwStr = windDirection_[0:7]
         except: pass
         if checkData2 == False:
-            for item in _windDirection:
+            for item in windDirection_:
                 try:
                     if float(item) >= 0:
                         windDir.append(float(item))
@@ -112,12 +112,12 @@ def checkTheInputs():
         if nonPositive == False: checkData2 = False
         if len(windDir) > 1: dirMultVal = True
         if checkData2 == False:
-            warning = '_windDirection input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
+            warning = 'windDirection_ input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
-        checkData2 = False
-        print "Connect wind direction."
+        checkData2 = True
+        windDir = [0]
     
     #Define a function to duplicate data
     def duplicateData(data, calcLength):

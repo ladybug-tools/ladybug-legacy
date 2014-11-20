@@ -483,19 +483,21 @@ def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windD
         #Create the wind profile mesh.
         totalMesh = rc.Geometry.Mesh()
         for count, point in enumerate(anchorPts[0][1:]):
-            circle = rc.Geometry.Circle(rc.Geometry.Plane(point, windVec[0][count+1]), scaleFactor*0.05).ToNurbsCurve()
-            extruVec = rc.Geometry.Vector3d(windVec[0][count+1].X, windVec[0][count+1].Y, 0)
-            extruVec.Unitize()
-            extruVec = rc.Geometry.Vector3d.Multiply(scaleFactor*-.5, extruVec)
-            extruVec = rc.Geometry.Vector3d.Add(windVec[0][count+1], extruVec)
-            extrusion = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(circle, extruVec))
-            conePlane = rc.Geometry.Plane(rc.Geometry.Point3d(windVec[0][count+1].X, windVec[0][count+1].Y, point.Z), windVec[0][count+1])
-            cone = rc.Geometry.Brep.CreateFromCone(rc.Geometry.Cone(conePlane, scaleFactor*-.5, scaleFactor*.15), True)
-            arrowMesh = rc.Geometry.Mesh()
-            arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(extrusion)[0])
-            arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(cone)[0])
-            arrowMesh.VertexColors.CreateMonotoneMesh(colors[count])
-            totalMesh.Append(arrowMesh)
+            try:
+                circle = rc.Geometry.Circle(rc.Geometry.Plane(point, windVec[0][count+1]), scaleFactor*0.05).ToNurbsCurve()
+                extruVec = rc.Geometry.Vector3d(windVec[0][count+1].X, windVec[0][count+1].Y, 0)
+                extruVec.Unitize()
+                extruVec = rc.Geometry.Vector3d.Multiply(scaleFactor*-.5, extruVec)
+                extruVec = rc.Geometry.Vector3d.Add(windVec[0][count+1], extruVec)
+                extrusion = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(circle, extruVec))
+                conePlane = rc.Geometry.Plane(rc.Geometry.Point3d(windVec[0][count+1].X, windVec[0][count+1].Y, point.Z), windVec[0][count+1])
+                cone = rc.Geometry.Brep.CreateFromCone(rc.Geometry.Cone(conePlane, scaleFactor*-.5, scaleFactor*.15), True)
+                arrowMesh = rc.Geometry.Mesh()
+                arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(extrusion)[0])
+                arrowMesh.Append(rc.Geometry.Mesh.CreateFromBrep(cone)[0])
+                arrowMesh.VertexColors.CreateMonotoneMesh(colors[count])
+                totalMesh.Append(arrowMesh)
+            except: pass
         windVecMesh = [totalMesh]
     else:
         #Evaluate each height.
