@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_16_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_21_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -3789,19 +3789,15 @@ class WindSpeed(object):
         roughLength = None
         
         if round(terrainType, 1) == 3.0 or terrainType == "water":
-            print "Terrain set to water."
             d = 210
             a = 0.10
         elif round(terrainType, 1) == 2.0 or terrainType == "country":
-            print "Terrain set to country."
             d = 270
             a = 0.14
         elif round(terrainType, 1) == 1.0 or terrainType == "suburban":
-            print "Terrain set to suburban."
             d = 370
             a = 0.22
         elif round(terrainType, 1) == 0.0 or terrainType == "urban":
-            print "Terrain set to urban."
             d = 460
             a = 0.33
         else:
@@ -3811,9 +3807,9 @@ class WindSpeed(object):
         
         return checkData, d, a
     
-    def calcWindSpeedBasedOnHeight(self, vMet, height, d, a):
+    def calcWindSpeedBasedOnHeight(self, vMet, height, d, a, metD, metA):
         #Calculate the wind speed.
-        vHeight = ((height / d) ** a) * (vMet * (270 / 10) ** 0.14)
+        vHeight = ((height / d) ** a) * (vMet * (metD / 10) ** metA)
         
         return vHeight
 

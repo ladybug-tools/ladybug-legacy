@@ -15,9 +15,14 @@ Provided by Ladybug 0.0.58
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _windSpeed_tenMeters: The wind speed from the import EPW component or a number representing the wind speed at 10 meters off the ground in agricultural or airport terrian.  This input also accepts lists of numbers representing different speeds at 10 meters.
         _windDirection: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
-        _terrainType: The model for wind speed varies with the type of terrain. The user may enter values from a slider or a string of text indicating the type of landscape to be evaluated:
-            0 = City: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
-            1 = Urban: suburbs, wooded areas.
+        _terrainType: An interger from 0 to 3 that sets the terrain class associated with the output windSpeedAtHeight. Interger values represent the following terrain classes:
+            0 = Urban: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
+            1 = Suburban: suburbs, wooded areas.
+            2 = Country: open, with scattered objects generally less than 10m high.
+            3 = Water: Flat, unobstructed areas exposed to wind flowing over a large water body (no more than 500m inland).
+        epwTerrain_: An optional interger from 0 to 3 that sets the terrain class associated with the output windSpeedAtHeight. The default is set to 2 for flat clear land, which is typical for most EPW files that are recorded at airports.  Interger values represent the following terrain classes:
+            0 = Urban: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
+            1 = Suburban: suburbs, wooded areas.
             2 = Country: open, with scattered objects generally less than 10m high.
             3 = Water: Flat, unobstructed areas exposed to wind flowing over a large water body (no more than 500m inland).
         -------------------------: ...
@@ -49,7 +54,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Profile Curve Visualizer"
 ghenv.Component.NickName = 'WindProfileCurve'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_21_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -276,18 +281,32 @@ def checkTheInputs():
             else:
                 windVectorScale = windVectorScale_
         
+        # Set a defult epwTerrain if none is connected.
+        checkData8 = True
+        if epwTerrain_ != None:
+            if epwTerrain_ <=3 and epwTerrain_ >= 0: epwTerrain = epwTerrain_
+            else:
+                epwTerrain = None
+                checkData8 = False
+                print "You have not connected a correct epwTerrain_ type."
+                w = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct epwTerrain_ type.")
+        else:
+            epwTerrain = 2
+            print "epwTerrain_ has been set to 2 for flat clear land, which is typical for most EPW files that are recorded at airports."
+        
         #Set the default to averageData_.
         if averageData_ == None:
             averageData = True
         else:
             averageData = averageData_
         
-        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True:
+        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True:
             checkData = True
         else:
             checkData = False
         
-        return checkData, heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, conversionFactor
+        return checkData, heightsAboveGround, analysisPeriod, d, a, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, conversionFactor
     else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
@@ -367,9 +386,12 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         return titleStatement, patternList
 
 
-def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
+def main(heightsAboveGround, analysisPeriod, d, a, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
     #Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
+    
+    #Read the coefficients of the epwTerrain.
+    checkData, metD, metA = lb_wind.readTerrainType(epwTerrain)
     
     #If epw data is connected, get the data for the analysis period and strip the header off.
     if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)] and HOY_ == []:
@@ -438,7 +460,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windD
         windSpdHeight = [[]]
         anchorPts = [[]]
         for count, height in enumerate(heightsAboveGround):
-            windSpdHeight[0].append(lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height, d, a))
+            windSpdHeight[0].append(lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height, d, a, metD, metA))
             anchorPts[0].append(rc.Geometry.Point3d(0, 0, height))
        
        #Create vectors for each height.
@@ -507,7 +529,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windD
             windHeight = []
             anchorPt = []
             for count, height in enumerate(heightsAboveGround):
-                windHeight.append(lb_wind.calcWindSpeedBasedOnHeight(speed, height, d, a))
+                windHeight.append(lb_wind.calcWindSpeedBasedOnHeight(speed, height, d, a, metD, metA))
                 anchorPt.append(rc.Geometry.Point3d(0, 0, height))
             windSpdHeight.append(windHeight)
             anchorPts.append(anchorPt)
@@ -637,13 +659,13 @@ checkData = False
 check = checkTheInputs()
 
 if check != -1:
-    checkData, heightsAboveGround, analysisPeriod, d, a, averageData, \
+    checkData, heightsAboveGround, analysisPeriod, d, a, epwTerrain, averageData, \
     windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, \
     lb_wind, windVectorScale, scaleFactor = check
 
 #Get the wind profile curve if everything looks good.
 if checkData == True:
-    windProfileCurve, windVectorMesh, speeds, vectors, anchorPts, legend, legendBasePt = main(heightsAboveGround, analysisPeriod, d, a, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
+    windProfileCurve, windVectorMesh, speeds, vectors, anchorPts, legend, legendBasePt = main(heightsAboveGround, analysisPeriod, d, a, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
     
     #Unpack the lists of lists in Python.
     for count, list in enumerate(speeds):
