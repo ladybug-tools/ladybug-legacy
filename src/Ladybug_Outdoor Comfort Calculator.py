@@ -37,14 +37,18 @@ Provided by Ladybug 0.0.58
         ------------------------------: ...
         universalThermalClimateIndex: The UTCI of the input conditions in degrees Celcius. Perhaps the most familiar application of Univeral Thermal Climate Index (UTCI) is the temperature given by TV weathermen and women when they say that, even though the dry bulb temperature outside is a certain value, the temperature actually "feels like" something higher or lower. UTCI is this temperature of what the weather "feels like" and it takes into account radiant temperature (usually including solar radiation), relative humidity, wind speed and uses them in a human energy balance model to give a temperature value that is indicative of the heat stress or cold stress felt by the human body.
         comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether a person outside is comfortable for each hour of the input conditions.  0 indicates that a person is not comfortable while 1 indicates that a person is comfortable.  A person is considered to be comfortable when he/she experiences no thermal stress (9 < UTCI < 26).
-        conditionOfPerson: A stream of interger values from -2 to +2 that indicate the following:
-                       -3 - Strong Cold Stress - potential public health hazard with higher-than-normal mortality rates (UTCI < -13 C).
-                       -2 - Moderate Cold Stress - cold but no public health hazard (-13 < UTCI <0).
-                       -1 - Slight Cold Stress - cool but comfortable for short periods of time (0 < UTCI <9)
-                       0  - No Thermal Stress  - comfortable conditions (9 < UTCI < 26).
-                       +1 - Slight Heat Stress - warm but comfortable for short periods of time (26 < UTCI < 28).
-                       +2 - Moderate Heat Stress - hot but no public health hazard (28 < UTCI < 32).
-                       +3 - Strong Heat Stress - potential public health hazard with higher-than-normal mortality rates (UTCI > 32 C).
+        thermalStress: A stream of interger values from -1 to +1 that indicate the following:
+                       -1 - Cold Stress - cold conditions (UTCI < 9C).
+                       0  - No Thermal Stress - comfortable conditions (9C < UTCI < 26C).
+                       +1 - Heat Stress - hot conditions (UTCI > 26C).
+        conditionOfPerson: A stream of interger values from -3 to +3 that indicate the following:
+                       -3 - Strong Cold Stress - potential public health hazard with higher-than-normal mortality rates (UTCI < -13C).
+                       -2 - Moderate Cold Stress - cold but no public health hazard (-13C < UTCI < 0C).
+                       -1 - Slight Cold Stress - cool but comfortable for short periods of time (0C < UTCI < 9C)
+                       0  - No Thermal Stress  - comfortable conditions (9C < UTCI < 26C).
+                       +1 - Slight Heat Stress - warm but comfortable for short periods of time (26C < UTCI < 28C).
+                       +2 - Moderate Heat Stress - hot but no public health hazard (28C < UTCI < 32C).
+                       +3 - Strong Heat Stress - potential public health hazard with higher-than-normal mortality rates (UTCI > 32C).
         ------------------------------: ...
         percentOfTimeComfortable: The percent of the input data for which the UTCI indicates no thermal stress (comfortable conditions).  Comfortable conditions are when the UTCI is between 9 and 26 degrees Celcius.
         percentComfForShortPeriod: The percent of the input data for which the UTCI indicates slight heat/cold stress.  This indicates conditions that are comfortable for short periods of time with proper attire.  This includes all conditions when the UTCI is between 0 and 9 degrees Celcius or between 26 and 28 degrees Celcius.
@@ -54,7 +58,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_16_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_22_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -274,6 +278,7 @@ def main():
         #If things are good, run it through the comfort model.
         universalThermalClimateIndex = []
         comfortableOrNot = []
+        thermalStressType = []
         coldStressComfortableHeatStress = []
         percentOfTimeComfortable = None
         percentComfForShortPeriod = None
@@ -282,15 +287,18 @@ def main():
         if checkData == True and epwData == True:
             universalThermalClimateIndex.extend([epwStr[0], epwStr[1], 'Universal Thermal Climate Index', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfort or Not', 'Boolean Value', epwStr[4], runPeriod[0], runPeriod[1]])
+            thermalStressType.extend([epwStr[0], epwStr[1], 'Thermal Stress', '-1 = Cold | 0 = Comfort | 1 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
             coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort', '-3 = Extreme Cold | -2 = Cold | -1 = Cool | 0 = Comfort | 1 = Warm | 2 = Hot | -3 = Extreme Heat', epwStr[4], runPeriod[0], runPeriod[1]])
         elif checkData == True and epwData == True and 'for' in epwStr[2]:
             universalThermalClimateIndex.extend([epwStr[0], epwStr[1], 'Universal Thermal Climate Index' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfort or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean Value', epwStr[4], runPeriod[0], runPeriod[1]])
+            thermalStressType.extend([epwStr[0], epwStr[1], 'Thermal Stress', '-1 = Cold | 0 = Comfort | 1 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
             coldStressComfortableHeatStress.extend([epwStr[0], epwStr[1], 'Outdoor Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-3 = Extreme Cold | -2 = Cold | -1 = Cool | 0 = Comfort | 1 = Warm | 2 = Hot | -3 = Extreme Heat', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
             try:
                 utciList = []
                 comfOrNot = []
+                thermalStr = []
                 coldComfHot = []
                 for count in HOYS:
                     # let the user cancel the process
@@ -302,9 +310,10 @@ def main():
                         radTemp[count] = radTemp[count]-distToMove
                         airTemp[count] = airTemp[count]+distToMove
                         print "Index " + str(count) + " had a difference between air temperature and radiant temperature greater than 70.  Both temperatures wee moved closer to their average to prevent the comfort model from failing."
-                    utci, comf, condition = lb_comfortModels.comfUTCI(airTemp[count], radTemp[count], windSpeed[count], relHumid[count])
+                    utci, comf, condition, stressVal = lb_comfortModels.comfUTCI(airTemp[count], radTemp[count], windSpeed[count], relHumid[count])
                     utciList.append(utci)
                     comfOrNot.append(comf)
+                    thermalStr.append(stressVal)
                     coldComfHot.append(condition)
                 comfTime = []
                 for item in comfOrNot:
@@ -324,10 +333,12 @@ def main():
                 percentComfForShortPeriod = ((sum(short))/calcLength)*100
                 universalThermalClimateIndex.extend(utciList)
                 comfortableOrNot.extend(comfOrNot)
+                thermalStressType.extend(thermalStr)
                 coldStressComfortableHeatStress.extend(coldComfHot)
             except:
                 universalThermalClimateIndex = []
                 comfortableOrNot = []
+                thermalStressType = []
                 coldStressComfortableHeatStress = []
                 percentOfTimeComfortable = None
                 percentComfForShortPeriod = None
@@ -338,7 +349,7 @@ def main():
                 ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
         
         #Return all of the info.
-        return universalThermalClimateIndex, comfortableOrNot, coldStressComfortableHeatStress, percentOfTimeComfortable, percentComfForShortPeriod, percentHeatStress, percentColdStress
+        return universalThermalClimateIndex, comfortableOrNot, thermalStressType, coldStressComfortableHeatStress, percentOfTimeComfortable, percentComfForShortPeriod, percentHeatStress, percentColdStress
     else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
@@ -353,7 +364,7 @@ if _runIt == True:
     results = main()
     
     if results != -1:
-        universalThermalClimateIndex, comfortableOrNot, conditionOfPerson, \
+        universalThermalClimateIndex, comfortableOrNot, thermalStress, conditionOfPerson, \
         percentOfTimeComfortable, percentComfForShortPeriod, percentHeatStress, \
         percentColdStress = results
 
