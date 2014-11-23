@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_18_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_23_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -293,8 +293,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             elif roseAngles[-1]<= windDirection:
                                 separatedBasedOnAngle[-1].append(h)
                                 break
-            print segAngle
-            print roseAngles
+            
             # calculate the frequency
             calmFreq = (100*len(calmHour)/len(studyHours))
             
