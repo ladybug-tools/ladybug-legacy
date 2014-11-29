@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -513,6 +513,10 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 
 
 def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, lb_visualization):
+    #Set a default text height if the user has not provided one.
+    if legendFontSize == None:
+        legendFontSize = 0.6
+    
     #Generate a list of temperatures that will be used to make the relative humidity curves.
     tempNum = range(-20, 55, 5)
     relHumidNum = range(10, 110, 10)
@@ -602,18 +606,40 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
         else:
             maxHrLines.append(curve)
     
+    #Make lines of constant enthalpy.
+    enthalpyForLines = range(-10,120,10)
+    enthalLines = []
+    enthText = []
+    
+    for enthl in enthalpyForLines:
+        enthText.append(str(enthl)+" kJ/kg")
+        startVal = lb_comfortModels.calcTempFromEnthalpy(enthl, 0.0)
+        startPt = rc.Geometry.Point3d(startVal, 0.0, 0.0)
+        endVal = lb_comfortModels.calcTempFromEnthalpy(enthl, 0.03)
+        endPt = rc.Geometry.Point3d(endVal, 0.03*scaleFactor, 0.0)
+        enthLine = rc.Geometry.LineCurve(startPt, endPt)
+        enthalLines.append(enthLine)
+    
+    #Split the enthalpy lines with the boundary of the chart.
+    for crvCount, curve in enumerate(enthalLines):
+        splitCrv = curve.Split(satBrep, sc.doc.ModelAbsoluteTolerance)
+        if len(splitCrv) != 0: enthalLines[crvCount] = splitCrv[0]
+    maxTBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(maxTempCurves[-1], rc.Geometry.Vector3d.ZAxis))
+    for crvCount, curve in enumerate(enthalLines):
+        splitCrv = curve.Split(maxTBrep, sc.doc.ModelAbsoluteTolerance)
+        if len(splitCrv) != 0: enthalLines[crvCount] = splitCrv[-1]
+    
+    #Make the text for the lines of constant enthalpy.
+    enthLabelBasePts = []
+    for count, enth in enumerate(enthalLines):
+        enthLabelBasePts.append(rc.Geometry.Point3d(enth.PointAtEnd.X-(legendFontSize*5), enth.PointAtEnd.Y+(legendFontSize*0.5), 0))
+    
     # Bring all of the curves into one list.
     chartCurves = []
-    for curve in maxhumidCurves:
-        chartCurves.append(curve)
-    for curve in maxTempCurves:
-        chartCurves.append(curve)
-    for curve in maxHrLines:
-        chartCurves.append(curve)
-    
-    #Set a default text height if the user has not provided one.
-    if legendFontSize == None:
-        legendFontSize = 0.6
+    chartCurves.extend(maxhumidCurves)
+    chartCurves.extend(maxTempCurves)
+    chartCurves.extend(maxHrLines)
+    chartCurves.extend(enthalLines)
     
     # Make the temperature text for the chart.
     tempLabels = []
@@ -636,6 +662,11 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
         relHumidTxt.append(str(humid)+"%")
     for count, text in enumerate(relHumidTxt[:-1]):
         relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75, legendBold)[0])
+    
+    #Make the enthalpy labels for the chart.
+    enthLabels = []
+    for count, text in enumerate(enthText):
+        enthLabels.extend(lb_visualization.text2srf([text], [enthLabelBasePts[count]], legendFont, legendFontSize*0.75, legendBold)[0])
     
     #Make axis labels for the chart.
     xAxisLabels = []
@@ -685,6 +716,8 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     for item in yAxisLabels:
         chartCrvAndText.append(item)
     for item in titleLabels:
+        chartCrvAndText.append(item)
+    for item in enthLabels:
         chartCrvAndText.append(item)
     
     

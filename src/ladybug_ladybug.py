@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_23_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_29_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1887,8 +1887,7 @@ class MeshPreparation(object):
 
 class RunAnalysisInsideGH(object):
     #
-    def calRadRoseRes(self, tiltedRoseVectors, TregenzaPatchesNormalVectors, genCumSkyResult, testPoint = rc.Geometry.Point3d.Origin, bldgMesh = [], 
-groundRef = 0):
+    def calRadRoseRes(self, tiltedRoseVectors, TregenzaPatchesNormalVectors, genCumSkyResult, testPoint = rc.Geometry.Point3d.Origin, bldgMesh = [], groundRef = 0):
         radResult = []; sunUpHours = 1
         for vec in tiltedRoseVectors:
             radiation = 0; groundRadiation = 0; patchNum = 0;
@@ -1999,8 +1998,7 @@ groundRef = 0):
         return radResult, totalRadiation, intersectionMtx
     
     
-    def parallel_sunlightHoursCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, sunVectors, conversionFac, northVector, 
-timeStep = 1):
+    def parallel_sunlightHoursCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, sunVectors, conversionFac, northVector, timeStep = 1):
         # preparing bulk lists
         sunlightHours = [0] * len(testPts)
         sunlightHoursResult = [0] * len(testPts)
@@ -3339,12 +3337,7 @@ class ComfortModels(object):
         return UTCI_approx, comfortable, stressRange
     
     
-    def calcHumidRatio(self, airTemp, relHumid, barPress):
-        #Convert Temperature to Kelvin
-        TKelvin = []
-        for item in airTemp:
-            TKelvin.append(item+273)
-        
+    def calcVapPressHighAccuracy(self, TKelvin):
         #Calculate saturation vapor pressure above freezing
         Sigma = []
         for item in TKelvin:
@@ -3400,6 +3393,16 @@ class ComfortModels(object):
         #Combine into final saturation vapor pressure
         saturationPressure = [a+b for a,b in zip(SatPress1,SatPress2)]
         
+        return saturationPressure
+    
+    def calcHumidRatio(self, airTemp, relHumid, barPress):
+        #Convert Temperature to Kelvin
+        TKelvin = []
+        for item in airTemp:
+            TKelvin.append(item+273)
+        
+        saturationPressure = self.calcVapPressHighAccuracy(TKelvin)
+        
         #Calculate hourly water vapor pressure
         DecRH = []
         for item in relHumid:
@@ -3438,6 +3441,27 @@ class ComfortModels(object):
         
         #Return all of the results
         return humidityRatio, enthalpy, partialPressure, saturationPressure
+    
+    
+    def calcTempFromHumidRatio(self, absHumid, barPress, temperature):
+        #Calculate the partial pressure of water in the atmostphere.
+        Pw = (absHumid*1000*barPress)/(621.9907 + (absHumid*1000))
+        
+        #Convert Temperature to Kelvin
+        TKelvin = temperature + 273
+        #Calculate saturation pressure.
+        Pws = self.calcVapPressHighAccuracy([TKelvin])[0]
+        
+        #Calculate the relative humidity.
+        relHumid = (Pw/Pws)*100
+        
+        return relHumid
+    
+    
+    def calcTempFromEnthalpy(self, enthalpy, absHumid):
+        airTemp =(enthalpy - 2.5*(absHumid*1000))/(1.01 + (0.00189*absHumid*1000))
+        return airTemp
+    
     
     def outlineCurve(self, curve):
         solidBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
