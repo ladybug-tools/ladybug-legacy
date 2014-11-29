@@ -3446,7 +3446,7 @@ class ComfortModels(object):
         return humidityRatio, enthalpy, partialPressure, saturationPressure
     
     
-    def calcTempFromHumidRatio(self, absHumid, barPress, temperature):
+    def calcRelHumidFromHumidRatio(self, absHumid, barPress, temperature):
         #Calculate the partial pressure of water in the atmostphere.
         Pw = (absHumid*1000*barPress)/(621.9907 + (absHumid*1000))
         
