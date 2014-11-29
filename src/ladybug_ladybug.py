@@ -2475,17 +2475,20 @@ class ResultVisualization(object):
         baseCircle = rc.Geometry.Circle(cenPt, radius).ToNurbsCurve()
         outerCircle = rc.Geometry.Circle(cenPt, 1.02*radius).ToNurbsCurve()
         
-        def drawLine(cenPt, vector, radius, mainLine = False, xMove = 10):
+        xMove = 5
+        
+        def drawLine(cenPt, vector, radius, mainLine = False, xMove = 5):
             stPtRatio = 1
             endPtRatio = 1.08
-            textPtRatio = endPtRatio + 0.03
+            textPtRatio = endPtRatio + 0.08
             if mainLine: endPtRatio = 1.15; textPtRatio = 1.17
             stPt = rc.Geometry.Point3d.Add(cenPt, stPtRatio * radius * vector)
             if centerLine: stPt = cenPt
             endPt = rc.Geometry.Point3d.Add(cenPt, endPtRatio * radius * vector)
             textBasePt = rc.Geometry.Point3d.Add(cenPt, textPtRatio * radius * vector)
             
-            if not mainLine: textBasePt = rc.Geometry.Point3d.Add(textBasePt, -xMove* rc.Geometry.Vector3d.XAxis)
+            if not mainLine: textBasePt = rc.Geometry.Point3d(textBasePt.X-xMove, textBasePt.Y-(xMove/4), textBasePt.Z)
+            else: textBasePt = rc.Geometry.Point3d(textBasePt.X-(xMove/2), textBasePt.Y-(xMove/4), textBasePt.Z)
             
             return rc.Geometry.Line(stPt, endPt).ToNurbsCurve(), textBasePt, baseCircle, outerCircle
         
@@ -2500,7 +2503,7 @@ class ResultVisualization(object):
             vector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
             line, basePt, baseCircle, outerCircle = drawLine(cenPt, vector, radius, mainLine, xMove)
             if mainLine == True: compassText.append(mainText[mainAngles.index(angle)])
-            else: compassText.append("%.2f"%angle)
+            else: compassText.append(str(int(angle)))
                 
             textBasePts.append(basePt)
             lines.append(line)
