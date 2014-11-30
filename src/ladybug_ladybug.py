@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_29_2014'
+ghenv.Component.Message = 'VER 0.0.58\nNOV_30_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -716,13 +716,66 @@ class Preparation(object):
             elev + ';       !Elevation'
         epwfile.close
         return locName, lat, lngt, timeZone, elev, locationString
-    
+
     def separateHeader(self, inputList):
         num = []; str = []
         for item in inputList:
             try: num.append(float(item))
             except: str.append(item)
         return num, str
+    
+    def depthData(self,groundtemp,depthdataposition):
+       ## Function takes two arguements the list of the ground temp data and the index which defines what 
+       ## depth the data is @. THe purpose is to replace 'Depth' seen in the groundTempData function 
+       ## with depth at which the temperatures are in the epw in meters
+       
+        for count, i in enumerate(groundtemp):
+            if i == 'Depth':
+                groundtemp[count] = depthdataposition
+            else:
+                pass
+    
+    strToBeFoundgt = 'key:location/Depth temp @ (m)/dataType/units/frequency/startsAt/endsAt' ## String for GroundTempData function
+    
+    def groundTempData(self, epw_file, location = 'Somewhere!', Depth = 'Not entered!'):
+        
+        epwfile = open(epw_file,"r")
+        
+        groundtemp1st = [self.strToBeFoundgt, location, 'Depth' , 'Ground temperature', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
+        groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' , 'Ground temperature', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
+        groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' , 'Ground temperature', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
+
+        lnum = 1 # Line number
+        
+        with epwfile as i:
+            for line in i: 
+                if lnum == 3: 
+                    
+                    groundtemp = epwfile.readline().split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
+                    print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st)' + groundtemp[18]+ ' meters (2nd)'+groundtemp[34]+'meters (3rd)respectively'
+                          
+                    
+                    def func(seq): ## Function that converts strings to floats if possible if not returns the original 
+                        for x in seq:
+                            try:
+                                yield float(x)
+                            except ValueError:
+                                yield x
+                 
+                    groundtemp1st.extend(func(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
+                    groundtemp2nd.extend(func(groundtemp[22:34]))
+                    groundtemp3rd.extend(func(groundtemp[38:50]))
+                    
+                    self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
+                    self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
+                    self.depthData(groundtemp3rd,float(groundtemp[34]))
+                    
+                else:
+                    pass
+                lnum += 1
+                
+        return groundtemp1st,groundtemp2nd,groundtemp3rd
+    
     
     strToBeFound = 'key:location/dataType/units/frequency/startsAt/endsAt'
     
@@ -2391,11 +2444,12 @@ class ResultVisualization(object):
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
         return textCrvs
     
-    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False):
+    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False, plane = None):
         # Thanks to Giulio Piacentino for his version of text to curve
         textSrfs = []
         for n in range(len(text)):
-            plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
+            if plane == None:
+                plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d.ZAxis)
             if type(text[n]) is not str:
                 preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, bold, False)
             else:
