@@ -2447,9 +2447,11 @@ class ResultVisualization(object):
     def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False, plane = None):
         # Thanks to Giulio Piacentino for his version of text to curve
         textSrfs = []
+        planeCheck = False
         for n in range(len(text)):
-            if plane == None:
-                plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d.ZAxis)
+            if plane == None or planeCheck == True:
+                plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
+                planeCheck = True
             if type(text[n]) is not str:
                 preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, bold, False)
             else:
