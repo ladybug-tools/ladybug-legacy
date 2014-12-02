@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_30_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_02_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -378,6 +378,7 @@ class Preparation(object):
             time = `int(hour%24)` + ':' + minutes
         if alternate:
             time = hour%24
+            if time == 0: time = 24
             month = self.monthList.index(month)
             return day, month, time
             
