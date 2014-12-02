@@ -671,7 +671,10 @@ class Preparation(object):
             except:
                 allSet = False
                 print 'Download failed!!! You need gendaymtx.exe to use this component.' + \
-                '\nPlease check your internet connection, and try again!'
+                '\nPlease check your internet connection, and try again!' + \
+                '\nIf that does not work, you must manually download the file from this address:' + \
+                '\nhttp://dl.dropbox.com/u/16228160/GenCumulativeSky/gendaymtx.exe' + \
+                '\nand copy it here:' + str(workingDir)
         else:
             pass
             #print 'GenCumulativeSky.exe is already available at ', workingDir + \
