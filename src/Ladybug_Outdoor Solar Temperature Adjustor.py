@@ -30,7 +30,7 @@ Provided by Ladybug 0.0.58
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         -------------------------: ...
         groundReflectivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation reflected off of the ground.  By default, this is set to 0.25, which is characteristic of outdoor grass or dry bare soil.  You may want to increase this value for concrete or decrease it for water or dark soil.
-        clothingAbsorptivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.67 for (white) skin and average clothing.  You may want to increase this value for darker skin or darker clothing.
+        clothingAbsorptivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.7 for (average/brown) skin and average clothing.  You may want to increase this value for darker skin or darker clothing.
         windowTransmissivity_: An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions. 
         -------------------------: ...
         analysisPeriodOrHOY_: An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year.
@@ -88,7 +88,7 @@ inputsDict = {
 9: ["north_", "Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees)."],
 10: ["-------------------------", "..."],
 11: ["groundReflectivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation reflected off of the ground.  By default, this is set to 0.25, which is characteristic of outdoor grass or dry bare soil.  You may want to increase this value for concrete or decrease it for water or dark soil."],
-12: ["clothingAbsorptivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.67 for (white) skin and average clothing.  You may want to increase this value for darker skin or darker clothing."],
+12: ["clothingAbsorptivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.7 for (average/brown) skin and average clothing.  You may want to increase this value for darker skin or darker clothing."],
 13: ["windowTransmissivity_", "An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions."],
 14: ["-------------------------", "..."],
 15: ["analysisPeriodOrHOY_", "An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis.  If no analysis period or HOY is given, the analysis will be run for the enitre year."],
@@ -431,8 +431,8 @@ def checkTheInputs():
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         else:
-            cloA = 0.67
-            print 'No value found for clothingAbsorptivity_.  The clothing absorptivity will be set to 0.67 for (white) skin and average clothing.'
+            cloA = 0.7
+            print 'No value found for clothingAbsorptivity_.  The clothing absorptivity will be set to 0.7 for (average/brown) skin and average clothing.'
         
         #Check the windowTransmissivity_.
         checkData6 = True
