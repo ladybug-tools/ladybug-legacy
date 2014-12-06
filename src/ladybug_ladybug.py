@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_02_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -2488,6 +2488,7 @@ class ResultVisualization(object):
             #Mesh the surfcaes.
             meshSrfs = []
             for srf in srfs:
+                srf.Flip()
                 meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
                 meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
                 meshSrfs.append(meshSrf)
