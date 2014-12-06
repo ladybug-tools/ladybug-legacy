@@ -54,10 +54,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Profile Curve Visualizer"
 ghenv.Component.NickName = 'WindProfileCurve'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_21_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 

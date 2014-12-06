@@ -28,10 +28,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Legend Parameters"
 ghenv.Component.NickName = 'legendPar'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_16_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 

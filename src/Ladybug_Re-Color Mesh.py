@@ -29,12 +29,12 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_15_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
-#compatibleLBVersion = VER 0.0.57\nAUG_19_2014
+#compatibleLBVersion = VER 0.0.57\nDEC_02_2014
 
 
 import scriptcontext as sc
