@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_07_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -2536,7 +2536,7 @@ class ResultVisualization(object):
         baseCircle = rc.Geometry.Circle(cenPt, radius).ToNurbsCurve()
         outerCircle = rc.Geometry.Circle(cenPt, 1.02*radius).ToNurbsCurve()
         
-        xMove = 5
+        xMove = 0.03*radius
         
         def drawLine(cenPt, vector, radius, mainLine = False, xMove = 5):
             stPtRatio = 1
@@ -2549,7 +2549,7 @@ class ResultVisualization(object):
             textBasePt = rc.Geometry.Point3d.Add(cenPt, textPtRatio * radius * vector)
             
             if not mainLine: textBasePt = rc.Geometry.Point3d(textBasePt.X-xMove, textBasePt.Y-(xMove/4), textBasePt.Z)
-            else: textBasePt = rc.Geometry.Point3d(textBasePt.X-(xMove/2), textBasePt.Y-(xMove/4), textBasePt.Z)
+            else: textBasePt = rc.Geometry.Point3d(textBasePt.X-(xMove/2), textBasePt.Y-(xMove/2), textBasePt.Z)
             
             return rc.Geometry.Line(stPt, endPt).ToNurbsCurve(), textBasePt, baseCircle, outerCircle
         
