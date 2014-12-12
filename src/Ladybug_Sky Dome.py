@@ -33,10 +33,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -111,7 +111,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         elif legendPar[5] == None: overwriteScale = True
         
         # read the legend parameters legend
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
         
         # this is not a good idea to set the default to 0.9!
         # should be fixed later
@@ -119,11 +119,11 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         
         # generate the legend
         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
         
         #print listInfo[i], customHeading[i]
         # generate the title
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False,  legendFont, legendFontSize)
+        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False,  legendFont, legendFontSize, legendBold)
         
         # generate compass curve
         # northVector = rc.Geometry.Vector3d.YAxis

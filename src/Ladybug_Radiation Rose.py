@@ -35,10 +35,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -139,13 +139,13 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                 if legendPar == []: overwriteScale = True
                 elif legendPar[5] == None: overwriteScale = True
                 
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
                 if overwriteScale: legendScale = 0.9
                 
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                 
-                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False, legendFont, legendFontSize)
+                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False, legendFont, legendFontSize, legendBold)
                 
                 # print legendMax[i]
                 compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 0.3 * scale * legendMax[i], roseAngles, 1.2*textSize, True)

@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Colored Sky Visualizer"
 ghenv.Component.NickName = 'skyVizualizer'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_08_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -110,7 +110,7 @@ def checkTheInputs():
     if checkData1 == True and checkData2 == True and checkData3 == True:
         for month in months:
             for day in days:
-                doy.append(sum(daysPerMonth[:month-1]) + day)
+                doy.append(sum(daysPerMonth[:month-1]) + day-1)
     
     #Check the turbidity.
     checkData4 = True

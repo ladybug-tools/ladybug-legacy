@@ -55,10 +55,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -418,7 +418,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == []: overwriteScale = True
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.9
             
@@ -467,7 +467,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         customHeading = '\n\n\n\nSun-Path Diagram - Latitude: ' + `latitude` + '\n'
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(values
-                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                         
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -493,7 +493,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                             # print resultStr
                             customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
-                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
+                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
                         
                         
                         legend = lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]])
@@ -505,7 +505,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         ##
                         compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
-                        numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                        numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
                         compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
 
@@ -568,7 +568,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     
                 textSize = legendScale * 0.5 * lb_visualization.BoundingBoxPar[2]/20
                 titlebasePt = lb_visualization.BoundingBoxPar[-2]
-                titleTextCurve = lb_visualization.text2srf(['\n\n' + customHeading], [titlebasePt], 'Veranda', textSize)
+                titleTextCurve = lb_visualization.text2srf(['\n\n' + customHeading], [titlebasePt], 'Veranda', textSize, legendBold)
                 legend = None, lb_preparation.flattenList(titleTextCurve)
                 
                 legendText.append('\n\n' + customHeading)
@@ -576,7 +576,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 sunsJoined = colorSun(sunSpheres, colors)
                 
                 compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
-                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
                 compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                 
                 if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvs)
