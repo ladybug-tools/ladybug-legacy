@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_07_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_07_2014
@@ -814,7 +814,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
     finalWinTransmiss = []
     for hour in HOYS:
         d, m, t = lb_preparation.hour2Date(hour, True)
-        lb_sunpath.solInitOutput(d, m, t)
+        lb_sunpath.solInitOutput(m+1, d, t)
         altitude = lb_sunpath.solAlt
         altitudes.append(altitude)
         finalWinTransmiss.append(winTrans[hour-1])
@@ -1119,7 +1119,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
     sunVectors = []
     for hour in HOYS:
         d, m, t = lb_preparation.hour2Date(hour, True)
-        lb_sunpath.solInitOutput(d, m, t)
+        lb_sunpath.solInitOutput(m+1, d, t)
         altitude = lb_sunpath.solAlt
         altitudes.append(altitude)
         azimuths.append(lb_sunpath.solAz)
