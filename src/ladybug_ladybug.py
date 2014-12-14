@@ -2446,7 +2446,7 @@ class ResultVisualization(object):
         # 262148 - top right
         
         textCrvs = []
-        just = System.Enum.ToObject(Rhino.Geometry.TextJustification, justIndex)
+        just = System.Enum.ToObject(rc.Geometry.TextJustification, justIndex)
         for n in range(len(text)):
             plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
             if type(text[n]) is not str:
@@ -2476,7 +2476,7 @@ class ResultVisualization(object):
         # 262148 - top right
         
         textSrfs = []
-        just = System.Enum.ToObject(Rhino.Geometry.TextJustification, justIndex)
+        just = System.Enum.ToObject(rc.Geometry.TextJustification, justIndex)
         planeCheck = False
         for n in range(len(text)):
             if plane == None or planeCheck == True:
