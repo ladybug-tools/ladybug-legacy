@@ -2461,18 +2461,31 @@ class ResultVisualization(object):
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
         return textCrvs
     
-    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False, plane = None):
+    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False, plane = None, justIndex = 0):
         # Thanks to Giulio Piacentino for his version of text to curve
+        
+        #justIndex (justification and alignment indexes):
+        # 0 - bottom left(default)
+        # 2 - bottom center
+        # 4 - bottom right
+        # 131072 - middle left
+        # 262144 - top left
+        # 131074 - center
+        # 131076 - middle right
+        # 262146 - top middle
+        # 262148 - top right
+        
         textSrfs = []
+        just = System.Enum.ToObject(Rhino.Geometry.TextJustification, justIndex)
         planeCheck = False
         for n in range(len(text)):
             if plane == None or planeCheck == True:
                 plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
                 planeCheck = True
             if type(text[n]) is not str:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, bold, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, bold, False, just)
             else:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, bold, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, bold, False, just)
                 
             postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
             TG = postText.Geometry
