@@ -515,7 +515,7 @@ class Preparation(object):
     
     
     def readLegendParameters(self, legendPar, getCenter = True):
-        if legendPar == []: legendPar = [None] * 8
+        if legendPar == []: legendPar = [None] * 10
         if legendPar[0] == None: lowB = 'min'
         elif legendPar[0] == 'min': lowB = 'min'
         else: lowB = float(legendPar[0])
@@ -551,7 +551,10 @@ class Preparation(object):
             else: legendBold = legendPar[8]
         except: legendBold = False
         
-        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold
+        if legendPar[9] == None: legendJustification = 0
+        else: legendJustification = legendPar[9]
+        
+        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, legendJustification
     
     def readOrientationParameters(self, orientationStudyP):
         try:
