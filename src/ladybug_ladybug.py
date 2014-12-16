@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_07_2014'
+ghenv.Component.Message = 'VER 0.0.58\nDEC_16_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -3407,20 +3407,35 @@ class ComfortModels(object):
             if UTCI_approx > 9 and UTCI_approx < 26: comfortable = 1
             else: comfortable = 0
             
-            if UTCI_approx <= -13.0: stressRange = -3
-            elif UTCI_approx > -13.0 and UTCI_approx <= 0.0: stressRange = -2
-            elif UTCI_approx > 0.0 and UTCI_approx <= 9.0: stressRange = -1
-            elif UTCI_approx > 9.0 and UTCI_approx <= 26.0: stressRange = 0
-            elif UTCI_approx > 26.0 and UTCI_approx <= 28.0: stressRange = 1
-            elif UTCI_approx > 28.0 and UTCI_approx <= 32.0: stressRange = 2
-            else: stressRange = 3
+            if UTCI_approx <= -13.0:
+                stressRange = -3
+                stressVal = -1
+            elif UTCI_approx > -13.0 and UTCI_approx <= 0.0:
+                stressRange = -2
+                stressVal = -1
+            elif UTCI_approx > 0.0 and UTCI_approx <= 9.0:
+                stressRange = -1
+                stressVal = -1
+            elif UTCI_approx > 9.0 and UTCI_approx <= 26.0:
+                stressRange = 0
+                stressVal = 0
+            elif UTCI_approx > 26.0 and UTCI_approx <= 28.0:
+                stressRange = 1
+                stressVal = 1
+            elif UTCI_approx > 28.0 and UTCI_approx <= 32.0:
+                stressRange = 2
+                stressVal = 1
+            else:
+                stressRange = 3
+                stressVal = 1
             
         else:
             UTCI_approx = None
             comfortable = None
+            stressVal = None
             stressRange = None
         
-        return UTCI_approx, comfortable, stressRange
+        return UTCI_approx, comfortable, stressRange, stressVal
     
     
     def calcVapPressHighAccuracy(self, TKelvin):
