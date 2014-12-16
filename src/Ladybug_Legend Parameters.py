@@ -22,16 +22,7 @@ Provided by Ladybug 0.0.58
         font_: An optional text string that sets the font of the text. Examples include "Arial", "Times New Roman" or "Courier" (all without quotations).  The text input here can be any font that is on your computer but the font must be of an Editable file type (as seen in the font folder off of your control panel).  Font files that are Print and Preview will not work.
         fontSize_: An optional number to set the size of the text in Rhino model units.
         bold_:  Set to 'True' to have the text be bolded and set to 'False' to have it displayed in medium type face.  The default is set to 'False.'
-        justification_: An optional text alignment and justification indices:
-                        0 - bottom left (default)
-                        1 - bottom center
-                        2 - bottom right
-                        3 - middle left
-                        4 - center
-                        5 - middle right
-                        6 - top left
-                        7 - top middle
-                        8 - top right
+
     Returns:
         legendPar: A list of legend parameters to be plugged into any of the Ladybug components with a legend.
 """
@@ -65,7 +56,7 @@ def getFontsList():
     fonts.sort()
     return fonts
 
-def main(lowBound, highBound, numSegments, customColors, legendLocation, legendScale, font, fontSize, bold, justification):
+def main(lowBound, highBound, numSegments, customColors, legendLocation, legendScale, font, fontSize, bold):
     if len(customColors) != 1:
         if lowBound: lowBound = float(lowBound)
         if highBound: highBound = float(highBound)
@@ -83,12 +74,12 @@ def main(lowBound, highBound, numSegments, customColors, legendLocation, legendS
         else:
             legendPar = [lowBound, highBound, numSegments, customColors, legendLocation, legendScale]
         
-        legendPar.extend([font, fontSize, bold, justification])
+        legendPar.extend([font, fontSize, bold])
         return legendPar
     else:
         return -1
 
-legendPar = main(lowBound_, highBound_, numSegments_, customColors_, legendLocation_, legendScale_, font_, fontSize_, bold_, justification_)
+legendPar = main(lowBound_, highBound_, numSegments_, customColors_, legendLocation_, legendScale_, font_, fontSize_, bold_)
 ghenv.Component.Params.Output[0].Hidden = True
 if legendPar == -1:
     warning = "You should connect at least two colors to customColors input."
