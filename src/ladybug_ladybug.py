@@ -550,7 +550,7 @@ class Preparation(object):
             if legendPar[8] == None: legendBold = False
             else: legendBold = legendPar[8]
         except: legendBold = False
-        
+
         return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold
     
     def readOrientationParameters(self, orientationStudyP):
@@ -2430,16 +2430,37 @@ class ResultVisualization(object):
             [meshAndCrv.append(c) for c in legendRes[1]]
             return meshAndCrv
         else: return -1
+        
+    def textJustificationEnumeration(self, justificationIndex):
+        #justificationIndices:
+        # 0 - bottom left (default)
+        # 1 - bottom center
+        # 2 - bottom right
+        # 3 - middle left
+        # 4 - center
+        # 5 - middle right
+        # 6 - top left
+        # 7 - top middle
+        # 8 - top right
+        constantsList  = [0, 2, 4, 131072, 131074, 131076, 262144, 262146, 262148]
+        try:
+            justificationConstant = constantsList[justificationIndex]
+        except:
+            # if 0 < justificationIndex > 8
+            justificationConstant = 0
+        textJustification = System.Enum.ToObject(rc.Geometry.TextJustification, justificationConstant)
+        return textJustification
     
-    def text2crv(self, text, textPt, font = 'Verdana', textHeight = 20):
+    def text2crv(self, text, textPt, font = 'Verdana', textHeight = 20, justificationIndex = 0):
         # Thanks to Giulio Piacentino for his version of text to curve
         textCrvs = []
+        textJustification = textJustificationEnumeration(justificationIndex)
         for n in range(len(text)):
             plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
             if type(text[n]) is not str:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, False, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, True, False, textJustification)
             else:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, False, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, True, False, textJustification)
                 
             postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
             TG = postText.Geometry
@@ -2448,18 +2469,19 @@ class ResultVisualization(object):
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
         return textCrvs
     
-    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False, plane = None):
+    def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False, plane = None, justificationIndex = 0):
         # Thanks to Giulio Piacentino for his version of text to curve
         textSrfs = []
+        textJustification = textJustificationEnumeration(justificationIndex)
         planeCheck = False
         for n in range(len(text)):
             if plane == None or planeCheck == True:
                 plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
                 planeCheck = True
             if type(text[n]) is not str:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, bold, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, bold, False, textJustification)
             else:
-                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, bold, False)
+                preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, bold, False, textJustification)
                 
             postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
             TG = postText.Geometry

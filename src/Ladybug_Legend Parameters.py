@@ -22,6 +22,7 @@ Provided by Ladybug 0.0.58
         font_: An optional text string that sets the font of the text. Examples include "Arial", "Times New Roman" or "Courier" (all without quotations).  The text input here can be any font that is on your computer but the font must be of an Editable file type (as seen in the font folder off of your control panel).  Font files that are Print and Preview will not work.
         fontSize_: An optional number to set the size of the text in Rhino model units.
         bold_:  Set to 'True' to have the text be bolded and set to 'False' to have it displayed in medium type face.  The default is set to 'False.'
+
     Returns:
         legendPar: A list of legend parameters to be plugged into any of the Ladybug components with a legend.
 """
@@ -67,7 +68,7 @@ def main(lowBound, highBound, numSegments, customColors, legendLocation, legendS
                 msg = "Cannot find input font " + font + "."
                 w = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(w, msg)
-                font = None 
+                font = None
         if lowBound and highBound and float(lowBound) > float(highBound):
             legendPar = [highBound, lowBound, numSegments, customColors, legendLocation, legendScale]
         else:
@@ -86,3 +87,4 @@ if legendPar == -1:
     w = gh.GH_RuntimeMessageLevel.Warning
     ghenv.Component.AddRuntimeMessage(w, warning)
     legendPar = []
+    
