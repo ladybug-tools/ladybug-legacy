@@ -2454,7 +2454,7 @@ class ResultVisualization(object):
     def text2crv(self, text, textPt, font = 'Verdana', textHeight = 20, justificationIndex = 0):
         # Thanks to Giulio Piacentino for his version of text to curve
         textCrvs = []
-        textJustification = textJustificationEnumeration(justificationIndex)
+        textJustification = self.textJustificationEnumeration(justificationIndex)
         for n in range(len(text)):
             plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
             if type(text[n]) is not str:
@@ -2472,7 +2472,7 @@ class ResultVisualization(object):
     def text2srf(self, text, textPt, font = 'Verdana', textHeight = 20, bold = False, plane = None, justificationIndex = 0):
         # Thanks to Giulio Piacentino for his version of text to curve
         textSrfs = []
-        textJustification = textJustificationEnumeration(justificationIndex)
+        textJustification = self.textJustificationEnumeration(justificationIndex)
         planeCheck = False
         for n in range(len(text)):
             if plane == None or planeCheck == True:
