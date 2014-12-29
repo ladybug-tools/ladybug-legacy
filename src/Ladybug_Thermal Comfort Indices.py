@@ -937,7 +937,7 @@ def heartRates(age, gender):
 def heartRate(Ta, e, M, HRrates):
     #formula by Fuller, Brouha 1966
     HR = 22.4 + 0.18*M + 0.25*(5*Ta + 2.66*e)
-    HR = round(HR)
+    HR = int(round(HR))
     
     if HR < HRrates[0]:
         effectHR = 0
