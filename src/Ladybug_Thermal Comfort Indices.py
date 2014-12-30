@@ -701,7 +701,6 @@ def noaaSolarCalculator(latitude, longitude, timeZone, month, day, hour):
     timeZone = -timeZone
     longitude = -longitude
     DOY = int(lb_preparation.getJD(month, day))
-    #DOY = int(getJD(month, day))
     minute = 0  # default
     sc = 0  # default
     gamma = (2*math.pi)/365*(DOY-1+((hour-12)/24))
@@ -938,7 +937,7 @@ def heartRates(age, gender):
 def heartRate(Ta, e, M, HRrates):
     #formula by Fuller, Brouha 1966
     HR = 22.4 + 0.18*M + 0.25*(5*Ta + 2.66*e)
-    HR = int(HR)
+    HR = int(round(HR))
     
     if HR < HRrates[0]:
         effectHR = 0
