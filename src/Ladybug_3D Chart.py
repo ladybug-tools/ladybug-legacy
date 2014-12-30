@@ -601,7 +601,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     except:
                         placeName = 'alternateLayerName'
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont)
+                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, [], textPt, textSize, legendFont, finalChartCrvs+fullLegTxt)
                 
                 res[0].append(coloredChart)
                 res[1].append([legendSrfs, fullLegTxt])
