@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_16_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_12_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1316,7 +1316,7 @@ class Sunpath(object):
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
     def solInitOutput(self, month, day, hour):
-        year = 2014
+        year = 2015
         self.time = hour
         
         a = 1 if (month < 3) else 0
