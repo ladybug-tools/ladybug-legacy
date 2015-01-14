@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_12_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_02_2014
@@ -338,7 +338,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             # initial compass for BB
             textSize = 10
-            compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
+            compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *(maxFreq) * scale, roseAngles, 1.5*textSize)
             
             
             
@@ -365,8 +365,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 
                 #separate data
                 indexList, listInfo = lb_preparation.separateList(annualHourlyData, lb_preparation.strToBeFound)
-                
-                
                 
                 for i in range(len(listInfo)):
                     customHeading = 'Wind-Rose\n'
@@ -529,11 +527,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
                     
-                    compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
+                    compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
-                    
-                    
                     
                     # let's move it move it move it!
                     if legendScale > 1: movingVector = legendScale * movingVector
