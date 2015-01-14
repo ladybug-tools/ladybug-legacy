@@ -22,8 +22,8 @@ ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
 ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
 

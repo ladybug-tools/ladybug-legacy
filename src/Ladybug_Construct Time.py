@@ -23,7 +23,7 @@ ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 hour = _hour_ + _minutes_/60 + _seconds_/3600

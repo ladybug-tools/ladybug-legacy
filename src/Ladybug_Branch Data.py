@@ -22,9 +22,9 @@ ghenv.Component.Name = "Ladybug_Branch Data"
 ghenv.Component.NickName = 'branchDataDailyMonthlyHourly'
 ghenv.Component.Message = 'VER 0.0.58\nOCT_27_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
 
