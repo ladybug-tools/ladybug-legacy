@@ -29,7 +29,7 @@ ghenv.Component.Message = 'VER 0.0.58\nOCT_01_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 
