@@ -774,9 +774,9 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
     
     #Find the point and text for the Y-Axis Label.
     yAxisLabelText = "Height (" + str(sc.doc.ModelUnitSystem) + ")"
-    lineMidPt = axesLines[1].PointAt(axesLines[0].DivideByCount(2, True)[1])
+    lineMidPt = axesLines[1].PointAt(axesLines[1].DivideByCount(2, True)[1])
     if windDir == []:
-        axesBasePt = rc.Geometry.Point3d(lineMidPt.X-(windVectorScale/2)-(legendFontSize*3.5), lineMidPt.Y, lineMidPt.Z)
+        axesBasePt = rc.Geometry.Point3d(lineMidPt.X-(windVectorScale/2)-(legendFontSize*5), lineMidPt.Y, lineMidPt.Z)
     else:
         if windVec[-1].X == 0 and windVec[-1].Y == 0 and windVec[-1].Z == 0: moveVec = rc.Geometry.Vector3d(-1,0,0)
         else:
