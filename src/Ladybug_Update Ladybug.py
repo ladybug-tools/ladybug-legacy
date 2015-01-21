@@ -35,7 +35,7 @@ import zipfile
 import time
 import urllib
 import Grasshopper.Folders as folders
-
+import System
 
 def downloadSourceAndUnzip(lb_preparation):
     """
@@ -62,19 +62,13 @@ def downloadSourceAndUnzip(lb_preparation):
 
     if download:
         try:
-            webFile = urllib.urlopen(url)
-            localFile = open(zipFile, 'wb')
-            localFile.write(webFile.read())
-            webFile.close()
-            localFile.close()
+            client = System.Net.WebClient()
+            client.DownloadFile(url, zipFile)
             if not os.path.isfile(zipFile):
                 print "Download failed! Try to download and unzip the file manually form:\n" + url
                 return
         except Exception, e:
-            iplibPath = ghenv.Script.GetStandardLibPath()
-            print `e` + \
-            "\nDownload ssl.py from the link below and copy the file to " + iplibPath + " and try again!"
-            print "https://app.box.com/s/jvsj1ic60vnficptlktt0jpfutcktemq"
+            print `e` + "\nDownload failed! Try to download and unzip the file manually form:\n" + url
             return
     
     #unzip the file

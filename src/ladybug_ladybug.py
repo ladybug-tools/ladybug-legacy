@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_20_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -49,7 +49,6 @@ import System
 import time
 from itertools import chain
 import datetime
-import urllib2 as urllib
 
 PI = math.pi
 letItFly = True
@@ -99,11 +98,13 @@ class CheckIn():
     
     def checkForUpdates(self, LB= True, HB= True, OpenStudio = True, template = True):
         
-        url = "https://dl.dropboxusercontent.com/u/16228160/honeybee/versions.txt"
-        webFile = urllib.urlopen(url, timeout = 10)
-        versions= eval(webFile.read())
-        webFile.close()
-        
+        url = "https://github.com/mostaphaRoudsari/ladybug/raw/master/resources/versions.txt"
+        versionFile = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "versions.txt")
+        client = System.Net.WebClient()
+        client.DownloadFile(url, versionFile)
+        with open("c:/ladybug/versions.txt", "r")as vf:
+            versions= eval("\n".join(vf.readlines()))
+
         if LB:
             ladybugVersion = versions['Ladybug']
             currentLadybugVersion = self.getComponentVersion() # I assume that this function will be called inside Ladybug_ladybug Component
@@ -629,26 +630,24 @@ class Preparation(object):
 
     ## download File
     def downloadFile(self, url, workingDir, timeout = 20):
-            import urllib2 as urllib
-            webFile = urllib.urlopen(url, timeout)
-            localFile = open(workingDir + '/' + url.split('/')[-1], 'wb')
-            localFile.write(webFile.read())
-            webFile.close()
-            localFile.close()
-            
+        localFilePath = workingDir + '/' + url.split('/')[-1]
+        client = System.Net.WebClient()
+        client.DownloadFile(url, localFilePath)
+        
+        
     def downloadGenCumulativeSky(self, workingDir):
         # download the Gencumulative Sky
         if not os.path.isfile(workingDir + '\GenCumulativeSky.exe'):
             try:
                 print 'Downloading GenCumulativeSky.exe to ', workingDir
-                self.downloadFile('http://dl.dropbox.com/u/16228160/GenCumulativeSky/GenCumulativeSky.exe', workingDir, 30)
+                self.downloadFile('https://github.com/mostaphaRoudsari/ladybug/raw/master/resources/GenCumulativeSky.exe', workingDir, 30)
                 print 'Download complete!'
             except:
                 allSet = False
                 print 'Download failed!!! You need GenCumulativeSky.exe to use this component.' + \
                 '\nPlease check your internet connection, and try again!' + \
                 '\nIf that does not work, you must manually download the file from this address:' + \
-                '\nhttp://dl.dropbox.com/u/16228160/GenCumulativeSky/GenCumulativeSky.exe' + \
+                '\nhttps://github.com/mostaphaRoudsari/ladybug/raw/master/resources/GenCumulativeSky.exe' + \
                 '\nand copy it here:' + str(workingDir)
         else:
             pass
@@ -661,14 +660,14 @@ class Preparation(object):
         if not os.path.isfile(workingDir + '\gendaymtx.exe'):
             try:
                 print 'Downloading gendaymtx.exe to ', workingDir
-                self.downloadFile('http://dl.dropbox.com/u/16228160/GenCumulativeSky/gendaymtx.exe', workingDir, 20)
+                self.downloadFile('https://github.com/mostaphaRoudsari/ladybug/raw/master/resources/gendaymtx.exe', workingDir, 20)
                 print 'Download complete!'
             except:
                 allSet = False
                 print 'Download failed!!! You need gendaymtx.exe to use this component.' + \
                 '\nPlease check your internet connection, and try again!' + \
                 '\nIf that does not work, you must manually download the file from this address:' + \
-                '\nhttp://dl.dropbox.com/u/16228160/GenCumulativeSky/gendaymtx.exe' + \
+                '\nhttps://github.com/mostaphaRoudsari/ladybug/raw/master/resources/gendaymtx.exe' + \
                 '\nand copy it here:' + str(workingDir)
         else:
             pass
