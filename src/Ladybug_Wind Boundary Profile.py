@@ -59,7 +59,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_20_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_02_2014
@@ -1276,9 +1276,10 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
         for geo in profileCrv: geo.Transform(transformMtx)
         for geo in windVecMesh:
             geo.Transform(transformMtx)
-        legendBasePoint.Transform(transformMtx)
-        for geo in legend:
-            if geo != -1: geo.Transform(transformMtx)
+        if legendBasePoint != None and legendBasePoint != []: legendBasePoint.Transform(transformMtx)
+        if legend != []:
+            for geo in legend:
+                if geo != -1: geo.Transform(transformMtx)
         for geo in anchorPts:
             geo.Transform(transformMtx)
         for geo in profileAxes:
