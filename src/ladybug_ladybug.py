@@ -4278,6 +4278,69 @@ class ComfortModels(object):
 
 class WindSpeed(object):
     
+    def terrain(self, terrainType):
+        # Atmospheric boundary layer parameters based on terrain type
+        if terrainType == None:
+            # Default terrain value
+            terrainType = "City Terrain"
+            gradientHeightDiv = 921
+            gradientHeight = 460
+            a = 0.33
+            yValues = [str(yLabel) for yLabel in range(0,500,50)]
+            yAxisMaxRhinoHeight = 92
+            nArrows = 10
+            validTerrain = True
+            printMsg = "Terrain has been set to a default of (0 = city)."
+        else:
+            if terrainType == "city" or int(terrainType) == 0:
+                terrainType = "City Terrain"
+                gradientHeightDiv = 921
+                gradientHeight = 460
+                a = 0.33
+                yValues = [str(yLabel) for yLabel in range(0,500,50)]
+                yAxisMaxRhinoHeight = 92
+                nArrows = 10
+                validTerrain = True
+                printMsg = "Terrain set to (0 = city)"
+            elif terrainType == "suburban" or int(terrainType) == 1:
+                terrainType = "Suburban Terrain"
+                gradientHeightDiv = 741
+                gradientHeight = 370
+                a = 0.22
+                yValues = [str(yLabel) for yLabel in range(0,400,50)]
+                yAxisMaxRhinoHeight = 72
+                nArrows = 8
+                validTerrain = True
+                printMsg = "Terrain set to (1 = suburban)"
+            elif terrainType == "country" or int(terrainType) == 2:
+                terrainType = "Country Terrain"
+                gradientHeightDiv = 541
+                gradientHeight = 270
+                a = 0.14
+                yValues = [str(yLabel) for yLabel in range(0,300,50)]
+                yAxisMaxRhinoHeight = 52
+                nArrows = 6
+                validTerrain = True
+                printMsg = "Terrain set to (2 = country)"
+            elif terrainType == "water" or int(terrainType) == 3:
+                terrainType = "Water Terrain"
+                gradientHeightDiv = 421
+                gradientHeight = 210
+                a = 0.10
+                yValues = [str(yLabel) for yLabel in range(0,250,50)]
+                yAxisMaxRhinoHeight = 42
+                nArrows = 5
+                validTerrain = True
+                printMsg = "Terrain set to (3 = water)"
+            else:
+                terrainType = gradientHeightDiv = gradientHeight = a = yValues = yAxisMaxRhinoHeight = nArrows = None
+                validTerrain = False
+                printMsg = "Please choose one of three terrain types: 0=city, 1=urban, 2=country 3=water"
+        
+        return validTerrain, terrainType, gradientHeightDiv, gradientHeight, a, yValues, yAxisMaxRhinoHeight, nArrows, printMsg
+    
+    
+    
     def readTerrainType(self, terrainType):
         checkData = True
         roughLength = None
