@@ -19,7 +19,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -44,8 +44,6 @@ def downloadSourceAndUnzip(lb_preparation):
     url = "https://github.com/mostaphaRoudsari/ladybug/archive/master.zip"
     targetDirectory = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "ladybugSrc")
     
-
-    
     # download the zip file
     print "Downloading the source code..."
     zipFile = os.path.join(targetDirectory, os.path.basename(url))
@@ -63,13 +61,20 @@ def downloadSourceAndUnzip(lb_preparation):
     if not os.path.isdir(targetDirectory): os.mkdir(targetDirectory)
 
     if download:
-        webFile = urllib.urlopen(url)
-        localFile = open(zipFile, 'wb')
-        localFile.write(webFile.read())
-        webFile.close()
-        localFile.close()
-        if not os.path.isfile(zipFile):
-            print "Download failed! Try to download and unzip the file manually form:\n" + url
+        try:
+            webFile = urllib.urlopen(url)
+            localFile = open(zipFile, 'wb')
+            localFile.write(webFile.read())
+            webFile.close()
+            localFile.close()
+            if not os.path.isfile(zipFile):
+                print "Download failed! Try to download and unzip the file manually form:\n" + url
+                return
+        except Exception, e:
+            iplibPath = ghenv.Script.GetStandardLibPath()
+            print `e` + \
+            "\nDownload ssl.py from the link below and copy the file to " + iplibPath + " and try again!"
+            print "https://app.box.com/s/jvsj1ic60vnficptlktt0jpfutcktemq"
             return
     
     #unzip the file
@@ -195,17 +200,29 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         
     # copy files from source to destination
     if updateAllUObjects:
-        if not userObjectsFolder  or not os.path.exists(userObjectsFolder ):
+        if not userObjectsFolder  or not os.path.exists(userObjectsFolder):
             warning = 'source directory address is not a valid address!'
             print warning
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+        
+        srcFiles = os.listdir(userObjectsFolder)
+        print 'Removing Old Version...'
+        # remove userobjects that are currently removed
+        fileNames = os.listdir(destinationDirectory)
+        for fileName in fileNames:
+            # check for ladybug userObjects and delete the files if they are not
+            # in source anymore
+            if fileName.StartsWith('Ladybug') and fileName not in srcFiles:
+                fullPath = os.path.join(folder, fileName)
+                os.remove(fullPath)                
+
         print 'Updating...'
-        srcFiles = os.listdir(userObjectsFolder )
+        
         for srcFileName in srcFiles:
             # check for ladybug userObjects
-            if srcFileName.StartsWith('Ladybug') or srcFileName.StartsWith('Honeybee'):
+            if srcFileName.StartsWith('Ladybug'):
                 srcFullPath = os.path.join(userObjectsFolder, srcFileName)
                 dstFullPath = os.path.join(destinationDirectory, srcFileName) 
                 
@@ -213,6 +230,7 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
                 if not os.path.isfile(dstFullPath): shutil.copy2(srcFullPath, dstFullPath)
                 # or is older than the new file
                 elif os.stat(srcFullPath).st_mtime - os.stat(dstFullPath).st_mtime > 1: shutil.copy2(srcFullPath, dstFullPath)
+        
         return "Done!" , True
 
 if _updateThisFile or _updateAllUObjects:
