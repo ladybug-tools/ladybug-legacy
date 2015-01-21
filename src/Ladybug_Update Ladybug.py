@@ -19,7 +19,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_20_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -215,7 +215,7 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
             # check for ladybug userObjects and delete the files if they are not
             # in source anymore
             if fileName.StartsWith('Ladybug') and fileName not in srcFiles:
-                fullPath = os.path.join(folder, fileName)
+                fullPath = os.path.join(destinationDirectory, fileName)
                 os.remove(fullPath)                
 
         print 'Updating...'
