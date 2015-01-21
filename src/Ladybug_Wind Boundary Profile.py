@@ -1274,8 +1274,9 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
     if originPt_ != None:
         transformMtx = rc.Geometry.Transform.Translation(originPt_.X, originPt_.Y, originPt_.Z)
         for geo in profileCrv: geo.Transform(transformMtx)
-        for geo in windVecMesh:
-            geo.Transform(transformMtx)
+        if windVecMesh != None and windVecMesh != []:
+            for geo in windVecMesh:
+                geo.Transform(transformMtx)
         if legendBasePoint != None and legendBasePoint != []: legendBasePoint.Transform(transformMtx)
         if legend != []:
             for geo in legend:
