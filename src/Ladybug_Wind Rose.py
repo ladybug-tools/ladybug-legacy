@@ -261,7 +261,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
             selectedWindDir = []
             for count in HOYS:
-                selectedWindDir.append(windDir[count])
+                selectedWindDir.append(windDir[count-1])
             #selectedWindDir = lb_preparation.selectHourlyData(windDir, analysisPeriod)[7:]
             # read analysis period
             stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, False)
