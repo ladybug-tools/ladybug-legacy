@@ -18,8 +18,9 @@ Instructions for Installing Ladybug + Honeybee:
 6. Install Daysim to C:\DAYSIM by downloading it at this link (http://daysim.ning.com/page/download) and running the exe. 
 8. Install Energy Plus 8.1 to C:\EnergyPlusV8-1-0 by going to the DOE website
      (http://apps1.eere.energy.gov/buildings/energyplus/energyplus_download.cfm), making an account, going to "download older
-	 versions of EnergyPlus, selecting 8.1 and  running the exe.
-9. Copy falsecolor2.exe and evalglare.exe to C:\Radiance\bin
+     versions of EnergyPlus, selecting 8.1 and  running the exe.
+9. Copy falsecolor2.exe (http://pyrat.googlecode.com/files/falsecolor2.exe) and evalglare.exe 
+     (http://www.ise.fraunhofer.de/en/downloads-englisch/software/evalglare_windows.zip/at_download/file) to C:\Radiance\bin
 10. You now have a fully-working version of Ladybug + Honeybee.  Get started visualizing weather data with these video tutorials
      (https://www.youtube.com/playlist?list=PLruLh1AdY-Sj_XGz3kzHUoWmpWDXNep1O).
 
