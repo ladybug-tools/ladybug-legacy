@@ -21,7 +21,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_10_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.58\nJAN_21_2015
