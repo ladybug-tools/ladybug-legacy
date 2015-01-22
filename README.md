@@ -10,12 +10,40 @@ Ladybug imports standard EnergyPlus Weather files (.EPW) in Grasshopper and prov
 Here is Ladybug in a less than 5-minute video (http://www.youtube.com/watch?v=OEjwAyC2l_0)!
 
 
+Licence
+========================================
 Ladybug started by Mostapha Sadeghipour Roudsari is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License. Based on a work at https://github.com/mostaphaRoudsari/ladybug.
 	
 It means you can copy, distribute and transmit the work or remix it to adapt the work. You can also use it to make commercial use of the work, BUT you must attribute that the work is based on Ladybug, and if you alter, transform, or build upon Ladybug, you may distribute the resulting work only under the same or similar license. This process will ensure that Ladybug and its future versions will stay free and accessible for everyone.
 
+Useful links
+========================================
 Group page: http://www.grasshopper3d.com/group/ladybug
 
 Facebook page: https://www.facebook.com/LadyBugforGrasshopper
 
 Ladybug on Twitter: @ladybug_tool
+
+Contributors(a-z):
+========================================
+Anton Szilasi @antonszilasi
+
+Alex Jacobson
+
+Abraham Yezioro @ayezioro
+
+Chris Mackey @chriswmackey
+
+Djordje Spasic @stgeorges
+
+Mostapha Roudsari @mostapharoudsari
+
+Saeran Vasanthakumar @saeranv
+
+Trygve Wastvedt @twastvedt
+
+
+![Screenshot](http://api.ning.com/files/n6JmThHrscbO0NxgLueUYrQPy4fLA8xdzP2COHyD1QEQ3DwfUxXlyjBtQMAxuSYvCXRAw0TfZ25DeARWbsMBKw0*wFlKWzeT/Untitledpresentation.png?width=1200)
+
+
+So many thanks to Radiance!
