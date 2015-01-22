@@ -349,11 +349,30 @@ class Preparation(object):
         else: month = month%12
         return month
 
-    def checkDay(self, day, month):
-        if day<1: day = 1
-        if month == 2 and day > 28: day = 28
-        elif (month == 4 or month == 6 or month == 9 or month == 11) and day > 30: day = 30
-        elif day > 31: day = 31
+    def checkDay(self, day, month, component = None):
+        w = gh.GH_RuntimeMessageLevel.Warning
+        if day<1:
+            if component!=None:
+                component.AddRuntimeMessage(w, "Day " + `day` + " is changed to 1.")
+            day = 1
+        if month == 2 and day > 28:
+            if component!=None:
+                msg = "Feb. has 28 days. The date is corrected by Ladybug."
+                component.AddRuntimeMessage(w, msg)
+            day = 28
+            
+        elif (month == 4 or month == 6 or month == 9 or month == 11) and day > 30:
+            if component!=None:
+                msg = self.monthList[month-1] + " has 30 days. The date is corrected by Ladybug."
+                component.AddRuntimeMessage(w, msg)
+            day = 30
+            
+        elif day > 31:
+            if component!=None:
+                msg = self.monthList[month-1] + " has 31 days. The date is corrected by Ladybug."
+                component.AddRuntimeMessage(w, msg)
+            day = 31
+        
         return day
     
     def hour2Date(self, hour, alternate = False):
