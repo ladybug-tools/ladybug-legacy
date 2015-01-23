@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_08_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_22_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -145,6 +145,12 @@ def main(epwFile, skyType, workingDir, useOldRes):
         
         ## check for epw file to be connected
         if epwFile != None and epwFile[-3:] == 'epw':
+            if not os.path.isfile(epwFile):
+                print "Can't find epw file at " + epwFile
+                w = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(w, "Can't find epw file at " + epwFile)
+                return -1
+                
             # import data from epw file
             locName, lat, lngt, timeZone, elev, locationStr = lb_preparation.epwLocation(epwFile)
             newLocName = lb_preparation.removeBlank(locName)
@@ -202,15 +208,22 @@ def main(epwFile, skyType, workingDir, useOldRes):
 def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZone):
     # All the patches on top high get the same values so maybe
     # I should re-create the geometry 577 instead of 580
-    
-    skyPatchesDict = {1 : 145 + 1,
-                      2 : 580 - 3 + 1}
-    
+    # and keep in mind that first patch is ground!
+    # I create the dictionary only for sky patches and don't collect the data
+    # for the first patch
+    # this line could have saved me 5 hours
+    skyPatchesDict = {1 : 145,
+                      2 : 580 - 3}
+
     numOfPatchesInEachRow = {1: [30, 30, 24, 24, 18, 12, 6, 1],
                              2: [60, 60, 60, 60, 48, 48, 48, 48, 36, 36, 24, 24, 12, 12, 1]}
                              
-    strConv = {1 : [0.0344199465, 0.0455168385, 0.0445221864, 0.0428934136, 0.0406730411, 0.0473984151, 0.0416418006, 0.0435449227],
-               2: [0.00921483254, 0.00612971396, 0.0121875626, 0.00905126163, 0.0119026242, 0.00974295956, 0.011436609, 0.00974713106, 0.0108025291, 0.0117312774, 0.0125224872, 0.0105335058, 0.0109255262, 0.0111894547, 0.0113221971]}
+    # first row is horizon and last row is the one 
+    #strConv = {1 : [0.0435449227, 0.0416418006, 0.0473984151, 0.0406730411, 0.0428934136, 0.0445221864, 0.0455168385, 0.0344199465],
+    #           2: [0.0113221971, 0.0111894547, 0.0109255262, 0.0105335058, 0.0125224872, 0.0117312774, 0.0108025291, 0.00974713106, 0.011436609, 0.00974295956, 0.0119026242, 0.00905126163, 0.0121875626, 0.00612971396, 0.00921483254]}
+    
+    strConv = {1 : [1, 1, 1, 1, 1, 1, 1, 1],
+               2: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
     
     numOfSkyPatches = skyPatchesDict[n]
     
@@ -222,7 +235,7 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
     resFileDif = open(daylightMtxDif, "r") 
     resFileDir = open(daylightMtxDir, "r") 
     
-    def getValue(line):
+    def getValue(line, rowNumber):
         R, G, B = line.split(' ')
         value = (.265074126 * float(R) + .670114631 * float(G) + .064811243 * float(B)) * strConv[n][rowNumber]
         return value
@@ -232,6 +245,8 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
     warnOff = False
     failedHours = {}
     for difLine, dirLine in izip(resFileDif, resFileDir):
+        # each line is the data for each hour for a single patch
+        
         # new version of gendaymtx genrates a header
         # this is a check to make sure the component will work for both versions
         if lineCount == 0 and difLine.startswith("#?RADIANCE"):
@@ -246,37 +261,41 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
         # these lines is an empty line to separate patches do let's pass them
         hour = (lineCount + 1 + extraHeadingLines)% 8761
         
+        #print lineCount, hour
+        
         if hour != 0:
             patchNumber = int((lineCount + 1 + extraHeadingLines) /8761)
             
-            #
-            for rowCount, patchCountInRow in enumerate(numOfPatchesInEachRow[n]):
-                if patchNumber <= sum(numOfPatchesInEachRow[n][:rowCount]):
-                    rowNumber = rowCount
-                    break
-            try:
-                difValue = getValue(difLine)
-                dirValue = getValue(dirLine)
-            
-            except Exception, e:
-                value = 0
-                if not warnOff:
-                    print "genDayMtx returns null Values for few hours. The study will run anyways." + \
-                          "\nMake sure that you are using an standard epw file." + \
-                          "\nThe failed hours are listed below in [Month/Day @Hour] format."
-                warnOff = True
-                day, month, time = hour2Date(hour - 1)
-                if hour-1 not in failedHours.keys():
-                    failedHours[hour-1] = [day, month, time]
-                    print "Failed to read the results > " + month + "/" + day + " @" + time
-                
-            try: radValuesDict[patchNumber][hour] = [difValue, dirValue]
-            except: print patchNumber, hour, value
+            # first patch is ground!
+            if patchNumber != 0: #and patchNumber < numOfSkyPatches:
+                for rowCount, patchCountInRow in enumerate(numOfPatchesInEachRow[n]):
+                    if patchNumber - 1 < sum(numOfPatchesInEachRow[n][:rowCount+1]):
+                        rowNumber = rowCount
+                        # print rowNumber
+                        break
+                try:
+                    difValue = getValue(difLine, rowNumber)
+                    dirValue = getValue(dirLine, rowNumber)
+                except Exception, e:
+                    value = 0
+                    if not warnOff:
+                        print "genDayMtx returns null Values for few hours. The study will run anyways." + \
+                              "\nMake sure that you are using an standard epw file." + \
+                              "\nThe failed hours are listed below in [Month/Day @Hour] format."
+                    warnOff = True
+                    day, month, time = hour2Date(hour - 1)
+                    if hour-1 not in failedHours.keys():
+                        failedHours[hour-1] = [day, month, time]
+                        print "Failed to read the results > " + month + "/" + day + " @" + time
+                    
+                try: radValuesDict[patchNumber-1][hour] = [difValue, dirValue]
+                except:print patchNumber-1, hour, value
             
         lineCount += 1
     
     resFileDif.close()
     resFileDir.close()
+
     
     class SkyResultsCollection(object):
         def __init__(self, valuesDict, locationName, lat, lngt, timeZone):

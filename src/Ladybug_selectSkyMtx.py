@@ -23,7 +23,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_22_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -32,8 +32,6 @@ except: pass
 
 
 import scriptcontext as sc
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import System
 from Grasshopper import DataTree
@@ -48,9 +46,7 @@ def getHourlySky(daylightMtxDict, HOY):
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        # first patch is the ground
-        if patchNumber!=0:
-            hourlyMtx.append(daylightMtxDict[patchNumber][HOY])
+        hourlyMtx.append(daylightMtxDict[patchNumber][HOY])
     return hourlyMtx, analysisP
     
 def getCumulativeSky(daylightMtxDict, runningPeriod):
@@ -85,19 +81,18 @@ def getCumulativeSky(daylightMtxDict, runningPeriod):
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        if patchNumber!=0:
-            cumulativeDifValue = 0
-            cumulativeDirValue = 0
-            # adding upp the values
-            try:
-                for HOY in HOYS:
-                    difValue, dirValue = daylightMtxDict[patchNumber][HOY + 1]
-                    cumulativeDifValue += difValue
-                    cumulativeDirValue += dirValue 
-            except Exception, e:
-                print `e`
-                
-            hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
+        cumulativeDifValue = 0
+        cumulativeDirValue = 0
+        # adding upp the values
+        try:
+            for HOY in HOYS:
+                difValue, dirValue = daylightMtxDict[patchNumber][HOY + 1]
+                cumulativeDifValue += difValue
+                cumulativeDirValue += dirValue 
+        except Exception, e:
+            print `e`
+            
+        hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
     
     return hourlyMtx
 
