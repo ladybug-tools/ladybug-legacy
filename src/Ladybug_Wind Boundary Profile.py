@@ -328,9 +328,10 @@ def checkTheInputs():
         return -1
 
 
-def checkConditionalStatement(annualHourlyData, conditionalStatement):
+def checkConditionalStatement(annualHourlyData, conditionalStatement, analysisPeriod, HOYS):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         indexList, listInfo = lb_preparation.separateList(annualHourlyData, lb_preparation.strToBeFound)
+        
         
         letters = [chr(i) for i in xrange(ord('a'), ord('z')+1)]
         # remove 'and' and 'or' from conditional statements
@@ -357,7 +358,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         for i in range(len(listInfo)):
             selList[i] = annualHourlyData[indexList[i]+7:indexList[i+1]]
             if listInfo[i][4]!='Hourly' or listInfo[i][5]!=(1,1,1) or  listInfo[i][6]!=(12,31,24) or len(selList[i])!=8760:
-                warning = 'At least one of the input data lists is not a valis ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
+                warning = 'At least one of the input data lists is not valid ladybug hourly data! Please fix this issue and try again!\n List number = '+ `i+1`
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1, -1
@@ -384,10 +385,19 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             finalStatement = finalStatement + ' ' + statemntPart
         print titleStatement
         
+        #If there is an analysis period connected, change the sel list to only be for that period.
+        if analysisPeriod != [(1, 1, 1), (12, 31, 24)]:
+            newSelList = []
+            for dataCount, dataList in enumerate(selList):
+                newSelList.append([])
+                for count in HOYS:
+                    newSelList[dataCount].append(dataList[count-1])
+            selList = newSelList
+        
         # check for the pattern
         patternList = []
         try:
-            for HOY in range(8760):
+            for HOY in range(len(HOYS)):
                 exec(finalStatement)
                 patternList.append(pattern)
         except Exception,e:
@@ -965,13 +975,14 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
     checkData, metD, metA = lb_wind.readTerrainType(epwTerrain)
     
     #If epw data is connected, get the data for the analysis period and strip the header off.
+    HOYS = range(1,8761)
     if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)] and HOY_ == None:
         HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
         hrWindDir = []
         hrWindSpd = []
         for count in HOYS:
-            hrWindSpd.append(windSpeed[count])
-            if windDir != []: hrWindDir.append(windDir[count])
+            hrWindSpd.append(windSpeed[count-1])
+            if windDir != []: hrWindDir.append(windDir[count-1])
     else:
         hrWindSpd = windSpeed
         hrWindDir = windDir
@@ -984,31 +995,25 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
             print 'Checking conditional statements...'
             # send all data and statement to a function and return back
             # True, False Pattern and condition statement
-            titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement_)
-        
-        if titleStatement != -1 and True not in patternList:
-            warning = 'No hour meets the conditional statement.' 
-            print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        
-        if titleStatement == -1:
-            patternList = [True] * 8760
+            titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement_, analysisPeriod, HOYS)
+            
+            if titleStatement != -1 and True not in patternList:
+                warning = 'No hour meets the conditional statement.' 
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            
+            #Create new lists of wind speed and wind direction data.
+            newHrWindSpd = []
+            newHrWindDir = []
+            for count, bool in enumerate(patternList):
+                if bool == True:
+                    newHrWindSpd.append(hrWindSpd[count])
+                    if windDir != []: newHrWindDir.append(hrWindDir[count])
+                else: pass
+            hrWindSpd = newHrWindSpd
+            hrWindDir = newHrWindDir
+        else:
             titleStatement = False
-        patternListFinal = []
-        if epwData == True and analysisPeriod != [(1, 1, 1), (12, 31, 24)] and HOY_ == None:
-            for count in HOYS:
-                patternListFinal.append(patternList[count])
-        else: patternListFinal = patternList
-        
-        newHrWindDir = []
-        newHrWindSpd = []
-        for count, bool in enumerate(patternListFinal):
-            if bool == True:
-                newHrWindSpd.append(hrWindSpd[count])
-                if windDir != []: newHrWindDir.append(hrWindDir[count])
-            else: pass
-        hrWindSpd = newHrWindSpd
-        hrWindDir = newHrWindDir
     else:
         titleStatement = False
     
@@ -1019,8 +1024,9 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
     else: pass
     
     
+    noHrMeetsStatement = False
     #Find the prevailing wind direction and corresponding speed.
-    if HOY_ == None and windDir != []:
+    if HOY_ == None and windDir != [] and hrWindSpd != [] and hrWindDir != []:
         #Create lists to be filled
         compassDirs = []
         windDirections = []
@@ -1096,242 +1102,248 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
         avgHrWindSpd = sum(zipped[-1][1])/len(zipped[-1][1])
     elif HOY_ == None and windDir == []:
         avgHrWindSpd = sum(hrWindSpd)/len(hrWindSpd)
+    elif hrWindSpd == [] and hrWindDir == []:
+        noHrMeetsStatement = True
     
-    #Evaluate each height.
-    windSpdHeight = []
-    anchorPts = []
-    for count, height in enumerate(heightsAboveGround):
-        windSpdHeight.append(lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height/scaleFactor, d, a, metD, metA))
-        if windDir != []: anchorPts.append(rc.Geometry.Point3d(0, 0, height))
-        else: anchorPts.append(rc.Geometry.Point3d(0, height, 0))
-   
-   #Create vectors for each height.
-    windVec = []
-    for speed in windSpdHeight:
-        if windDir != []:
-            vec = rc.Geometry.Vector3d(0, speed*windVectorScale, 0)
-            vec.Rotate(avgHrWindDir, rc.Geometry.Vector3d.ZAxis)
-        else:
-            vec = rc.Geometry.Vector3d(speed*windVectorScale, 0, 0)
-        windVec.append(vec)
-    
-    #If there is a north angle hooked up, rotate the vectors.
-    if north_ != None and windDir != []:
-        northAngle, northVector = lb_preparation.angle2north(north_)
-        for vec in windVec:
-            vec.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis)
-    else: pass
-    
-    #Create the wind profile curve.
-    profilePts = []
-    for count, point in enumerate(anchorPts):
-        if windDir != []: profilePts.append(rc.Geometry.Point3d(windVec[count].X, windVec[count].Y, point.Z))
-        else: profilePts.append(rc.Geometry.Point3d(windVec[count].X, point.Y, 0))
-    if len(anchorPts) != 2:
-        interpCrv = rc.Geometry.Curve.CreateInterpolatedCurve(profilePts[1:], 3)
-        
-        tanCrv = interpCrv.TangentAtStart
-        tanCrv = rc.Geometry.Vector3d.Multiply(.33, tanCrv)
-        startVec = rc.Geometry.Vector3d(windVec[-1].X, windVec[-1].Y, (tanCrv.Z))
-        startVec.Unitize()
-        
-        if terrainType_ < 2:
-            ptList = [rc.Geometry.Point3d.Origin, profilePts[1]]
-        else:
-            midPtHeight = (heightsAboveGround[1]-heightsAboveGround[0])/20
-            midPtX = lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, midPtHeight, d, a, metD, metA)
-            if windDir == []:
-                midPt = rc.Geometry.Point3d(midPtX*windVectorScale, midPtHeight, 0)
-                ptList = [rc.Geometry.Point3d.Origin, midPt, profilePts[1]]
+    #Check if to be sure that there are hours that meet the conditional statement.
+    if noHrMeetsStatement == True:
+        return -1
+    else:
+        #Evaluate each height.
+        windSpdHeight = []
+        anchorPts = []
+        for count, height in enumerate(heightsAboveGround):
+            windSpdHeight.append(lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height/scaleFactor, d, a, metD, metA))
+            if windDir != []: anchorPts.append(rc.Geometry.Point3d(0, 0, height))
+            else: anchorPts.append(rc.Geometry.Point3d(0, height, 0))
+       
+       #Create vectors for each height.
+        windVec = []
+        for speed in windSpdHeight:
+            if windDir != []:
+                vec = rc.Geometry.Vector3d(0, speed*windVectorScale, 0)
+                vec.Rotate(avgHrWindDir, rc.Geometry.Vector3d.ZAxis)
             else:
-                windDirVec = rc.Geometry.Vector3d(windVec[-1])
-                windDirVec.Unitize()
-                windDirVec = rc.Geometry.Vector3d.Multiply(midPtX*windVectorScale, windDirVec)
-                midPt = rc.Geometry.Point3d(windDirVec.X, windDirVec.Y, midPtHeight)
-                ptList = [rc.Geometry.Point3d.Origin, midPt, profilePts[1]]
+                vec = rc.Geometry.Vector3d(speed*windVectorScale, 0, 0)
+            windVec.append(vec)
         
-        profileLine = rc.Geometry.Curve.CreateInterpolatedCurve(ptList, 3, rc.Geometry.CurveKnotStyle.Uniform, startVec, tanCrv)
-        profileCrv = [rc.Geometry.Curve.JoinCurves([interpCrv, profileLine], sc.doc.ModelAbsoluteTolerance)[0]]
-    else:
-        profileCrv = rc.Geometry.Curve.CreateInterpolatedCurve(profilePts, 3)
-    
-    
-    #If the user has requested arrows, then generate them
-    if windVec[-1].X == 0 and windVec[-1].Y == 0 and windVec[-1].Z == 0:
-        windVecMesh = None
-        colors = []
-        values = windSpdHeight[1:]
-    else:
-        if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
-            #Get colors for the and profile mesh.
-            values = windSpdHeight[1:]
-            colors = lb_visualization.gradientColor(windSpdHeight[1:], lowB, highB, customColors)
+        #If there is a north angle hooked up, rotate the vectors.
+        if north_ != None and windDir != []:
+            northAngle, northVector = lb_preparation.angle2north(north_)
+            for vec in windVec:
+                vec.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis)
+        else: pass
+        
+        #Create the wind profile curve.
+        profilePts = []
+        for count, point in enumerate(anchorPts):
+            if windDir != []: profilePts.append(rc.Geometry.Point3d(windVec[count].X, windVec[count].Y, point.Z))
+            else: profilePts.append(rc.Geometry.Point3d(windVec[count].X, point.Y, 0))
+        if len(anchorPts) != 2:
+            interpCrv = rc.Geometry.Curve.CreateInterpolatedCurve(profilePts[1:], 3)
             
-            #Create the wind profile mesh.
-            windVecMesh = []
-            #Create standard color 3D meshes.
-            if windArrowStyle == 1:
-                arrowMesh = rc.Geometry.Mesh()
-                use1meterArrowHeadSize = True
-                for count, point in enumerate(anchorPts[1:]):
-                    mesh = createColoredArrowMesh(count, point, colors, windVec, heightsAboveGround, use1meterArrowHeadSize, scaleFactor)
-                    arrowMesh.Append(mesh)
-                windVecMesh.append(arrowMesh)
-            #Create high-res colored 3D meshes
-            elif windArrowStyle == 2:
-                arrowMesh = rc.Geometry.Mesh()
-                for count, point in enumerate(anchorPts[1:]):
-                    mesh = createHighResColoredArrows(count, point, colors, windVec, heightsAboveGround, windDir)
-                    arrowMesh.Append(mesh)
-                windVecMesh.append(arrowMesh)
-            #Create line arrows (colored)
-            elif windArrowStyle == 3:
-                for count, point in enumerate(anchorPts[1:]):
-                    arrowLine, arrowMeshHead = createLineArrow(count, point, colors, windVec, heightsAboveGround, windDir, windVectorScale)
-                    windVecMesh.extend([arrowLine, arrowMeshHead])
-        #Create line arrows (black)
-        elif windArrowStyle == 4:
-            values = windSpdHeight[1:]
-            windVecMesh = []
-            colors = []
-            for count, point in enumerate(anchorPts[1:]):
-                colors.append(System.Drawing.Color.Black)
-                arrowLine, arrowMeshHead = createLineArrow(count, point, colors, windVec, heightsAboveGround, windDir, windVectorScale)
-                windVecMesh.extend([arrowLine, arrowMeshHead])
+            tanCrv = interpCrv.TangentAtStart
+            tanCrv = rc.Geometry.Vector3d.Multiply(.33, tanCrv)
+            startVec = rc.Geometry.Vector3d(windVec[-1].X, windVec[-1].Y, (tanCrv.Z))
+            startVec.Unitize()
+            
+            if terrainType_ < 2:
+                ptList = [rc.Geometry.Point3d.Origin, profilePts[1]]
+            else:
+                midPtHeight = (heightsAboveGround[1]-heightsAboveGround[0])/20
+                midPtX = lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, midPtHeight, d, a, metD, metA)
+                if windDir == []:
+                    midPt = rc.Geometry.Point3d(midPtX*windVectorScale, midPtHeight, 0)
+                    ptList = [rc.Geometry.Point3d.Origin, midPt, profilePts[1]]
+                else:
+                    windDirVec = rc.Geometry.Vector3d(windVec[-1])
+                    windDirVec.Unitize()
+                    windDirVec = rc.Geometry.Vector3d.Multiply(midPtX*windVectorScale, windDirVec)
+                    midPt = rc.Geometry.Point3d(windDirVec.X, windDirVec.Y, midPtHeight)
+                    ptList = [rc.Geometry.Point3d.Origin, midPt, profilePts[1]]
+            
+            profileLine = rc.Geometry.Curve.CreateInterpolatedCurve(ptList, 3, rc.Geometry.CurveKnotStyle.Uniform, startVec, tanCrv)
+            profileCrv = [rc.Geometry.Curve.JoinCurves([interpCrv, profileLine], sc.doc.ModelAbsoluteTolerance)[0]]
         else:
+            profileCrv = rc.Geometry.Curve.CreateInterpolatedCurve(profilePts, 3)
+        
+        
+        #If the user has requested arrows, then generate them
+        if windVec[-1].X == 0 and windVec[-1].Y == 0 and windVec[-1].Z == 0:
             windVecMesh = None
             colors = []
             values = windSpdHeight[1:]
-    
-    #Convert the colors into Rhino materials if bakeIt is set to true.
-    arrowMeshesMaterialIndexes = []
-    arrowMeshMaterial = rc.DocObjects.Material()
-    if bakeIt_ and colors != []:
-        for color in colors:
-            arrowMeshMaterial.DiffuseColor = color
-            newMatIndex = rc.RhinoDoc.ActiveDoc.Materials.Add(arrowMeshMaterial)
-            arrowMeshesMaterialIndexes.append(newMatIndex)
-    
-    #Plot the chart axes.
-    profileAxes = []
-    axesLines, axesArrows, xAxisPts, yAxisPts, xAxisText, yAxisText = createChartAxes(heightsAboveGround, windVectorScale, scaleFactor, windVec, windDir, maxSpeed)
-    profileAxes.extend(axesLines)
-    profileAxes.extend(axesArrows)
-    
-    #Calculate a bounding box around everything that will help place the legend and title.
-    allGeo = []
-    allGeo.append(profileCrv)
-    allGeo.extend(profileAxes)
-    lb_visualization.calculateBB(allGeo, True)
-    
-    legendScaleDeterminant = windVectorScale*maxSpeed+(scaleFactor*4)
-    lb_visualization.BoundingBoxPar = (lb_visualization.BoundingBoxPar[0], lb_visualization.BoundingBoxPar[2], legendScaleDeterminant, lb_visualization.BoundingBoxPar[3], lb_visualization.BoundingBoxPar[4], lb_visualization.BoundingBoxPar[5], lb_visualization.BoundingBoxPar[6])
-    
-    #Create a color legend if wind arrow meshes have been generated.
-    if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
-        legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values
-                        , lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
-        # generate legend colors
-        legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
-        # color legend surfaces
-        legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-        #Flaten the text list
-        legend = lb_preparation.flattenList(legendTextSrf)
-        legend.append(legendSrfs)
-        #Get the legend base point.
-        if legendBasePoint == None:
-            legendBasePoint = lb_visualization.BoundingBoxPar[0]
-    else:
-        BBYlength = lb_visualization.BoundingBoxPar[2]
-        legendHeight = (BBYlength/10) * legendScale
-        if  legendFontSize == None: textSize = (legendHeight/3) * legendScale
-        else: textSize = legendFontSize
-        legend = []
-        legendBasePoint = []
-    
-    # If a wind direction is connected and a legend was produced, re-orient the legend to align with the previaling direction of the wind.
-    if windDir != []:
-        if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
-            if windVec[-1].X == 0 and windVec[-1].Y == 0 and windVec[-1].Z == 0: rotatedWindVec = rc.Geometry.Vector3d(1,0,0)
-            else: rotatedWindVec = rc.Geometry.Vector3d(windVec[-1])
-            legendBasePointNew = axesLines[0].PointAtEnd
-            originalPlane = rc.Geometry.Plane(legendBasePoint, rc.Geometry.Vector3d.ZAxis)
-            newPlane = rc.Geometry.Plane(legendBasePointNew, rotatedWindVec, rc.Geometry.Vector3d.ZAxis)
-            reOrientTrans = rc.Geometry.Transform.PlaneToPlane(originalPlane, newPlane)
-            for geo in legend:
-                geo.Transform(reOrientTrans)
-            legendBasePoint = legendBasePointNew
-    
-    # Create the axes text lables
-    axesText = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
-    
-    #i love rosi.
-    #Create the units labels of the axes.
-    unitsTextLabels = makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, windVectorScale, axesLines, epwStr, terrainType, analysisPeriod, titleStatement, legendFont, textSize, legendBold, lb_visualization, lb_preparation)
-    axesText.extend(unitsTextLabels)
-    
-    #If the user has specified a base point, use this to move everything.
-    if originPt_ != None:
-        transformMtx = rc.Geometry.Transform.Translation(originPt_.X, originPt_.Y, originPt_.Z)
-        for geo in profileCrv: geo.Transform(transformMtx)
-        if windVecMesh != None and windVecMesh != []:
-            for geo in windVecMesh:
-                geo.Transform(transformMtx)
-        if legendBasePoint != None and legendBasePoint != []: legendBasePoint.Transform(transformMtx)
-        if legend != []:
-            for geo in legend:
-                if geo != -1: geo.Transform(transformMtx)
-        for geo in anchorPts:
-            geo.Transform(transformMtx)
-        for geo in profileAxes:
-            geo.Transform(transformMtx)
-        for geo in axesText:
-            geo.Transform(transformMtx)
-    
-    # If bakeIt is set to true, then bake all of the geometry.
-    if bakeIt_:
-        layerIndex, layerName = setupAddLayers("LADYBUG", "WIND_BOUNDARY_PROFILE", "myProject", False, "Wind_boundary_profile_")
-        
-        attr = rc.DocObjects.ObjectAttributes()
-        attr.LayerIndex = layerIndex
-        legendIds = []
-        arrowMeshesIds = []
-        for mesh in legend:
-            id = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
-            legendIds.append(id)
-        boundaryCrvId = rc.RhinoDoc.ActiveDoc.Objects.AddCurve(profileCrv[0], attr)
-        if windVecMesh != None:
-            for i,mesh2 in enumerate(windVecMesh):
-                attr.MaterialIndex = arrowMeshesMaterialIndexes[i]
-                attr.MaterialSource = rc.DocObjects.ObjectMaterialSource.MaterialFromObject
-                arrowMeshId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh2, attr)
-                arrowMeshesIds.append(arrowMeshId)
-        # Add axis.
-        lineIds = []
-        for line in profileAxes:
-            try:
-                lineId = rc.RhinoDoc.ActiveDoc.Objects.AddCurve(line,attr)
-                lineIds.append(lineId)
-            except:
-                lineId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(line,attr)
-                lineIds.append(lineId)
-        
-        #Add text.
-        textIds = []
-        for txt in axesText:
-            textId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(txt,attr)
-            textIds.append(textId)
-        
-        # group baked geometry
-        if windVecMesh != None:
-            ids = legendIds + arrowMeshesIds + [boundaryCrvId] + lineIds + textIds
         else:
-            ids = legendIds + [boundaryCrvId] + lineIds + textIds
-        groupIndex = rc.RhinoDoc.ActiveDoc.Groups.Add(layerName)
-        rc.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, ids)
-    
-    
-    return profileCrv, windVecMesh, windSpdHeight, windVec, anchorPts, profileAxes, axesText, legend, legendBasePoint
+            if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
+                #Get colors for the and profile mesh.
+                values = windSpdHeight[1:]
+                colors = lb_visualization.gradientColor(windSpdHeight[1:], lowB, highB, customColors)
+                
+                #Create the wind profile mesh.
+                windVecMesh = []
+                #Create standard color 3D meshes.
+                if windArrowStyle == 1:
+                    arrowMesh = rc.Geometry.Mesh()
+                    use1meterArrowHeadSize = True
+                    for count, point in enumerate(anchorPts[1:]):
+                        mesh = createColoredArrowMesh(count, point, colors, windVec, heightsAboveGround, use1meterArrowHeadSize, scaleFactor)
+                        arrowMesh.Append(mesh)
+                    windVecMesh.append(arrowMesh)
+                #Create high-res colored 3D meshes
+                elif windArrowStyle == 2:
+                    arrowMesh = rc.Geometry.Mesh()
+                    for count, point in enumerate(anchorPts[1:]):
+                        mesh = createHighResColoredArrows(count, point, colors, windVec, heightsAboveGround, windDir)
+                        arrowMesh.Append(mesh)
+                    windVecMesh.append(arrowMesh)
+                #Create line arrows (colored)
+                elif windArrowStyle == 3:
+                    for count, point in enumerate(anchorPts[1:]):
+                        arrowLine, arrowMeshHead = createLineArrow(count, point, colors, windVec, heightsAboveGround, windDir, windVectorScale)
+                        windVecMesh.extend([arrowLine, arrowMeshHead])
+            #Create line arrows (black)
+            elif windArrowStyle == 4:
+                values = windSpdHeight[1:]
+                windVecMesh = []
+                colors = []
+                for count, point in enumerate(anchorPts[1:]):
+                    colors.append(System.Drawing.Color.Black)
+                    arrowLine, arrowMeshHead = createLineArrow(count, point, colors, windVec, heightsAboveGround, windDir, windVectorScale)
+                    windVecMesh.extend([arrowLine, arrowMeshHead])
+            else:
+                windVecMesh = None
+                colors = []
+                values = windSpdHeight[1:]
+        
+        #Convert the colors into Rhino materials if bakeIt is set to true.
+        arrowMeshesMaterialIndexes = []
+        arrowMeshMaterial = rc.DocObjects.Material()
+        if bakeIt_ and colors != []:
+            for color in colors:
+                arrowMeshMaterial.DiffuseColor = color
+                newMatIndex = rc.RhinoDoc.ActiveDoc.Materials.Add(arrowMeshMaterial)
+                arrowMeshesMaterialIndexes.append(newMatIndex)
+        
+        #Plot the chart axes.
+        profileAxes = []
+        axesLines, axesArrows, xAxisPts, yAxisPts, xAxisText, yAxisText = createChartAxes(heightsAboveGround, windVectorScale, scaleFactor, windVec, windDir, maxSpeed)
+        profileAxes.extend(axesLines)
+        profileAxes.extend(axesArrows)
+        
+        #Calculate a bounding box around everything that will help place the legend and title.
+        allGeo = []
+        allGeo.append(profileCrv)
+        allGeo.extend(profileAxes)
+        lb_visualization.calculateBB(allGeo, True)
+        
+        legendScaleDeterminant = windVectorScale*maxSpeed+(scaleFactor*4)
+        lb_visualization.BoundingBoxPar = (lb_visualization.BoundingBoxPar[0], lb_visualization.BoundingBoxPar[2], legendScaleDeterminant, lb_visualization.BoundingBoxPar[3], lb_visualization.BoundingBoxPar[4], lb_visualization.BoundingBoxPar[5], lb_visualization.BoundingBoxPar[6])
+        
+        #Create a color legend if wind arrow meshes have been generated.
+        if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
+            legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values
+                            , lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+            # generate legend colors
+            legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
+            # color legend surfaces
+            legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
+            #Flaten the text list
+            legend = lb_preparation.flattenList(legendTextSrf)
+            legend.append(legendSrfs)
+            #Get the legend base point.
+            if legendBasePoint == None:
+                legendBasePoint = lb_visualization.BoundingBoxPar[0]
+        else:
+            BBYlength = lb_visualization.BoundingBoxPar[2]
+            legendHeight = (BBYlength/10) * legendScale
+            if  legendFontSize == None: textSize = (legendHeight/3) * legendScale
+            else: textSize = legendFontSize
+            legend = []
+            legendBasePoint = []
+        
+        # If a wind direction is connected and a legend was produced, re-orient the legend to align with the previaling direction of the wind.
+        if windDir != []:
+            if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
+                if windVec[-1].X == 0 and windVec[-1].Y == 0 and windVec[-1].Z == 0: rotatedWindVec = rc.Geometry.Vector3d(1,0,0)
+                else: rotatedWindVec = rc.Geometry.Vector3d(windVec[-1])
+                legendBasePointNew = axesLines[0].PointAtEnd
+                originalPlane = rc.Geometry.Plane(legendBasePoint, rc.Geometry.Vector3d.ZAxis)
+                newPlane = rc.Geometry.Plane(legendBasePointNew, rotatedWindVec, rc.Geometry.Vector3d.ZAxis)
+                reOrientTrans = rc.Geometry.Transform.PlaneToPlane(originalPlane, newPlane)
+                for geo in legend:
+                    geo.Transform(reOrientTrans)
+                legendBasePoint = legendBasePointNew
+        
+        # Create the axes text lables
+        axesText = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
+        
+        #i love rosi.
+        #Create the units labels of the axes.
+        unitsTextLabels = makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, windVectorScale, axesLines, epwStr, terrainType, analysisPeriod, titleStatement, legendFont, textSize, legendBold, lb_visualization, lb_preparation)
+        axesText.extend(unitsTextLabels)
+        
+        #If the user has specified a base point, use this to move everything.
+        if originPt_ != None:
+            transformMtx = rc.Geometry.Transform.Translation(originPt_.X, originPt_.Y, originPt_.Z)
+            for geo in profileCrv: geo.Transform(transformMtx)
+            if windVecMesh != None and windVecMesh != []:
+                for geo in windVecMesh:
+                    geo.Transform(transformMtx)
+            if legendBasePoint != None and legendBasePoint != []: legendBasePoint.Transform(transformMtx)
+            if legend != []:
+                for geo in legend:
+                    if geo != -1: geo.Transform(transformMtx)
+            for geo in anchorPts:
+                geo.Transform(transformMtx)
+            for geo in profileAxes:
+                geo.Transform(transformMtx)
+            for geo in axesText:
+                geo.Transform(transformMtx)
+        
+        # If bakeIt is set to true, then bake all of the geometry.
+        if bakeIt_:
+            layerIndex, layerName = setupAddLayers("LADYBUG", "WIND_BOUNDARY_PROFILE", "myProject", False, "Wind_boundary_profile_")
+            
+            attr = rc.DocObjects.ObjectAttributes()
+            attr.LayerIndex = layerIndex
+            legendIds = []
+            arrowMeshesIds = []
+            for mesh in legend:
+                id = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
+                legendIds.append(id)
+            boundaryCrvId = rc.RhinoDoc.ActiveDoc.Objects.AddCurve(profileCrv[0], attr)
+            if windVecMesh != None:
+                for i,mesh2 in enumerate(windVecMesh):
+                    attr.MaterialIndex = arrowMeshesMaterialIndexes[i]
+                    attr.MaterialSource = rc.DocObjects.ObjectMaterialSource.MaterialFromObject
+                    arrowMeshId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh2, attr)
+                    arrowMeshesIds.append(arrowMeshId)
+            # Add axis.
+            lineIds = []
+            for line in profileAxes:
+                try:
+                    lineId = rc.RhinoDoc.ActiveDoc.Objects.AddCurve(line,attr)
+                    lineIds.append(lineId)
+                except:
+                    lineId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(line,attr)
+                    lineIds.append(lineId)
+            
+            #Add text.
+            textIds = []
+            for txt in axesText:
+                textId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(txt,attr)
+                textIds.append(textId)
+            
+            # group baked geometry
+            if windVecMesh != None:
+                ids = legendIds + arrowMeshesIds + [boundaryCrvId] + lineIds + textIds
+            else:
+                ids = legendIds + [boundaryCrvId] + lineIds + textIds
+            groupIndex = rc.RhinoDoc.ActiveDoc.Groups.Add(layerName)
+            rc.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, ids)
+        
+        
+        return profileCrv, windVecMesh, windSpdHeight, windVec, anchorPts, profileAxes, axesText, legend, legendBasePoint
 
 
 
@@ -1347,7 +1359,9 @@ if check != -1:
 
 #Get the wind profile curve if everything looks good.
 if checkData == True:
-    windProfileCurve, windVectorMesh, windSpeeds, windVectors, vectorAnchorPts, profileAxes, axesText, legend, legendBasePt = main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
+    result = main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
+    if result != -1:
+        windProfileCurve, windVectorMesh, windSpeeds, windVectors, vectorAnchorPts, profileAxes, axesText, legend, legendBasePt = result
 
 #Hide the anchor points.
 ghenv.Component.Params.Output[4].Hidden = True
