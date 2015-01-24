@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_12_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_07_2014
@@ -639,8 +639,8 @@ def getHourlySky(daylightMtxDict, HOY):
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
         # first patch is the ground
-        if patchNumber!=0:
-            hourlyMtx.append(daylightMtxDict[patchNumber][HOY])
+        #if patchNumber!=0:
+        hourlyMtx.append(daylightMtxDict[patchNumber][HOY])
     return hourlyMtx, analysisP
 
 def getCumulativeSky(daylightMtxDict, runningPeriod):
@@ -675,20 +675,19 @@ def getCumulativeSky(daylightMtxDict, runningPeriod):
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        if patchNumber!=0:
-            cumulativeDifValue = 0
-            cumulativeDirValue = 0
-            # adding upp the values
-            try:
-                for HOY in HOYS:
-                    difValue, dirValue = daylightMtxDict[patchNumber][HOY + 1]
-                    cumulativeDifValue += difValue
-                    cumulativeDirValue += dirValue 
-            except Exception, e:
-                print `e`
-                
-            hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
-    
+        cumulativeDifValue = 0
+        cumulativeDirValue = 0
+        # adding upp the values
+        try:
+            for HOY in HOYS:
+                difValue, dirValue = daylightMtxDict[patchNumber][HOY + 1]
+                cumulativeDifValue += difValue
+                cumulativeDirValue += dirValue 
+        except Exception, e:
+            print `e`
+            
+        hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
+
     return hourlyMtx
 
 def prepareLBList(skyMtxLists, analysisPeriodOrHOY, locName, unit, removeDiffuse, removeDirect):
