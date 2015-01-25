@@ -28,10 +28,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_22_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_25_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.58\nJAN_21_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
