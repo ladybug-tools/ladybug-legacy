@@ -41,7 +41,7 @@ ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
 ghenv.Component.Message = 'VER 0.0.58\nJAN_20_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.SubCategory = "3 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_02_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass

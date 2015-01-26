@@ -60,7 +60,7 @@ ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
 ghenv.Component.Message = 'VER 0.0.58\nNOV_22_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.SubCategory = "2 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass

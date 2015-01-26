@@ -57,7 +57,7 @@ ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
 ghenv.Component.Message = 'VER 0.0.58\nJAN_24_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.SubCategory = "3 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_07_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
@@ -65,8 +65,6 @@ except: pass
 
 import Rhino as rc
 import scriptcontext as sc
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import System
 from Grasshopper import DataTree

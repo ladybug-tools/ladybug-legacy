@@ -25,7 +25,7 @@ ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
 ghenv.Component.Message = 'VER 0.0.58\nJAN_25_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+ghenv.Component.SubCategory = "3 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_21_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass

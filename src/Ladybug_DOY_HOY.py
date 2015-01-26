@@ -23,7 +23,7 @@ ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
 ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.58\nJAN_21_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass

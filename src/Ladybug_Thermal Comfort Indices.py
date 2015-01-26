@@ -99,7 +99,7 @@ ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = 'ThermalComfortIndices'
 ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.SubCategory = "2 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
