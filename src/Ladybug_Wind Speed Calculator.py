@@ -36,7 +36,7 @@ ghenv.Component.Name = "Ladybug_Wind Speed Calculator"
 ghenv.Component.NickName = 'WindSpeedCalculator'
 ghenv.Component.Message = 'VER 0.0.58\nNOV_21_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "2 | AnalyzeWeatherData"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass

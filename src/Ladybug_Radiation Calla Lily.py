@@ -33,9 +33,9 @@ ghenv.Component.Name = "Ladybug_Radiation Calla Lily"
 ghenv.Component.NickName = 'radiationCallaLily'
 ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | VisualizeWeatherData"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_02_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 

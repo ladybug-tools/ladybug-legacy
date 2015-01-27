@@ -19,7 +19,7 @@ ghenv.Component.Name = "Ladybug_Wh2BTU"
 ghenv.Component.NickName = 'Wh2BTU'
 ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Extra"
+ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass

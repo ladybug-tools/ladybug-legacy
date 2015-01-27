@@ -23,7 +23,7 @@ ghenv.Component.Name = "Ladybug_View From Sun"
 ghenv.Component.NickName = 'viewFromSun'
 ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | EnvironmentalAnalysis"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass

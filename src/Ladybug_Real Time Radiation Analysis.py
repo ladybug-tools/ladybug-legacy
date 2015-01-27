@@ -22,9 +22,9 @@ ghenv.Component.Name = "Ladybug_Real Time Radiation Analysis"
 ghenv.Component.NickName = 'RTRadiationAnalysis'
 ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Extra"
+ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 

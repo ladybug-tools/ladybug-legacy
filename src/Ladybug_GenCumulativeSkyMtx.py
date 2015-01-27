@@ -30,7 +30,7 @@ ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
 ghenv.Component.Message = 'VER 0.0.58\nJAN_25_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | VisualizeWeatherData"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_21_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
@@ -38,6 +38,8 @@ except: pass
 
 import os
 import scriptcontext as sc
+from clr import AddReference
+AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 from itertools import izip
 import shutil
