@@ -21,6 +21,7 @@ Instructions for Installing Ladybug + Honeybee:
      versions of EnergyPlus, selecting 8.1 and  running the exe.
 9. Copy falsecolor2.exe (http://pyrat.googlecode.com/files/falsecolor2.exe) and evalglare.exe 
      (http://www.ise.fraunhofer.de/en/downloads-englisch/software/evalglare_windows.zip/at_download/file) to C:\Radiance\bin
-10. You now have a fully-working version of Ladybug + Honeybee.  Get started visualizing weather data with these video tutorials
+10. Download the OpenStudio Libraries (https://app.box.com/s/y2sx16k98g1lfd3r47zi) and unzip them to C:\ladybug\OpenStudio.
+11. You now have a fully-working version of Ladybug + Honeybee.  Get started visualizing weather data with these video tutorials
      (https://www.youtube.com/playlist?list=PLruLh1AdY-Sj_XGz3kzHUoWmpWDXNep1O).
 
