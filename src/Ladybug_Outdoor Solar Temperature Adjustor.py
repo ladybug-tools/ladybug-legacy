@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.58
         clothingAbsorptivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.7 for (average/brown) skin and average clothing.  You may want to increase this value for darker skin or darker clothing.
         windowTransmissivity_: An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions. 
         -------------------------: ...
-        analysisPeriodOrHOY_: An optional analysis period from the Analysis Period component.  If no Analysis period is given, the analysis will be run for the enitre year.
+        analysisPeriodOrHOY_: An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis. If no value is connected here, the component will run for noon on the winter solstice.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         tempOrRad_: Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person.
         parallel_: Set to "True" to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'
@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_24_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_07_2014
@@ -92,7 +92,7 @@ inputsDict = {
 12: ["clothingAbsorptivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.7 for (average/brown) skin and average clothing.  You may want to increase this value for darker skin or darker clothing."],
 13: ["windowTransmissivity_", "An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions."],
 14: ["-------------------------", "..."],
-15: ["analysisPeriodOrHOY_", "An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis.  If no analysis period or HOY is given, the analysis will be run for the enitre year."],
+15: ["analysisPeriodOrHOY_", "An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis. If no value is connected here, the component will run for noon on the winter solstice."],
 16: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
 17: ["tempOrRad_", "Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person."],
 18: ["parallel_", "Set to 'True' to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'"],
@@ -478,7 +478,8 @@ def checkTheInputs():
         checkData9 = True
         periodMethod = 0
         if analysisPeriodOrHOY_ == []:
-            analysisPeriodOrHOY = [(1, 1, 1), (12, 31, 24)]
+            analysisPeriodOrHOY = 8508
+            periodMethod = 1
         else:
             #Check if the analysis period is an hour of the year or an HOY
             try:
