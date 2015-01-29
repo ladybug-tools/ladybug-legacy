@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Colored Sky Visualizer"
 ghenv.Component.NickName = 'skyVizualizer'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_08_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -228,6 +228,8 @@ def createSkyDomeMesh(basePoint, resolution, scale):
     
     #Color the mesh with monotone colors.
     uncoloredMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
+    
+    uncoloredMesh.Flip(True, True, True)
     
     return uncoloredMesh
 

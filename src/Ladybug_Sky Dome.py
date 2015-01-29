@@ -28,12 +28,12 @@ Provided by Ladybug 0.0.58
         skyPatchesCenPts: The center points of sky patches, which can be used to shape Rhino geometry in relation to radiation from different sky patches.
         skyPatchesAreas: The area of sky patches in Rhino model units.
         skyPatchesAsBrep: The geometry of sky patches as breps.
-        values: Radiation values for the sky patches in Wh/m2.
+        values: Radiation values for the sky patches in kWh/m2.
 """
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_25_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_21_2015
@@ -187,6 +187,9 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         
         # color the meshed patches
         domeMeshed = lb_visualization.colorMesh(colForMesh, domeMeshed)
+        
+        #Flip it so that the mesh faces are outward.
+        domeMeshed.Flip(True, True, True)
         
         if legendBasePoint == None:
             nlegendBasePoint = lb_visualization.BoundingBoxPar[0]

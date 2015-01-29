@@ -27,7 +27,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -1032,27 +1032,30 @@ class Preparation(object):
     
     def genRadRoseArrows(self, movingVectors, radResult, cenPt, sc, internalSc = 0.2, arrowHeadScale = 1):
         radArrows = []; vecNum = 0
-        # this is a copy/paste. should be fixed later
-        cenPt = rs.AddPoint(cenPt.X, cenPt.Y, cenPt.Z)
+        
         for vec in movingVectors:
             movingVec = (sc* internalSc * vec * radResult[vecNum])
-            ptMoveDis = 20 * internalSc * arrowHeadScale
-            ptMovingVec_right = rs.VectorRotate((vec * sc * ptMoveDis), 90, (0,0,1))
-            ptMovingVec_left = rs.VectorRotate((vec * sc * ptMoveDis), -90, (0,0,1))
-            arrowEndpt = rs.MoveObject(rs.CopyObject(cenPt), movingVec)
-            baseLine = rs.AddLine(cenPt, arrowEndpt)
-            pt = rs.EvaluateCurve(baseLine, 0.85* rs.CurveLength(baseLine))
-            pt = rs.AddPoint(pt[0], pt[1], pt[2])
-            rightPt = rs.MoveObject(rs.CopyObject(pt), ptMovingVec_right)
-            leftPt = rs.MoveObject(rs.CopyObject(pt), ptMovingVec_left)
-            # change this to mesh
-            # arrowSrf = rs.AddSrfPt((cenPt, rightPt, arrowEndpt, leftPt))
+            ptMoveDis = movingVec.Length * 0.1 * internalSc * arrowHeadScale 
+            
+            arrowEndpt = rc.Geometry.Point3d.Add(cenPt, movingVec)
+            baseLine = rc.Geometry.LineCurve(cenPt, arrowEndpt)
+            basePt = baseLine.PointAt(baseLine.DivideByCount(4, True)[-2])
+            
+            ptMovingVec_right = rc.Geometry.Vector3d(vec.X, vec.Y, vec.Z)
+            ptMovingVec_right.Rotate(math.radians(90), rc.Geometry.Vector3d.ZAxis)
+            ptMovingVec_right.Unitize()
+            ptMovingVec_right = rc.Geometry.Vector3d.Multiply(ptMoveDis, ptMovingVec_right)
+            rightPt = rc.Geometry.Point3d.Add(basePt, ptMovingVec_right)
+            
+            ptMovingVec_right.Reverse()
+            leftPt = rc.Geometry.Point3d.Add(basePt, ptMovingVec_right)
+            
             
             tempMesh = rc.Geometry.Mesh()
-            tempMesh.Vertices.Add(rs.coerce3dpoint(cenPt)) #0
-            tempMesh.Vertices.Add(rs.coerce3dpoint(rightPt)) #1
-            tempMesh.Vertices.Add(rs.coerce3dpoint(arrowEndpt)) #2
-            tempMesh.Vertices.Add(rs.coerce3dpoint(leftPt)) #3
+            tempMesh.Vertices.Add(cenPt) #0
+            tempMesh.Vertices.Add(rightPt) #1
+            tempMesh.Vertices.Add(arrowEndpt) #2
+            tempMesh.Vertices.Add(leftPt) #3
             tempMesh.Faces.AddFace(0, 1, 2, 3)
             
             
@@ -2512,23 +2515,24 @@ class ResultVisualization(object):
             if "=" in text[n]: extraSrfCount += -1
             if ":" in text[n]: extraSrfCount += -1
             
-            if len(text[n].strip()) != len(srfs) + extraSrfCount:
-                # project the curves to the place in case number of surfaces
-                # doesn't match the text
-                projectedCrvs = []
-                for crv in joindCrvs:
-                    projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
-                srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
-            
-            #Mesh the surfcaes.
-            meshSrfs = []
-            for srf in srfs:
-                srf.Flip()
-                meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
-                meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
-                meshSrfs.append(meshSrf)
-            
-            textSrfs.append(meshSrfs)
+            if srfs:
+                if len(text[n].strip()) != len(srfs) + extraSrfCount:
+                    # project the curves to the place in case number of surfaces
+                    # doesn't match the text
+                    projectedCrvs = []
+                    for crv in joindCrvs:
+                        projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
+                    srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
+                
+                #Mesh the surfcaes.
+                meshSrfs = []
+                for srf in srfs:
+                    srf.Flip()
+                    meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
+                    meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+                    meshSrfs.append(meshSrf)
+                
+                textSrfs.append(meshSrfs)
             
             #if len(text[n].strip()) == len(srfs)+ extraSrfCount:
             #    textSrfs.append(srfs)

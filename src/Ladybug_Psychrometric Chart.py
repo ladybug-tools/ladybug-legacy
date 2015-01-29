@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_02_2014
@@ -836,6 +836,9 @@ def colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_
             cullFaceIndices.append(count)
     uncoloredMesh.Faces.DeleteFaces(cullFaceIndices)
     
+    #Flip the mesh to be sure that it always displays correctly.
+    uncoloredMesh.Flip(True, True, True)
+    
     #Return everything that's useful.
     return hourPts, uncoloredMesh, finalMeshFrequency
 
@@ -1577,7 +1580,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if calcLength > 1:
             hourPts, coloredMesh, meshFaceValues = colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_visualization, scaleFactor, lowB, highB, customColors)
             legendTitle = "Hours"
-            lb_visualization.calculateBB(chartCurves[62:70], True)
+            lb_visualization.calculateBB(chartCurves[75:83], True)
             legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)

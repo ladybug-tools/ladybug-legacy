@@ -23,7 +23,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_25_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_21_2015
@@ -46,7 +46,9 @@ def getHourlySky(daylightMtxDict, HOY):
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        hourlyMtx.append(daylightMtxDict[patchNumber][HOY])
+        convertedMtx = []
+        for val in daylightMtxDict[patchNumber][HOY]: convertedMtx.append(val/1000)
+        hourlyMtx.append(convertedMtx)
     return hourlyMtx, analysisP
     
 def getCumulativeSky(daylightMtxDict, runningPeriod):
@@ -149,7 +151,7 @@ def isLadybugFlying():
 skyMtxLists = []
 if _cumulativeSkyMtx and HOY_ and isLadybugFlying:
     skyMtxLists, _analysisPeriod_ = getHourlySky(_cumulativeSkyMtx.d, HOY_)
-    unit = 'Wh/m2'
+    unit = 'kWh/m2'
 elif _cumulativeSkyMtx and isLadybugFlying:
     skyMtxLists = getCumulativeSky(_cumulativeSkyMtx.d, _analysisPeriod_)
     unit = 'kWh/m2'

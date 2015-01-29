@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_20_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nDEC_02_2014
@@ -485,7 +485,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                         centerMesh.Append(singleMesh)
                                     except Exception, e:
                                         print `e`
-                    
+                        
+                        centerMesh.Flip(True, True, True)
+                        
                         segments = rc.Geometry.Mesh()
                         segmentsColors = []
                         for direction, segmentValues in enumerate(values):
@@ -521,7 +523,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                         segmentsColors.append(color[0])
                                         segments.Append(segment)
                                     totalFr = totalFr + fr
-                                
+                    
+                    segments.Flip(True, True, True)
+                    
                     segments = lb_visualization.colorMesh(segmentsColors, segments)
                     centerMesh = lb_visualization.colorMesh(cenMeshColors, centerMesh)
                     
