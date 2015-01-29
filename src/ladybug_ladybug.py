@@ -2595,6 +2595,8 @@ class ResultVisualization(object):
         lines = []; textBasePts = []
         mainAngles = [0, 90, 180, 270]
         mainText = ['N', 'E', 'S', 'W']
+        altText1 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        altText2 = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
         compassText = []
         for angle in angles:
             mainLine = False
@@ -2602,11 +2604,16 @@ class ResultVisualization(object):
             vector = rc.Geometry.Vector3d(northVector)
             vector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
             line, basePt, baseCircle, outerCircle = drawLine(cenPt, vector, radius, mainLine, xMove)
-            if mainLine == True: compassText.append(mainText[mainAngles.index(angle)])
-            else: compassText.append(str(int(angle)))
-                
+            if len(angles) != 8 and len(angles) != 16:
+                if mainLine == True: compassText.append(mainText[mainAngles.index(angle)])
+                else: compassText.append(str(int(angle)))
+            
             textBasePts.append(basePt)
             lines.append(line)
+        
+        if len(angles) == 8: compassText = altText1
+        if len(angles) == 16: compassText = altText2
+        
         lines.append(baseCircle)
         lines.append(outerCircle)
         return lines, textBasePts, compassText
