@@ -12,7 +12,7 @@ Provided by Ladybug 0.0.58
     Args:
         _ambientTemperature: The temperture around the mannequin, which can be either UTCI (outdoor comfort), Standard Effective Temperature (PMV comfort), or Operative Temperature (Adaptive Comfort).
         targetTemperature_: The target comfort temperature that the mannequin wants to be at.  The default is set to 20C
-        comfortRange_: The number of degrees above and below the target temperture that the subject will still find comfortable.  The default is set to 2C, which is pretty common for many comfort metrics.
+        comfortRange_: The number of degrees above and below the target temperture that the subject will still find comfortable.  The default is set to 3C, which is pretty common for many comfort metrics.
         -------------------------: ...
         bodyPosture_: An interger to set the posture of the comfort mannequin, which can have a large effect on the radiation striking the mannequin.  0 = Standing, 1 = Sitting, and 2 = Lying Down.  The default is set to 1 for sitting.
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
@@ -26,7 +26,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Comfort Mannequin"
 ghenv.Component.NickName = 'ComfortMannequin'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_29_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.58\nAUG_20_2014
@@ -74,7 +74,7 @@ def checkTheInputs():
         print "Target temperture is set to " + str(targetTemp)
         
         #Check the target temperture.
-        if comfortRange_ == None: comfRange = 2
+        if comfortRange_ == None: comfRange = 3
         else: comfRange = comfortRange_
         print "Comfort range is set to " + str(comfRange)
         
@@ -152,12 +152,12 @@ def checkTheInputs():
 
 def main(ambTemp, targetTemp, comfRange, mannequinMesh, lb_preparation, lb_visualization):
     # read legend parameters
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar_, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
     
     if lowB == "min":
-        lowB = targetTemp - (5*comfRange)
+        lowB = targetTemp - (comfRange)
     if highB == "max":
-        highB = targetTemp + (5*comfRange)
+        highB = targetTemp + (comfRange)
     range = [lowB, highB]
     
     #Join the Mesh
@@ -176,7 +176,7 @@ def main(ambTemp, targetTemp, comfRange, mannequinMesh, lb_preparation, lb_visua
     lb_visualization.calculateBB(mannequinMesh, True)
     # create legend geometries
     legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(range
-        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces
