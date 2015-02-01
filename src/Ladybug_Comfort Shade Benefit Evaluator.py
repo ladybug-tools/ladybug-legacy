@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_30_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.58\nDEC_02_2014
@@ -430,7 +430,8 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
         HOYs = range(8760)
     HOYStart = HOYs[0]
     
-    for hoy in HOYs:
+    
+    for count, hoy in enumerate(HOYs):
         d, m, h = lb_preparation.hour2Date(hoy, True)
         m += 1
         lb_sunpath.solInitOutput(m, d, h)
@@ -438,9 +439,9 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
         if lb_sunpath.solAlt >= 0:
             sunVec = lb_sunpath.sunReverseVectorCalc()
             sunVectors.append(sunVec)
-            sunUpHoys.append(hoy)
+            sunUpHoys.append(count)
             for path in allDataDict:
-                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][hoy-HOYStart]))
+                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][count]))
     
     #Check to see if the user has requested the highest resolution and, if not, consolidate the sun vectors into sky patches.
     finalSunVecs = []
@@ -481,7 +482,7 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
                 
                 for hour in hourList:
                     for path in allDataDict:
-                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + float(allDataDict[path]["temperture"][hour-HOYStart])
+                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + float(allDataDict[path]["temperture"][hour])
                         allDataDict[path]["divisor"][vecCount] += 1
         
         for path in allDataDict:
