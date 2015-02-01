@@ -20,7 +20,7 @@ The default set to 3) June 21 to September 21.
 Note that extremely complicated concave shapes will take a long time to calculate a solar fan for.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _boundary:  closed boundary curve representing a piece of land (such as a park) or a window for which solar access is desired.
@@ -50,10 +50,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_SolarFan_alt"
 ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 

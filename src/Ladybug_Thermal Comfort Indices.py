@@ -7,7 +7,7 @@
 """
 Use this component to calculate different thermal comfort indices
 
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     input:
         _comfortIndex: Choose one of the comfort indices:
@@ -97,7 +97,7 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = 'ThermalComfortIndices'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_21_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

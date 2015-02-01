@@ -13,7 +13,7 @@ Gendaymtx is written by Ian Ashdown and Greg Ward. For more information, check t
 http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymtx.pdf
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _epwFile: The output of the Ladybug Open EPW component or the file path location of the epw weather file on your system.
@@ -28,10 +28,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 

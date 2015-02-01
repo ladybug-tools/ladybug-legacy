@@ -8,7 +8,7 @@ Use this component to generates a Ladybug Header that can be combined with any r
 _
 This component is particularly useful if you are bringing in data from other plugins or from instrumental measurements and you want to visualize it or analyze it with the Ladybug and Honeybee components.  It is also useful if you want to replace the header on Ladybug data.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         location_: A text string that represents the name of the location where the data was collected.  If no value is connected here, the default will be "Somewhere."
@@ -22,10 +22,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Create LB Header"
 ghenv.Component.NickName = 'CreateHeader'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_25_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
