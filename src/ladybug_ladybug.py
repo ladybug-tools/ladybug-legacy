@@ -93,10 +93,10 @@ class CheckIn():
         
         #set up default pass
         if not self.folderIsSetByUser:
-            if False and os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
+            if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
                 # folder already exists so it is all fine
                 sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-            elif False and os.access(os.path.dirname("c:\\"), os.F_OK):
+            elif os.access(os.path.dirname("c:\\"), os.F_OK):
                 #the folder does not exists but write privileges are given so it is fine
                 sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
             else:
@@ -4456,8 +4456,7 @@ try:
 except:
     msg =  "Ladybug failed to fly! :(\n" + \
            "You are using an old version of GHPython. " +\
-           "Please update to version: " + GHPythonTargetVersion + \
-           "\nLadybug failed to fly! :("
+           "Please update to version: " + GHPythonTargetVersion
     print msg
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
     checkIn.letItFly = False
