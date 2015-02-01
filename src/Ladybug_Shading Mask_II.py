@@ -25,7 +25,7 @@ ghenv.Component.Name = "Ladybug_Shading Mask_II"
 ghenv.Component.NickName = 'shadingMaskII'
 ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass

@@ -21,7 +21,7 @@ ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
 ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | Developers"
+ghenv.Component.SubCategory = "5 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass

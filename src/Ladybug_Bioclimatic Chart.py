@@ -62,7 +62,7 @@ ghenv.Component.NickName = 'Bioclimatic Chart'
 ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "6 | WIP"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
