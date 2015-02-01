@@ -20,17 +20,19 @@ Source code is available at:
 https://github.com/mostaphaRoudsari/ladybug
 -
 Provided by Ladybug 0.0.58
-    
+    Args:
+        defaultFolder_: Optional input for Ladybug default folder.
+                       If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
     Returns:
         report: Current Ladybug mood!!!
 """
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_28_2015'
+ghenv.Component.Message = 'VER 0.0.58\nJAN_31_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.58\nJAN_31_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -51,35 +53,66 @@ from itertools import chain
 import datetime
 
 PI = math.pi
-letItFly = True
 rc.Runtime.HostUtils.DisplayOleAlerts(False)
 
 
-
-#set up default pass
-if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
-    # folder already exists so it is all fine
-    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-elif os.access(os.path.dirname("c:\\"), os.F_OK):
-    #the folder does not exists but write privileges are given so it is fine
-    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-else:
-    # let's use the user folder
-    sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
-
 class CheckIn():
     
-    def __init__(self):
+    def __init__(self, defaultFolder, folderIsSetByUser = False):
+        
+        self.folderIsSetByUser = folderIsSetByUser
+        self.letItFly = True
+        
+        if defaultFolder:
+            # user is setting up the folder
+            defaultFolder = os.path.normpath(defaultFolder) + os.sep
+            
+            # check if path has white space
+            if (" " in defaultFolder):
+                msg = "Default file path can't have white space. Please set the path to another folder." + \
+                      "\nLadybug failed to fly! :("
+                print msg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                self.letItFly = False
+                return
+            else:
+                # create the folder if it is not created
+                if not os.path.isdir(defaultFolder):
+                    try: os.mkdir(defaultFolder)
+                    except:
+                        msg = "Cannot create default folder! Try a different filepath" + \
+                              "\nLadybug failed to fly! :("
+                        print msg
+                        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                        self.letItFly = False
+                        return
+            
+            # looks fine so let's set it up
+            sc.sticky["Ladybug_DefaultFolder"] = defaultFolder
+            self.folderIsSetByUser = True
+        
         #set up default pass
-        if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
-            # folder already exists so it is all fine
-            sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-        elif os.access(os.path.dirname("c:\\"), os.F_OK):
-            #the folder does not exists but write privileges are given so it is fine
-            sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-        else:
-            # let's use the user folder
-            sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
+        if not self.folderIsSetByUser:
+            if False and os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
+                # folder already exists so it is all fine
+                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+            elif False and os.access(os.path.dirname("c:\\"), os.F_OK):
+                #the folder does not exists but write privileges are given so it is fine
+                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+            else:
+                # let's use the user folder
+                username = os.getenv("USERNAME")
+                # make sure username doesn't have space
+                if (" " in username):
+                    msg = "User name on this system: " + username + " has white space." + \
+                          " Default fodelr cannot be set.\nUse defaultFolder_ to set the path to another folder and try again!" + \
+                          "\nLadybug failed to fly! :("
+                    print msg
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                    self.letItFly = False
+                    return
+                
+                sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
     
     def getComponentVersion(self):
         monthDict = {'JAN':'01', 'FEB':'02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06',
@@ -165,8 +198,7 @@ class CheckIn():
             return self.isNewerVersionAvailable(currentTemplateVersion, templateVersion)
             
 
-checkIn = CheckIn()
-
+checkIn = CheckIn(defaultFolder_)
 
 class versionCheck(object):
     
@@ -4418,16 +4450,21 @@ def checkGHPythonVersion(target = "0.6.0.3"):
 
 GHPythonTargetVersion = "0.6.0.3"
 
-if not checkGHPythonVersion(GHPythonTargetVersion):
+try:
+    if not checkGHPythonVersion(GHPythonTargetVersion):
+        assert False
+except:
     msg =  "Ladybug failed to fly! :(\n" + \
            "You are using an old version of GHPython. " +\
-           "Please update to version: " + GHPythonTargetVersion
+           "Please update to version: " + GHPythonTargetVersion + \
+           "\nLadybug failed to fly! :("
     print msg
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
-    letItFly = False
+    checkIn.letItFly = False
     sc.sticky["ladybug_release"] = False
 
-if letItFly:
+
+if checkIn.letItFly:
     # let's just overwrite it every time
     #if not sc.sticky.has_key("ladybug_release"):
     sc.sticky["ladybug_release"] = versionCheck()       
@@ -4442,7 +4479,7 @@ if letItFly:
     sc.sticky["ladybug_ComfortModels"] = ComfortModels
     sc.sticky["ladybug_WindSpeed"] = WindSpeed
         
-if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
-    print "Hi " + os.getenv("USERNAME")+ "!\n" + \
-          "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
-          "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+    if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
+        print "Hi " + os.getenv("USERNAME")+ "!\n" + \
+              "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
+              "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
