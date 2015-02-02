@@ -1124,7 +1124,9 @@ def createFrequencyMesh(orgY, dryBulbTemperature, relativeHumidity, cullMesh, lb
     if legendPar_ == None:
         legendPar = [None, None, None, None, None, None, None, None]
     else: legendPar = legendPar_
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+    
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale,\
+    legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
     
     hourPts = []
     for count, ratio in enumerate(relativeHumidity):
@@ -1307,7 +1309,8 @@ def main(epwData, epwStr):
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         # Read the legend parameters.
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar_, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, \
+        legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
         
         if cullMesh_:
             cullMesh = cullMesh_
