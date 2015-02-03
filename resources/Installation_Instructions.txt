@@ -8,8 +8,8 @@ Instructions for Installing Ladybug + Honeybee:
 2. Open Rhino and type "Grasshopper" into the command line (without quotations). Wait for grasshopper to load.
 3. Install GHPython by downloading the file at this link (http://www.food4rhino.com/project/ghpython?ufh) and
      drag the .gha file onto the Grasshopper canvas.
-4. Select and drag all of the files in the "userObjects" folder (downloaded with this instructions file)
-     onto your Grasshopper canvas. You should see Ladybug and Honeybee appear as tabs on the grasshopper tool bar.
+4. Select and drag all of the userObject files (downloaded with this instructions file) onto your Grasshopper canvas.
+     You should see Ladybug and Honeybee appear as tabs on the grasshopper tool bar.
      (If you are reading this instruction on github you can download them from http://www.food4rhino.com/project/ladybug-honeybee)
 5. Download the files at this link (https://app.box.com/s/bh9sbpgajdtmmystv3n4), unzip them and copy the contents
      to both C:\ladybug and C:\Users\[yourUsername]\AppData\Roaming\Ladybug.
@@ -25,4 +25,3 @@ Instructions for Installing Ladybug + Honeybee:
 10. Download the OpenStudio Libraries (https://app.box.com/s/y2sx16k98g1lfd3r47zi) and unzip them to C:\ladybug\OpenStudio.
 11. You now have a fully-working version of Ladybug + Honeybee.  Get started visualizing weather data with these video tutorials
      (https://www.youtube.com/playlist?list=PLruLh1AdY-Sj_XGz3kzHUoWmpWDXNep1O).
-
