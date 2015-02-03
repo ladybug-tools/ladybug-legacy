@@ -1295,6 +1295,12 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     passiveStrategyCurves.append(joinedHumidBound)
                     passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
                     strategyListTest.append("Dessicant Dehumidification")
+                elif "Dessicant Dehumidification" in passiveStrategy:
+                    passiveStrategyCurves.append(None)
+                    strategyListTest.append("Dessicant Dehumidification")
+                    warning = 'Dessicant Dehumidification is only relevant when there is an upper bound of humidity ratio on the comfort polygon.  Use the "PMV Comfort Parameters" component to set this.'
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 
                 #If the user has hooked up dessicant dehumidification, add a dessicant dehumidification curve to the chart.
                 if "Dehumidification Only" in passiveStrategy and humidRatioUp*scaleFactor <= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
@@ -1351,7 +1357,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     strategyPercent = []
     strategyOrNot = []
     
-    #For each of the comfort polygons, determine how many of the hour points are inside of them and make a comfotr or not list.
+    #For each of the comfort polygons, determine how many of the hour points are inside of them and make a comfort or not list.
     for countComf, comfortPolygon in enumerate(comfortPolyline):
         comfBool = []
         for hourPt in hourPts:
@@ -1379,29 +1385,48 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     #For each of the strategy polygons, determine how many of the hour points are inside of them and make a comfort or not list.
     for countStrat, comfortPolygon in enumerate(strategyPolylines):
         comfBool = []
-        if strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" or epwData == False or patternList != []:
-            for hourPt in hourPts:
-                if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
-                else:comfBool.append(0)
-        else:
-            for hourCt, hourPt in enumerate(hourPts):
-                if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" and airTemp[hourCt-12] < maxComfortPolyTemp-tempBelowComf: comfBool.append(1)
-                else:comfBool.append(0)
-        comfPercent = (sum(comfBool)/len(comfBool))*100
-        strategyPercent.append(comfPercent)
-        if epwData == True:
-            if analysisPeriod_:
-                comfBool.insert(0,analysisPeriod_[1])
-                comfBool.insert(0,analysisPeriod_[0])
+        try:
+            if strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" or epwData == False or patternList != []:
+                for hourPt in hourPts:
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
+                    else:comfBool.append(0)
             else:
-                comfBool.insert(0, epwStr[6])
-                comfBool.insert(0, epwStr[5])
-            comfBool.insert(0, epwStr[4])
-            comfBool.insert(0, "Boolean Value")
-            comfBool.insert(0, "Comfortable Hours in " + strategyTextNames[countComf + countStrat + 1] + " Polygon")
-            comfBool.insert(0, epwStr[1])
-            comfBool.insert(0, epwStr[0])
-        strategyOrNot.append(comfBool)
+                for hourCt, hourPt in enumerate(hourPts):
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" and airTemp[hourCt-12] < maxComfortPolyTemp-tempBelowComf: comfBool.append(1)
+                    else:comfBool.append(0)
+            comfPercent = (sum(comfBool)/len(comfBool))*100
+            strategyPercent.append(comfPercent)
+            if epwData == True:
+                if analysisPeriod_:
+                    comfBool.insert(0,analysisPeriod_[1])
+                    comfBool.insert(0,analysisPeriod_[0])
+                else:
+                    comfBool.insert(0, epwStr[6])
+                    comfBool.insert(0, epwStr[5])
+                comfBool.insert(0, epwStr[4])
+                comfBool.insert(0, "Boolean Value")
+                comfBool.insert(0, "Comfortable Hours in " + strategyTextNames[countComf + countStrat + 1] + " Polygon")
+                comfBool.insert(0, epwStr[1])
+                comfBool.insert(0, epwStr[0])
+            strategyOrNot.append(comfBool)
+        except:
+            strategyPercent.append(0)
+            for count in range(len(hourPts)):
+                comfBool.append(0)
+            
+            if epwData == True:
+                if analysisPeriod_:
+                    comfBool.insert(0,analysisPeriod_[1])
+                    comfBool.insert(0,analysisPeriod_[0])
+                else:
+                    comfBool.insert(0, epwStr[6])
+                    comfBool.insert(0, epwStr[5])
+                comfBool.insert(0, epwStr[4])
+                comfBool.insert(0, "Boolean Value")
+                comfBool.insert(0, "Comfortable Hours in Dessicant Dehumidification Polygon")
+                comfBool.insert(0, epwStr[1])
+                comfBool.insert(0, epwStr[0])
+            strategyOrNot.append(comfBool)
     
     #For the total comfort, determine how many of the hour points are inside of them and make a comfort or not list.
     temporaryPercent = []
