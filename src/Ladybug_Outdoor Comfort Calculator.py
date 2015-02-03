@@ -311,10 +311,16 @@ def main():
                         airTemp[count] = airTemp[count]+distToMove
                         print "Index " + str(count) + " had a difference between air temperature and radiant temperature greater than 70.  Both temperatures wee moved closer to their average to prevent the comfort model from failing."
                     utci, comf, condition, stressVal = lb_comfortModels.comfUTCI(airTemp[count], radTemp[count], windSpeed[count], relHumid[count])
-                    utciList.append(utci)
-                    comfOrNot.append(comf)
-                    thermalStr.append(stressVal)
-                    coldComfHot.append(condition)
+                    if utci != None:
+                        utciList.append(utci)
+                        comfOrNot.append(comf)
+                        thermalStr.append(stressVal)
+                        coldComfHot.append(condition)
+                    else:
+                        utciList.append(50)
+                        comfOrNot.append(0)
+                        thermalStr.append(1)
+                        coldComfHot.append(3)
                 comfTime = []
                 for item in comfOrNot:
                     if item == 1: comfTime.append(1.0)
