@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_02_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_04_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -71,6 +71,7 @@ class CheckIn():
                       "\nLadybug failed to fly! :("
                 print msg
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                sc.sticky["Ladybug_DefaultFolder"] = ""
                 self.letItFly = False
                 return
             else:
@@ -82,6 +83,7 @@ class CheckIn():
                               "\nLadybug failed to fly! :("
                         print msg
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                        sc.sticky["Ladybug_DefaultFolder"] = ""
                         self.letItFly = False
                         return
             
@@ -107,6 +109,7 @@ class CheckIn():
                           "\nLadybug failed to fly! :("
                     print msg
                     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                    sc.sticky["Ladybug_DefaultFolder"] = ""
                     self.letItFly = False
                     return
                 
@@ -665,8 +668,7 @@ class Preparation(object):
     def flattenList(self, l):
         return list(chain.from_iterable(l))
     
-    def makeWorkingDir(self, workingDir, default = sc.sticky["Ladybug_DefaultFolder"]):
-        if not workingDir: workingDir = default
+    def makeWorkingDir(self, workingDir = sc.sticky["Ladybug_DefaultFolder"]):
         if not os.path.exists(workingDir):
             try:
                 os.makedirs(workingDir)
