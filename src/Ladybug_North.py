@@ -21,7 +21,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_North"
 ghenv.Component.NickName = 'northArrow'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
