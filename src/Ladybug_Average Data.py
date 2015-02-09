@@ -19,11 +19,12 @@ Provided by Ladybug 0.0.59
         averagedDaily: The averaged data for each day during the analysis period
         averagedMonthly: The averaged data for each month during the analysis period
         avrMonthlyPerHour: The data for the average hour of each month during the analysis period
+        avrAnalysisPeriod: The averaged data for the analysis period
 """
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_08_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -81,6 +82,9 @@ def main(annualHourlyData, analysisPeriod):
             selDailyData = []; avDailyData = []
             selWeeklyData = []; avWeeklyData = []
             selMonthlyData = []; avMonthlyData = []
+            avrAnalysisPeriod =[]
+            
+            
             for l in range(len(separatedLists)):
                 [selHourlyData.append(item) for item in listInfo[l][:4]]
                 selHourlyData.append('Hourly')
@@ -91,16 +95,31 @@ def main(annualHourlyData, analysisPeriod):
                 endAnnualHour = lb_preparation.date2Hour(endMonth, endDay, endHour)
                 
                 # check it goes from the end of the year to the start of the year
+                selectedData = []
                 if stAnnualHour < endAnnualHour:
                     for i, item in enumerate(separatedLists[l][stAnnualHour-1:endAnnualHour]):
-                        if stHour-1 <= (i + stHour - 1)%24 <= endHour-1: selHourlyData.append(item)
+                        if stHour-1 <= (i + stHour - 1)%24 <= endHour-1:
+                            selHourlyData.append(item)
+                            selectedData.append(item)
                     type = True
                 else:
                     for i, item in enumerate(separatedLists[l][stAnnualHour-1:]):
-                        if stHour-1 <= (i + stHour - 1)%24 <= endHour-1: selHourlyData.append(item)
+                        if stHour-1 <= (i + stHour - 1)%24 <= endHour-1:
+                            selHourlyData.append(item)
+                            selectedData.append(item)
                     for i, item in enumerate(separatedLists[l][:endAnnualHour]):
-                        if stHour-1 <= i %24 <= endHour-1: selHourlyData.append(item)
+                        if stHour-1 <= i %24 <= endHour-1:
+                            selHourlyData.append(item)
+                            selectedData.append(item)
                     type = False
+                
+                
+                [avrAnalysisPeriod.append(item) for item in listInfo[l][:4]]
+                avrAnalysisPeriod.append('Analysis Period -> averaged')
+                avrAnalysisPeriod.append((stMonth, stDay, stHour))
+                avrAnalysisPeriod.append((endMonth, endDay, endHour))
+                avrAnalysisPeriod.append(average(selectedData))
+                
                 
                 # add list informations
                 [selDailyData.append(item) for item in listInfo[l][:4]]
@@ -189,7 +208,7 @@ def main(annualHourlyData, analysisPeriod):
                                 eachHourData.append(monthlyData[hour + (day * (endHour - stHour + 1))])
                             selMonthlyData.append(average(eachHourData))
                 
-            return selHourlyData, avDailyData, selDailyData, selWeeklyData, selMonthlyData, avMonthlyData
+            return selHourlyData, avDailyData, selDailyData, selWeeklyData, selMonthlyData, avMonthlyData, avrAnalysisPeriod
         elif _annualHourlyData[0] == "Connect Data Here!":
             print "Connect annualHourlyData from the importEPW component!"
             return -1
@@ -207,4 +226,5 @@ def main(annualHourlyData, analysisPeriod):
 
 result = main(_annualHourlyData, _analysisPeriod_)
 if result!= -1:
-            selHourlyData, averagedDaily, avrDailyPerHour, avrWeeklyPerHour, avrMonthlyPerHour, averagedMonthly = result
+            selHourlyData, averagedDaily, avrDailyPerHour, avrWeeklyPerHour, \
+            avrMonthlyPerHour, averagedMonthly, avrAnalysisPeriod = result
