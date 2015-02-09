@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Create LB Header"
 ghenv.Component.NickName = 'CreateHeader'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_08_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -61,7 +61,7 @@ def setDefaults():
     #Check the timpeStep_.
     if timeStep_ == None: timeStep = "Hourly"
     else:
-        if timeStep_ == "Hourly" or timeStep_ == "Daily" or timeStep_ == "Monthly" or timeStep_ == "Anually": timeStep = timeStep_
+        if timeStep_ == "Hourly" or timeStep_ == "Daily" or timeStep_ == "Monthly" or timeStep_ == "Annually": timeStep = timeStep_
         else:
             timeStep = None
             checkData = False
