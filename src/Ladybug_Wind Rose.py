@@ -8,7 +8,7 @@
 Use this component to make a windRose in the Rhino scene.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _north_: Input a vector to be used as a true North direction for the wind rose or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -18,8 +18,7 @@ Provided by Ladybug 0.0.58
         _analysisPeriod_: An optional analysis period from the Analysis Period component.
         conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the wind rose. To use this input correctly, hourly data, such as temperature or humidity, must be plugged into the annualHourlyData_ input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
                               The current version of this component accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
-                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<a<23 and b<80 (without quotation marks).
-                              For the windRose component, the variable "a" always represents windSpeed.
+                              For the WindBoundaryProfile component, the variable "a" always represents windSpeed. For example, if you have hourly dry bulb temperature connected as the second list, and relative humidity connected as the third list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<b<23 and c<80 (without quotation marks).
         _numOfDirections_: A number of cardinal directions with which to divide up the data in wind rose. Values must be greater than 4 since you can have no fewer than 4 cardinal directions.
         _centerPoint_: Input a point here to change the location of the wind rose in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
@@ -40,10 +39,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -238,11 +237,11 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             cenPt = lb_preparation.getCenPt(centerPoint)
             
-            if not numOfDirections or int(numOfDirections) < 4: numOfDirections = 24
+            if not numOfDirections or int(numOfDirections) < 4: numOfDirections = 16
             elif int(numOfDirections)> 360: numOfDirections = 360
             else:
                 try: numOfDirections = int(numOfDirections)
-                except: numOfDirections = 24
+                except: numOfDirections = 16
             
             # define angles
             segAngle = 360/numOfDirections
@@ -259,8 +258,11 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 northVector2.Rotate(-float(math.radians(angle + (segAngle/2))), rc.Geometry.Vector3d.ZAxis)
                 sideVectors.append(northVector2)
             
-            
-            selectedWindDir = lb_preparation.selectHourlyData(windDir, analysisPeriod)[7:]
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+            selectedWindDir = []
+            for count in HOYS:
+                selectedWindDir.append(windDir[count-1])
+            #selectedWindDir = lb_preparation.selectHourlyData(windDir, analysisPeriod)[7:]
             # read analysis period
             stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, False)
 
@@ -275,7 +277,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             [separatedBasedOnAngle.append([]) for i in range(len(roseAngles))]
             #print len(studyHours)
             #print len(selectedWindDir)
-            
             for hour, windDirection in enumerate(selectedWindDir):
                 h = studyHours[hour]
                 if patternList[h]: # if the hour pass the conditional statement
@@ -285,7 +286,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         for angleCount in range(len(roseAngles)-1):
                             # print roseAngles[angleCount], roseAngles[angleCount + 1]
                             #print windDirection
-                            if roseAngles[angleCount]<= windDirection <= roseAngles[angleCount + 1]:
+                            if windDirection == 360.0: windDirection = 0
+                            
+                            if roseAngles[angleCount]-(segAngle/2)<= windDirection < roseAngles[angleCount + 1]-(segAngle/2):
                                 separatedBasedOnAngle[angleCount].append(h)
                                 break
                             elif roseAngles[-1]<= windDirection:
@@ -293,12 +296,15 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                 break
             
             # calculate the frequency
-            calmFreq = 100*len(calmHour)/len(studyHours)
+            calmFreq = (100*len(calmHour)/len(studyHours))
+            
             comment1 = 'Calm for ' + '%.2f'%calmFreq + '% of the time = ' + `len(calmHour)` + ' hours.'
             print comment1
             windFreq = []
             for angle in separatedBasedOnAngle:
                 windFreq.append(100*len(angle)/len(studyHours))
+            
+            calmFreq = (100*len(calmHour)/len(studyHours))/numOfDirections
             
             # draw the basic geometry for windRose
             
@@ -333,16 +339,19 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             # initial compass for BB
             textSize = 10
-            compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
-            numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
-            compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
-            lb_visualization.calculateBB(compassCrvs, True)
+            compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *(maxFreq) * scale, roseAngles, 1.5*textSize)
+            
+            
             
             # initiate legend parameters
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == None: overwriteScale = True
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+            
+            numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
+            compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
+            lb_visualization.calculateBB(compassCrvs, True)
             
             if overwriteScale: legendScale = 0.9
             legend = []; legendText = []; textPt = []; legendSrfs = None
@@ -385,7 +394,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         
                         # get the legend done
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(allValues
-                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                         
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -406,8 +415,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             # print resultStr
                             customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
-                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
-                        
+                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
                         
                         # find the freq of the numbers in each segment
                         numRanges = legendText[:-1]
@@ -477,7 +485,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                         centerMesh.Append(singleMesh)
                                     except Exception, e:
                                         print `e`
-                    
+                        
+                        centerMesh.Flip(True, True, True)
+                        
                         segments = rc.Geometry.Mesh()
                         segmentsColors = []
                         for direction, segmentValues in enumerate(values):
@@ -513,18 +523,18 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                         segmentsColors.append(color[0])
                                         segments.Append(segment)
                                     totalFr = totalFr + fr
-                                
+                    
+                    segments.Flip(True, True, True)
+                    
                     segments = lb_visualization.colorMesh(segmentsColors, segments)
                     centerMesh = lb_visualization.colorMesh(cenMeshColors, centerMesh)
                     
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
                     
-                    compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.07 *maxFreq * scale, roseAngles, 1.5*textSize)
-                    numberCrvs = lb_visualization.text2crv(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                    compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
+                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
-                    
-                    
                     
                     # let's move it move it move it!
                     if legendScale > 1: movingVector = legendScale * movingVector

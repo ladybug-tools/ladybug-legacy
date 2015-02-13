@@ -6,7 +6,7 @@
 """
 Use this component to calculate the day of the year and hour of the year from an input date with a day of the month, month of the year and hour of the day.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _days_: A number (or list of numbers) between 1 and 31 that represents the day(s) of the month.
@@ -21,10 +21,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -51,15 +51,15 @@ def main(days, months, hours):
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
         lb_preparation = sc.sticky["ladybug_Preparation"]()
-        for d in days:
-            for m in months:
+        for m in months:
+            for d in days:
                 for h in hours:
-                    h = lb_preparation.checkHour(float(h))
-                    m  = lb_preparation.checkMonth(int(m))
-                    d = lb_preparation.checkDay(int(d), m)
-                    HOY.append(lb_preparation.date2Hour(m, d, h))
-                    DOY.append(int(lb_preparation.getJD(m, d)))
-                    date.append(lb_preparation.hour2Date(lb_preparation.date2Hour(m, d, h)))
+                    hour = lb_preparation.checkHour(float(h))
+                    month  = lb_preparation.checkMonth(int(m))
+                    day = lb_preparation.checkDay(int(d), m, ghenv.Component)
+                    HOY.append(lb_preparation.date2Hour(month, day, hour))
+                    DOY.append(int(lb_preparation.getJD(month, day)))
+                    date.append(lb_preparation.hour2Date(lb_preparation.date2Hour(month, day, hour)))
         return HOY, DOY, date
     else:
         print "You should first let the Ladybug fly..."

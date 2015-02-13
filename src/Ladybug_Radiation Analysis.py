@@ -15,7 +15,7 @@ For these situations where the relfection of light is important, the Honeybee da
 
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -40,20 +40,20 @@ Provided by Ladybug 0.0.58
         testPts: The grid of test points on the test _geometry that will be used to perform the radiation analysis.  Note that these points are generated before the analysis is run, allowing you to preview the resolution of the result before you run the component.
         testVec: Vectors for each of the test points on the test _geometry, which indicate the direction for which radiation analysis is performed.  Hook this and the test points up to a Grasshopper "Vector Display" component to see how analysis is performed on the test _geometry.
         _____________________: ...
-        radiationResult: The amount of radiation in Wh/m2 falling on the input test _geometry at each of the test points.
-        radiationMesh: A colored mesh of the test _geometry representing the radiation in Wh/m2 falling on this input _geometry for the selected sky.
+        radiationResult: The amount of radiation in kWh/m2 falling on the input test _geometry at each of the test points.
+        radiationMesh: A colored mesh of the test _geometry representing the radiation in kWh/m2 falling on this input _geometry for the selected sky.
         radiationLegend: A legend for the radiation study showing radiation values that correspond to the colors of the radiationMesh. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePt: The legend base point, which can be used to move the legend in relation to the radiation mesh with the grasshopper "move" component.
-        totalRadiation: The total radiation in Wh falling on the input test _geometry.  This is computed through a mass addition of all the Wh/m2 results at each of the test points and then multiplying this by the area of all the the surfaces in the test _geometry.
+        totalRadiation: The total radiation in kWh falling on the input test _geometry.  This is computed through a mass addition of all the kWh/m2 results at each of the test points and then multiplying this by the area of all the the surfaces in the test _geometry.
         intersectionMtx: A python list that includes the relation between each test point and all the sky patchs on the sky dome.  After running a basic radiation study, you can connect this output to the Ladybug "Real Time Radiation Analysis" component to scroll through the radiation falling on your test geometry on an hour-by-hour, day-by-day, or month-by-month basis in real time.
 """
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -214,7 +214,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
     
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
         
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
         # print legendBasePoint
         
         colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
@@ -228,7 +228,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
             lb_visualization.calculateBB([analysisSrfs, contextSrfs])
         
         # legend geometry
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
         
         # legend colors
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -239,7 +239,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
         if runOrientation:
             try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
             except: pass
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[0]], lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize)
+        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[0]], lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize, legendBold)
         
         if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
         

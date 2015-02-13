@@ -7,12 +7,12 @@
 """
 Use this component to make a 3D chart in the Rhino scene of any climate data or hourly simulation data.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _inputData: A list of input data to plot.
-        _xScale_: The scale of the X axis of the graph. The default will plot the X axis with a length of 365 Rhino model units (for 365 days of the year). Connect a list of values for multiple graphs.
-        _yScale_: The scale of the Y axis of the graph. The default will plot the Y axis with a length of 24 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
+        _xScale_: The scale of the X axis of the graph. The default will plot the X axis with a length of 3650 Rhino model units (for 365 days of the year). Connect a list of values for multiple graphs.
+        _yScale_: The scale of the Y axis of the graph. The default will plot the Y axis with a length of 240 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
         _zScale_: The scale of the Z axis of the graph. The default will plot the Z axis with a number of Rhino model units corresponding to the input data values.  Set to 0 to see graphCurves appear on top of the mesh.  Connect a list of values for multiple graphs.
         _yCount_: The number of segments on your y-axis.  The default is set to 24 for 24 hours of the day. This variable is particularly useful for input data that is not for each hour of the year.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
@@ -32,10 +32,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -168,29 +168,30 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
         mesh.Faces.AddFace(0, 1, 2, 3)
         joinedMesh.Append(mesh)
     
-    #Create the first webbing in between the primary mesh faces.
-    for listCount, list in enumerate(meshFacePts):
-        if listCount < len(meshFacePts)-yCount:
-            mesh = rc.Geometry.Mesh()
-            mesh.Vertices.Add(list[2])
-            mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
-            mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
-            mesh.Vertices.Add(list[3])
-            
-            mesh.Faces.AddFace(0, 1, 2, 3)
-            joinedMesh.Append(mesh)
-    
-    #Create the second webbing in between the primary mesh faces.
-    for listCount, list in enumerate(meshFacePts):
-        if listCount/yCount != int(listCount/yCount):
-            mesh = rc.Geometry.Mesh()
-            mesh.Vertices.Add(list[2])
-            mesh.Vertices.Add(list[1])
-            mesh.Vertices.Add(meshFacePts[listCount-1][0])
-            mesh.Vertices.Add(meshFacePts[listCount-1][3])
-            
-            mesh.Faces.AddFace(0, 1, 2, 3)
-            joinedMesh.Append(mesh)
+    if zScale > 0.0:
+        #Create the first webbing in between the primary mesh faces.
+        for listCount, list in enumerate(meshFacePts):
+            if listCount < len(meshFacePts)-yCount:
+                mesh = rc.Geometry.Mesh()
+                mesh.Vertices.Add(list[2])
+                mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
+                mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
+                mesh.Vertices.Add(list[3])
+                
+                mesh.Faces.AddFace(0, 1, 2, 3)
+                joinedMesh.Append(mesh)
+        
+        #Create the second webbing in between the primary mesh faces.
+        for listCount, list in enumerate(meshFacePts):
+            if listCount/yCount != int(listCount/yCount):
+                mesh = rc.Geometry.Mesh()
+                mesh.Vertices.Add(list[2])
+                mesh.Vertices.Add(list[1])
+                mesh.Vertices.Add(meshFacePts[listCount-1][0])
+                mesh.Vertices.Add(meshFacePts[listCount-1][3])
+                
+                mesh.Faces.AddFace(0, 1, 2, 3)
+                joinedMesh.Append(mesh)
     
     # color the mesh faces.
     joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
@@ -201,18 +202,20 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
             joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum]
             joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum]
             joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum]
-        elif srfNum >= len(values) and srfNum < len(values)*2 - yCount:
-            joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
-            joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
-            joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
-            joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
-        elif srfNum >= len(values)*2 - yCount:
-            extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
-            if yCount == 2: extraVal = extraVal+2
-            joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-            joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-            joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
-            joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+        if zScale > 0.0:
+            if srfNum >= len(values) and srfNum < len(values)*2 - yCount:
+                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
+                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
+                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
+                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
+            elif srfNum >= len(values)*2 - yCount:
+                extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
+                if yCount == 2: extraVal = extraVal+2
+                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+            else: pass
         else: pass
     
     #Make a copy of the mesh for purposes of placing the legend correctly.
@@ -241,7 +244,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     
     return joinedMesh, originalMesh
 
-def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize, lb_visualization):
+def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize, legendBold, lb_visualization):
     ySize = int(len(values)/xSize)
     # Get a value to set the chart curves with.
     orderedVal = values[:]
@@ -298,7 +301,7 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     #Make the text surfaces for each month.
     textSrfs = []
     for count, monthText in enumerate(textStrings):
-        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize)
+        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize, legendBold)
         textSrfs.extend(textSrf[0])
     
     #Generate curves for each of the major hours.
@@ -314,11 +317,11 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
         startPt = rc.Geometry.Point3d(basePoint.X, basePoint.Y+i, zMax)
         endPt = rc.Geometry.Point3d(basePoint.X+(ySize*yScale), basePoint.Y+i, zMax)
         hourLines.append(rc.Geometry.LineCurve(startPt, endPt))
-        hourTextPts.append(rc.Geometry.Point3d(basePoint.X - legendFontSize*6, basePoint.Y+i, zMax))
+        hourTextPts.append(rc.Geometry.Point3d(basePoint.X - legendFontSize*5.5, basePoint.Y+i-legendFontSize*0.5, zMax))
         i+=(xScale)
     
     hoursPerPeriod = [0, 6, 12, 18, 24]
-    hourNames = ["12 AM", "6 AM", "12 PM", "6 PM", "12 AM"]
+    hourNames = ["12 AM", " 6 AM", "12 PM", " 6 PM", "12 AM"]
     
     for hourCount, hour in enumerate(hoursList):
         for count, period in enumerate(hoursPerPeriod):
@@ -326,7 +329,7 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
                 textStrings.append(hourNames[count])
                 monthCurves.append(hourLines[hourCount])
                 textBasePts.append(hourTextPts[hourCount])
-                srfs = lb_visualization.text2srf([hourNames[count]], [hourTextPts[hourCount]], legendFont, legendFontSize)[0]
+                srfs = lb_visualization.text2srf([hourNames[count]], [hourTextPts[hourCount]], legendFont, legendFontSize, legendBold)[0]
                 for srf in srfs:
                     textSrfs.append(srf)
     
@@ -429,7 +432,9 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     try:
                         xC = float(yCount[0])
                     except:
-                        xC = abs(endHour - stHour) + 1
+                        if 'Daily' in listInfo[i][4]: xC = 7
+                        elif listInfo[i][4] == 'Monthly' or listInfo[i][4] == 'Monthly-> averaged': xC = 1
+                        else: xC = abs(endHour - stHour) + 1
                         
                 if xC == 0: xC = abs(endHour - stHour) + 1
                 xC = int(xC)
@@ -457,7 +462,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 zSC = abs(zSC)
                 
                 # read legend parameters
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
                 
                 # Get the graph colors
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
@@ -471,7 +476,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 if yHeight == 24*xSC:
                     if len(results) == 8760 or listInfo[i][4] == "Hourly":
-                        chartCrvs, textBasePts, textStrings, textSrfs = createChartCrvs(results, listInfo[i][5], listInfo[i][6], xC, xSC, ySC, zSC, rc.Geometry.Point3d.Origin, yHeight, lb_preparation, legendFont, legendFontSize, lb_visualization)
+                        chartCrvs, textBasePts, textStrings, textSrfs = createChartCrvs(results, listInfo[i][5], listInfo[i][6], xC, xSC, ySC, zSC, rc.Geometry.Point3d.Origin, yHeight, lb_preparation, legendFont, legendFontSize, legendBold, lb_visualization)
                     else:
                         chartCrvs = []
                         textBasePts = []
@@ -504,7 +509,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 movingVector = rc.Geometry.Vector3d(0, i * movingDist,0)
                 coloredChart.Translate(movingVector)
-                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]],lb_visualization.BoundingBoxPar, legendScale, None, False, legendFont, legendFontSize)
+                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]],lb_visualization.BoundingBoxPar, legendScale, None, False, legendFont, legendFontSize, legendBold)
                 
                 legendTitle = listInfo[i][3]
                 placeName = listInfo[i][1]
@@ -520,9 +525,17 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 for item in textStrings:
                     titleText.append(item)
                 
+                #Calculate a bounding box to help size the legend.
+                allGeoL = []
+                for item in chartCrvs:
+                    allGeoL.append(item)
+                allGeoL.append(originalMesh)
+                lb_visualization.calculateBB(allGeoL, True)
+                lb_visualization.BoundingBoxPar = (lb_visualization.BoundingBoxPar[0], lb_visualization.BoundingBoxPar[1], lb_visualization.BoundingBoxPar[2] - (lb_visualization.BoundingBoxPar[2]/numSeg) , lb_visualization.BoundingBoxPar[3], lb_visualization.BoundingBoxPar[4], lb_visualization.BoundingBoxPar[5], lb_visualization.BoundingBoxPar[6])
+                
                 # create legend geometries
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                 
                 textPt.append(titlebasePt)
                 
@@ -588,7 +601,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     except:
                         placeName = 'alternateLayerName'
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont)
+                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, [], textPt, textSize, legendFont, finalChartCrvs+fullLegTxt)
                 
                 res[0].append(coloredChart)
                 res[1].append([legendSrfs, fullLegTxt])

@@ -10,7 +10,7 @@ By default, this function used to derive clothing levels based on outside temper
 This version of the component allows users to change the maximum and minimum clothing levels, which Schiavon set at 1 and 0.46 respectively, and the temperatures at which these clothing levels occur, which Schiavon set at 26C and -5 C respectively.
 Note that Schiavon did not endorse the changing of these values but they are provided here to allow users an additional level of freedom.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _outdoorAirTemperature: A number or list of numbers representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept the direct output of dryBulbTemperature from the Import EPW component and this is recommended for hourly comfort analysis.
@@ -26,11 +26,11 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Clothing Function"
 ghenv.Component.NickName = 'CloFunction'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 

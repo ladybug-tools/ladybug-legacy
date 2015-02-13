@@ -8,7 +8,7 @@
 Use this component to visualize a Perez sky as a colored mesh in the Rhino scene using the weather file location, a time and date, and an estimate of turbidity (or amount of particulates in the atmosphere.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         north_: Input a vector to be used as a true North direction for the sky dome or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -33,10 +33,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Colored Sky Visualizer"
 ghenv.Component.NickName = 'skyVizualizer'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -110,7 +110,7 @@ def checkTheInputs():
     if checkData1 == True and checkData2 == True and checkData3 == True:
         for month in months:
             for day in days:
-                doy.append(sum(daysPerMonth[:month-1]) + day)
+                doy.append(sum(daysPerMonth[:month-1]) + day-1)
     
     #Check the turbidity.
     checkData4 = True
@@ -228,6 +228,8 @@ def createSkyDomeMesh(basePoint, resolution, scale):
     
     #Color the mesh with monotone colors.
     uncoloredMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
+    
+    uncoloredMesh.Flip(True, True, True)
     
     return uncoloredMesh
 

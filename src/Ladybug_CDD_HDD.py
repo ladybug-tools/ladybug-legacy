@@ -11,7 +11,7 @@ By default, this component uses a more accurate calculation than the traditional
 You may check the formulas in this page: "http://www.vesma.com/ddd/ddcalcs.htm"
 If you rather to use the traditional method, set useDailyAvrMethod to True.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _hourlyDryBulbTemperature: Annual dry bulb temperature from the Import epw component (in degrees Celsius).
@@ -30,10 +30,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_CDD_HDD"
 ghenv.Component.NickName = "CDD_HDD"
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
