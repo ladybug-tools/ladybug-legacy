@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_04_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_13_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -669,6 +669,9 @@ class Preparation(object):
         return list(chain.from_iterable(l))
     
     def makeWorkingDir(self, workingDir = sc.sticky["Ladybug_DefaultFolder"]):
+        
+        if workingDir== None:
+            workingDir = sc.sticky["Ladybug_DefaultFolder"]
         if not os.path.exists(workingDir):
             try:
                 os.makedirs(workingDir)
