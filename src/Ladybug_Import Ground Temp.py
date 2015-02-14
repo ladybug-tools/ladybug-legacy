@@ -397,6 +397,8 @@ elif visualisedata_Season == True:
                 barMesh.Vertices.Add(point)
             barMesh.Faces.AddFace(0, 1, 3, 2)
             
+            barMesh.Flip(True, True, True)
+            
             # Color the mesh faces
             barMesh.VertexColors.CreateMonotoneMesh(color)
     
@@ -589,8 +591,8 @@ elif visualisedata_Month == True:
         if maxDiff > minDiff: diffFactor = maxDiff/4
         else: diffFactor = minDiff/4
         
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
-        print type(legendPar_)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters([], False)
+        
         colors = lb_visualization.gradientColor(range(12), 0, 11, customColors)
 
         #Create the points for the temperature profile curves
