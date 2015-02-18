@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_14_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_17_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2418,7 +2418,6 @@ class ResultVisualization(object):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
-        
         if legendBasePoint == None: basePt = BoundingBoxP[0]
         else: basePt = legendBasePoint
             
@@ -3163,7 +3162,7 @@ class ComfortModels(object):
         else: offset = 2.5
         to = (ta + tr) / 2
         # See if the running mean temperature is between 10 C and 33.5 C and, if not, label the data as too extreme for the adaptive method.
-        if runningMean > 10.0 and runningMean < 33.5:
+        if runningMean >= 10.0 and runningMean <= 33.5:
             # Define a function to tell if values are in the comfort range.
             def comfBetween (x, l, r):
                 return (x > l and x < r)
