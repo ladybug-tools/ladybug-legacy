@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -713,6 +713,10 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar, lb_
             legendFontSize = None
             legendBold = False
             legendScale = 1
+        
+        #If the user has not input custom boundaries, automatically choose the boundaries for them.
+        if lowB == "min": lowB = -1 * legendVal
+        if highB == "max": highB = legendVal
         
         #Color each of the meshes with shade benefit.
         for regionCount, shadeMeshGroup in enumerate(shadeMeshListInit):
