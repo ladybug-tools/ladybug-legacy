@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -377,7 +377,6 @@ def checkTheInputs():
     
     #If there are comfort parameters hooked up, read them out.
     checkData8 = True
-    print comfortPar_
     if comfortPar_ != []:
         try:
             eightyPercentComfortable = bool(comfortPar_[0])

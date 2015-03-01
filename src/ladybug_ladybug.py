@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_17_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2793,18 +2793,21 @@ class ComfortModels(object):
             elif abs(f2) <= epsilon:
                 res.append(b)
             else:
+                rangeCheck = True
                 count = range(100)
                 for i in count:
-                    if (b - a) != 0 and (f2 - f1) != 0:
+                    if (b - a) != 0 and (f2 - f1) != 0 and rangeCheck == True:
                         slope = (f2 - f1) / (b - a)
                         c = b - f2/slope
-                        f3 = fn(c)
-                        if abs(f3) < epsilon:
-                            res.append(c)
-                        a = b
-                        b = c
-                        f1 = f2
-                        f2 = f3
+                        if c <= 200 and c >= -200:
+                            f3 = fn(c)
+                            if abs(f3) < epsilon:
+                                res.append(c)
+                            a = b
+                            b = c
+                            f1 = f2
+                            f2 = f3
+                        else: rangeCheck = False
                     else: pass
             res.append('NaN')
             return res[0]
