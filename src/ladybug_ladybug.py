@@ -839,26 +839,34 @@ class Preparation(object):
     
     strToBeFound = 'key:location/dataType/units/frequency/startsAt/endsAt'
     
-    def epwDataReader(self, epw_file, location = 'Somewhere!'):
+    def epwDataReader(epw_file, location = 'Somewhere!'):
         # weather data
-        dbTemp = [self.strToBeFound, location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dewPoint = [self.strToBeFound, location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        RH = [self.strToBeFound, location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)]
-        windSpeed = [self.strToBeFound, location, 'Wind Speed', 'm/s', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        windDir = [self.strToBeFound, location, 'Wind Direction', 'degrees', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dirRad = [self.strToBeFound, location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        difRad = [self.strToBeFound, location, 'Diffuse Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        glbRad = [self.strToBeFound, location, 'Global Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dirIll = [self.strToBeFound, location, 'Direct Normal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        difIll = [self.strToBeFound, location, 'Diffuse Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        glbIll = [self.strToBeFound, location, 'Global Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        cloudCov = [self.strToBeFound, location, 'Total Cloud Cover', 'tenth', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        rainDepth = [self.strToBeFound, location, 'Liquid Precipitation Depth', 'mm', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        barPress = [self.strToBeFound, location, 'Barometric Pressure', 'Pa', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        epwYear = [location, 'Year', 'Year', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        epwMonth = [location, 'Month', 'Month', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        epwDay = [location, 'Day', 'Day of Month', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        epwHr = [location, 'Hour', 'Hour', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dbTemp = [location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dewPoint = [location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        RH = [location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)]
+        windSpeed = [location, 'Wind Speed', 'm/s', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        windDir = [location, 'Wind Direction', 'degrees', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dirRad = [location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        difRad = [location, 'Diffuse Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        glbRad = [location, 'Global Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dirIll = [location, 'Direct Normal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        difIll = [location, 'Diffuse Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        glbIll = [location, 'Global Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        cloudCov = [location, 'Total Cloud Cover', 'tenth', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        rainDepth = [location, 'Liquid Precipitation Depth', 'mm', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        barPress = [location, 'Barometric Pressure', 'Pa', 'Hourly', (1, 1, 1), (12, 31, 24)];
         epwfile = open(epw_file,"r")
         lnum = 1 # line number
         for line in epwfile:
             if lnum > 8:
+                epwYear.append(float(line.split(',')[0]))
+                epwMonth.append(float(line.split(',')[1]))
+                epwDay.append(float(line.split(',')[2]))
+                epwHr.append(float(line.split(',')[3]))
                 dbTemp.append(float(line.split(',')[6]))
                 dewPoint.append(float(line.split(',')[7]))
                 RH.append(float(line.split(',')[8]))
@@ -877,7 +885,7 @@ class Preparation(object):
                     else: rainDepth.append(0.0)
                 except: pass
             lnum += 1
-        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress
+        return epwYear[6:], epwMonth[6:], epwDay[6:], epwHr[6:], dbTemp[6:], dewPoint[6:], RH[6:], windSpeed[6:], windDir[6:], dirRad[6:], difRad[6:], glbRad[6:], dirIll[6:], difIll[6:], glbIll[6:], cloudCov[6:], rainDepth[6:], barPress[6:]
     
     ##### Start of Gencumulative Sky
     def removeBlank(self, str):
