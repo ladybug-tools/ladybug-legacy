@@ -847,7 +847,7 @@ class Preparation(object):
         epwHr = [location, 'Hour', 'Hour', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dbTemp = [location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dewPoint = [location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        RH = [location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)]
+        RH = [location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)];
         windSpeed = [location, 'Wind Speed', 'm/s', 'Hourly', (1, 1, 1), (12, 31, 24)];
         windDir = [location, 'Wind Direction', 'degrees', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dirRad = [location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
