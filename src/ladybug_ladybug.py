@@ -839,7 +839,7 @@ class Preparation(object):
     
     strToBeFound = 'key:location/dataType/units/frequency/startsAt/endsAt'
     
-    def epwDataReader(epw_file, location = 'Somewhere!'):
+    def epwDataReader(self, epw_file, location = 'Somewhere!'):
         # weather data
         epwYear = [location, 'Year', 'Year', 'Hourly', (1, 1, 1), (12, 31, 24)];
         epwMonth = [location, 'Month', 'Month', 'Hourly', (1, 1, 1), (12, 31, 24)];
@@ -885,7 +885,7 @@ class Preparation(object):
                     else: rainDepth.append(0.0)
                 except: pass
             lnum += 1
-        return epwYear[6:], epwMonth[6:], epwDay[6:], epwHr[6:], dbTemp[6:], dewPoint[6:], RH[6:], windSpeed[6:], windDir[6:], dirRad[6:], difRad[6:], glbRad[6:], dirIll[6:], difIll[6:], glbIll[6:], cloudCov[6:], rainDepth[6:], barPress[6:]
+        return epwYear, epwMonth, epwDay, epwHr, dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress
     
     ##### Start of Gencumulative Sky
     def removeBlank(self, str):
