@@ -13,7 +13,7 @@ The air conditioning industy set out with the goal of satisfying 80% of the occu
 _
 Further note that cultures differ widely in terms of their treatment of humidity at cooler temperatures and lack of humidity.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         eightyOrNinetyPercent_: Set to "True" to have the comfort standard be 80 percent of occupants comfortable and set to "False" to have the comfort standard be 90 percent of all occupants comfortable.  The default is set to "False" for 90 percent, which is the more rigorous comfort standard and is arguably more fair to an occupant for which you are restricting their clothing and metabolic rate by using a PMV model. Note that, if you try to restrict everyone's clothing and metabolic rate as the PMV model assumed, you can never make 100% of the people comfortable.
@@ -25,10 +25,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Parameters"
 ghenv.Component.NickName = 'ComfortPar'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 

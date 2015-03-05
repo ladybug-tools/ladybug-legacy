@@ -9,7 +9,7 @@ Use this component to generate a solar fan for a given test surface and set of s
 Solar fans are typically used to ensure solar access for park vegetation in the midst of large developments constructed around it.  It can be also used to ensure solar access for windows that might want to use the sun for heating for ceratin hours of the year.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _baseSrf: A surface representing a piece of land (such as a park) or a window for which solar access is desired.
@@ -22,10 +22,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 

@@ -6,7 +6,7 @@
 """
 Use this component to branch any data based on day, month and hour. Number of data items should match number of HOYs.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _data: A list of data to be branched for each month
@@ -20,10 +20,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Branch Data"
 ghenv.Component.NickName = 'branchDataDailyMonthlyHourly'
-ghenv.Component.Message = 'VER 0.0.58\nOCT_27_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 

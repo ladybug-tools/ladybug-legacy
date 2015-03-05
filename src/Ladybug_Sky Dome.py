@@ -8,7 +8,7 @@
 This component allows you to visualize a selected sky matrix from the selectSkyMxt component in order to see the patches of the sky dome where radiation is coming from.
 The component will produce 3 sky domes by default: a dome showing just the diffuse radiation, a dome showing just the direct radiation, and a dome showing the total radiation.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -28,15 +28,15 @@ Provided by Ladybug 0.0.58
         skyPatchesCenPts: The center points of sky patches, which can be used to shape Rhino geometry in relation to radiation from different sky patches.
         skyPatchesAreas: The area of sky patches in Rhino model units.
         skyPatchesAsBrep: The geometry of sky patches as breps.
-        values: Radiation values for the sky patches in Wh/m2.
+        values: Radiation values for the sky patches in kWh/m2.
 """
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -187,6 +187,9 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         
         # color the meshed patches
         domeMeshed = lb_visualization.colorMesh(colForMesh, domeMeshed)
+        
+        #Flip it so that the mesh faces are outward.
+        domeMeshed.Flip(True, True, True)
         
         if legendBasePoint == None:
             nlegendBasePoint = lb_visualization.BoundingBoxPar[0]

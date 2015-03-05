@@ -8,13 +8,13 @@
 Use this component to calculate wind speed at a specific height for a given terrain type.  By default, the component will calculate ground wind speed, which is useful for comfrt calculations.  Also, by hooking up wind data from an epw file, you can use the resulting data to create a wind rose at any height.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _windSpeed_tenMeters: The wind speed from the import EPW component or a number representing the wind speed at 10 meters off the ground in agricultural or airport terrian.  This input also accepts lists of numbers representing different speeds at 10 meters.
         windDirection_: The wind direction from the import EPW component or a number in degrees represeting the wind direction from north,  This input also accepts lists of numbers representing different directions.
-        _terrainType: An interger from 0 to 3 that sets the terrain class associated with the output windSpeedAtHeight. Interger values represent the following terrain classes:
+        terrainType_: An interger from 0 to 3 that sets the terrain class associated with the output windSpeedAtHeight. Interger values represent the following terrain classes:
             0 = Urban: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
             1 = Suburban: suburbs, wooded areas.
             2 = Country: open, with scattered objects generally less than 10m high.
@@ -34,10 +34,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Wind Speed Calculator"
 ghenv.Component.NickName = 'WindSpeedCalculator'
-ghenv.Component.Message = 'VER 0.0.58\nNOV_21_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -56,7 +56,7 @@ windDirectionAtHeight = DataTree[Object]()
 windVectorAtHeight = DataTree[Object]()
 
 
-def checkTheInputs():
+def checkTheInputs(lb_wind):
     #Define a value that will indicate whether someone has hooked up epw data.
     epwData = False
     epwStr = []
@@ -161,6 +161,7 @@ def checkTheInputs():
     checkData4 = True
     if heightAboveGround_ == []:
         heightAboveGround = [1]
+        print "The input heightAboveGround has been set to a default of 1 meter, which is typical for most pedestrians."
     else:
         for item in heightAboveGround_:
             if item < 0:
@@ -179,24 +180,24 @@ def checkTheInputs():
     
     # Evaluate the terrain type to get the right boundary layer thickness and flow exponent.
     checkData3 = True
-    if _terrainType != None:
-        if _terrainType == 0: print "Terrain set to water."
-        elif _terrainType == 1: print "Terrain set to country."
-        elif _terrainType == 2: print "Terrain set to suburban."
-        elif _terrainType == 3: print "Terrain set to urban."
-        else:
-            checkData3 = False
-            print "Invalid input for _terrainType."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "Invalid input for _terrainType.")
+    validTerrain, terrainType, gradientHeightDiv, d, a, yValues, yAxisMaxRhinoHeight, nArrows, printMsg = lb_wind.terrain(terrainType_)
+    print printMsg
+    if validTerrain == True: pass
     else:
-        print "Connect a value for terrain type."
         checkData3 = False
+        print "Invalid input for terrainType_."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, "Invalid input for terrainType_.")
     
     # Set a defult epwTerrain if none is connected.
     checkData6 = True
     if epwTerrain_ != None:
-        if epwTerrain_ <=3 and epwTerrain_ >= 0: epwTerrain = epwTerrain_
+        if epwTerrain_ <=3 and epwTerrain_ >= 0:
+            epwTerrain = epwTerrain_
+            if epwTerrain_ == 0: print "EPW terrain set to (0 = city)."
+            elif epwTerrain_ == 1: print "EPW terrain set to (1 = suburban)."
+            elif epwTerrain_ == 2: print "EPW terrain set to (2 = country)."
+            elif epwTerrain_ == 3: print "EPW terrain set to (3 = water)."
         else:
             epwTerrain = None
             checkData6 = False
@@ -205,7 +206,7 @@ def checkTheInputs():
             ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct epwTerrain_ type.")
     else:
         epwTerrain = 2
-        print "epwTerrain_ has been set to 2 for flat clear land, which is typical for most EPW files that are recorded at airports."
+        print "epwTerrain_ has been set to (2 = country), which is typical for most EPW files that are recorded at airports."
     
     #Set the default to not averageData_.
     if averageData_ == None:
@@ -218,28 +219,10 @@ def checkTheInputs():
     else:
         checkData = False
     
-    return checkData, heightAboveGround, analysisPeriod, _terrainType, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr
+    return checkData, heightAboveGround, analysisPeriod, d, a, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr
 
 
-def main(heightAboveGround, analysisPeriod, terrainType, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr):
-    # import the classes
-    if sc.sticky.has_key('ladybug_release'):
-        try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-        except:
-            warning = "You need a newer version of Ladybug to use this compoent." + \
-            "Use updateLadybug component to update userObjects.\n" + \
-            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
-            "into canvas and try again."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
-            
-        lb_preparation = sc.sticky["ladybug_Preparation"]()
-        lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
-        lb_wind = sc.sticky["ladybug_WindSpeed"]()
-        
-        checkData, d, a = lb_wind.readTerrainType(terrainType)
+def main(heightAboveGround, analysisPeriod, d, a, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr):
         checkData, metD, metA = lb_wind.readTerrainType(epwTerrain)
         
         if checkData == True:
@@ -348,20 +331,40 @@ def main(heightAboveGround, analysisPeriod, terrainType, epwTerrain, averageData
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct Terrain type.")
             return [], [], []
-    else:
-        print "You should first let the Ladybug fly..."
+
+
+# import the classes
+initCheck = False
+if sc.sticky.has_key('ladybug_release'):
+    initCheck = True
+    try:
+        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = True
+    except:
+        initCheck = False
+        warning = "You need a newer version of Ladybug to use this compoent." + \
+        "Use updateLadybug component to update userObjects.\n" + \
+        "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+        "into canvas and try again."
         w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return [], [], []
-
-
+        ghenv.Component.AddRuntimeMessage(w, warning)
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
+    lb_wind = sc.sticky["ladybug_WindSpeed"]()
+else:
+    initCheck = False
+    print "You should first let the Ladybug fly..."
+    w = gh.GH_RuntimeMessageLevel.Warning
+    ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
+    lb_wind = None
 
 #Check the inputs.
-checkData, heightAboveGround, analysisPeriod, terrainType, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr = checkTheInputs()
+checkData = False
+if initCheck == True:
+    checkData, heightAboveGround, analysisPeriod, d, a, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr = checkTheInputs(lb_wind)
 
 #Run the function.
 if checkData == True:
-    res = main(heightAboveGround, analysisPeriod, terrainType, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr)
+    res = main(heightAboveGround, analysisPeriod, d, a, epwTerrain, averageData, windSpeed, windDir, epwData, epwStr)
     
     if res!=-1:
         windSpdAtHght, windVecAtHght, windDirHeight = res

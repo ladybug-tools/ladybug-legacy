@@ -21,7 +21,7 @@ http://www.gsd.harvard.edu/research/gsdsquare/Publications/Shaderade_BS2011.pdf
 The heating/temperture degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the temperture-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or temperture degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive temperture degree-days to give a net effect for the cell.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -54,10 +54,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -430,7 +430,8 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
         HOYs = range(8760)
     HOYStart = HOYs[0]
     
-    for hoy in HOYs:
+    
+    for count, hoy in enumerate(HOYs):
         d, m, h = lb_preparation.hour2Date(hoy, True)
         m += 1
         lb_sunpath.solInitOutput(m, d, h)
@@ -438,9 +439,9 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
         if lb_sunpath.solAlt >= 0:
             sunVec = lb_sunpath.sunReverseVectorCalc()
             sunVectors.append(sunVec)
-            sunUpHoys.append(hoy)
+            sunUpHoys.append(count)
             for path in allDataDict:
-                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][hoy-HOYStart]))
+                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][count]))
     
     #Check to see if the user has requested the highest resolution and, if not, consolidate the sun vectors into sky patches.
     finalSunVecs = []
@@ -481,7 +482,7 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
                 
                 for hour in hourList:
                     for path in allDataDict:
-                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + float(allDataDict[path]["temperture"][hour-HOYStart])
+                        allDataDict[path]["tempertureFinal"][vecCount] = allDataDict[path]["tempertureFinal"][vecCount] + float(allDataDict[path]["temperture"][hour])
                         allDataDict[path]["divisor"][vecCount] += 1
         
         for path in allDataDict:
@@ -712,6 +713,10 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar, lb_
             legendFontSize = None
             legendBold = False
             legendScale = 1
+        
+        #If the user has not input custom boundaries, automatically choose the boundaries for them.
+        if lowB == "min": lowB = -1 * legendVal
+        if highB == "max": highB = legendVal
         
         #Color each of the meshes with shade benefit.
         for regionCount, shadeMeshGroup in enumerate(shadeMeshListInit):

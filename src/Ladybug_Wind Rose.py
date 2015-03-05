@@ -8,7 +8,7 @@
 Use this component to make a windRose in the Rhino scene.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _north_: Input a vector to be used as a true North direction for the wind rose or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -18,8 +18,7 @@ Provided by Ladybug 0.0.58
         _analysisPeriod_: An optional analysis period from the Analysis Period component.
         conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the wind rose. To use this input correctly, hourly data, such as temperature or humidity, must be plugged into the annualHourlyData_ input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
                               The current version of this component accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
-                              For example, if you have hourly dry bulb temperature connected as the first list, and relative humidity connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<a<23 and b<80 (without quotation marks).
-                              For the windRose component, the variable "a" always represents windSpeed.
+                              For the WindBoundaryProfile component, the variable "a" always represents windSpeed. For example, if you have hourly dry bulb temperature connected as the second list, and relative humidity connected as the third list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<b<23 and c<80 (without quotation marks).
         _numOfDirections_: A number of cardinal directions with which to divide up the data in wind rose. Values must be greater than 4 since you can have no fewer than 4 cardinal directions.
         _centerPoint_: Input a point here to change the location of the wind rose in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
@@ -40,10 +39,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_12_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -259,8 +258,11 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 northVector2.Rotate(-float(math.radians(angle + (segAngle/2))), rc.Geometry.Vector3d.ZAxis)
                 sideVectors.append(northVector2)
             
-            
-            selectedWindDir = lb_preparation.selectHourlyData(windDir, analysisPeriod)[7:]
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+            selectedWindDir = []
+            for count in HOYS:
+                selectedWindDir.append(windDir[count-1])
+            #selectedWindDir = lb_preparation.selectHourlyData(windDir, analysisPeriod)[7:]
             # read analysis period
             stMonth, stDay, stHour, endMonth, endDay, endHour = lb_preparation.readRunPeriod(analysisPeriod, False)
 
@@ -275,7 +277,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             [separatedBasedOnAngle.append([]) for i in range(len(roseAngles))]
             #print len(studyHours)
             #print len(selectedWindDir)
-            
             for hour, windDirection in enumerate(selectedWindDir):
                 h = studyHours[hour]
                 if patternList[h]: # if the hour pass the conditional statement
@@ -484,7 +485,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                         centerMesh.Append(singleMesh)
                                     except Exception, e:
                                         print `e`
-                    
+                        
+                        centerMesh.Flip(True, True, True)
+                        
                         segments = rc.Geometry.Mesh()
                         segmentsColors = []
                         for direction, segmentValues in enumerate(values):
@@ -520,7 +523,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                         segmentsColors.append(color[0])
                                         segments.Append(segment)
                                     totalFr = totalFr + fr
-                                
+                    
+                    segments.Flip(True, True, True)
+                    
                     segments = lb_visualization.colorMesh(segmentsColors, segments)
                     centerMesh = lb_visualization.colorMesh(cenMeshColors, centerMesh)
                     

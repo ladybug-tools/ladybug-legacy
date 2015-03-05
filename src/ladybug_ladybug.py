@@ -19,18 +19,19 @@ http://creativecommons.org/licenses/by-sa/3.0/deed.en_US
 Source code is available at:
 https://github.com/mostaphaRoudsari/ladybug
 -
-Provided by Ladybug 0.0.58
-    
+Provided by Ladybug 0.0.59
+    Args:
+        defaultFolder_: Optional input for Ladybug default folder.
+                       If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
     Returns:
         report: Current Ladybug mood!!!
 """
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.58\nJAN_12_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -38,7 +39,6 @@ except: pass
 import rhinoscriptsyntax as rs
 import Rhino as rc
 import scriptcontext as sc
-from clr import AddReference
 import Grasshopper.Kernel as gh
 import math
 import shutil
@@ -49,38 +49,71 @@ import System
 import time
 from itertools import chain
 import datetime
-import urllib
 
 PI = math.pi
-letItFly = True
 rc.Runtime.HostUtils.DisplayOleAlerts(False)
 
 
-
-#set up default pass
-if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
-    # folder already exists so it is all fine
-    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-elif os.access(os.path.dirname("c:\\"), os.F_OK):
-    #the folder does not exists but write privileges are given so it is fine
-    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-else:
-    # let's use the user folder
-    sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
-
 class CheckIn():
     
-    def __init__(self):
+    def __init__(self, defaultFolder, folderIsSetByUser = False):
+        
+        self.folderIsSetByUser = folderIsSetByUser
+        self.letItFly = True
+        
+        if defaultFolder:
+            # user is setting up the folder
+            defaultFolder = os.path.normpath(defaultFolder) + os.sep
+            
+            # check if path has white space
+            if (" " in defaultFolder):
+                msg = "Default file path can't have white space. Please set the path to another folder." + \
+                      "\nLadybug failed to fly! :("
+                print msg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                sc.sticky["Ladybug_DefaultFolder"] = ""
+                self.letItFly = False
+                return
+            else:
+                # create the folder if it is not created
+                if not os.path.isdir(defaultFolder):
+                    try: os.mkdir(defaultFolder)
+                    except:
+                        msg = "Cannot create default folder! Try a different filepath" + \
+                              "\nLadybug failed to fly! :("
+                        print msg
+                        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                        sc.sticky["Ladybug_DefaultFolder"] = ""
+                        self.letItFly = False
+                        return
+            
+            # looks fine so let's set it up
+            sc.sticky["Ladybug_DefaultFolder"] = defaultFolder
+            self.folderIsSetByUser = True
+        
         #set up default pass
-        if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
-            # folder already exists so it is all fine
-            sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-        elif os.access(os.path.dirname("c:\\"), os.F_OK):
-            #the folder does not exists but write privileges are given so it is fine
-            sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-        else:
-            # let's use the user folder
-            sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", os.getenv("USERNAME"), "AppData\\Roaming\\Ladybug\\")
+        if not self.folderIsSetByUser:
+            if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
+                # folder already exists so it is all fine
+                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+            elif os.access(os.path.dirname("c:\\"), os.F_OK):
+                #the folder does not exists but write privileges are given so it is fine
+                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+            else:
+                # let's use the user folder
+                username = os.getenv("USERNAME")
+                # make sure username doesn't have space
+                if (" " in username):
+                    msg = "User name on this system: " + username + " has white space." + \
+                          " Default fodelr cannot be set.\nUse defaultFolder_ to set the path to another folder and try again!" + \
+                          "\nLadybug failed to fly! :("
+                    print msg
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
+                    sc.sticky["Ladybug_DefaultFolder"] = ""
+                    self.letItFly = False
+                    return
+                
+                sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
     
     def getComponentVersion(self):
         monthDict = {'JAN':'01', 'FEB':'02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06',
@@ -99,11 +132,13 @@ class CheckIn():
     
     def checkForUpdates(self, LB= True, HB= True, OpenStudio = True, template = True):
         
-        url = "https://dl.dropboxusercontent.com/u/16228160/honeybee/versions.txt"
-        webFile = urllib.urlopen(url)
-        versions= eval(webFile.read())
-        webFile.close()
-        
+        url = "https://github.com/mostaphaRoudsari/ladybug/raw/master/resources/versions.txt"
+        versionFile = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "versions.txt")
+        client = System.Net.WebClient()
+        client.DownloadFile(url, versionFile)
+        with open("c:/ladybug/versions.txt", "r")as vf:
+            versions= eval("\n".join(vf.readlines()))
+
         if LB:
             ladybugVersion = versions['Ladybug']
             currentLadybugVersion = self.getComponentVersion() # I assume that this function will be called inside Ladybug_ladybug Component
@@ -164,8 +199,7 @@ class CheckIn():
             return self.isNewerVersionAvailable(currentTemplateVersion, templateVersion)
             
 
-checkIn = CheckIn()
-
+checkIn = CheckIn(defaultFolder_)
 
 class versionCheck(object):
     
@@ -348,11 +382,30 @@ class Preparation(object):
         else: month = month%12
         return month
 
-    def checkDay(self, day, month):
-        if day<1: day = 1
-        if month == 2 and day > 28: day = 28
-        elif (month == 4 or month == 6 or month == 9 or month == 11) and day > 30: day = 30
-        elif day > 31: day = 31
+    def checkDay(self, day, month, component = None):
+        w = gh.GH_RuntimeMessageLevel.Warning
+        if day<1:
+            if component!=None:
+                component.AddRuntimeMessage(w, "Day " + `day` + " is changed to 1.")
+            day = 1
+        if month == 2 and day > 28:
+            if component!=None:
+                msg = "Feb. has 28 days. The date is corrected by Ladybug."
+                component.AddRuntimeMessage(w, msg)
+            day = 28
+            
+        elif (month == 4 or month == 6 or month == 9 or month == 11) and day > 30:
+            if component!=None:
+                msg = self.monthList[month-1] + " has 30 days. The date is corrected by Ladybug."
+                component.AddRuntimeMessage(w, msg)
+            day = 30
+            
+        elif day > 31:
+            if component!=None:
+                msg = self.monthList[month-1] + " has 31 days. The date is corrected by Ladybug."
+                component.AddRuntimeMessage(w, msg)
+            day = 31
+        
         return day
     
     def hour2Date(self, hour, alternate = False):
@@ -615,8 +668,10 @@ class Preparation(object):
     def flattenList(self, l):
         return list(chain.from_iterable(l))
     
-    def makeWorkingDir(self, workingDir, default = sc.sticky["Ladybug_DefaultFolder"]):
-        if not workingDir: workingDir = default
+    def makeWorkingDir(self, workingDir = sc.sticky["Ladybug_DefaultFolder"]):
+        
+        if workingDir== None:
+            workingDir = sc.sticky["Ladybug_DefaultFolder"]
         if not os.path.exists(workingDir):
             try:
                 os.makedirs(workingDir)
@@ -627,53 +682,46 @@ class Preparation(object):
                 return -1
         return workingDir
 
+    ## download File
+    def downloadFile(self, url, workingDir, timeout = 20):
+        localFilePath = workingDir + '/' + url.split('/')[-1]
+        client = System.Net.WebClient()
+        client.DownloadFile(url, localFilePath)
+        
+        
     def downloadGenCumulativeSky(self, workingDir):
-        ## download File
-        def downloadFile(url, workingDir):
-            import urllib
-            webFile = urllib.urlopen(url)
-            localFile = open(workingDir + '/' + url.split('/')[-1], 'wb')
-            localFile.write(webFile.read())
-            webFile.close()
-            localFile.close()
-
         # download the Gencumulative Sky
         if not os.path.isfile(workingDir + '\GenCumulativeSky.exe'):
             try:
                 print 'Downloading GenCumulativeSky.exe to ', workingDir
-                downloadFile('http://dl.dropbox.com/u/16228160/GenCumulativeSky/GenCumulativeSky.exe', workingDir)
+                self.downloadFile('https://github.com/mostaphaRoudsari/ladybug/raw/master/resources/GenCumulativeSky.exe', workingDir, 30)
                 print 'Download complete!'
             except:
                 allSet = False
                 print 'Download failed!!! You need GenCumulativeSky.exe to use this component.' + \
-                '\nPlease check your internet connection, and try again!'
+                '\nPlease check your internet connection, and try again!' + \
+                '\nIf that does not work, you must manually download the file from this address:' + \
+                '\nhttps://github.com/mostaphaRoudsari/ladybug/raw/master/resources/GenCumulativeSky.exe' + \
+                '\nand copy it here:' + str(workingDir)
         else:
             pass
             #print 'GenCumulativeSky.exe is already available at ', workingDir + \
             #'\nPlease make sure you are using the latest version of GenCumulativeSky.exe'
 
-    def downloadGendaymtx(self, workingDir):
-        ## download File
-        def downloadFile(url, workingDir):
-            import urllib
-            webFile = urllib.urlopen(url)
-            localFile = open(workingDir + '/' + url.split('/')[-1], 'wb')
-            localFile.write(webFile.read())
-            webFile.close()
-            localFile.close()
 
+    def downloadGendaymtx(self, workingDir):
         # download the Gencumulative Sky
         if not os.path.isfile(workingDir + '\gendaymtx.exe'):
             try:
                 print 'Downloading gendaymtx.exe to ', workingDir
-                downloadFile('http://dl.dropbox.com/u/16228160/GenCumulativeSky/gendaymtx.exe', workingDir)
+                self.downloadFile('https://github.com/mostaphaRoudsari/ladybug/raw/master/resources/gendaymtx.exe', workingDir, 20)
                 print 'Download complete!'
             except:
                 allSet = False
                 print 'Download failed!!! You need gendaymtx.exe to use this component.' + \
                 '\nPlease check your internet connection, and try again!' + \
                 '\nIf that does not work, you must manually download the file from this address:' + \
-                '\nhttp://dl.dropbox.com/u/16228160/GenCumulativeSky/gendaymtx.exe' + \
+                '\nhttps://github.com/mostaphaRoudsari/ladybug/raw/master/resources/gendaymtx.exe' + \
                 '\nand copy it here:' + str(workingDir)
         else:
             pass
@@ -759,16 +807,24 @@ class Preparation(object):
                     print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st)' + groundtemp[18]+ ' meters (2nd)'+groundtemp[34]+'meters (3rd)respectively'
                           
                     
-                    def func(seq): ## Function that converts strings to floats if possible if not returns the original 
-                        for x in seq:
-                            try:
-                                yield float(x)
-                            except ValueError:
-                                yield x
-                 
-                    groundtemp1st.extend(func(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
-                    groundtemp2nd.extend(func(groundtemp[22:34]))
-                    groundtemp3rd.extend(func(groundtemp[38:50]))
+                    def stringtoFloat(sequence): # stringtoFloattion that converts strings to floats, if not possible it passes
+                    	strings = []
+                    	seq = [] # line 18 - data = CSV.Branch(month_-1) creates grasshoppers own List[object] this does not contain a remove method'
+                    	# therefore in line 4 6 and 7 we must add the data to a python list to be able to use the function
+                    	for item in sequence:
+                    		seq.append(item)
+                    	for i in range(len(seq)):
+                    		try:
+                    			seq[i] = float(seq[i])
+                    		except:
+                    			strings.append(seq[i])
+                    	for x in strings:
+                    		seq.remove(x)
+                    	return seq
+                    
+                    groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
+                    groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
+                    groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
                     
                     self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
                     self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
@@ -1019,27 +1075,30 @@ class Preparation(object):
     
     def genRadRoseArrows(self, movingVectors, radResult, cenPt, sc, internalSc = 0.2, arrowHeadScale = 1):
         radArrows = []; vecNum = 0
-        # this is a copy/paste. should be fixed later
-        cenPt = rs.AddPoint(cenPt.X, cenPt.Y, cenPt.Z)
+        
         for vec in movingVectors:
             movingVec = (sc* internalSc * vec * radResult[vecNum])
-            ptMoveDis = 20 * internalSc * arrowHeadScale
-            ptMovingVec_right = rs.VectorRotate((vec * sc * ptMoveDis), 90, (0,0,1))
-            ptMovingVec_left = rs.VectorRotate((vec * sc * ptMoveDis), -90, (0,0,1))
-            arrowEndpt = rs.MoveObject(rs.CopyObject(cenPt), movingVec)
-            baseLine = rs.AddLine(cenPt, arrowEndpt)
-            pt = rs.EvaluateCurve(baseLine, 0.85* rs.CurveLength(baseLine))
-            pt = rs.AddPoint(pt[0], pt[1], pt[2])
-            rightPt = rs.MoveObject(rs.CopyObject(pt), ptMovingVec_right)
-            leftPt = rs.MoveObject(rs.CopyObject(pt), ptMovingVec_left)
-            # change this to mesh
-            # arrowSrf = rs.AddSrfPt((cenPt, rightPt, arrowEndpt, leftPt))
+            ptMoveDis = movingVec.Length * 0.1 * internalSc * arrowHeadScale 
+            
+            arrowEndpt = rc.Geometry.Point3d.Add(cenPt, movingVec)
+            baseLine = rc.Geometry.LineCurve(cenPt, arrowEndpt)
+            basePt = baseLine.PointAt(baseLine.DivideByCount(4, True)[-2])
+            
+            ptMovingVec_right = rc.Geometry.Vector3d(vec.X, vec.Y, vec.Z)
+            ptMovingVec_right.Rotate(math.radians(90), rc.Geometry.Vector3d.ZAxis)
+            ptMovingVec_right.Unitize()
+            ptMovingVec_right = rc.Geometry.Vector3d.Multiply(ptMoveDis, ptMovingVec_right)
+            rightPt = rc.Geometry.Point3d.Add(basePt, ptMovingVec_right)
+            
+            ptMovingVec_right.Reverse()
+            leftPt = rc.Geometry.Point3d.Add(basePt, ptMovingVec_right)
+            
             
             tempMesh = rc.Geometry.Mesh()
-            tempMesh.Vertices.Add(rs.coerce3dpoint(cenPt)) #0
-            tempMesh.Vertices.Add(rs.coerce3dpoint(rightPt)) #1
-            tempMesh.Vertices.Add(rs.coerce3dpoint(arrowEndpt)) #2
-            tempMesh.Vertices.Add(rs.coerce3dpoint(leftPt)) #3
+            tempMesh.Vertices.Add(cenPt) #0
+            tempMesh.Vertices.Add(rightPt) #1
+            tempMesh.Vertices.Add(arrowEndpt) #2
+            tempMesh.Vertices.Add(leftPt) #3
             tempMesh.Faces.AddFace(0, 1, 2, 3)
             
             
@@ -2359,7 +2418,6 @@ class ResultVisualization(object):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
-        
         if legendBasePoint == None: basePt = BoundingBoxP[0]
         else: basePt = legendBasePoint
             
@@ -2499,23 +2557,24 @@ class ResultVisualization(object):
             if "=" in text[n]: extraSrfCount += -1
             if ":" in text[n]: extraSrfCount += -1
             
-            if len(text[n].strip()) != len(srfs) + extraSrfCount:
-                # project the curves to the place in case number of surfaces
-                # doesn't match the text
-                projectedCrvs = []
-                for crv in joindCrvs:
-                    projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
-                srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
-            
-            #Mesh the surfcaes.
-            meshSrfs = []
-            for srf in srfs:
-                srf.Flip()
-                meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
-                meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
-                meshSrfs.append(meshSrf)
-            
-            textSrfs.append(meshSrfs)
+            if srfs:
+                if len(text[n].strip()) != len(srfs) + extraSrfCount:
+                    # project the curves to the place in case number of surfaces
+                    # doesn't match the text
+                    projectedCrvs = []
+                    for crv in joindCrvs:
+                        projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
+                    srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
+                
+                #Mesh the surfcaes.
+                meshSrfs = []
+                for srf in srfs:
+                    srf.Flip()
+                    meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
+                    meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+                    meshSrfs.append(meshSrf)
+                
+                textSrfs.append(meshSrfs)
             
             #if len(text[n].strip()) == len(srfs)+ extraSrfCount:
             #    textSrfs.append(srfs)
@@ -2578,6 +2637,8 @@ class ResultVisualization(object):
         lines = []; textBasePts = []
         mainAngles = [0, 90, 180, 270]
         mainText = ['N', 'E', 'S', 'W']
+        altText1 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        altText2 = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
         compassText = []
         for angle in angles:
             mainLine = False
@@ -2585,11 +2646,16 @@ class ResultVisualization(object):
             vector = rc.Geometry.Vector3d(northVector)
             vector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
             line, basePt, baseCircle, outerCircle = drawLine(cenPt, vector, radius, mainLine, xMove)
-            if mainLine == True: compassText.append(mainText[mainAngles.index(angle)])
-            else: compassText.append(str(int(angle)))
-                
+            if len(angles) != 8 and len(angles) != 16:
+                if mainLine == True: compassText.append(mainText[mainAngles.index(angle)])
+                else: compassText.append(str(int(angle)))
+            
             textBasePts.append(basePt)
             lines.append(line)
+        
+        if len(angles) == 8: compassText = altText1
+        if len(angles) == 16: compassText = altText2
+        
         lines.append(baseCircle)
         lines.append(outerCircle)
         return lines, textBasePts, compassText
@@ -2727,18 +2793,21 @@ class ComfortModels(object):
             elif abs(f2) <= epsilon:
                 res.append(b)
             else:
+                rangeCheck = True
                 count = range(100)
                 for i in count:
-                    if (b - a) != 0 and (f2 - f1) != 0:
+                    if (b - a) != 0 and (f2 - f1) != 0 and rangeCheck == True:
                         slope = (f2 - f1) / (b - a)
                         c = b - f2/slope
-                        f3 = fn(c)
-                        if abs(f3) < epsilon:
-                            res.append(c)
-                        a = b
-                        b = c
-                        f1 = f2
-                        f2 = f3
+                        if c <= 200 and c >= -200:
+                            f3 = fn(c)
+                            if abs(f3) < epsilon:
+                                res.append(c)
+                            a = b
+                            b = c
+                            f1 = f2
+                            f2 = f3
+                        else: rangeCheck = False
                     else: pass
             res.append('NaN')
             return res[0]
@@ -3096,7 +3165,7 @@ class ComfortModels(object):
         else: offset = 2.5
         to = (ta + tr) / 2
         # See if the running mean temperature is between 10 C and 33.5 C and, if not, label the data as too extreme for the adaptive method.
-        if runningMean > 10.0 and runningMean < 33.5:
+        if runningMean >= 10.0 and runningMean <= 33.5:
             # Define a function to tell if values are in the comfort range.
             def comfBetween (x, l, r):
                 return (x > l and x < r)
@@ -4283,6 +4352,69 @@ class ComfortModels(object):
 
 class WindSpeed(object):
     
+    def terrain(self, terrainType):
+        # Atmospheric boundary layer parameters based on terrain type
+        if terrainType == None:
+            # Default terrain value
+            terrainType = "City Terrain"
+            gradientHeightDiv = 921
+            gradientHeight = 460
+            a = 0.33
+            yValues = [str(yLabel) for yLabel in range(0,500,50)]
+            yAxisMaxRhinoHeight = 92
+            nArrows = 10
+            validTerrain = True
+            printMsg = "Terrain has been set to a default of (0 = city)."
+        else:
+            if terrainType == "city" or int(terrainType) == 0:
+                terrainType = "City Terrain"
+                gradientHeightDiv = 921
+                gradientHeight = 460
+                a = 0.33
+                yValues = [str(yLabel) for yLabel in range(0,500,50)]
+                yAxisMaxRhinoHeight = 92
+                nArrows = 10
+                validTerrain = True
+                printMsg = "Terrain set to (0 = city)"
+            elif terrainType == "suburban" or int(terrainType) == 1:
+                terrainType = "Suburban Terrain"
+                gradientHeightDiv = 741
+                gradientHeight = 370
+                a = 0.22
+                yValues = [str(yLabel) for yLabel in range(0,400,50)]
+                yAxisMaxRhinoHeight = 72
+                nArrows = 8
+                validTerrain = True
+                printMsg = "Terrain set to (1 = suburban)"
+            elif terrainType == "country" or int(terrainType) == 2:
+                terrainType = "Country Terrain"
+                gradientHeightDiv = 541
+                gradientHeight = 270
+                a = 0.14
+                yValues = [str(yLabel) for yLabel in range(0,300,50)]
+                yAxisMaxRhinoHeight = 52
+                nArrows = 6
+                validTerrain = True
+                printMsg = "Terrain set to (2 = country)"
+            elif terrainType == "water" or int(terrainType) == 3:
+                terrainType = "Water Terrain"
+                gradientHeightDiv = 421
+                gradientHeight = 210
+                a = 0.10
+                yValues = [str(yLabel) for yLabel in range(0,250,50)]
+                yAxisMaxRhinoHeight = 42
+                nArrows = 5
+                validTerrain = True
+                printMsg = "Terrain set to (3 = water)"
+            else:
+                terrainType = gradientHeightDiv = gradientHeight = a = yValues = yAxisMaxRhinoHeight = nArrows = None
+                validTerrain = False
+                printMsg = "Please choose one of three terrain types: 0=city, 1=urban, 2=country 3=water"
+        
+        return validTerrain, terrainType, gradientHeightDiv, gradientHeight, a, yValues, yAxisMaxRhinoHeight, nArrows, printMsg
+    
+    
+    
     def readTerrainType(self, terrainType):
         checkData = True
         roughLength = None
@@ -4331,16 +4463,20 @@ def checkGHPythonVersion(target = "0.6.0.3"):
 
 GHPythonTargetVersion = "0.6.0.3"
 
-if not checkGHPythonVersion(GHPythonTargetVersion):
+try:
+    if not checkGHPythonVersion(GHPythonTargetVersion):
+        assert False
+except:
     msg =  "Ladybug failed to fly! :(\n" + \
            "You are using an old version of GHPython. " +\
            "Please update to version: " + GHPythonTargetVersion
     print msg
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
-    letItFly = False
+    checkIn.letItFly = False
     sc.sticky["ladybug_release"] = False
 
-if letItFly:
+
+if checkIn.letItFly:
     # let's just overwrite it every time
     #if not sc.sticky.has_key("ladybug_release"):
     sc.sticky["ladybug_release"] = versionCheck()       
@@ -4355,7 +4491,7 @@ if letItFly:
     sc.sticky["ladybug_ComfortModels"] = ComfortModels
     sc.sticky["ladybug_WindSpeed"] = WindSpeed
         
-if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
-    print "Hi " + os.getenv("USERNAME")+ "!\n" + \
-          "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
-          "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+    if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
+        print "Hi " + os.getenv("USERNAME")+ "!\n" + \
+              "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
+              "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]

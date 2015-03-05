@@ -8,7 +8,7 @@
 Calculates heating and cooling degree-hours.
 Degree-hours are defined as the difference between the base temperature and the average ambient outside air temperature multiplied by the number of hours that this difference condition exists.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _hourlyDryBulbTemperature: Annual dry bulb temperature from the Import epw component (in degrees Celsius).
@@ -28,10 +28,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_CDH_HDH"
 ghenv.Component.NickName = "CDH_HDH"
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 

@@ -17,7 +17,7 @@ Internal Heat Gain - The component assumes a minimum building balance point of 1
 _
 Dessicant Dehumidification - This polygon represents the conditions under which dessicant dehumidification would be helpful.  As such, it takes as its upper limit the line of constant enthalpy from the edge of the comfort polygon and includes all humid conditions below it.  Note that this polygon does not appear if there is no upper humidity limit on the comfort polygon.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         maxTempAboveComf_: An optional number in degrees C representing the maximum daily temperature above the comfort range which can still be counted in the Thermal Mass + Night Flush polygon.  The default is set to 16.7 C above the highest comfort temperature.
@@ -29,10 +29,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Passive Strategy Parameters"
 ghenv.Component.NickName = 'StrategyPar'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 

@@ -20,7 +20,7 @@ _
 The information for the polygons representing passive strategies comes from the climate consultant psychrometric chart.  Further information on how these polygons are calculated can be found here:
 http://apps1.eere.energy.gov/buildings/tools_directory/software.cfm/ID=123/pagename=alpha_list
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -68,10 +68,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nDEC_05_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_17_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nDEC_02_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -696,7 +696,7 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
             titleTxt.append(getDateStr(epwStr[5], epwStr[6]))
         else:
             titleTxt.append(getDateStr(analysisPeriod_[0], analysisPeriod_[1]))
-    else: titleTxt = ["Psychrometric Chart", "Unlown Location", "Unknown Time Period"]
+    else: titleTxt = ["Psychrometric Chart", "Unkown Location", "Unknown Time Period"]
     titlePt = [rc.Geometry.Point3d(-19, 0.0295*scaleFactor, 0), rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
         titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
@@ -835,6 +835,9 @@ def colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_
         if freq == 0:
             cullFaceIndices.append(count)
     uncoloredMesh.Faces.DeleteFaces(cullFaceIndices)
+    
+    #Flip the mesh to be sure that it always displays correctly.
+    uncoloredMesh.Flip(True, True, True)
     
     #Return everything that's useful.
     return hourPts, uncoloredMesh, finalMeshFrequency
@@ -1292,6 +1295,12 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     passiveStrategyCurves.append(joinedHumidBound)
                     passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
                     strategyListTest.append("Dessicant Dehumidification")
+                elif "Dessicant Dehumidification" in passiveStrategy:
+                    passiveStrategyCurves.append(None)
+                    strategyListTest.append("Dessicant Dehumidification")
+                    warning = 'Dessicant Dehumidification is only relevant when there is an upper bound of humidity ratio on the comfort polygon.  Use the "PMV Comfort Parameters" component to set this.'
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 
                 #If the user has hooked up dessicant dehumidification, add a dessicant dehumidification curve to the chart.
                 if "Dehumidification Only" in passiveStrategy and humidRatioUp*scaleFactor <= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
@@ -1348,7 +1357,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     strategyPercent = []
     strategyOrNot = []
     
-    #For each of the comfort polygons, determine how many of the hour points are inside of them and make a comfotr or not list.
+    #For each of the comfort polygons, determine how many of the hour points are inside of them and make a comfort or not list.
     for countComf, comfortPolygon in enumerate(comfortPolyline):
         comfBool = []
         for hourPt in hourPts:
@@ -1376,29 +1385,48 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     #For each of the strategy polygons, determine how many of the hour points are inside of them and make a comfort or not list.
     for countStrat, comfortPolygon in enumerate(strategyPolylines):
         comfBool = []
-        if strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" or epwData == False or patternList != []:
-            for hourPt in hourPts:
-                if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
-                else:comfBool.append(0)
-        else:
-            for hourCt, hourPt in enumerate(hourPts):
-                if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" and airTemp[hourCt-12] < maxComfortPolyTemp-tempBelowComf: comfBool.append(1)
-                else:comfBool.append(0)
-        comfPercent = (sum(comfBool)/len(comfBool))*100
-        strategyPercent.append(comfPercent)
-        if epwData == True:
-            if analysisPeriod_:
-                comfBool.insert(0,analysisPeriod_[1])
-                comfBool.insert(0,analysisPeriod_[0])
+        try:
+            if strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" or epwData == False or patternList != []:
+                for hourPt in hourPts:
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
+                    else:comfBool.append(0)
             else:
-                comfBool.insert(0, epwStr[6])
-                comfBool.insert(0, epwStr[5])
-            comfBool.insert(0, epwStr[4])
-            comfBool.insert(0, "Boolean Value")
-            comfBool.insert(0, "Comfortable Hours in " + strategyTextNames[countComf + countStrat + 1] + " Polygon")
-            comfBool.insert(0, epwStr[1])
-            comfBool.insert(0, epwStr[0])
-        strategyOrNot.append(comfBool)
+                for hourCt, hourPt in enumerate(hourPts):
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" and airTemp[hourCt-12] < maxComfortPolyTemp-tempBelowComf: comfBool.append(1)
+                    else:comfBool.append(0)
+            comfPercent = (sum(comfBool)/len(comfBool))*100
+            strategyPercent.append(comfPercent)
+            if epwData == True:
+                if analysisPeriod_:
+                    comfBool.insert(0,analysisPeriod_[1])
+                    comfBool.insert(0,analysisPeriod_[0])
+                else:
+                    comfBool.insert(0, epwStr[6])
+                    comfBool.insert(0, epwStr[5])
+                comfBool.insert(0, epwStr[4])
+                comfBool.insert(0, "Boolean Value")
+                comfBool.insert(0, "Comfortable Hours in " + strategyTextNames[countComf + countStrat + 1] + " Polygon")
+                comfBool.insert(0, epwStr[1])
+                comfBool.insert(0, epwStr[0])
+            strategyOrNot.append(comfBool)
+        except:
+            strategyPercent.append(0)
+            for count in range(len(hourPts)):
+                comfBool.append(0)
+            
+            if epwData == True:
+                if analysisPeriod_:
+                    comfBool.insert(0,analysisPeriod_[1])
+                    comfBool.insert(0,analysisPeriod_[0])
+                else:
+                    comfBool.insert(0, epwStr[6])
+                    comfBool.insert(0, epwStr[5])
+                comfBool.insert(0, epwStr[4])
+                comfBool.insert(0, "Boolean Value")
+                comfBool.insert(0, "Comfortable Hours in Dessicant Dehumidification Polygon")
+                comfBool.insert(0, epwStr[1])
+                comfBool.insert(0, epwStr[0])
+            strategyOrNot.append(comfBool)
     
     #For the total comfort, determine how many of the hour points are inside of them and make a comfort or not list.
     temporaryPercent = []
@@ -1442,7 +1470,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     return finalTotalPercent, finalComfOrNot, strategyPercent, strategyOrNot
 
 
-def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_visualization):
+def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization):
     #Define the lists.
     pointColors = []
     colorLegends = []
@@ -1577,7 +1605,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if calcLength > 1:
             hourPts, coloredMesh, meshFaceValues = colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_visualization, scaleFactor, lowB, highB, customColors)
             legendTitle = "Hours"
-            lb_visualization.calculateBB(chartCurves[62:70], True)
+            lb_visualization.calculateBB(chartCurves[75:83], True)
             legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
@@ -1604,7 +1632,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         
         #Generate colors for the points.
         if len(totalComfOrNot) > 1:
-            pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_visualization)
+            pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization)
         else:
             pointColors = []
             pointLegends = []

@@ -8,7 +8,7 @@
 Use this component if you do not have an .epw weather file but have a latitude or other information on the site.
 The location output of this component can be used to make a sun plot in the absence of an .epw weather file.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.59
 
     Args:
         _locationName: A name for the location you are constructing. (ie. Steventon Island, Antarctica)
@@ -24,10 +24,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Construct Location"
 ghenv.Component.NickName = 'constructLocation'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_11_2014'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
