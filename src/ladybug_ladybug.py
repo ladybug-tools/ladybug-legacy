@@ -885,7 +885,7 @@ class Preparation(object):
                     else: rainDepth.append(0.0)
                 except: pass
             lnum += 1
-        return epwYear, epwMonth, epwDay, epwHr, dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress
+        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress, epwYear, epwMonth, epwDay, epwHr
     
     ##### Start of Gencumulative Sky
     def removeBlank(self, str):
