@@ -841,10 +841,10 @@ class Preparation(object):
     
     def epwDataReader(self, epw_file, location = 'Somewhere!'):
         # weather data
-        epwYear = [location, 'Year', 'Year', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        epwMonth = [location, 'Month', 'Month', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        epwDay = [location, 'Day', 'Day of Month', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        epwHr = [location, 'Hour', 'Hour', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        modelYear = [location, 'Year', 'Year', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        modelMonth = [location, 'Month', 'Month', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        modelDay = [location, 'Day', 'Day of Month', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        modelHour = [location, 'Hour', 'Hour', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dbTemp = [location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dewPoint = [location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
         RH = [location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)];
@@ -863,10 +863,10 @@ class Preparation(object):
         lnum = 1 # line number
         for line in epwfile:
             if lnum > 8:
-                epwYear.append(float(line.split(',')[0]))
-                epwMonth.append(float(line.split(',')[1]))
-                epwDay.append(float(line.split(',')[2]))
-                epwHr.append(float(line.split(',')[3]))
+                modelYear.append(float(line.split(',')[0]))
+                modelMonth.append(float(line.split(',')[1]))
+                modelDay.append(float(line.split(',')[2]))
+                modelHour.append(float(line.split(',')[3]))
                 dbTemp.append(float(line.split(',')[6]))
                 dewPoint.append(float(line.split(',')[7]))
                 RH.append(float(line.split(',')[8]))
@@ -885,7 +885,7 @@ class Preparation(object):
                     else: rainDepth.append(0.0)
                 except: pass
             lnum += 1
-        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress, epwYear, epwMonth, epwDay, epwHr
+        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress, modelYear, modelMonth, modelDay, modelHour
     
     ##### Start of Gencumulative Sky
     def removeBlank(self, str):
