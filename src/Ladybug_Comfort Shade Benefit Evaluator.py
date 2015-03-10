@@ -24,8 +24,8 @@ The heating/temperture degree-day calculation used here works by first getting t
 Provided by Ladybug 0.0.59
     
     Args:
-        _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
-        _temperatures: The selHourlyData output of the Ladybug_SunPath component when dryBulbTemperature is connected to the SunPath's annualHourlyData_ input.
+        _location: The location output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
+        _temperatures: A stream of 8760 temperature values (including a header) representing the temperature at each hour of the year that will be used to evaluate shade benefit.  This can be the dryBulbTemperature from the 'Import EPW' component, the univeralThermalClimateIndex (UTCI) output from the 'Outdoor Comfort Calculator' component, or the standardEffectiveTemperature (SET) output from the 'PMV Comfort Calculator' component.  If you are using this component to evaluate shade for a passive building with no heating/cooling, this input can also be the indoor temperature of the zone to be shaded.
         balanceTemperature_: An estimated balance temperature representing median temperture that people find comfortable, which can vary from climate to climate. The default is set to 17.5C, which is the median outdoor comfort temperature (UTCI) that defines the conditions of no thermal stress (9 < UTCI <26).
         temperatureOffest_: An number represeting the offset from the balanceTemperature_ in degrees Celcius at which point the shade importance begins to have an effect.  The default is set to 8.5 C, which is the range of outdoor comfort temperature (UTCI) that defines the conditions of no thermal stress (9 < UTCI <26).
         ============: ...
@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_28_2015'
+ghenv.Component.Message = 'VER 0.0.59\nMAR_10_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
