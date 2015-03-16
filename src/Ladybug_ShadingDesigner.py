@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nMAR_16_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -642,7 +642,7 @@ def main(method, depth, sunVectors, numShds, distBtwn, horOrVert):
             #Depth method
             #Define a function that can get the angle to North of any surface.
             def getAngle2North(normalVector):
-                if north_ != None and north_.IsValid():
+                if north_ != None:
                     northVector = north_
                 else:northVector = rc.Geometry.Vector3d.YAxis
                 angle =  rc.Geometry.Vector3d.VectorAngle(northVector, normalVector, rc.Geometry.Plane.WorldXY)
