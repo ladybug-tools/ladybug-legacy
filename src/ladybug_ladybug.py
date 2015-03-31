@@ -1511,6 +1511,7 @@ class Sunpath(object):
             self.solInitOutput(month, 21, hour)
             if self.sunPosPt()[2].Z > self.cenPt.Z: selHours.append(hour)
         
+        sunPsolarTimeL = []
         for hour in selHours:
             for day in days:
                 sunP = []
@@ -1518,6 +1519,8 @@ class Sunpath(object):
                     self.solInitOutput(month, day, hour)
                     sunP.append(self.sunPosPt()[2])
             sunP.append(sunP[0])
+            sunPsolarTime = [sunP[11], (sunP[0]+sunP[10])/2, (sunP[1]+sunP[9])/2, (sunP[2]+sunP[8])/2, (sunP[3]+sunP[7])/2, (sunP[4]+sunP[6])/2, sunP[5]]
+            sunPsolarTimeL.append(sunPsolarTime)
             knotStyle = rc.Geometry.CurveKnotStyle.UniformPeriodic
             crv = rc.Geometry.Curve.CreateInterpolatedCurve(sunP, 3, knotStyle)
             intersectionEvents = rc.Geometry.Intersect.Intersection.CurvePlane(crv, self.basePlane, sc.doc.ModelAbsoluteTolerance)
@@ -1538,7 +1541,7 @@ class Sunpath(object):
             
             if crv: hourlyCrvs.append(crv)
         
-        return monthlyCrvs, hourlyCrvs
+        return monthlyCrvs, hourlyCrvs, sunPsolarTimeL
         
         
     def drawBaseLines(self):
