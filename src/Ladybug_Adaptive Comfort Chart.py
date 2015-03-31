@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.57
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.57\nFEB_17_2014'
+ghenv.Component.Message = 'VER 0.0.57\nMAR_14_2014'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -136,31 +136,65 @@ def checkTheInputs():
     prevailTemp = []
     prevailMultVal = False
     if len(_prevailingOutdoorTemp) != 0:
-        try:
-            if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature' and (len(airTemp) == 8760 or len(airTemp) == 1):
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7:751])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[751:1423])/672)], 672))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[1423:2167])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[2167:2887])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[2887:3631])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[3631:4351])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[4351:5095])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[5095:5839])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[5839:6559])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[6559:7303])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7303:8023])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[8023:])/744)], 744))
-                checkData3 = True
-                epwData = True
-                if epwStr == []:
-                    epwStr = _prevailingOutdoorTemp[0:7]
-        except: pass
-        if checkData3 == False:
-            for item in _prevailingOutdoorTemp:
-                try:
-                    prevailTemp.append(float(item))
+        if monthlyOrWeekly_ == False:
+            try:
+                if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature' and (len(airTemp) == 8760 or len(airTemp) == 1):
+                    #Bin the temperature values by week.
+                    prevailList = []
+                    prevailWeek = []
+                    weekCounter = 0
+                    weekLength = 168
+                    for hour in _prevailingOutdoorTemp[7:]:
+                        if weekCounter < weekLength:
+                            prevailWeek.append(hour)
+                            weekCounter += 1
+                        else:
+                            weekCounter = 0
+                            prevailList.append(prevailWeek)
+                            prevailWeek = []
+                    
+                    #Average the weekly Temperatures.
+                    for tempList in prevailList:
+                        prevailTemp.extend(duplicateData([float(sum(tempList)/weekLength)], weekLength))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[8568:])/192)], 192))
+                    
                     checkData3 = True
-                except: checkData3 = False
+                    epwData = True
+                    if epwStr == []:
+                        epwStr = _prevailingOutdoorTemp[0:7]
+            except: pass
+            if checkData3 == False:
+                for item in _prevailingOutdoorTemp:
+                    try:
+                        prevailTemp.append(float(item))
+                        checkData3 = True
+                    except: checkData3 = False
+        else:
+            try:
+                if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature' and (len(airTemp) == 8760 or len(airTemp) == 1):
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7:751])/744)], 744))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[751:1423])/672)], 672))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[1423:2167])/744)], 744))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[2167:2887])/720)], 720))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[2887:3631])/744)], 744))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[3631:4351])/720)], 720))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[4351:5095])/744)], 744))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[5095:5839])/744)], 744))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[5839:6559])/720)], 720))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[6559:7303])/744)], 744))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7303:8023])/720)], 720))
+                    prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[8023:])/744)], 744))
+                    checkData3 = True
+                    epwData = True
+                    if epwStr == []:
+                        epwStr = _prevailingOutdoorTemp[0:7]
+            except: pass
+            if checkData3 == False:
+                for item in _prevailingOutdoorTemp:
+                    try:
+                        prevailTemp.append(float(item))
+                        checkData3 = True
+                    except: checkData3 = False
         if len(prevailTemp) > 1: prevailMultVal = True
         if checkData3 == False:
             warning = '_prevailingOutdoorTemp input does not contain valid temperature values in degrees Celcius.'

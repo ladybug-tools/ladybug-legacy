@@ -35,11 +35,12 @@ Provided by Ladybug 0.0.59
         windRoseCenPts: The center point(s) of wind rose(s).  Use this to move the wind roses in relation to one another using the grasshopper "move" component.
         legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePts: The legend base point(s), which can be used to move the legend in relation to the rose with the grasshopper "move" component.
+        title: The title for the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
 """
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nMAR_16_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -358,6 +359,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             allWindRoseMesh = []; allWindCenMesh = []; cenPts = []
             legendBasePoints = []; allWindRoseCrvs = []; allLegend = []
+            titleTextCurveFinal = []
             
             # for each of the information in hourly data
             if len(annualHourlyData)!=0 and annualHourlyData[0]!=None:
@@ -412,8 +414,12 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         if titleStatement:
                             resultStr = "%.1f" % (len(allValues)) + ' hours of total ' + ("%.1f" % len(windDir)) + ' hours' + \
                                         ' (' + ("%.2f" % (len(allValues)/len(windDir) * 100)) + '%).'
-                            # print resultStr
-                            customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
+                            if analysisPeriod != [(1, 1, 1), (12, 31, 24)] and analysisPeriod != []:
+                                additStr = "%.1f" % (len(allValues)) + ' hours of analysis period ' + ("%.1f" % len(HOYS)) + ' hours' + \
+                                            ' (' + ("%.2f" % (len(allValues)/len(HOYS) * 100)) + '%).'
+                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + additStr
+                            else:
+                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
                         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
                         
@@ -569,10 +575,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         allWindRoseCrvs.append(crvsTemp)
                         
                         legendSrfs.Translate(movingVector)
-                        allLegend.append(lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]]))
+                        allLegend.append(lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv)]]))
+                        titleTextCurveFinal.append(titleTextCurve[0])
                         
-                        #allSunPosInfo.append(modifiedsunPosInfo)
-                        #allValues.append(values)
                     except Exception, e:
                         print `e`
                         
@@ -583,7 +588,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             print `e`
                             
         
-            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints
+            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurveFinal
 
     else:
         warning =  "You should first let the Ladybug fly..."
@@ -598,7 +603,7 @@ if _runIt:
                   _scale_, legendPar_, bakeIt_, maxFrequency_)
     
     if result!= -1:
-        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints = result
+        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurve = result
         
         legend = DataTree[Object]()
         calmRoseMesh = DataTree[Object]()
@@ -608,6 +613,7 @@ if _runIt:
         windRoseCenPts = DataTree[Object]()
         sunPositionsInfo = DataTree[Object]()
         legendBasePts = DataTree[Object]()
+        title = DataTree[Object]()
         for i, leg in enumerate(allLegend):
             p = GH_Path(i)
             legend.Add(leg[0], p)
@@ -615,11 +621,9 @@ if _runIt:
             if allWindCenMesh!=[]: calmRoseMesh.Add(allWindCenMesh[i],p)
             windRoseMesh.Add(allWindRoseMesh[i],p)
             windRoseCrvs.AddRange(allWindRoseCrvs[i],p)
-            #selHourlyData.AddRange(selHourlyDataList[i],p)
-            #sunPositions.AddRange(sunPositionsList[i],p)
             windRoseCenPts.Add(cenPts[i],p)
-            #sunPositionsInfo.AddRange(sunPosInfoList[i], p)
             legendBasePts.Add(legendBasePoints[i],p)
+            title.AddRange(titleTextCurve[i],p)
         
         ghenv.Component.Params.Output[4].Hidden = True
         ghenv.Component.Params.Output[6].Hidden = True

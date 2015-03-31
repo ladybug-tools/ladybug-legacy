@@ -35,14 +35,14 @@ Provided by Ladybug 0.0.59
         totalSkyCover: "This is the fraction for total sky cover (tenths of coverage). (i.e. 1 is 1/10 covered. 10 is total coverage). (Amount of sky dome in tenths covered by clouds or obscuring phenomena at the hour indicated at the time indicated.) Minimum value is 0; maximum value is 10; missing value is 99."
         liquidPrecipitationDepth: "The amount of liquid precipitation(mm) observed at the indicated hour for the period indicated in the liquid precipitation quantity field. If this value is not missing, then it is used and overrides the precipitation flag as rainfall.  Conversely, if the precipitation flag shows rain and this field is missing or zero, it is set to 1.5 (mm)."
         barometricPressure: "This is the hourly weather station pressure in Pa. Valid values range from 31,000 to 120,000... Missing value for this field is 999999."
-        modelYear: "Year from which the upper hourly data has been extracted. Values range depend on the epw file source type."
+        modelYear: The year from which the hourly data has been extracted. EPW files are synthesized from real recorded data from different years in a given climate. This is done to ensure that, for each month, the selected data is statistically representative of the average monthly conditions over the 18+ years of recording the data. Different EPW files will be synthesized from different years depeding on whether they are TMY (Typical Meteorological Year), TMY2, TMY3, AMY (Actual Meteorological Year) or other.
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nMAR_16_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nMAR_15_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
