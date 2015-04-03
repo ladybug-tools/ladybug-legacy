@@ -400,7 +400,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             annualSunPathCrvs = []
             baseCrvs = []
             if annualSunPath!=False:
-                annualSunPathCrvs = [item.ToNurbsCurve() for sublist in lb_sunpath.drawSunPath() for item in sublist]
+                annualSunPathCrvs = [item.ToNurbsCurve() for i,sublist in enumerate(lb_sunpath.drawSunPath()) for item in sublist if i < 2]
             if dailySunPath:
                 dailySunPathCrvs = []
                 for HOY in HOYs:
