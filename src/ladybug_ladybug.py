@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nMAR_15_2015'
+ghenv.Component.Message = 'VER 0.0.59\nAPR_03_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1512,6 +1512,7 @@ class Sunpath(object):
             if self.sunPosPt()[2].Z > self.cenPt.Z: selHours.append(hour)
         
         sunPsolarTimeL = []
+        hourlyCrvsSolarTime = []
         for hour in selHours:
             for day in days:
                 sunP = []
@@ -1524,6 +1525,7 @@ class Sunpath(object):
             knotStyle = rc.Geometry.CurveKnotStyle.UniformPeriodic
             crv = rc.Geometry.Curve.CreateInterpolatedCurve(sunP, 3, knotStyle)
             intersectionEvents = rc.Geometry.Intersect.Intersection.CurvePlane(crv, self.basePlane, sc.doc.ModelAbsoluteTolerance)
+            crvSolarTime = rc.Geometry.Curve.CreateInterpolatedCurve(sunPsolarTime, 3, knotStyle)
             
             try:
                 if len(intersectionEvents) != 0:
@@ -1540,8 +1542,9 @@ class Sunpath(object):
             except: pass
             
             if crv: hourlyCrvs.append(crv)
+            if crvSolarTime: hourlyCrvsSolarTime.append(crvSolarTime)
         
-        return monthlyCrvs, hourlyCrvs, sunPsolarTimeL
+        return monthlyCrvs, hourlyCrvs, sunPsolarTimeL, hourlyCrvsSolarTime
         
         
     def drawBaseLines(self):
