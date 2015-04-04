@@ -48,18 +48,20 @@ Provided by Ladybug 0.0.59
     Returns:
         readMe!: ...
         --------------------: ...
-        windSpeedAtHeight: The wind speeds that correspond to the wind vectors in the wind profile visualization.
+        windSpeeds: The wind speeds that correspond to the wind vectors in the wind profile visualization.
+        windDirections: The wind directions that correspond to the wind vectors in the wind profile visualization.
         windVectors: The wind vectors that correspond to those in the wind profile visualization.  Note that the magnitude of these vectors will be scaled based on the windVectorScale_ input.
         vectorAnchorPts: Anchor points for each of the vectors above, which correspond to the height above the ground for each of the vectors.  Connect this along with the output above to a Grasshopper "Vector Display" component to see the vectors as a grasshopper vector display (as opposed to the vector mesh below).
         --------------------: ...
         windVectorMesh: A mesh displaying the wind vectors that were used to make the profile curve.
         windProfileCurve: A curve outlining the wind speed as it changes with height.  This may also be a list of wind profile curves if multiple "HOY_" inputs are connected or "averageData_" is set to False."
-        legend: A legend of the wind profile curves. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the rc scene.  
+        axesText: The meshes of the axes text (labelling wind speeds and heights).
+        legend: A legend of the wind profile curves. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the rc scene.
         legendBasePt: The legend base point(s), which can be used to move the legend in relation to the wind profile with the grasshopper "move" component.
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nMAR_11_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -964,6 +966,9 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
     #Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
     
+    #Set a default windDirHieghts.
+    windDirHieghts = []
+    
     #Define a maximum wind speed if none is provided in the legendPar.
     if highB == "max": maxSpeed = 6
     else: maxSpeed = int(highB)
@@ -1126,6 +1131,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
             if windDir != []:
                 vec = rc.Geometry.Vector3d(0, speed*windVectorScale, 0)
                 vec.Rotate(avgHrWindDir, rc.Geometry.Vector3d.ZAxis)
+                windDirHieghts.append(avgHrWindDir)
             else:
                 vec = rc.Geometry.Vector3d(speed*windVectorScale, 0, 0)
             windVec.append(vec)
@@ -1346,7 +1352,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
             rc.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, ids)
         
         
-        return profileCrv, windVecMesh, windSpdHeight, windVec, anchorPts, profileAxes, axesText, legend, legendBasePoint
+        return profileCrv, windVecMesh, windSpdHeight, windDirHieghts, windVec, anchorPts, profileAxes, axesText, legend, legendBasePoint
 
 
 
@@ -1364,7 +1370,7 @@ if check != -1:
 if checkData == True:
     result = main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
     if result != -1:
-        windProfileCurve, windVectorMesh, windSpeeds, windVectors, vectorAnchorPts, profileAxes, axesText, legend, legendBasePt = result
+        windProfileCurve, windVectorMesh, windSpeeds, windDirections, windVectors, vectorAnchorPts, profileAxes, axesText, legend, legendBasePt = result
 
 #Hide the anchor points.
 ghenv.Component.Params.Output[4].Hidden = True

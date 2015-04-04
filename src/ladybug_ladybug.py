@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_14_2015'
+ghenv.Component.Message = 'VER 0.0.59\nAPR_03_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -841,9 +841,10 @@ class Preparation(object):
     
     def epwDataReader(self, epw_file, location = 'Somewhere!'):
         # weather data
+        modelYear = [self.strToBeFound, location, 'Year', 'Year', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dbTemp = [self.strToBeFound, location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dewPoint = [self.strToBeFound, location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        RH = [self.strToBeFound, location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)]
+        RH = [self.strToBeFound, location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)];
         windSpeed = [self.strToBeFound, location, 'Wind Speed', 'm/s', 'Hourly', (1, 1, 1), (12, 31, 24)];
         windDir = [self.strToBeFound, location, 'Wind Direction', 'degrees', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dirRad = [self.strToBeFound, location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
@@ -859,6 +860,7 @@ class Preparation(object):
         lnum = 1 # line number
         for line in epwfile:
             if lnum > 8:
+                modelYear.append(float(line.split(',')[0]))
                 dbTemp.append(float(line.split(',')[6]))
                 dewPoint.append(float(line.split(',')[7]))
                 RH.append(float(line.split(',')[8]))
@@ -877,7 +879,7 @@ class Preparation(object):
                     else: rainDepth.append(0.0)
                 except: pass
             lnum += 1
-        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress
+        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress, modelYear
     
     ##### Start of Gencumulative Sky
     def removeBlank(self, str):
@@ -1509,6 +1511,8 @@ class Sunpath(object):
             self.solInitOutput(month, 21, hour)
             if self.sunPosPt()[2].Z > self.cenPt.Z: selHours.append(hour)
         
+        sunPsolarTimeL = []
+        hourlyCrvsSolarTime = []
         for hour in selHours:
             for day in days:
                 sunP = []
@@ -1516,9 +1520,12 @@ class Sunpath(object):
                     self.solInitOutput(month, day, hour)
                     sunP.append(self.sunPosPt()[2])
             sunP.append(sunP[0])
+            sunPsolarTime = [sunP[11], (sunP[0]+sunP[10])/2, (sunP[1]+sunP[9])/2, (sunP[2]+sunP[8])/2, (sunP[3]+sunP[7])/2, (sunP[4]+sunP[6])/2, sunP[5]]
+            sunPsolarTimeL.append(sunPsolarTime)
             knotStyle = rc.Geometry.CurveKnotStyle.UniformPeriodic
             crv = rc.Geometry.Curve.CreateInterpolatedCurve(sunP, 3, knotStyle)
             intersectionEvents = rc.Geometry.Intersect.Intersection.CurvePlane(crv, self.basePlane, sc.doc.ModelAbsoluteTolerance)
+            crvSolarTime = rc.Geometry.Curve.CreateInterpolatedCurve(sunPsolarTime, 3, knotStyle)
             
             try:
                 if len(intersectionEvents) != 0:
@@ -1535,8 +1542,9 @@ class Sunpath(object):
             except: pass
             
             if crv: hourlyCrvs.append(crv)
+            if crvSolarTime: hourlyCrvsSolarTime.append(crvSolarTime)
         
-        return monthlyCrvs, hourlyCrvs
+        return monthlyCrvs, hourlyCrvs, sunPsolarTimeL, hourlyCrvsSolarTime
         
         
     def drawBaseLines(self):
@@ -2418,7 +2426,6 @@ class ResultVisualization(object):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
-        
         if legendBasePoint == None: basePt = BoundingBoxP[0]
         else: basePt = legendBasePoint
             
@@ -2794,18 +2801,21 @@ class ComfortModels(object):
             elif abs(f2) <= epsilon:
                 res.append(b)
             else:
+                rangeCheck = True
                 count = range(100)
                 for i in count:
-                    if (b - a) != 0 and (f2 - f1) != 0:
+                    if (b - a) != 0 and (f2 - f1) != 0 and rangeCheck == True:
                         slope = (f2 - f1) / (b - a)
                         c = b - f2/slope
-                        f3 = fn(c)
-                        if abs(f3) < epsilon:
-                            res.append(c)
-                        a = b
-                        b = c
-                        f1 = f2
-                        f2 = f3
+                        if c <= 200 and c >= -200:
+                            f3 = fn(c)
+                            if abs(f3) < epsilon:
+                                res.append(c)
+                            a = b
+                            b = c
+                            f1 = f2
+                            f2 = f3
+                        else: rangeCheck = False
                     else: pass
             res.append('NaN')
             return res[0]
@@ -3163,7 +3173,7 @@ class ComfortModels(object):
         else: offset = 2.5
         to = (ta + tr) / 2
         # See if the running mean temperature is between 10 C and 33.5 C and, if not, label the data as too extreme for the adaptive method.
-        if runningMean > 10.0 and runningMean < 33.5:
+        if runningMean >= 10.0 and runningMean <= 33.5:
             # Define a function to tell if values are in the comfort range.
             def comfBetween (x, l, r):
                 return (x > l and x < r)

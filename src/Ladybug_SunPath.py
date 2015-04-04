@@ -34,6 +34,7 @@ Provided by Ladybug 0.0.59
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         ---------------- : ...
         _dailyOrAnnualSunPath_: By default, this value is set to "True" (or 1), which will produce a sun path for the whole year.  Set this input to "False" (or 0) to generate a sun path for just one day of the year (or several days if multiple days are included in the analysis period).
+        solarOrStandardTime_: Set to 'True' to have the sunPath display in solar time and set to 'False' to have it display in standard time.  The default is set to 'False.'  Note that this input only changes the way in which the supath curves are drawn currently and does not yet change the position of the sun based on the input hour.
         bakeIt_: Set to True to bake the sunpath into the Rhino scene.
     Returns:
         readMe!: ...
@@ -55,7 +56,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nAPR_03_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -400,7 +401,22 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             annualSunPathCrvs = []
             baseCrvs = []
             if annualSunPath!=False:
-                annualSunPathCrvs = [item.ToNurbsCurve() for sublist in lb_sunpath.drawSunPath() for item in sublist]
+                if solarOrStandardTime_:
+                    annualSunPathCrvs = [item.ToNurbsCurve() for i,sublist in enumerate(lb_sunpath.drawSunPath()) for item in sublist if i > 2 or i < 1]
+                    newAnnualSunPathCrvs = []
+                    try: trimRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(centerPt, rc.Geometry.Vector3d.ZAxis), rc.Geometry.Point3d(-10000, -10000, 0), rc.Geometry.Point3d(10000, 10000, 0)).ToNurbsCurve()
+                    except: trimRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane.WorldXY, rc.Geometry.Point3d(-10000, -10000, 0), rc.Geometry.Point3d(10000, 10000, 0)).ToNurbsCurve()
+                    trimPln = rc.Geometry.Brep.CreatePlanarBreps(trimRect)[0]
+                    for curve in annualSunPathCrvs:
+                        
+                        try:
+                            newCrv = curve.Split(trimPln, sc.doc.ModelAbsoluteTolerance)[-1]
+                        except:
+                            newCrv = curve
+                        newAnnualSunPathCrvs.append(newCrv)
+                    annualSunPathCrvs = newAnnualSunPathCrvs
+                else:
+                    annualSunPathCrvs = [item.ToNurbsCurve() for i,sublist in enumerate(lb_sunpath.drawSunPath()) for item in sublist if i < 2]
             if dailySunPath:
                 dailySunPathCrvs = []
                 for HOY in HOYs:

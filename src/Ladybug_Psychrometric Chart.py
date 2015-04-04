@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nFEB_17_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -696,7 +696,7 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
             titleTxt.append(getDateStr(epwStr[5], epwStr[6]))
         else:
             titleTxt.append(getDateStr(analysisPeriod_[0], analysisPeriod_[1]))
-    else: titleTxt = ["Psychrometric Chart", "Unlown Location", "Unknown Time Period"]
+    else: titleTxt = ["Psychrometric Chart", "Unkown Location", "Unknown Time Period"]
     titlePt = [rc.Geometry.Point3d(-19, 0.0295*scaleFactor, 0), rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
         titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
