@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nAPR_04_2015'
+ghenv.Component.Message = 'VER 0.0.59\nAPR_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -848,21 +848,21 @@ class Preparation(object):
     
     def epwDataReader(self, epw_file, location = 'Somewhere!'):
         # weather data
-        modelYear = [location, 'Year', 'Year', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dbTemp = [location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dewPoint = [location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        RH = [location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        windSpeed = [location, 'Wind Speed', 'm/s', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        windDir = [location, 'Wind Direction', 'degrees', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dirRad = [location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        difRad = [location, 'Diffuse Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        glbRad = [location, 'Global Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        dirIll = [location, 'Direct Normal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        difIll = [location, 'Diffuse Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        glbIll = [location, 'Global Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        cloudCov = [location, 'Total Cloud Cover', 'tenth', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        rainDepth = [location, 'Liquid Precipitation Depth', 'mm', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        barPress = [location, 'Barometric Pressure', 'Pa', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        modelYear = [self.strToBeFound, location, 'Year', 'Year', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dbTemp = [self.strToBeFound, location, 'Dry Bulb Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dewPoint = [self.strToBeFound, location, 'Dew Point Temperature', 'C', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        RH = [self.strToBeFound, location, 'Relative Humidity', '%', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        windSpeed = [self.strToBeFound, location, 'Wind Speed', 'm/s', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        windDir = [self.strToBeFound, location, 'Wind Direction', 'degrees', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dirRad = [self.strToBeFound, location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        difRad = [self.strToBeFound, location, 'Diffuse Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        glbRad = [self.strToBeFound, location, 'Global Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        dirIll = [self.strToBeFound, location, 'Direct Normal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        difIll = [self.strToBeFound, location, 'Diffuse Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        glbIll = [self.strToBeFound, location, 'Global Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        cloudCov = [self.strToBeFound, location, 'Total Cloud Cover', 'tenth', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        rainDepth = [self.strToBeFound, location, 'Liquid Precipitation Depth', 'mm', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        barPress = [self.strToBeFound, location, 'Barometric Pressure', 'Pa', 'Hourly', (1, 1, 1), (12, 31, 24)];
         epwfile = open(epw_file,"r")
         lnum = 1 # line number
         for line in epwfile:
@@ -1518,6 +1518,8 @@ class Sunpath(object):
             self.solInitOutput(month, 21, hour)
             if self.sunPosPt()[2].Z > self.cenPt.Z: selHours.append(hour)
         
+        sunPsolarTimeL = []
+        hourlyCrvsSolarTime = []
         for hour in selHours:
             for day in days:
                 sunP = []
@@ -1525,9 +1527,12 @@ class Sunpath(object):
                     self.solInitOutput(month, day, hour)
                     sunP.append(self.sunPosPt()[2])
             sunP.append(sunP[0])
+            sunPsolarTime = [sunP[11], (sunP[0]+sunP[10])/2, (sunP[1]+sunP[9])/2, (sunP[2]+sunP[8])/2, (sunP[3]+sunP[7])/2, (sunP[4]+sunP[6])/2, sunP[5]]
+            sunPsolarTimeL.append(sunPsolarTime)
             knotStyle = rc.Geometry.CurveKnotStyle.UniformPeriodic
             crv = rc.Geometry.Curve.CreateInterpolatedCurve(sunP, 3, knotStyle)
             intersectionEvents = rc.Geometry.Intersect.Intersection.CurvePlane(crv, self.basePlane, sc.doc.ModelAbsoluteTolerance)
+            crvSolarTime = rc.Geometry.Curve.CreateInterpolatedCurve(sunPsolarTime, 3, knotStyle)
             
             try:
                 if len(intersectionEvents) != 0:
@@ -1544,8 +1549,9 @@ class Sunpath(object):
             except: pass
             
             if crv: hourlyCrvs.append(crv)
+            if crvSolarTime: hourlyCrvsSolarTime.append(crvSolarTime)
         
-        return monthlyCrvs, hourlyCrvs
+        return monthlyCrvs, hourlyCrvs, sunPsolarTimeL, hourlyCrvsSolarTime
         
         
     def drawBaseLines(self):
