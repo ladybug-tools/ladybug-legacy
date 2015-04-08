@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nAPR_05_2015'
+ghenv.Component.Message = 'VER 0.0.59\nAPR_07_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -3220,7 +3220,7 @@ class ComfortModels(object):
             
         elif runningMean < 10.0:
             # The prevailing temperature is too cold for the adaptive method.
-            tComf = 0.31 * 10 + 17.8
+            tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
             tempDiff = to - tComf
             tComfLower = tComf - offset
             tComfUpper = tComf + offset
