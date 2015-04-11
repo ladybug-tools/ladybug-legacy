@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nMAR_15_2015'
+ghenv.Component.Message = 'VER 0.0.59\nAPR_07_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -777,25 +777,32 @@ class Preparation(object):
         return num, str
     
     def depthData(self,groundtemp,depthdataposition):
-       ## Function takes two arguements the list of the ground temp data and the index which defines what 
-       ## depth the data is @. THe purpose is to replace 'Depth' seen in the groundTempData function 
-       ## with depth at which the temperatures are in the epw in meters
+        """ This function takes two arguements the list of the ground temp data and the index which defines what 
+        depth the data is @. THe purpose is to replace 'Depth' seen in the groundTempData function 
+        with depth at which the temperatures are in the epw in meters 
+        """
        
         for count, i in enumerate(groundtemp):
             if i == 'Depth':
-                groundtemp[count] = depthdataposition
+                groundtemp[count] = 'Ground temperature at ' + str(depthdataposition) + ' m' 
             else:
                 pass
     
-    strToBeFoundgt = 'key:location/Depth temp @ (m)/dataType/units/frequency/startsAt/endsAt' ## String for GroundTempData function
+    strToBeFoundgt = 'key:location/Depth temp @ (m)/units/frequency/startsAt/endsAt' ## String for GroundTempData function
     
     def groundTempData(self, epw_file, location = 'Somewhere!', Depth = 'Not entered!'):
         
+        """ This function reads the ground temperature data from an epw file, and then converts it to a list of floats 
+            the list of floats is then subsequently re-arranaged by using the function depthData so that the depth below ground to which the 
+            ground temperature data corresponds to is the 2nd item in the list of all the ground temperature data.
+        """
+        
+        
         epwfile = open(epw_file,"r")
         
-        groundtemp1st = [self.strToBeFoundgt, location, 'Depth' , 'Ground temperature', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
-        groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' , 'Ground temperature', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
-        groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' , 'Ground temperature', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
+        groundtemp1st = [self.strToBeFoundgt, location, 'Depth', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
+        groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
+        groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
 
         lnum = 1 # Line number
         
@@ -1512,6 +1519,7 @@ class Sunpath(object):
             if self.sunPosPt()[2].Z > self.cenPt.Z: selHours.append(hour)
         
         sunPsolarTimeL = []
+        hourlyCrvsSolarTime = []
         for hour in selHours:
             for day in days:
                 sunP = []
@@ -1524,6 +1532,7 @@ class Sunpath(object):
             knotStyle = rc.Geometry.CurveKnotStyle.UniformPeriodic
             crv = rc.Geometry.Curve.CreateInterpolatedCurve(sunP, 3, knotStyle)
             intersectionEvents = rc.Geometry.Intersect.Intersection.CurvePlane(crv, self.basePlane, sc.doc.ModelAbsoluteTolerance)
+            crvSolarTime = rc.Geometry.Curve.CreateInterpolatedCurve(sunPsolarTime, 3, knotStyle)
             
             try:
                 if len(intersectionEvents) != 0:
@@ -1540,8 +1549,9 @@ class Sunpath(object):
             except: pass
             
             if crv: hourlyCrvs.append(crv)
+            if crvSolarTime: hourlyCrvsSolarTime.append(crvSolarTime)
         
-        return monthlyCrvs, hourlyCrvs, sunPsolarTimeL
+        return monthlyCrvs, hourlyCrvs, sunPsolarTimeL, hourlyCrvsSolarTime
         
         
     def drawBaseLines(self):
@@ -3210,7 +3220,7 @@ class ComfortModels(object):
             
         elif runningMean < 10.0:
             # The prevailing temperature is too cold for the adaptive method.
-            tComf = 0.31 * 10 + 17.8
+            tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
             tempDiff = to - tComf
             tComfLower = tComf - offset
             tComfUpper = tComf + offset

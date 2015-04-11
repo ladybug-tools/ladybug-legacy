@@ -1,11 +1,12 @@
 # Ground Temperature Calculator
 # By Anton Szilasi with help from Chris Mackey
+# For user requests or technical support please contact me at
 # ajszilasi@gmail.com
 # Ladybug started by Mostapha Sadeghipour Roudsari is licensed
 # under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 
 """
-Use this component to calculate the hourly ground temperature at a specific depth.
+Use this component to visualise ground temperatures throughout the year at specific depths. Please note that epw files usually only provide ground temperature data at depths 0.5 meters, 2 meters and 4 meters thus data has been interpolated for all other depths. In particular this interpolation assumes that ground temperatures do not vary over the seasons once the depth has reach 9 meters below the ground surface.
 
 -
 Provided by Ladybug 0.0.58
@@ -13,14 +14,18 @@ Provided by Ladybug 0.0.58
     Args:
         _groundTemperatureData: ...
         _epwFile: An .epw file path on your system as a string
-        visualisedata: Set to true to visualise data as a graph
+        visualisedata_Season: Set to true to visualise the ground temperature data as an average for every season
+        visualisedata_Month: Set to true to visualise the ground temperature data for every month
+        
     Returns:
         readMe!: ...
         groundtemp1st: In every epw file there are monthly ground temperatures at 3 different depths this is the 1st
         groundtemp2nd: In every epw file there are monthly ground temperatures at 3 different depths this is the 2nd
         groundtemp3rd: In every epw file there are monthly ground temperatures at 3 different depths this is the 3rd
-        graphAxes , profileCrvs, graphdata, graphtext: All these combine to create graph outputs they dont need to be connected to any objects to work
-
+        graphAxes: This output draws the axes of the graph it doesn't need to be connected to anything
+        graphtext: This output draws the text of the graph it doesn't need to be connected to anything
+        crvColors: This output draws the colours of the temperature curves connect it to S of the Grasshopper component Custom Preview
+        profileCrvs: This output draws the curves of the temperature curves connect it to G of the Grasshopper component Custom Preview
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
@@ -76,6 +81,7 @@ def main(_epw_file):
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, warningM)
         return -1
+
 
 # Collecting Data from epw
 if _epwFile and _epwFile.endswith('.epw') and  _epwFile != 'C:\Example.epw':
@@ -154,7 +160,7 @@ elif visualisedata_Season == True:
     
         global groundtempall
         
-        groundtempall = groundtemp1st[8:] + groundtemp2nd[8:] + groundtemp3rd[8:] # Adding the ground temp data from each of the ground temp depths (1st,2nd and 3rd) in the epw file
+        groundtempall = groundtemp1st[7:] + groundtemp2nd[7:] + groundtemp3rd[7:] # Adding the ground temp data from each of the ground temp depths (1st,2nd and 3rd) in the epw file
     
         groundtempCtext = [] # The text (numbers) that will be shown as labels on the horzontial axis 
         
@@ -180,6 +186,10 @@ elif visualisedata_Season == True:
     # These 3 function inputs are taken from drawAxes function
     def drawText(divisionPts,divisionPts1,groundtempCtext): 
         graphtext = []
+        
+        # Drawing site location
+        
+        print location
     
         # Drawing the labels on the vertical axis
     
@@ -239,6 +249,7 @@ elif visualisedata_Season == True:
 
         for txt in textSrfs4:
             graphtext.extend(txt)
+            
         return graphtext
         
     def drawprofileCrvs_Season(groundtemp1st,groundtemp2nd,groundtemp3rd):
@@ -246,13 +257,14 @@ elif visualisedata_Season == True:
         depthsList = [0.5, 2, 4]
 
         #Find the annual average temperature, which will be the temperature at very low depths.
-        annualAvg = sum(groundtemp1st[8:])/12 ## [8:] denotes from 8th row in list onwards as in groundtemp1st,groundtemp2nd etc data starts in 8th row
+        annualAvg = sum(groundtemp1st[7:])/12 
 
         #Find the maximum deviation around this for get a scale for the horizontal axis.
         allValues = []
-        allValues.extend(groundtemp1st[8:])
-        allValues.extend(groundtemp2nd[8:])
-        allValues.extend(groundtemp3rd[8:])
+
+        allValues.extend(groundtemp1st[7:])
+        allValues.extend(groundtemp2nd[7:])
+        allValues.extend(groundtemp3rd[7:])
     
         # The function orderbyseason returns a list of dictionaries with temperatures for each season and their correponding depths
         def orderbyseason(groundtemp1st,groundtemp2nd,groundtemp3rd): 
@@ -273,33 +285,33 @@ elif visualisedata_Season == True:
                 for count,i in enumerate(alllists):
             
                     if count == 0: # Depth at 0.5 m
-                        winter['0.5']= sum(groundtemp1st[8:10]+groundtemp1st[19:])/3
+                        winter['0.5']= sum(groundtemp1st[7:9]+groundtemp1st[18:])/3
 
-                        spring['0.5']= sum(groundtemp1st[10:13])/3
+                        spring['0.5']= sum(groundtemp1st[9:12])/3
 
-                        summer['0.5']= sum(groundtemp1st[13:16])/3
+                        summer['0.5']= sum(groundtemp1st[12:15])/3
 
-                        autumn['0.5']= sum(groundtemp1st[16:19])/3
+                        autumn['0.5']= sum(groundtemp1st[15:18])/3
                     
                     if count == 1: # Depth at 2 m 
                     
-                        winter['2'] = sum(groundtemp2nd[8:10]+groundtemp2nd[19:])/3
+                        winter['2'] = sum(groundtemp2nd[7:9]+groundtemp2nd[18:])/3
     
-                        spring['2'] = sum(groundtemp2nd[10:13])/3
+                        spring['2'] = sum(groundtemp2nd[9:12])/3
 
-                        summer['2'] = sum(groundtemp2nd[13:16])/3
+                        summer['2'] = sum(groundtemp2nd[12:15])/3
 
-                        autumn['2'] = sum(groundtemp2nd[16:19])/3
+                        autumn['2'] = sum(groundtemp2nd[15:18])/3
                     
                     if count == 2: # Depth at 4 m
                     
-                        winter['4'] = sum(groundtemp3rd[8:10]+groundtemp3rd[19:])/3
+                        winter['4'] = sum(groundtemp3rd[7:9]+groundtemp3rd[18:])/3
     
-                        spring['4'] = sum(groundtemp3rd[10:13])/3
+                        spring['4'] = sum(groundtemp3rd[9:12])/3
 
-                        summer['4'] = sum(groundtemp3rd[13:16])/3
+                        summer['4'] = sum(groundtemp3rd[12:15])/3
 
-                        autumn['4']= sum(groundtemp3rd[16:19])/3
+                        autumn['4']= sum(groundtemp3rd[15:18])/3
                         
             else: # Site is in the Southern Hemisphere
                 
@@ -312,33 +324,33 @@ elif visualisedata_Season == True:
                     
                     if count == 0: # Depth at 0.5 m
                     
-                        winter['0.5']= sum(groundtemp1st[13:16])/3
+                        winter['0.5']= sum(groundtemp1st[12:15])/3
                         
-                        spring['0.5']= sum(groundtemp1st[16:19])/3
-                
-                        summer['0.5']= sum(groundtemp1st[8:10]+groundtemp1st[19:])/3
+                        spring['0.5']= sum(groundtemp1st[15:18])/3
+                        
+                        summer['0.5']= sum(groundtemp1st[7:9]+groundtemp1st[18:])/3
     
-                        autumn['0.5']= sum(groundtemp1st[10:13])/3
+                        autumn['0.5']= sum(groundtemp1st[9:12])/3
 
                     if count == 1: # Depth at 2 m 
                     
-                        winter['2']= sum(groundtemp2nd[13:16])/3
+                        winter['2']= sum(groundtemp2nd[12:15])/3
                         
-                        spring['2']= sum(groundtemp2nd[16:19])/3
+                        spring['2']= sum(groundtemp2nd[15:18])/3
                    
-                        summer['2']= sum(groundtemp2nd[8:10]+groundtemp2nd[19:])/3
+                        summer['2']= sum(groundtemp2nd[7:9]+groundtemp2nd[18:])/3
     
-                        autumn['2']= sum(groundtemp2nd[10:13])/3
+                        autumn['2']= sum(groundtemp2nd[9:12])/3
                     
                     if count == 2: # Depth at 4 m
                     
-                        winter['4']= sum(groundtemp3rd[13:16])/3
+                        winter['4']= sum(groundtemp3rd[12:15])/3
                         
-                        spring['4']= sum(groundtemp3rd[16:19])/3
+                        spring['4']= sum(groundtemp3rd[15:18])/3
                     
-                        summer['4']= sum(groundtemp3rd[8:10]+groundtemp3rd[19:])/3
+                        summer['4']= sum(groundtemp3rd[7:9]+groundtemp3rd[18:])/3
     
-                        autumn['4']= sum(groundtemp3rd[10:13])/3
+                        autumn['4']= sum(groundtemp3rd[9:12])/3
                         
             return winter,spring,autumn,summer, # Return the seasons in this order
             
@@ -350,7 +362,7 @@ elif visualisedata_Season == True:
     
         crvColors = []
         
-        colors = System.Drawing.Color.MediumBlue,System.Drawing.Color.SeaGreen,System.Drawing.Color.Yellow,System.Drawing.Color.Red #In order of summer,spring,autumn,winter
+        colors = System.Drawing.Color.LightBlue,System.Drawing.Color.ForestGreen,System.Drawing.Color.Yellow,System.Drawing.Color.Tomato 
         
         # Colors for season curves in order of winter,spring,autumn,summer 
     
@@ -379,9 +391,10 @@ elif visualisedata_Season == True:
         return profileCrvs,crvColors,colors
         
     def drawLegend(colors):
+        # A function which draws the legend box in the Rhino Viewport
         
         dataMeshes = []
-        # A function which draws the legend box in the Rhino Viewport
+        
         def draw_Legendbox(x,z1,z2,color): 
             
             dataMeshes = []
@@ -418,7 +431,6 @@ elif visualisedata_Season == True:
                 graphtext.extend(txt)
             return graphtext
             
-            
         dataMeshes.extend(draw_Legendbox(2,10,10.5,colors[0]))
         dataMeshes.extend(draw_Legendbox(2,10.75,11.25,colors[1]))
         dataMeshes.extend(draw_Legendbox(2,11.5,12,colors[2]))
@@ -434,6 +446,15 @@ elif visualisedata_Season == True:
     divisionPts,divisionPts1,groundtempCtext,graphAxes = drawAxes(groundtemp1st,groundtemp2nd,groundtemp3rd)
 
     graphtext = drawText(divisionPts,divisionPts1,groundtempCtext)
+    
+    # Draw text above graph which shows location
+    
+    Plane = rc.Geometry.Plane(rc.Geometry.Point3d(3.5,0,2.5), rc.Geometry.Vector3d(1,0,0),  rc.Geometry.Vector3d(0,0,1))
+
+    textSrfs5 = lb_visualization.text2srf([str(location.split(",")[1])], [rc.Geometry.Point3d(-2,5,0)],'Verdana', 0.3, False, Plane)
+    
+    for txt in textSrfs5:
+        graphtext.extend(txt)
     
     profileCrvs,crvColors,colors = drawprofileCrvs_Season(groundtemp1st,groundtemp2nd,groundtemp3rd)
     
@@ -574,15 +595,16 @@ elif visualisedata_Month == True:
         return graphtext
 
     def drawprofileCrvs_Month(groundtemp1st,groundtemp2nd,groundtemp3rd):
-    
+        
         #Find the annual average temperature, which will be the temperature at very low depths.
-        annualAvg = sum(groundtemp1st[8:])/12 ## [8:] denotes from 8th row in list onwards as in groundtemp1st,groundtemp2nd etc data starts in 8th row
 
+        annualAvg = sum(groundtemp1st[7:])/12 
+        
         #Find the maximum deviation around this for get a scale for the horizontal axis.
         allValues = []
-        allValues.extend(groundtemp1st[8:])
-        allValues.extend(groundtemp2nd[8:])
-        allValues.extend(groundtemp3rd[8:])
+        allValues.extend(groundtemp1st[7:])
+        allValues.extend(groundtemp2nd[7:])
+        allValues.extend(groundtemp3rd[7:])
     
         allValues.sort()
         maxDiff = max(allValues) - annualAvg
@@ -593,21 +615,63 @@ elif visualisedata_Month == True:
         
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters([], False)
         
-        colors = lb_visualization.gradientColor(range(12), 0, 11, customColors)
-
+        # colors = lb_visualization.gradientColor(range(12), 0, 11, customColors) ophaned code, initally each month line was a different colour now colouring by season
+        
         #Create the points for the temperature profile curves
         ptsList = []
         
         crvColors = []
-        for count in range(12):
-            pt1 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp1st[count+8]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-0.5)
-            pt2 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp2nd[count+8]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-2)
-            pt3 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp3rd[count+8]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-4)
-            pt4 = rc.Geometry.Point3d(rectangleCenterPt.X, rectangleCenterPt.Y, rectangleCenterPt.Z-9)
-            ptsList.append([pt1, pt2, pt3, pt4])
+        
+        if latitude.find("-") == -1: # If true site is in the Northern Hemisphere
+        
+            for count in range(12):
+                pt1 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp1st[count+7]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-0.5)
+                pt2 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp2nd[count+7]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-2)
+                pt3 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp3rd[count+7]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-4)
+                pt4 = rc.Geometry.Point3d(rectangleCenterPt.X, rectangleCenterPt.Y, rectangleCenterPt.Z-9)
+                ptsList.append([pt1, pt2, pt3, pt4])
+                
+                if (count == 0) or (count == 1) or (count == 11): # Winter in Northern Hemisphere
+                    
+                    crvColors.append(System.Drawing.Color.LightBlue) 
+                
+                elif (count == 2) or (count == 3) or (count == 4):  # Spring in Northern Hemisphere
+                
+                    crvColors.append(System.Drawing.Color.ForestGreen) 
+                    
+                elif (count == 5) or (count == 6) or (count == 7):  # Summer in Northern Hemisphere
+                
+                    crvColors.append(System.Drawing.Color.Tomato) 
+                    
+                elif (count == 8) or (count == 9) or (count == 10):  # Autumn in Northern Hemisphere
+                
+                    crvColors.append(System.Drawing.Color.Yellow) # Autumn
+                    
+        else: # Site in Southern Hemisphere 
             
-            crvColors.append(colors[count])
-            
+            for count in range(12):
+                pt1 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp1st[count+7]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-0.5)
+                pt2 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp2nd[count+7]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-2)
+                pt3 = rc.Geometry.Point3d(rectangleCenterPt.X + (groundtemp3rd[count+7]- annualAvg)/diffFactor, rectangleCenterPt.Y, rectangleCenterPt.Z-4)
+                pt4 = rc.Geometry.Point3d(rectangleCenterPt.X, rectangleCenterPt.Y, rectangleCenterPt.Z-9)
+                ptsList.append([pt1, pt2, pt3, pt4])
+                
+                if (count == 0) or (count == 1) or (count == 11): # Summer in Southern Hemisphere
+                    
+                    crvColors.append(System.Drawing.Color.Tomato) 
+                
+                elif (count == 2) or (count == 3) or (count == 4):  # Autumn in Southern Hemisphere
+                
+                    crvColors.append(System.Drawing.Color.Yellow) 
+                    
+                elif (count == 5) or (count == 6) or (count == 7):  # Winter in Southern Hemisphere
+                
+                    crvColors.append(System.Drawing.Color.LightBlue) 
+                    
+                elif (count == 8) or (count == 9) or (count == 10):  # Spring in Northern Hemisphere
+                
+                    crvColors.append(System.Drawing.Color.ForestGreen) 
+                    
         #Create the ground profile curves.
         profileCrvs = []
         for list in ptsList:
@@ -615,11 +679,30 @@ elif visualisedata_Month == True:
             profileCrvs.append(monthCrv)
             
         return profileCrvs,crvColors
+        
+        
+    # Draw graph axes 
             
     divisionPts,divisionPts1,groundtempCtext,graphAxes = drawAxes(groundtemp1st,groundtemp2nd,groundtemp3rd)
-
+    
+    # Draw graph text
     graphtext = drawText(divisionPts,divisionPts1,groundtempCtext)
+    
+    # Draw text above graph which shows location
+    
+    Plane = rc.Geometry.Plane(rc.Geometry.Point3d(3.5,0,2.5), rc.Geometry.Vector3d(1,0,0),  rc.Geometry.Vector3d(0,0,1))
+
+    textSrfs5 = lb_visualization.text2srf([str(location.split(",")[1])], [rc.Geometry.Point3d(-2,5,0)],'Verdana', 0.3, False, Plane)
+    
+    for txt in textSrfs5:
+        graphtext.extend(txt)
+   
+    #locationtext = lb_visualization.text2srf([str() + ' m'], [rc.Geometry.Point3d(point[0]-1.5, point[1], point[2])],'Verdana', 0.25, False, textPlane)
     
     profileCrvs,crvColors = drawprofileCrvs_Month(groundtemp1st,groundtemp2nd,groundtemp3rd)
     
-else: pass
+    # Create legend colours in order of winter, spring, Autumn and Summer
+    Legendcolors = [System.Drawing.Color.LightBlue,System.Drawing.Color.ForestGreen,System.Drawing.Color.Yellow,System.Drawing.Color.Tomato]
+    
+    Legend = drawLegend(Legendcolors)
+    
