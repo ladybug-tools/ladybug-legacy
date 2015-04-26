@@ -2667,7 +2667,7 @@ class ResultVisualization(object):
             mainLine = False
             if angle in mainAngles: mainLine = True
             vector = rc.Geometry.Vector3d(northVector)
-            vector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+            vector.Rotate(math.radians(angle), rc.Geometry.Vector3d.ZAxis)
             line, basePt, baseCircle, outerCircle = drawLine(cenPt, vector, radius, mainLine, xMove)
             if len(angles) != 8 and len(angles) != 16:
                 if mainLine == True: compassText.append(mainText[mainAngles.index(angle)])
