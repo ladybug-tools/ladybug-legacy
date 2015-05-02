@@ -24,7 +24,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelopeAdvanced'
 ghenv.Component.NickName = 'SolarEnvelopeAdvanced'
-ghenv.Component.Message = 'VER 0.0.59\nAPR_20_2015'
+ghenv.Component.Message = 'VER 0.0.59\nMAY_02_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
