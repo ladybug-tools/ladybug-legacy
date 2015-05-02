@@ -13,20 +13,20 @@ Provided by Ladybug 0.0.59
     
     Args:
         _baseSrf: A surface representing the area for which you want to create the solar envelope.
-        _obstacleCurves: A list of curves indicating the bottom borders of your surroundings for which you would like solar access to be kept.
+        obstacleCurves_: A list of curves indicating the bottom borders of your surroundings for which you would like solar access to be kept. If left emptpy, calculating the self envelope - base surface used as the border for shadowing
         _sunVectors: Sun vectors representing hours of the year when sun should be accessible to the properties surrounding the baseSrf.  sunVectors can be generated using the Ladybug sunPath component. 
-        _gridSize: An numeric value inidcating the gird size of the analysis in Rhino model units. The smaller the grid size - the more test points( more accurate but slower).
+        gridSize_: An numeric value inidcating the gird size of the analysis in Rhino model units. The smaller the grid size - the more test points( more accurate but slower).DEfault value set to 6
         _runIt: Set to True to run the component and generate a solar envelope.
     Returns:
         readMe!:Log of the component
-        finalPointList: A list of points representing the heights to which you can build without shading any of the _obstacleCurves from the input _sunVectors.
+        finalPointList: A list of points representing the heights to which you can build without shading any of the obstacleCurves_ from the input _sunVectors.
         total_ms: The time that it took this component to run
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelopeAdvanced'
 ghenv.Component.NickName = 'SolarEnvelopeAdvanced'
 ghenv.Component.Message = 'VER 0.0.59\nMAY_02_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
@@ -91,10 +91,10 @@ class SolarEnvelope:
                             g.height = tempHeight
         tasks.Parallel.ForEach(xrange(len(checkPointList)),_findPointHeight)
     
-    def __init__(self,_baseSrf,_gridSize,obstacleCurves,azimuthAngles, alltitudeAngles):
+    def __init__(self,_baseSrf,gridSize,obstacleCurves,azimuthAngles, alltitudeAngles):
         self.initParameters()
         self.buildSunPosList(azimuthAngles, alltitudeAngles)
-        self.getPtsFromClosedCrv(_baseSrf,_gridSize)
+        self.getPtsFromClosedCrv(_baseSrf,gridSize)
         self.parallelFindPointHeights(self.checkPointList, obstacleCurves)
     
     def getFinalPointList(self):
@@ -150,11 +150,25 @@ if _runIt:
     #if debug:
     #    import pydevd as py
     #    py.settrace()
-    start = time.clock()
-    azimuthAngles, alltitudeAngles = computeAzAltFromSunVec(_sunVectors)
-    se = SolarEnvelope(_baseSrf,_gridSize,_obstacleCurves, azimuthAngles,alltitudeAngles)
-    finalPointList =se.getFinalPointList()
-    total_ms = time.clock() - start
-    print "[Main] - starting solar envelope simulation"
+    allDataProvided = True
+    if not _baseSrf :
+        print "[Solar Envelope] - Base surface must be provided"
+        allDataProvided = False
+    if len(_sunVectors) == 0:
+        print "[Solar Envelope] - A list of sun vectors from ladybug must be provided"
+        allDataProvided = False
+    if allDataProvided:
+        print "[Solar Envelope] - starting solar envelope simulation"
+        start = time.clock()
+        azimuthAngles, alltitudeAngles = computeAzAltFromSunVec(_sunVectors)
+        if not gridSize_ : 
+            print "[Solar Envelope] - no gridSize provided, using the default value of 6"
+            gridSize_ = 6
+        if not obstacleCurves_ :
+            print "[Solar Envelope] - no obstacle curves selected, taking the base surface as the solar envelope border"
+            obstacleCurves_ = _baseSrf.Curves3D
+        se = SolarEnvelope(_baseSrf,gridSize_,obstacleCurves_, azimuthAngles,alltitudeAngles)
+        finalPointList =se.getFinalPointList()
+        total_ms = time.clock() - start
 else:
-    print "not running"
+    print "[Solar Envelope] - To run the component set _runIt to true"
