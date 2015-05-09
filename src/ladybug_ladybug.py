@@ -275,7 +275,7 @@ class Preparation(object):
         try:
             # print north
             northVector = rc.Geometry.Vector3d.YAxis
-            northVector.Rotate(math.radians(float(north)), rc.Geometry.Vector3d.ZAxis)
+            northVector.Rotate(-math.radians(float(north)), rc.Geometry.Vector3d.ZAxis)
             northVector.Unitize()
             return math.radians(float(north)), northVector
         except Exception, e:
