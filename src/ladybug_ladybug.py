@@ -769,6 +769,22 @@ class Preparation(object):
         epwfile.close
         return locName, lat, lngt, timeZone, elev, locationString
 
+    def decomposeLocation(self, location):
+        locationStr = location.split('\n')
+        newLocStr = ""
+        #clean the idf file
+        for line in locationStr:
+            if '!' in line:
+                line = line.split('!')[0]
+                newLocStr  = newLocStr + line.replace(" ", "")
+            else:
+                newLocStr  = newLocStr + line
+        
+        newLocStr = newLocStr.replace(';', "")
+        site, locationName, latitude, longitude, timeZone, elevation = newLocStr.split(',')
+        
+        return locationName, float(latitude), float(longitude), float(timeZone), float(elevation)
+
     def separateHeader(self, inputList):
         num = []; str = []
         for item in inputList:
