@@ -22,7 +22,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Create LB Header"
 ghenv.Component.NickName = 'CreateHeader'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_08_2015'
+ghenv.Component.Message = 'VER 0.0.59\nMAY_02_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
