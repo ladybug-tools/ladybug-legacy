@@ -4484,6 +4484,348 @@ class WindSpeed(object):
         return vHeight
 
 
+class Photovoltaics(object):
+    """ Set of methods for Photovoltaics and Solar hot water analysis """
+    def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
+        # sunZenith, sunAzimuth, sunAltitude angles
+        # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
+        min = 30
+        
+        # leap year
+        if year%4 == 0:
+            k = 1
+        else:
+            k = 0
+        
+        numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
+        jdoy = int(numOfDays[int(month)-1] + int(day))
+        
+        # julian day of year
+        if month > 2:
+            jdoy = jdoy + k
+        
+        # current decimal time of day in UTC
+        tutc = hour + min/60.0 - timeZone
+        
+        if tutc < 0:
+            tutc = tutc + 24
+            jdoy = jdoy - 1
+        elif tutc > 24:
+            tutc = tutc - 24
+            jdoy = jdoy + 1
+        
+        julian = 32916.5 + 365*(year-1949) + int((year-1949)/4) + jdoy + (tutc/24) - 51545
+        
+        mnlong = 280.46 + 0.9856474*julian   # in degrees
+        mnlong = mnlong - 360*int(mnlong/360)
+        
+        if (mnlong < 0):
+            mnlong = (mnlong+360)
+        
+        mnanom = (357.528 + 0.9856003*julian)
+        mnanom = mnanom - 360*int(mnanom/360)
+        
+        if (mnanom < 0):
+            mnanom = (mnanom+360)
+        mnanom = mnanom*(math.pi/180)   # in radians
+        
+        eclong = (mnlong + 1.915*math.sin(mnanom) + 0.02 * math.sin(2*mnanom))
+        eclong = eclong - 360*int(eclong/360)
+        
+        if (eclong < 0):
+            eclong = (eclong+360)
+        eclong = eclong*(math.pi/180)
+        
+        obleq = (math.pi/180)*(23.439 - 0.0000004*julian)
+        
+        if (math.cos(eclong) < 0):
+            ra = math.atan(((math.cos(obleq)*math.sin(eclong))/math.cos(eclong))) + math.pi
+        elif (math.cos(obleq)*math.sin(eclong) < 0):
+            ra = math.atan(((math.cos(obleq)*math.sin(eclong))/math.cos(eclong))) + 2*math.pi
+        else:
+            ra = math.atan(((math.cos(obleq)*math.sin(eclong))/math.cos(eclong)))
+        
+        beta = math.asin(math.sin(obleq)*math.sin(eclong))   # in radians
+        
+        gmst = 6.697375 + 0.0657098242*julian + tutc
+        gmst = gmst - 24*int(gmst/24)
+        
+        if (gmst < 0):
+            gmst = gmst + 24
+        
+        lmst = gmst + longitude/15
+        lmst = lmst - 24*int(lmst/24)
+        
+        if (lmst < 0):
+            lmst = lmst + 24
+       
+        b = 15*(math.pi/180) * lmst - ra
+        
+        if (b < -math.pi):
+            HA = b + 2*math.pi   # in radians
+        elif (b > math.pi):
+            HA = b - 2*math.pi   # in radians
+        else:
+            HA = b
+        
+        # sun altitude, not corrected for radiation (in radians):
+        a = math.sin(beta) * math.sin((math.pi/180)*latitude ) + math.cos(beta) * math.cos((math.pi/180)*latitude ) * math.cos(HA)
+        
+        if (a >= -1) and (a <= 1):
+            alpha0 = math.asin(a)
+        elif (a > 1):
+            alpha0 = math.pi/2
+        elif (a < -1):
+            alpha0 = -math.pi/2
+        
+        # sun altitude, corrected for refraction (in radians):
+        alpha0d = 180/math.pi * alpha0
+        
+        if (alpha0d > -0.56):
+            r = 3.51561*((0.1594+0.0196*alpha0d+0.00002*(alpha0d**2))/(1+0.505*alpha0d+0.0845*(alpha0d**2)))
+        elif (alpha0d <= -0.56):
+            r = 0.56
+        
+        if (alpha0d+r > 90):
+            sunAltitudeR = math.pi/2
+        elif (alpha0d+r <= 90):
+            sunAltitudeR = (math.pi/180) * (alpha0d+r)
+        
+        # sun azimuth angle (in radians):
+        a = (math.sin(alpha0)*math.sin(math.pi/180*latitude ) - math.sin(beta))/(math.cos(alpha0)*math.cos(math.pi/180*latitude ))
+        
+        if (a >= -1) and (a <= 1):
+            b = math.acos(a)
+        elif (math.cos(alpha0) == 0) or (a < -1):
+            b = math.pi
+        elif (a > 1):
+            b = 0
+        
+        if (HA < -math.pi):
+            sunAzimuthR = b
+        elif ((HA >= -math.pi) and (HA <= 0)) or (HA >= math.pi):
+            sunAzimuthR = math.pi - b
+        elif (HA > 0) and (HA < math.pi):
+            sunAzimuthR = math.pi + b
+        
+        # sun zenith angle (in radians)
+        sunZenithR = (math.pi/2) - sunAltitudeR
+        
+        sunZenithD = math.degrees(sunZenithR)
+        sunAzimuthD = math.degrees(sunAzimuthR)
+        sunAltitudeD = math.degrees(sunAltitudeR)
+        
+        return sunZenithD, sunAzimuthD, sunAltitudeD
+    
+    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo):
+        # pvwatts Plane-of-Array Irradiance by Perez 1990 algorithm
+        
+        if sunZenithD > 90:
+            sunZenithD = 90
+            sunAzimuthD = 0
+        
+        GHI = DHI + DNI * math.cos(math.radians(sunZenithD))
+        
+        # convert degree angles to radians:
+        srfTiltR = math.radians(srfTiltD)
+        srfAzimuthR = math.radians(srfAzimuthD)
+        
+        sunAzimuthR = math.radians(sunAzimuthD)
+        sunZenithR = math.radians(sunZenithD)
+        
+        # Tracking
+        #alphaFixed (angle of incidence in radians):
+        AOI_R = math.acos( math.cos(sunZenithR)*(math.cos(srfTiltR)) + math.sin(srfTiltR) * (math.sin(sunZenithR)) * (math.cos(srfAzimuthR - sunAzimuthR)) )  # in radians
+        
+        if (AOI_R > math.pi):
+            AOI_R = math.pi
+        elif AOI_R < 0:
+            AOI_R = 0
+        AOI_D = math.degrees(AOI_R)  # in degrees
+        
+        # Eb beam irradiance
+        Eb = DNI * math.cos(AOI_R)
+        
+        # Ed_sky (Perez 1990 Model modified model) diffuse sky irradiance
+        a = max(0, math.cos(AOI_R))
+        b = max(math.cos(math.radians(85)), math.cos(sunZenithR))
+        
+        k = 5.534*(10**(-6))  # for angles in degrees
+        # sky clearness
+        if DHI == 0:
+            divison = 0
+        elif DHI > 0:
+            divison = ((DHI+DNI)/DHI)
+        epsilon = ( divison + k*(sunZenithD**3)) / (1 + k*(sunZenithD**3))
+        
+        # Perez model coefficients for irradiance based on epsilon bins
+        if epsilon <= 1.065:
+            f11 = -0.0083117
+            f12 = 0.5877285
+            f13 = -0.0620636
+            f21 = -0.0596012
+            f22 = 0.0721249
+            f23 = -0.0220216
+        elif epsilon > 1.065 and epsilon <= 1.23:
+            f11 = 0.1299457
+            f12 = 0.6825954
+            f13 = -0.1513752
+            f21 = -0.0189325
+            f22 = 0.065965
+            f23 = -0.0288748
+        elif epsilon > 1.23 and epsilon <= 1.5:
+            f11 = 0.3296958
+            f12 = 0.4868735
+            f13 = -0.2210958
+            f21 = 0.055414
+            f22 = -0.0639588
+            f23 = -0.0260542
+        elif epsilon > 1.5 and epsilon <= 1.95:
+            f11 = 0.5682053
+            f12 = 0.1874525
+            f13 = -0.295129
+            f21 = 0.1088631
+            f22 = -0.1519229
+            f23 = -0.0139754
+        elif epsilon > 1.95 and epsilon <= 2.8:
+            f11 = 0.873028
+            f12 = -0.3920403
+            f13 = -0.3616149
+            f21 = 0.2255647
+            f22 = -0.4620442
+            f23 = 0.0012448
+        elif epsilon > 2.8 and epsilon <= 4.5:
+            f11 = 1.1326077
+            f12 = -1.2367284
+            f13 = -0.4118494
+            f21 = 0.2877813
+            f22 = -0.8230357
+            f23 = 0.0558651
+        elif epsilon > 4.5 and epsilon <= 6.2:
+            f11 = 1.0601591
+            f12 = -1.5999137
+            f13 = -0.3589221
+            f21 = 0.2642124
+            f22 = -1.127234
+            f23 = 0.1310694
+        elif epsilon > 6.2:
+            f11 = 0.677747
+            f12 = -0.3272588
+            f13 = -0.2504286
+            f21 = 0.1561313
+            f22 = -1.3765031
+            f23 = 0.2506212
+        
+        # absolute optical air mass
+        AM0 = 1/(b + 0.15*(1/((93.9 - sunZenithD)**(1.253))))
+        
+        # sky brightness
+        delta = DHI*(AM0/1367)
+        
+        F1 = max(0, (f11 + delta*f12 + sunZenithR*f13))
+        F2 = f21 + delta*f22 + sunZenithR*f23
+        
+        # isotropic, circumsolar, and horizon brightening components of the sky diffuse irradiance:
+        if (sunZenithD <= 87.5):
+            Di = DHI*(1-F1)*((1+math.cos(srfTiltR))/2)
+            Dc = DHI*F1*(a/b)
+            Dh = DHI*F2*math.sin(srfTiltR)
+        # only isotropic brightening component of the sky diffuse irradiance:
+        elif (sunZenithD > 87.5):
+            Di = (1+math.cos(srfTiltR))/2
+            Dc = 0
+            Dh = 0
+        
+        Ed_sky = Di + Dc + Dh
+        
+        # Eg ground reflected irradiance
+        Eground = ((DNI * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
+        
+        Epoa = Eb + Eground + Ed_sky  # in Wh/m2
+        
+        if Epoa < 0:
+            Epoa = 0
+        if ((DNI<=0) and (DHI<=0)):
+            Epoa = 0
+        
+        return Epoa, Eb, Ed_sky, Eground, AOI_R
+    
+    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws, DNI, DHI):
+        # PVWatts v1 Thermal, Module Temperature, Cell Temperature Module and Inverter models
+        
+        # Sandia PV Array Performance Module Cover
+        # Module Cover Polynomial Coefficients
+        b0 = 1
+        b1 = -2.438e-3
+        b2 = 3.103e-4
+        b3 = -1.246e-5
+        b4 = 2.112e-7
+        b5 = -1.359e-9
+        
+        f = b0 + b1*AOI_R + b2*(AOI_R**2) + b3*(AOI_R**3) + b4*(AOI_R**4) + b5*(AOI_R**5)
+        Etr = Epoa - (1-f)*Eb*math.cos(AOI_R)
+        
+        # Thermal Model by Fuentes (1987)
+        if moduleType == 0:   # glass/cell/glass   close roof mount
+            a = -2.98
+            b = -0.0471
+            deltaT = 1
+        elif moduleType == 1:   # glass/cell/polymer sheet   insulated back
+            a = -2.81
+            b = -0.0455
+            deltaT = 0
+        elif moduleType == 2:   # glass/cell/polymer sheet   open rack
+            a = -3.56
+            b = -0.0750
+            deltaT = 3
+        elif moduleType == 3:   # for glass/cell/glass   open rack
+            a = -3.47
+            b = -0.0594
+            deltaT = 3
+        
+        # Sandia Module Temperature Model
+        Tm = Epoa * (math.exp(a+(b*ws))) + Ta  # in C degrees
+        
+        # Sandia Cell Temperature Model
+        Tcell = Tm + (Epoa/1000)*deltaT  # in C degrees
+        
+        if ((DNI<=0) and (DHI<=0)):
+            Pac = 0
+            return Tm, Tcell, Pac
+        
+        # PVFORM version 3.3 adapted Module Model
+        Pdc0 = nameplateDCpowerRating   # in kWatts
+        gamma = -0.005   # default value for crystalline silicon PV modules
+        
+        if Etr > 125:
+            Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))
+        if Etr <= 125:
+            Pdc = ((0.008*(Etr**2))/1000)*Pdc0*(1+gamma*(Tcell-25))
+        
+        # System Derates
+        Eta_inv = 0.92  # default
+        Pdc_ = Pdc*(DCtoACderateFactor/Eta_inv)
+        
+        # PVFORM version 3.3 adapted Inverter Model
+        Pac0 = Pdc0
+        Pinv_dc0 = Pac0/Eta_inv
+        f = Pdc_/Pinv_dc0
+        
+        # Pac in kWh
+        if (f >= 0.1) and (f <= 1):
+            Eta_op = 0.774 + 0.663 * f - 0.952 * (f**2) + 0.426 * (f**3)
+            Pac = Pdc_ * Eta_op * (Eta_inv/0.91)
+        elif (f >= 0) and (f < 0.1):
+            Eta_op = -0.015 + 8.46 * f
+            Pac = Pdc_ * Eta_op * (Eta_inv/0.91)
+        elif (f > 1):
+            Pac = Pac0
+        
+        if Pac < 0: Pac = 0
+        
+        return Tm, Tcell, Pac
+
+
 try:
     checkIn.checkForUpdates(LB= True, HB= False, OpenStudio = False, template = False)
 except:
@@ -4529,6 +4871,7 @@ if checkIn.letItFly:
     sc.sticky["ladybug_Vector"] = Vector
     sc.sticky["ladybug_ComfortModels"] = ComfortModels
     sc.sticky["ladybug_WindSpeed"] = WindSpeed
+    sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
         print "Hi " + os.getenv("USERNAME")+ "!\n" + \
