@@ -4743,10 +4743,8 @@ class Photovoltaics(object):
         
         Epoa = Eb + Eground + Ed_sky  # in Wh/m2
         
-        if Epoa < 0:
-            Epoa = 0
-        if ((DNI<=0) and (DHI<=0)):
-            Epoa = 0
+        if Epoa < 0 or ((DNI<=0) and (DHI<=0)):
+            Epoa = Eb = Ed_sky = Eground = 0
         
         return Epoa, Eb, Ed_sky, Eground, AOI_R
     
