@@ -4822,6 +4822,83 @@ class Photovoltaics(object):
         if Pac < 0: Pac = 0
         
         return Tm, Tcell, Pac
+    
+    def srfAzimuthAngle(self, PVsurface):
+        # calculate PVsurface azimuth angle
+        obj = rs.coercegeometry(PVsurface)
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        srfNormal = objSrf.NormalAt(0.5, 0.5)
+        srfNormal.Unitize()
+        
+        if srfNormal == rc.Geometry.Vector3d(0,0,1):
+            # "_PVsurface" surface is parallel to the XY plane, faced upward
+            srfAzimuthD = 180
+            surfaceTiltD = 0
+        elif srfNormal == rc.Geometry.Vector3d(0,0,-1):
+            # "_PVsurface" surface is parallel to the XY plane, faced downward
+            srfAzimuthD = 180
+            surfaceTiltD = 180
+        else:
+            # "_PVsurface" surface is not parallel to the XY plane
+            if srfNormal.Z == 0:
+                # "_PVsurface" surface is perpendicular to the XY plane, faced downward
+                surfaceTiltD = 90
+            else:
+                # "_PVsurface" surface is not parallel nor perpendicular to XY plane
+                surfaceTiltD = None
+            # calculate the srfAzimuthD
+            xyPlane = rc.Geometry.Plane(rc.Geometry.Point3d(0,0,0), rc.Geometry.Vector3d(0,0,1))
+            
+            projNormalPt = xyPlane.ClosestPoint(rc.Geometry.Point3d(srfNormal))
+            projNormal = rc.Geometry.Vector3d(projNormalPt)
+            projNormal.Unitize()
+            
+            angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
+            srfAzimuthR = angleToYaxis
+            srfAzimuthD = math.degrees(srfAzimuthR)
+            
+            return srfAzimuthD, surfaceTiltD
+    
+    def srfTiltAngle(self, PVsurface):
+        # calculate PVsurface tilt angle
+        obj = rs.coercegeometry(PVsurface)
+        zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
+        zAxis = rc.Geometry.Vector3d(0,0,1)
+        worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
+        boundingBox = rc.Geometry.Brep.GetBoundingBox(obj, worldXYplane)
+        boundingBoxBrep = boundingBox.ToBrep()
+        lowerFaceBB = boundingBoxBrep.Faces[4].DuplicateFace(False)
+        centroidLowerFaceBB = rc.Geometry.AreaMassProperties.Compute(lowerFaceBB).Centroid
+        lowerFaceBBPlane = rc.Geometry.Plane(centroidLowerFaceBB, zAxis)
+        transformMatrix = rc.Geometry.Transform.Translation(zeroZeroZeroPt-centroidLowerFaceBB)
+        obj.Transform(transformMatrix)
+        
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        centroidClosestPoint = objSrf.PointAt(0.5, 0.5)
+        orientedSrfNormal = objSrf.NormalAt(0.5, 0.5)
+        transformMatrix2 = rc.Geometry.Transform.PlanarProjection(worldXYplane)
+        projectedSrf = rc.Geometry.Brep.DuplicateBrep(obj)
+        projectedSrf.Transform(transformMatrix2)
+        
+        intersectPlane = rc.Geometry.Plane(centroidClosestPoint, zAxis, orientedSrfNormal)
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        brepPlaneInterCrv1 = rc.Geometry.Intersect.Intersection.BrepPlane(obj, intersectPlane, tol)[1][0]
+        brepPlaneInterCrv2 = rc.Geometry.Intersect.Intersection.BrepPlane(projectedSrf, intersectPlane, tol)[1][0]
+        brepPlaneInterVec1 = rc.Geometry.Vector3d(brepPlaneInterCrv1.PointAtEnd - brepPlaneInterCrv1.PointAtStart)
+        brepPlaneInterVec2 = rc.Geometry.Vector3d(brepPlaneInterCrv2.PointAtEnd - brepPlaneInterCrv2.PointAtStart)
+        srfTitlR = rc.Geometry.Vector3d.VectorAngle(brepPlaneInterVec1, brepPlaneInterVec2)
+    
+        if orientedSrfNormal.Z < 0:
+            srfTitlR = math.pi - srfTitlR
+        srfTiltD = math.degrees(srfTitlR)
+        
+        return srfTiltD
 
 
 try:
