@@ -2039,6 +2039,23 @@ class MeshPreparation(object):
                 srfPtCalculator(i)
     
         return testPoint, srfNormals, meshSrfArea
+    
+    def meshFromPoints(self, u, v, pts, meshColors=None):
+        # creates a mesh from grid of points
+        mesh = rc.Geometry.Mesh()
+        if (meshColors == None) or (len(meshColors) == 0):
+            for i,pt in enumerate(pts):
+                mesh.Vertices.Add(pt)
+        else:
+            for i,pt in enumerate(pts):
+                mesh.Vertices.Add(pt)
+                mesh.VertexColors.Add(meshColors[i])
+        for i in range(1,u):
+            for k in range(1,v):
+                mesh.Faces.AddFace(k-1+(i-1)*v, k-1+i*v, k-1+i*v+1, k-1+(i-1)*v+1)
+        
+        return mesh
+
 
 class RunAnalysisInsideGH(object):
     #
