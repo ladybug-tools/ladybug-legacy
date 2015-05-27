@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
-ghenv.Component.Message = 'VER 0.0.58\nFEB_14_2015'
+ghenv.Component.Message = 'VER 0.0.58\nMAY_27_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_10_2015
@@ -45,6 +45,61 @@ AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import Rhino as rc
 import System
+
+
+def drawLegend(colors):
+    # A function which draws the legend box in the Rhino Viewport
+    
+    dataMeshes = []
+    
+    def draw_Legendbox(x,z1,z2,color): 
+        
+        dataMeshes = []
+        
+        facePt1 = rc.Geometry.Point3d(rectangleCenterPt.X-5, rectangleCenterPt.Y, rectangleCenterPt.Z-z1)
+        facePt2 = rc.Geometry.Point3d(rectangleCenterPt.X-5+x, rectangleCenterPt.Y, rectangleCenterPt.Z-z1)
+        facePt3 = rc.Geometry.Point3d(rectangleCenterPt.X-5, rectangleCenterPt.Y, rectangleCenterPt.Z-z2)
+        facePt4 = rc.Geometry.Point3d(rectangleCenterPt.X-5+x, rectangleCenterPt.Y, rectangleCenterPt.Z-z2)
+    
+        # Create the mesh of the bars themselves
+        barMesh = rc.Geometry.Mesh()
+        for point in [facePt1, facePt2, facePt3, facePt4]:
+            barMesh.Vertices.Add(point)
+        barMesh.Faces.AddFace(0, 1, 3, 2)
+        
+        barMesh.Flip(True, True, True)
+        
+        # Color the mesh faces
+        barMesh.VertexColors.CreateMonotoneMesh(color)
+
+        dataMeshes.append(barMesh)
+    
+        return dataMeshes
+        
+    def draw_Legendboxlabel(x,z,text):
+        
+        legPlane = rc.Geometry.Plane(rc.Geometry.Point3d(x,0,z), rc.Geometry.Vector3d(1,0,0),  rc.Geometry.Vector3d(1,0,1))
+
+        legPt = rc.Geometry.Point3d(x,0,z)
+
+        textSrfs = lb_visualization.text2srf([text], [legPt],'Verdana', 0.3, False, legPlane)
+
+        for txt in textSrfs:
+            graphtext.extend(txt)
+        return graphtext
+        
+    dataMeshes.extend(draw_Legendbox(2,10,10.5,colors[0]))
+    dataMeshes.extend(draw_Legendbox(2,10.75,11.25,colors[1]))
+    dataMeshes.extend(draw_Legendbox(2,11.5,12,colors[2]))
+    dataMeshes.extend(draw_Legendbox(2,12.25,12.75,colors[3]))
+    
+    dataMeshes.extend(draw_Legendboxlabel(2.5,-10.25,'winter'))
+    dataMeshes.extend(draw_Legendboxlabel(2.5,-11,'spring'))
+    dataMeshes.extend(draw_Legendboxlabel(2.5,-11.75,'autumn'))
+    dataMeshes.extend(draw_Legendboxlabel(2.5,-12.5,'summer'))
+    
+    return dataMeshes
+
 
 def main(_epw_file):
     # import the classes
@@ -103,7 +158,7 @@ else:
     
 # Graphing the ground temperature data 
 
-if visualisedata_Season == True and visualisedata_Month == True:
+if visualisedata_Season == True and visualisedata_Month == True and (result!= -1):
     
     print "This component cannot draw both season and month curves please only set visualisedata_Season or visualisedata_Month to True but not both"
     w = gh.GH_RuntimeMessageLevel.Warning
@@ -186,10 +241,6 @@ elif visualisedata_Season == True:
     # These 3 function inputs are taken from drawAxes function
     def drawText(divisionPts,divisionPts1,groundtempCtext): 
         graphtext = []
-        
-        # Drawing site location
-        
-        print location
     
         # Drawing the labels on the vertical axis
     
@@ -390,58 +441,6 @@ elif visualisedata_Season == True:
         
         return profileCrvs,crvColors,colors
         
-    def drawLegend(colors):
-        # A function which draws the legend box in the Rhino Viewport
-        
-        dataMeshes = []
-        
-        def draw_Legendbox(x,z1,z2,color): 
-            
-            dataMeshes = []
-            
-            facePt1 = rc.Geometry.Point3d(rectangleCenterPt.X-5, rectangleCenterPt.Y, rectangleCenterPt.Z-z1)
-            facePt2 = rc.Geometry.Point3d(rectangleCenterPt.X-5+x, rectangleCenterPt.Y, rectangleCenterPt.Z-z1)
-            facePt3 = rc.Geometry.Point3d(rectangleCenterPt.X-5, rectangleCenterPt.Y, rectangleCenterPt.Z-z2)
-            facePt4 = rc.Geometry.Point3d(rectangleCenterPt.X-5+x, rectangleCenterPt.Y, rectangleCenterPt.Z-z2)
-        
-            # Create the mesh of the bars themselves
-            barMesh = rc.Geometry.Mesh()
-            for point in [facePt1, facePt2, facePt3, facePt4]:
-                barMesh.Vertices.Add(point)
-            barMesh.Faces.AddFace(0, 1, 3, 2)
-            
-            barMesh.Flip(True, True, True)
-            
-            # Color the mesh faces
-            barMesh.VertexColors.CreateMonotoneMesh(color)
-    
-            dataMeshes.append(barMesh)
-        
-            return dataMeshes
-            
-        def draw_Legendboxlabel(x,z,text):
-            
-            legPlane = rc.Geometry.Plane(rc.Geometry.Point3d(x,0,z), rc.Geometry.Vector3d(1,0,0),  rc.Geometry.Vector3d(1,0,1))
-
-            legPt = rc.Geometry.Point3d(x,0,z)
-    
-            textSrfs = lb_visualization.text2srf([text], [legPt],'Verdana', 0.3, False, legPlane)
-
-            for txt in textSrfs:
-                graphtext.extend(txt)
-            return graphtext
-            
-        dataMeshes.extend(draw_Legendbox(2,10,10.5,colors[0]))
-        dataMeshes.extend(draw_Legendbox(2,10.75,11.25,colors[1]))
-        dataMeshes.extend(draw_Legendbox(2,11.5,12,colors[2]))
-        dataMeshes.extend(draw_Legendbox(2,12.25,12.75,colors[3]))
-        
-        dataMeshes.extend(draw_Legendboxlabel(2.5,-10.25,'winter'))
-        dataMeshes.extend(draw_Legendboxlabel(2.5,-11,'spring'))
-        dataMeshes.extend(draw_Legendboxlabel(2.5,-11.75,'autumn'))
-        dataMeshes.extend(draw_Legendboxlabel(2.5,-12.5,'summer'))
-        
-        return dataMeshes
         
     divisionPts,divisionPts1,groundtempCtext,graphAxes = drawAxes(groundtemp1st,groundtemp2nd,groundtemp3rd)
 
