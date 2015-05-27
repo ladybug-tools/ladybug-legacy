@@ -103,7 +103,7 @@ else:
     
 # Graphing the ground temperature data 
 
-if visualisedata_Season == True and visualisedata_Month == True:
+if visualisedata_Season == True and visualisedata_Month == True and (result!= -1):
     
     print "This component cannot draw both season and month curves please only set visualisedata_Season or visualisedata_Month to True but not both"
     w = gh.GH_RuntimeMessageLevel.Warning
@@ -128,7 +128,9 @@ elif visualisedata_Season == True:
         rectanglePt1 = rc.Geometry.Point3d(rectangleCenterPt.X-5, rectangleCenterPt.Y, rectangleCenterPt.Z)
         rectanglePt2 = rc.Geometry.Point3d(rectangleCenterPt.X-5, rectangleCenterPt.Y, rectangleCenterPt.Z-10)
         verticalAxis = rc.Geometry.LineCurve(rectanglePt1, rectanglePt2)
-
+        
+        print verticalAxis.GetType
+        
         #Create markings along this vertical axis every meter.
         divisionParams = rc.Geometry.Curve.DivideByLength(verticalAxis, 1, False)
         divisionPts = []
@@ -187,10 +189,6 @@ elif visualisedata_Season == True:
     def drawText(divisionPts,divisionPts1,groundtempCtext): 
         graphtext = []
         
-        # Drawing site location
-        
-        print location
-    
         # Drawing the labels on the vertical axis
     
         graphtextvert = []
