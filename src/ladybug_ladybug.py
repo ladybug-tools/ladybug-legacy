@@ -769,6 +769,22 @@ class Preparation(object):
         epwfile.close
         return locName, lat, lngt, timeZone, elev, locationString
 
+    def decomposeLocation(self, location):
+        locationStr = location.split('\n')
+        newLocStr = ""
+        #clean the idf file
+        for line in locationStr:
+            if '!' in line:
+                line = line.split('!')[0]
+                newLocStr  = newLocStr + line.replace(" ", "")
+            else:
+                newLocStr  = newLocStr + line
+        
+        newLocStr = newLocStr.replace(';', "")
+        site, locationName, latitude, longitude, timeZone, elevation = newLocStr.split(',')
+        
+        return locationName, float(latitude), float(longitude), float(timeZone), float(elevation)
+
     def separateHeader(self, inputList):
         num = []; str = []
         for item in inputList:
@@ -2023,6 +2039,23 @@ class MeshPreparation(object):
                 srfPtCalculator(i)
     
         return testPoint, srfNormals, meshSrfArea
+    
+    def meshFromPoints(self, u, v, pts, meshColors=None):
+        # creates a mesh from grid of points
+        mesh = rc.Geometry.Mesh()
+        if (meshColors == None) or (len(meshColors) == 0):
+            for i,pt in enumerate(pts):
+                mesh.Vertices.Add(pt)
+        else:
+            for i,pt in enumerate(pts):
+                mesh.Vertices.Add(pt)
+                mesh.VertexColors.Add(meshColors[i])
+        for i in range(1,u):
+            for k in range(1,v):
+                mesh.Faces.AddFace(k-1+(i-1)*v, k-1+i*v, k-1+i*v+1, k-1+(i-1)*v+1)
+        
+        return mesh
+
 
 class RunAnalysisInsideGH(object):
     #
@@ -4468,6 +4501,752 @@ class WindSpeed(object):
         return vHeight
 
 
+class Photovoltaics(object):
+    """ Set of methods for Photovoltaics and Solar hot water analysis """
+    def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
+        # sunZenith, sunAzimuth, sunAltitude angles
+        # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
+        min = 30
+        
+        # leap year
+        if year%4 == 0:
+            k = 1
+        else:
+            k = 0
+        
+        numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
+        jdoy = int(numOfDays[int(month)-1] + int(day))
+        
+        # julian day of year
+        if month > 2:
+            jdoy = jdoy + k
+        
+        # current decimal time of day in UTC
+        tutc = hour + min/60.0 - timeZone
+        
+        if tutc < 0:
+            tutc = tutc + 24
+            jdoy = jdoy - 1
+        elif tutc > 24:
+            tutc = tutc - 24
+            jdoy = jdoy + 1
+        
+        julian = 32916.5 + 365*(year-1949) + int((year-1949)/4) + jdoy + (tutc/24) - 51545
+        
+        mnlong = 280.46 + 0.9856474*julian   # in degrees
+        mnlong = mnlong - 360*int(mnlong/360)
+        
+        if (mnlong < 0):
+            mnlong = (mnlong+360)
+        
+        mnanom = (357.528 + 0.9856003*julian)
+        mnanom = mnanom - 360*int(mnanom/360)
+        
+        if (mnanom < 0):
+            mnanom = (mnanom+360)
+        mnanom = mnanom*(math.pi/180)   # in radians
+        
+        eclong = (mnlong + 1.915*math.sin(mnanom) + 0.02 * math.sin(2*mnanom))
+        eclong = eclong - 360*int(eclong/360)
+        
+        if (eclong < 0):
+            eclong = (eclong+360)
+        eclong = eclong*(math.pi/180)
+        
+        obleq = (math.pi/180)*(23.439 - 0.0000004*julian)
+        
+        if (math.cos(eclong) < 0):
+            ra = math.atan(((math.cos(obleq)*math.sin(eclong))/math.cos(eclong))) + math.pi
+        elif (math.cos(obleq)*math.sin(eclong) < 0):
+            ra = math.atan(((math.cos(obleq)*math.sin(eclong))/math.cos(eclong))) + 2*math.pi
+        else:
+            ra = math.atan(((math.cos(obleq)*math.sin(eclong))/math.cos(eclong)))
+        
+        beta = math.asin(math.sin(obleq)*math.sin(eclong))   # in radians
+        
+        gmst = 6.697375 + 0.0657098242*julian + tutc
+        gmst = gmst - 24*int(gmst/24)
+        
+        if (gmst < 0):
+            gmst = gmst + 24
+        
+        lmst = gmst + longitude/15
+        lmst = lmst - 24*int(lmst/24)
+        
+        if (lmst < 0):
+            lmst = lmst + 24
+       
+        b = 15*(math.pi/180) * lmst - ra
+        
+        if (b < -math.pi):
+            HA = b + 2*math.pi   # in radians
+        elif (b > math.pi):
+            HA = b - 2*math.pi   # in radians
+        else:
+            HA = b
+        
+        # sun altitude, not corrected for radiation (in radians):
+        a = math.sin(beta) * math.sin((math.pi/180)*latitude ) + math.cos(beta) * math.cos((math.pi/180)*latitude ) * math.cos(HA)
+        
+        if (a >= -1) and (a <= 1):
+            alpha0 = math.asin(a)
+        elif (a > 1):
+            alpha0 = math.pi/2
+        elif (a < -1):
+            alpha0 = -math.pi/2
+        
+        # sun altitude, corrected for refraction (in radians):
+        alpha0d = 180/math.pi * alpha0
+        
+        if (alpha0d > -0.56):
+            r = 3.51561*((0.1594+0.0196*alpha0d+0.00002*(alpha0d**2))/(1+0.505*alpha0d+0.0845*(alpha0d**2)))
+        elif (alpha0d <= -0.56):
+            r = 0.56
+        
+        if (alpha0d+r > 90):
+            sunAltitudeR = math.pi/2
+        elif (alpha0d+r <= 90):
+            sunAltitudeR = (math.pi/180) * (alpha0d+r)
+        
+        # sun azimuth angle (in radians):
+        a = (math.sin(alpha0)*math.sin(math.pi/180*latitude ) - math.sin(beta))/(math.cos(alpha0)*math.cos(math.pi/180*latitude ))
+        
+        if (a >= -1) and (a <= 1):
+            b = math.acos(a)
+        elif (math.cos(alpha0) == 0) or (a < -1):
+            b = math.pi
+        elif (a > 1):
+            b = 0
+        
+        if (HA < -math.pi):
+            sunAzimuthR = b
+        elif ((HA >= -math.pi) and (HA <= 0)) or (HA >= math.pi):
+            sunAzimuthR = math.pi - b
+        elif (HA > 0) and (HA < math.pi):
+            sunAzimuthR = math.pi + b
+        
+        # sun zenith angle (in radians)
+        sunZenithR = (math.pi/2) - sunAltitudeR
+        
+        sunZenithD = math.degrees(sunZenithR)
+        sunAzimuthD = math.degrees(sunAzimuthR)
+        sunAltitudeD = math.degrees(sunAltitudeR)
+        
+        return sunZenithD, sunAzimuthD, sunAltitudeD
+    
+    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo):
+        # pvwatts Plane-of-Array Irradiance by Perez 1990 algorithm
+        
+        if sunZenithD > 90:
+            sunZenithD = 90
+            sunAzimuthD = 0
+        
+        GHI = DHI + DNI * math.cos(math.radians(sunZenithD))
+        
+        # convert degree angles to radians:
+        srfTiltR = math.radians(srfTiltD)
+        srfAzimuthR = math.radians(srfAzimuthD)
+        
+        sunAzimuthR = math.radians(sunAzimuthD)
+        sunZenithR = math.radians(sunZenithD)
+        
+        # Tracking
+        #alphaFixed (angle of incidence in radians):
+        AOI_R = math.acos( math.cos(sunZenithR)*(math.cos(srfTiltR)) + math.sin(srfTiltR) * (math.sin(sunZenithR)) * (math.cos(srfAzimuthR - sunAzimuthR)) )  # in radians
+        
+        if (AOI_R > math.pi):
+            AOI_R = math.pi
+        elif AOI_R < 0:
+            AOI_R = 0
+        AOI_D = math.degrees(AOI_R)  # in degrees
+        
+        # Eb beam irradiance
+        Eb = DNI * math.cos(AOI_R)
+        
+        # Ed_sky (Perez 1990 Model modified model) diffuse sky irradiance
+        a = max(0, math.cos(AOI_R))
+        b = max(math.cos(math.radians(85)), math.cos(sunZenithR))
+        
+        k = 5.534*(10**(-6))  # for angles in degrees
+        # sky clearness
+        if DHI == 0:
+            divison = 0
+        elif DHI > 0:
+            divison = ((DHI+DNI)/DHI)
+        epsilon = ( divison + k*(sunZenithD**3)) / (1 + k*(sunZenithD**3))
+        
+        # Perez model coefficients for irradiance based on epsilon bins
+        if epsilon <= 1.065:
+            f11 = -0.0083117
+            f12 = 0.5877285
+            f13 = -0.0620636
+            f21 = -0.0596012
+            f22 = 0.0721249
+            f23 = -0.0220216
+        elif epsilon > 1.065 and epsilon <= 1.23:
+            f11 = 0.1299457
+            f12 = 0.6825954
+            f13 = -0.1513752
+            f21 = -0.0189325
+            f22 = 0.065965
+            f23 = -0.0288748
+        elif epsilon > 1.23 and epsilon <= 1.5:
+            f11 = 0.3296958
+            f12 = 0.4868735
+            f13 = -0.2210958
+            f21 = 0.055414
+            f22 = -0.0639588
+            f23 = -0.0260542
+        elif epsilon > 1.5 and epsilon <= 1.95:
+            f11 = 0.5682053
+            f12 = 0.1874525
+            f13 = -0.295129
+            f21 = 0.1088631
+            f22 = -0.1519229
+            f23 = -0.0139754
+        elif epsilon > 1.95 and epsilon <= 2.8:
+            f11 = 0.873028
+            f12 = -0.3920403
+            f13 = -0.3616149
+            f21 = 0.2255647
+            f22 = -0.4620442
+            f23 = 0.0012448
+        elif epsilon > 2.8 and epsilon <= 4.5:
+            f11 = 1.1326077
+            f12 = -1.2367284
+            f13 = -0.4118494
+            f21 = 0.2877813
+            f22 = -0.8230357
+            f23 = 0.0558651
+        elif epsilon > 4.5 and epsilon <= 6.2:
+            f11 = 1.0601591
+            f12 = -1.5999137
+            f13 = -0.3589221
+            f21 = 0.2642124
+            f22 = -1.127234
+            f23 = 0.1310694
+        elif epsilon > 6.2:
+            f11 = 0.677747
+            f12 = -0.3272588
+            f13 = -0.2504286
+            f21 = 0.1561313
+            f22 = -1.3765031
+            f23 = 0.2506212
+        
+        # absolute optical air mass
+        AM0 = 1/(b + 0.15*(1/((93.9 - sunZenithD)**(1.253))))
+        
+        # sky brightness
+        delta = DHI*(AM0/1367)
+        
+        F1 = max(0, (f11 + delta*f12 + sunZenithR*f13))
+        F2 = f21 + delta*f22 + sunZenithR*f23
+        
+        # isotropic, circumsolar, and horizon brightening components of the sky diffuse irradiance:
+        if (sunZenithD <= 87.5):
+            Di = DHI*(1-F1)*((1+math.cos(srfTiltR))/2)
+            Dc = DHI*F1*(a/b)
+            Dh = DHI*F2*math.sin(srfTiltR)
+        # only isotropic brightening component of the sky diffuse irradiance:
+        elif (sunZenithD > 87.5):
+            Di = (1+math.cos(srfTiltR))/2
+            Dc = 0
+            Dh = 0
+        
+        Ed_sky = Di + Dc + Dh
+        
+        # Eg ground reflected irradiance
+        Eground = ((DNI * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
+        
+        Epoa = Eb + Eground + Ed_sky  # in Wh/m2
+        
+        if Epoa < 0 or ((DNI<=0) and (DHI<=0)):
+            Epoa = Eb = Ed_sky = Eground = 0
+        
+        return Epoa, Eb, Ed_sky, Eground, AOI_R
+    
+    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws, DNI, DHI):
+        # PVWatts v1 Thermal, Module Temperature, Cell Temperature Module and Inverter models
+        
+        # Sandia PV Array Performance Module Cover
+        # Module Cover Polynomial Coefficients
+        b0 = 1
+        b1 = -2.438e-3
+        b2 = 3.103e-4
+        b3 = -1.246e-5
+        b4 = 2.112e-7
+        b5 = -1.359e-9
+        
+        f = b0 + b1*AOI_R + b2*(AOI_R**2) + b3*(AOI_R**3) + b4*(AOI_R**4) + b5*(AOI_R**5)
+        Etr = Epoa - (1-f)*Eb*math.cos(AOI_R)
+        
+        # Thermal Model by Fuentes (1987)
+        if moduleType == 0:   # glass/cell/glass   close roof mount
+            a = -2.98
+            b = -0.0471
+            deltaT = 1
+        elif moduleType == 1:   # glass/cell/polymer sheet   insulated back
+            a = -2.81
+            b = -0.0455
+            deltaT = 0
+        elif moduleType == 2:   # glass/cell/polymer sheet   open rack
+            a = -3.56
+            b = -0.0750
+            deltaT = 3
+        elif moduleType == 3:   # for glass/cell/glass   open rack
+            a = -3.47
+            b = -0.0594
+            deltaT = 3
+        
+        # Sandia Module Temperature Model
+        Tm = Epoa * (math.exp(a+(b*ws))) + Ta  # in C degrees
+        
+        # Sandia Cell Temperature Model
+        Tcell = Tm + (Epoa/1000)*deltaT  # in C degrees
+        
+        if ((DNI<=0) and (DHI<=0)):
+            Pac = 0
+            return Tm, Tcell, Pac
+        
+        # PVFORM version 3.3 adapted Module Model
+        Pdc0 = nameplateDCpowerRating   # in kWatts
+        gamma = -0.005   # default value for crystalline silicon PV modules
+        
+        if Etr > 125:
+            Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))
+        if Etr <= 125:
+            Pdc = ((0.008*(Etr**2))/1000)*Pdc0*(1+gamma*(Tcell-25))
+        
+        # System Derates
+        Eta_inv = 0.92  # default
+        Pdc_ = Pdc*(DCtoACderateFactor/Eta_inv)
+        
+        # PVFORM version 3.3 adapted Inverter Model
+        Pac0 = Pdc0
+        Pinv_dc0 = Pac0/Eta_inv
+        f = Pdc_/Pinv_dc0
+        
+        # Pac in kWh
+        if (f >= 0.1) and (f <= 1):
+            Eta_op = 0.774 + 0.663 * f - 0.952 * (f**2) + 0.426 * (f**3)
+            Pac = Pdc_ * Eta_op * (Eta_inv/0.91)
+        elif (f >= 0) and (f < 0.1):
+            Eta_op = -0.015 + 8.46 * f
+            Pac = Pdc_ * Eta_op * (Eta_inv/0.91)
+        elif (f > 1):
+            Pac = Pac0
+        
+        if Pac < 0: Pac = 0
+        
+        return Tm, Tcell, Pac
+    
+    def srfAzimuthAngle(self, PVsurface):
+        # calculate PVsurface azimuth angle
+        obj = rs.coercegeometry(PVsurface)
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        srfNormal = objSrf.NormalAt(0.5, 0.5)
+        srfNormal.Unitize()
+        
+        if srfNormal == rc.Geometry.Vector3d(0,0,1):
+            # "_PVsurface" surface is parallel to the XY plane, faced upward
+            srfAzimuthD = 180
+            surfaceTiltD = 0
+        elif srfNormal == rc.Geometry.Vector3d(0,0,-1):
+            # "_PVsurface" surface is parallel to the XY plane, faced downward
+            srfAzimuthD = 180
+            surfaceTiltD = 180
+        else:
+            # "_PVsurface" surface is not parallel to the XY plane
+            if srfNormal.Z == 0:
+                # "_PVsurface" surface is perpendicular to the XY plane, faced downward
+                surfaceTiltD = 90
+            else:
+                # "_PVsurface" surface is not parallel nor perpendicular to XY plane
+                surfaceTiltD = None
+            # calculate the srfAzimuthD
+            xyPlane = rc.Geometry.Plane(rc.Geometry.Point3d(0,0,0), rc.Geometry.Vector3d(0,0,1))
+            
+            projNormalPt = xyPlane.ClosestPoint(rc.Geometry.Point3d(srfNormal))
+            projNormal = rc.Geometry.Vector3d(projNormalPt)
+            projNormal.Unitize()
+            
+            angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
+            srfAzimuthR = angleToYaxis
+            srfAzimuthD = math.degrees(srfAzimuthR)
+            
+            return srfAzimuthD, surfaceTiltD
+    
+    def srfTiltAngle(self, PVsurface):
+        # calculate PVsurface tilt angle
+        obj = rs.coercegeometry(PVsurface)
+        zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
+        zAxis = rc.Geometry.Vector3d(0,0,1)
+        worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
+        boundingBox = rc.Geometry.Brep.GetBoundingBox(obj, worldXYplane)
+        boundingBoxBrep = boundingBox.ToBrep()
+        lowerFaceBB = boundingBoxBrep.Faces[4].DuplicateFace(False)
+        centroidLowerFaceBB = rc.Geometry.AreaMassProperties.Compute(lowerFaceBB).Centroid
+        lowerFaceBBPlane = rc.Geometry.Plane(centroidLowerFaceBB, zAxis)
+        transformMatrix = rc.Geometry.Transform.Translation(zeroZeroZeroPt-centroidLowerFaceBB)
+        obj.Transform(transformMatrix)
+        
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        centroidClosestPoint = objSrf.PointAt(0.5, 0.5)
+        orientedSrfNormal = objSrf.NormalAt(0.5, 0.5)
+        transformMatrix2 = rc.Geometry.Transform.PlanarProjection(worldXYplane)
+        projectedSrf = rc.Geometry.Brep.DuplicateBrep(obj)
+        projectedSrf.Transform(transformMatrix2)
+        
+        intersectPlane = rc.Geometry.Plane(centroidClosestPoint, zAxis, orientedSrfNormal)
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        brepPlaneInterCrv1 = rc.Geometry.Intersect.Intersection.BrepPlane(obj, intersectPlane, tol)[1][0]
+        brepPlaneInterCrv2 = rc.Geometry.Intersect.Intersection.BrepPlane(projectedSrf, intersectPlane, tol)[1][0]
+        brepPlaneInterVec1 = rc.Geometry.Vector3d(brepPlaneInterCrv1.PointAtEnd - brepPlaneInterCrv1.PointAtStart)
+        brepPlaneInterVec2 = rc.Geometry.Vector3d(brepPlaneInterCrv2.PointAtEnd - brepPlaneInterCrv2.PointAtStart)
+        srfTitlR = rc.Geometry.Vector3d.VectorAngle(brepPlaneInterVec1, brepPlaneInterVec2)
+    
+        if orientedSrfNormal.Z < 0:
+            srfTitlR = math.pi - srfTitlR
+        srfTiltD = math.degrees(srfTitlR)
+        
+        return srfTiltD
+    
+    def WMMcoefficients(self, COFfilePath=None):
+        # WMM coefficients extractor and WMM 2015-2020 coefficients
+        # written by: Christopher Weiss (cmweiss@gmail.com), source: https://pypi.python.org/pypi/geomag
+        
+        if COFfilePath:
+            wmm=[]
+            with open(COFfilePath) as COFfile:
+                for line in COFfile:
+                    linevals = line.strip().split()
+                    if len(linevals) == 3:
+                        epoch = float(linevals[0])
+                        model = linevals[1]
+                        modeldate = linevals[2]
+                    elif len(linevals) == 6:
+                        linedict = {"n": int(float(linevals[0])),
+                        "m": int(float(linevals[1])),
+                        "gnm": float(linevals[2]),
+                        "hnm": float(linevals[3]),
+                        "dgnm": float(linevals[4]),
+                        "dhnm": float(linevals[5])}
+                        wmm.append(linedict)
+            
+            z = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+            maxord = maxdeg = 12
+            tc = [z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13]]
+            sp = z[0:14]
+            cp = z[0:14]
+            cp[0] = 1.0
+            pp = z[0:13]
+            pp[0] = 1.0
+            p = [z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14]]
+            p[0][0] = 1.0
+            dp = [z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13]]
+            a = 6378.137
+            b = 6356.7523142
+            re = 6371.2
+            a2 = a*a
+            b2 = b*b
+            c2 = a2-b2
+            a4 = a2*a2
+            b4 = b2*b2
+            c4 = a4 - b4
+            
+            c = [z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14]]
+            cd = [z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14],z[0:14]]
+            
+            for wmmnm in wmm:
+                m = wmmnm["m"]
+                n = wmmnm["n"]
+                gnm = wmmnm["gnm"]
+                hnm = wmmnm["hnm"]
+                dgnm = wmmnm["dgnm"]
+                dhnm = wmmnm["dhnm"]
+                if (m <= n):
+                    c[m][n] = gnm
+                    cd[m][n] = dgnm
+                    if (m != 0):
+                        c[n][m-1] = hnm
+                        cd[n][m-1] = dhnm
+            
+            # convert schmidt normalized gauss coefficients to unnormalized
+            snorm = [z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13]]
+            snorm[0][0] = 1.0
+            k = [z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13],z[0:13]]
+            k[1][1] = 0.0
+            fn = [0.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0]
+            fm = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0]
+            for n in range(1,maxord+1):
+                snorm[0][n] = snorm[0][n-1]*(2.0*n-1)/n
+                j=2.0
+                m=0
+                D1=1
+                D2=(n-m+D1)/D1
+                while (D2 > 0):
+                    k[m][n] = (((n-1)*(n-1))-(m*m))/((2.0*n-1)*(2.0*n-3.0))
+                    if (m > 0):
+                        flnmj = ((n-m+1.0)*j)/(n+m)
+                        snorm[m][n] = snorm[m-1][n]*math.sqrt(flnmj)
+                        j = 1.0
+                        c[n][m-1] = snorm[m][n]*c[n][m-1]
+                        cd[n][m-1] = snorm[m][n]*cd[n][m-1]
+                    c[m][n] = snorm[m][n]*c[m][n]
+                    cd[m][n] = snorm[m][n]*cd[m][n]
+                    D2=D2-1
+                    m=m+D1
+        
+        else:
+            # no COFfilePath inputted, use WMM 2015-2020.COF coefficients:
+            epoch = 2015.0
+            maxord = 12
+            tc = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+            sp = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            cp = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            pp = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            p = [[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+            dp = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+            re = 6371.2
+            a2 = 40680631.5908
+            b2 = 40408299.9841
+            c2 = 272331.606682
+            a4 = 1.65491378662e+15
+            c4 = 2.20830790199e+13
+            c = [[0.0, -29438.5, -3667.9500000000003, 3377.75, 3969.0, -1831.725, 1003.40625, 2187.8999999999996, 1206.5625, 512.7890625, -342.80898437499997, 1067.792578125, -1320.388671875, 0.0],
+                 [4796.2, -1501.1, 5217.8030578012422, -7202.4184024360875, 4503.0043311382678, 3660.9859202943885, 1274.0706075900976, -2699.2368274123305, 576.46875, 1121.1505084935352, -1581.3594797464489, -699.57967039296318, -269.10823847557441, 0.0],
+                 [-4928.7237780179967, -555.98830922960963, 1451.9781919849897, 2373.3641945559048, 470.74821096314326, 1478.63499552797, 1087.9401092201722, -196.93350797286885, -947.792009121047, 336.81512900689262, 42.138384060792873, -940.81033876221875, 318.05194427898653, 0.0],
+                 [-353.03270917862551, 474.44045991040861, -425.56351611715962, 460.03234261299497, -700.70277222228833, -663.57598354483855, -1293.17423238808, 1062.82818860168, -132.54263465013815, -257.24680398006694, 99.168204275653849, 688.73281700535983, 843.98705644892641, 0.0],
+                 [1568.3316055605076, -738.01423597380563, 378.37949700003571, -243.66853606641544, 51.987551093987875, -349.19660919745473, -158.24900029305081, 185.23396312164252, -550.76612412740872, 33.825443023013385, -70.122509721407624, -215.56257141023613, -438.22404854078866, 0.0],
+                 [481.89595285185783, 1513.2184543630835, -561.92179032094839, 35.71833169046392, 70.226232078013382, 3.0167112680864894, 30.713942273827364, 57.422528567709179, 197.24679736884357, -448.08960423838624, 125.65654604793681, 95.054159320847774, 300.61921720066948, 0.0],
+                 [-391.29468215304178, 496.148511347661, 585.813904964708, -362.8813282582027, 16.98574080294998, 41.980830586337255, -47.623054217140982, -6.781108869499149, 80.323160923011869, -1.739793057467611, -28.924059580399042, -65.882349610875536, 20.829891011946017, 0.0],
+                 [-1918.905550105218, -561.83971392259639, 114.67895676626991, 301.31391334453849, 20.375735943380676, -66.600176396866644, -1.488697653361824, 4.336640990227923, -40.10922587136281, 65.541666851621656, 42.0906892135213, 9.920870589232127, 58.526941135745062, 0.0],
+                 [683.71875, -1015.0908500053819, 546.73836793181977, -390.34880642039639, 240.25549754701245, 39.131796347108356, -22.8121222143376, 1.3787546393280967, -1.2534133084800878, -23.514197358553233, 18.819971145948287, 38.692064716680534, -23.410776454298027, 0.0],
+                 [-2751.914884484132, 1173.4204494433677, 970.89922792476875, -383.35502092748504, -232.4675390409673, 135.70385848247366, 7.533524925473754, -10.077513153665672, 5.176919833491951, -6.395018617842998, -4.778612553812365, -1.762984967977451, -10.217300493286722, 0.0],
+                 [802.84404356358175, -63.207576091189296, 760.28956611334615, 514.23173795698926, -583.93336104629464, -24.792051068913466, -82.17705989306539, -22.911269221154438, -2.9202632273297784, -5.164562879088187, -2.1370605016916637, 1.088137945966928, 1.8864941272538016, 0.0],
+                 [-46.638644692864219, 859.00074408724333, -229.57760566845326, -263.46536505695531, 110.89651920765574, -18.823528460250156, -104.16914118693732, -34.140057102953413, -22.037312099718136, -5.44068972983464, -1.3339527900497614, 2.0299281587713764, -2.5033354595732336, 0.0],
+                 [-897.027461585248, 397.56493034873313, 1168.5974627754365, -1071.2143408774834, 100.20640573355649, 145.80923708362209, -11.705388227149014, 17.558082340723519, 5.108650246643361, -8.489223572642107, -0.55629676879405199, 0.39743760848879944, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+            cd = [[0.0, 10.7, -12.899999999999999, 7.75, -1.75, -1.5750000000000002, -7.21875, 5.362500000000001, 0.0, 0.0, 0.0, 0.0, 66.019433593750009, 0.0],
+                 [-26.8, 17.9, -5.715767664977294, -18.98354550656963, 4.427188724235731, 1.016658128379447, -3.780624948338568, -7.093920702791934, 6.703125, -12.740346687426538, 0.0, 0.0, 0.0, 0.0],
+                 [-46.938576885116575, -11.518137870333034, 2.0784609690826525, -0.7745966692414834, -36.00069443774661, -10.759298304257577, -8.966539361704715, -11.584323998404052, -28.041183701806126, -10.865004161512665, -21.069192030396437, -40.904797337487778, 0.0, 0.0],
+                 [25.71964229922337, -0.7745966692414834, 1.818309654596818, -8.221921916437788, 8.366600265340756, 0.0, 23.910771631212572, 26.621900677884089, 20.709786664084085, 33.193135997427994, 49.584102137826925, 32.796800809779043, 64.922081265302026, 0.0],
+                 [-3.320391543176798, 20.73953049131055, 6.274950199005566, -3.9194028563034955, -3.1059418861272987, 2.884088894261062, -6.002548286977789, 2.4697861749552334, -5.347243923567074, -28.187869185844487, -11.687084953567938, 0.0, -48.691560948976523, 0.0],
+                 [4.066632513517788, 12.296340919151518, -5.176833914179592, 7.321148731585772, 0.070156076002011389, 2.6659308880764323, 0.69804414258698555, -2.4697861749552334, 5.932234507333641, -6.738189537419342, -7.391561532231577, 0.0, 0.0, 0.0],
+                 [0.0, -32.877310992917295, -6.973975059103666, 0.54568620790707179, 2.3268138086232852, 0.87320127619581489, 1.007539934072094, -2.1796421366247265, 1.373045485863451, 1.739793057467611, -4.132008511485578, 0.0, 20.829891011946017, 0.0],
+                 [24.828722459771768, 14.480404998005064, -4.095677027366783, -1.2348930874776167, -4.322125806171658, 0.24218245962496965, 0.06472598492877496, 0.19417795478632488, -1.0027306467840702, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [-20.109375, 16.824710221083674, 12.42587199845045, 16.041731770701222, -1.4830586268334103, -1.373045485863451, 0.75204798508805271, 0.0, 0.18801199627201318, -0.51679554634182934, -1.63651923008246, 0.0, 0.0, 0.0],
+                 [-25.480693374853075, -10.865004161512665, -16.596567998713997, 5.6375738371688975, 3.369094768709671, 0.0, -1.506704985094751, 1.0335910926836587, 0.1827148176526571, -0.06090493921755237, -0.26547847521179802, 0.0, 0.0, 0.0],
+                 [24.3286073807146, -21.069192030396437, 0.0, 0.0, -14.783123064463155, 4.132008511485578, -2.0043185339772047, -1.63651923008246, 0.26547847521179802, -0.059362791713657326, -0.11872558342731465, -0.27203448649173201, 0.0, 0.0],
+                 [0.0, 40.904797337487778, 0.0, 23.951396823359573, 0.0, 0.0, 4.9604352946160635, 0.0, -0.88149248398872548, 0.0, -0.057997947393467898, -0.057997947393467898, 0.0, 0.0],
+                 [0.0, 0.0, -64.922081265302026, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+            k = [[0.0, -0.0, 0.33333333333333331, 0.26666666666666666, 0.25714285714285712, 0.25396825396825395, 0.25252525252525254, 0.25174825174825177, 0.25128205128205128, 0.25098039215686274, 0.25077399380804954, 0.25062656641604009, 0.25051759834368531],
+                 [0.0, 1.0, 0.0, 0.20000000000000001, 0.22857142857142856, 0.23809523809523808, 0.24242424242424243, 0.24475524475524477, 0.24615384615384617, 0.24705882352941178, 0.24767801857585139, 0.24812030075187969, 0.2484472049689441],
+                 [0.0, 0.0, -1.0, 0.0, 0.14285714285714285, 0.19047619047619047, 0.21212121212121213, 0.22377622377622378, 0.23076923076923078, 0.23529411764705882, 0.23839009287925697, 0.24060150375939848, 0.24223602484472051],
+                 [0.0, 0.0, 0.0, -0.33333333333333331, 0.0, 0.11111111111111111, 0.16161616161616163, 0.1888111888111888, 0.20512820512820512, 0.21568627450980393, 0.22291021671826625, 0.22807017543859648, 0.2318840579710145],
+                 [0.0, 0.0, 0.0, 0.0, -0.20000000000000001, 0.0, 0.090909090909090912, 0.13986013986013987, 0.16923076923076924, 0.18823529411764706, 0.20123839009287925, 0.21052631578947367, 0.21739130434782608],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, -0.14285714285714285, 0.0, 0.076923076923076927, 0.12307692307692308, 0.15294117647058825, 0.17337461300309598, 0.18796992481203007, 0.19875776397515527],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.11111111111111111, 0.0, 0.066666666666666666, 0.10980392156862745, 0.13931888544891641, 0.16040100250626566, 0.17598343685300208],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.090909090909090912, 0.0, 0.058823529411764705, 0.099071207430340563, 0.12781954887218044, 0.14906832298136646],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.076923076923076927, 0.0, 0.052631578947368418, 0.090225563909774431, 0.11801242236024845],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.066666666666666666, 0.0, 0.047619047619047616, 0.082815734989648032],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.058823529411764705, 0.0, 0.043478260869565216],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.052631578947368418, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.047619047619047616]]
+            fn = [0.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0]
+            fm = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0]
+        
+        return [epoch, maxord, tc, sp, cp, pp, p, dp, re, a2, b2, c2, a4, c4, c, cd, k, fn, fm]
+    
+    def GeoMag(self, dlat, dlon, elevation, time, coefficients):
+        # NOAA Magnetic Declination calculator
+        # written by: Christopher Weiss (cmweiss@gmail.com), source: https://pypi.python.org/pypi/geomag
+        
+        epoch, maxord, tc, sp, cp, pp, p, dp, re, a2, b2, c2, a4, c4, c, cd, k, fn, fm = coefficients
+        time = time.year+((time - datetime.date(time.year,1,1)).days/365.0)
+        alt = elevation/1000   # to kilometers
+        
+        otime = oalt = olat = olon = -1000.0
+        
+        dt = time - epoch
+        glat = dlat
+        glon = dlon
+        rlat = math.radians(glat)
+        rlon = math.radians(glon)
+        srlon = math.sin(rlon)
+        srlat = math.sin(rlat)
+        crlon = math.cos(rlon)
+        crlat = math.cos(rlat)
+        srlat2 = srlat*srlat
+        crlat2 = crlat*crlat
+        sp[1] = srlon
+        cp[1] = crlon
+        
+        # convert from geodetic coords. to spherical coords.
+        if (alt != oalt or glat != olat):
+            q = math.sqrt(a2-c2*srlat2)
+            q1 = alt*q
+            q2 = ((q1+a2)/(q1+b2))*((q1+a2)/(q1+b2))
+            ct = srlat/math.sqrt(q2*crlat2+srlat2)
+            st = math.sqrt(1.0-(ct*ct))
+            r2 = (alt*alt)+2.0*q1+(a4-c4*srlat2)/(q*q)
+            r = math.sqrt(r2)
+            d = math.sqrt(a2*crlat2+b2*srlat2)
+            ca = (alt+d)/r
+            sa = c2*crlat*srlat/(r*d)
+        
+        if (glon != olon):
+            for m in range(2,maxord+1):
+                sp[m] = sp[1]*cp[m-1]+cp[1]*sp[m-1]
+                cp[m] = cp[1]*cp[m-1]-sp[1]*sp[m-1]
+        
+        aor = re/r
+        ar = aor*aor
+        br = bt = bp = bpp = 0.0
+        for n in range(1,maxord+1):
+            ar = ar*aor
+            m=0
+            D3=1
+            D4=(n+m+1)
+            while D4>0:
+            
+                # compute unnormalized associated legendre polynomials and derivatives via recursion relations
+                if (alt != oalt or glat != olat):
+                    if (n == m):
+                        p[m][n] = st * p[m-1][n-1]
+                        dp[m][n] = st*dp[m-1][n-1]+ct*p[m-1][n-1]
+                    
+                    elif (n == 1 and m == 0):
+                        p[m][n] = ct*p[m][n-1]
+                        dp[m][n] = ct*dp[m][n-1]-st*p[m][n-1]
+                    
+                    elif (n > 1 and n != m):
+                        if (m > n-2):
+                            p[m][n-2] = 0
+                        if (m > n-2):
+                            dp[m][n-2] = 0.0
+                        p[m][n] = ct*p[m][n-1]-k[m][n]*p[m][n-2]
+                        dp[m][n] = ct*dp[m][n-1] - st*p[m][n-1]-k[m][n]*dp[m][n-2]
+                
+                # time adjust the gauss coefficients
+                if (time != otime):
+                    tc[m][n] = c[m][n]+dt*cd[m][n]
+                    if (m != 0):
+                        tc[n][m-1] = c[n][m-1]+dt*cd[n][m-1]
+                
+                # accumulate terms of the spherical harmonic expansions
+                par = ar*p[m][n]
+                
+                if (m == 0):
+                    temp1 = tc[m][n]*cp[m]
+                    temp2 = tc[m][n]*sp[m]
+                else:
+                    temp1 = tc[m][n]*cp[m]+tc[n][m-1]*sp[m]
+                    temp2 = tc[m][n]*sp[m]-tc[n][m-1]*cp[m]
+                
+                bt = bt-ar*temp1*dp[m][n]
+                bp = bp + (fm[m] * temp2 * par)
+                br = br + (fn[n] * temp1 * par)
+                
+                # special case:  north/south geographic poles
+                if (st == 0.0 and m == 1):
+                    if (n == 1):
+                        pp[n] = pp[n-1]
+                    else:
+                        pp[n] = ct*pp[n-1]-k[m][n]*pp[n-2]
+                    parp = ar*pp[n]
+                    bpp = bpp + (fm[m]*temp2*parp)
+                    
+                D4=D4-1
+                m=m+1
+        
+        if (st == 0.0):
+            bp = bpp
+        else:
+            bp = bp/st
+        
+        # rotate magnetic vector components from spherical to geodetic coordinates
+        bx = -bt*ca-br*sa
+        by = bp
+        bz = bt*sa-br*ca
+        
+        # compute declination (dec), inclination (dip) and total intensity (ti)
+        bh = math.sqrt((bx*bx)+(by*by))
+        ti = math.sqrt((bh*bh)+(bz*bz))
+        dec = math.degrees(math.atan2(by,bx))
+        dip = math.degrees(math.atan2(bz,bh))
+        
+        # compute magnetic grid variation if the current geodetic position is in the arctic or antarctic (i.e. glat > +55 degrees or glat < -55 degrees)
+        # otherwise, set magnetic grid variation to -999.0
+        gv = -999.0
+        if (math.fabs(glat) >= 55.):
+            if (glat > 0.0 and glon >= 0.0):
+                gv = dec-glon
+            if (glat > 0.0 and glon < 0.0):
+                gv = dec+math.fabs(glon);
+            if (glat < 0.0 and glon >= 0.0):
+                gv = dec+glon
+            if (glat < 0.0 and glon < 0.0):
+                gv = dec-math.fabs(glon)
+            if (gv > +180.0):
+                gv = gv - 360.0
+            if (gv < -180.0):
+                gv = gv + 360.0
+        
+        otime = time
+        oalt = alt
+        olat = glat
+        olon = glon
+        
+        return dec, dip, ti, bx, by, bz, time
+
+
 try:
     checkIn.checkForUpdates(LB= True, HB= False, OpenStudio = False, template = False)
 except:
@@ -4513,6 +5292,7 @@ if checkIn.letItFly:
     sc.sticky["ladybug_Vector"] = Vector
     sc.sticky["ladybug_ComfortModels"] = ComfortModels
     sc.sticky["ladybug_WindSpeed"] = WindSpeed
+    sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
         print "Hi " + os.getenv("USERNAME")+ "!\n" + \
