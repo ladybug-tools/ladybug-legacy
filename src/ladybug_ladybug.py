@@ -4876,8 +4876,8 @@ class Photovoltaics(object):
             angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
             srfAzimuthR = angleToYaxis
             srfAzimuthD = math.degrees(srfAzimuthR)
-            
-            return srfAzimuthD, surfaceTiltD
+        
+        return srfAzimuthD, surfaceTiltD
     
     def srfTiltAngle(self, PVsurface):
         # calculate PVsurface tilt angle
