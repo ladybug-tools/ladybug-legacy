@@ -768,7 +768,7 @@ class Preparation(object):
             elev + ';       !Elevation'
         epwfile.close
         return locName, lat, lngt, timeZone, elev, locationString
-    
+
     def decomposeLocation(self, location):
         locationStr = location.split('\n')
         newLocStr = ""
@@ -784,7 +784,7 @@ class Preparation(object):
         site, locationName, latitude, longitude, timeZone, elevation = newLocStr.split(',')
         
         return locationName, float(latitude), float(longitude), float(timeZone), float(elevation)
-    
+
     def separateHeader(self, inputList):
         num = []; str = []
         for item in inputList:
@@ -824,11 +824,16 @@ class Preparation(object):
         
         with epwfile as i:
             for line in i: 
-                if lnum == 3: 
-                    
+                if lnum == 3:
+                    noData = False
                     groundtemp = epwfile.readline().split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
-                    print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st)' + groundtemp[18]+ ' meters (2nd)'+groundtemp[34]+'meters (3rd)respectively'
-                          
+                    
+                    try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st)' + groundtemp[18]+ ' meters (2nd)'+ groundtemp[34]+'meters (3rd)respectively'
+                    except:
+                        if groundtemp[1] == '':
+                            print 'No ground temperatures found in weather file.'
+                            noData = True
+                        else: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters'
                     
                     def stringtoFloat(sequence): # stringtoFloattion that converts strings to floats, if not possible it passes
                     	strings = []
@@ -845,13 +850,16 @@ class Preparation(object):
                     		seq.remove(x)
                     	return seq
                     
-                    groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
-                    groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
-                    groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
-                    
-                    self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
-                    self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
-                    self.depthData(groundtemp3rd,float(groundtemp[34]))
+                    if noData == False:
+                        groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
+                        groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
+                        groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
+                        
+                        self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
+                        try: self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
+                        except: pass
+                        try: self.depthData(groundtemp3rd,float(groundtemp[34]))
+                        except: pass
                     
                 else:
                     pass
@@ -5285,7 +5293,7 @@ if checkIn.letItFly:
     sc.sticky["ladybug_ComfortModels"] = ComfortModels
     sc.sticky["ladybug_WindSpeed"] = WindSpeed
     sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
-    
+        
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
         print "Hi " + os.getenv("USERNAME")+ "!\n" + \
               "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
