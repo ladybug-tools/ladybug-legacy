@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.59
                  Input range: 0 to 100(%)
                  -
                  If not supplied default value of 2(%) will be used.
-        soiling_: Losses due to dust, dirt, leaves, other wildlife droppings, snow, and other foreign matter on the surface of the PV module that prevent solar radiation from reaching the cells. Soiling is location- and weather-dependent. There are greater soiling losses in high-traffic, high-pollution areas with infrequent rain. For northern locations, snow reduces the energy produced, depending on the amount of snow and how long it remains on the PV modules.
+        soiling_: Losses due to dust, dirt, leaves, other wildlife droppings, snow, and other foreign matter on the surface of the PV module that prevent solar radiation from reaching the cells. Soiling is location- and weather-dependent. There are greater soiling losses in high-traffic, high-pollution areas with infrequent rain.
                   Input range: 0 to 100(%)
                   -
                   If not supplied default value of 2(%) will be used.
@@ -81,8 +81,22 @@ import scriptcontext as sc
 
 def main(annualShading, age, snow, wiring, soiling, mismatch, availability, connections, nameplateRating, lightInducedDegradation):
     # checking for inputs and input ranges
-    if annualShading == None or annualShading < 0 or annualShading > 100:
+    if annualShading == None:
         annualShading = 0
+    else:
+        try:
+            annualShading = float(annualShading)
+            if float(annualShading) < 0 or float(annualShading) > 100:
+                annualShading = 0
+        except Exception, e:
+            totalLosses = DCtoACderateFactor = False
+            validInputs = False
+            if annualShading == "Please input \"ACenergyPerHour\" to calculate this output.":
+                printMsg = "Please insert a valid \"annualShading_\" input value by supplying data to \"ACenergyPerHour_\" input of the \"Sunpath shading\" component."
+            else:
+                printMsg = "Something is wrong with your \"annualShading_\" input. Please supply a valid numeric value."
+            return totalLosses, DCtoACderateFactor, validInputs, printMsg
+    
     if age == None or age < 0 or age > 100:
         age = 0
     if snow == None or snow < 0 or snow > 100:
@@ -131,13 +145,19 @@ Light-induced degradation: %s
     print resultsCompletedMsg
     print printOutputMsg
     
-    return round(totalLosses,3), round(DCtoACderateFactor,3)
+    validInputs = True
+    printMsg = "ok"
+    
+    return round(totalLosses,3), round(DCtoACderateFactor,3), validInputs, printMsg
 
 
 level = gh.GH_RuntimeMessageLevel.Warning
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
-        totalLosses, DCtoACderateFactor = main(annualShading_, age_, snow_, wiring_, soiling_, mismatch_, availability_, connections_, nameplateRating_, lightInducedDegradation_)
+        totalLosses, DCtoACderateFactor, validInputs, printMsg = main(annualShading_, age_, snow_, wiring_, soiling_, mismatch_, availability_, connections_, nameplateRating_, lightInducedDegradation_)
+        if not validInputs:
+            print printMsg
+            ghenv.Component.AddRuntimeMessage(level, printMsg)
     else:
         printMsg = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \

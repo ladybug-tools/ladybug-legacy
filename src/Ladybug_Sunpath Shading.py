@@ -7,8 +7,9 @@
 """
 This component calculates the amount of annual shading of sun window due to location's surroundings. Sun (or solar) window being an area of the the sky dome between winter and summer solstice sun paths.
 Obstruction from buildings, structures, trees, mountains or other objects are considered.
-It can be used to calculate annual shading for Photovoltaic arrays or Solar hot water collectors.
-Use "annualShading" output for Photovoltaic arrays and "beamIndexPerHour" output for Solar hot water collectors shading analysis.
+It can be used to calculate annual shading for Photovoltaic arrays, Solar hot water collectors or any other purpose.
+-
+Use "annualShading" or "beamIndexPerHour" output for Photovoltaic arrays and "beamIndexPerHour" output for Solar hot water collectors shading analysis.
 -
 Based on "Using sun path charts to estimate the effects of shading on PV arrays", University of Oregon, Frank Vignola:
 http://solardat.uoregon.edu/download/Papers/UsingSunPathChartstoEstimatetheEffectofShadingonPVArrays.pdf
@@ -21,6 +22,7 @@ Provided by Ladybug 0.0.59
         _epwFile: Input .epw file path by using grasshopper's "File Path" component.
         ACenergyPerHour_: Input the "ACenergyPerHour" output data from "Photovoltaics surface" component.
                           If you are calculating shading analysis for "Solar hot water surface" component (instead of "Photovoltaics surface" component), leave this input empty. In kWh.
+                          If you are calculating shading analysis for any other purpose, input annual solar radiation per hour data.
         context_: Buildings, structures, mountains and other permanent obstructions. Input polysurfaces, surfaces, or meshes.
         coniferousTrees_: This input allows for partial shading from coniferous(evergreen) context trees.
                           Input polysurfaces, surfaces, or meshes.
@@ -29,8 +31,8 @@ Provided by Ladybug 0.0.59
                          Leaf-less being a period from 21st September to 21st March in the northern hemisphere, and from 21st March to 21st September in the in the southern hemisphere.
                          Input polysurfaces, surfaces, or meshes.
         coniferousAllyearIndex_: All year round transmission index for coniferous(evergreen) context trees. It ranges from 0 to 1.0. 0 represents deciduous trees which do not allow solar radiation to pass through them (100% shading). 1 represents all solar radiation passing through deciduous trees, like the trees do not exist (0% shading).
-                                -
-                                If not supplied default value of 0.30 (equals 70% shading) will be used.
+                                 -
+                                 If not supplied default value of 0.30 (equals 70% shading) will be used.
         deciduousInleafIndex_: Deciduous context trees transmission index for in-leaf period. In-leaf being a period from 21st March to 21st September in the northern hemisphere, and from 21st September to 21st March in the southern hemisphere.
                                It ranges from 0 to 1.0. 0 represents deciduous trees which do not allow solar radiation to pass through them (100% shading). 1 represents all solar radiation passing through deciduous trees, like the trees do not exist (0% shading).
                                -
@@ -51,8 +53,8 @@ Provided by Ladybug 0.0.59
                 -
                 If not supplied, default value of 1 will be used.
         hoursPositionScale_: Scale factor for positioning of solar time hour points (that's "hoursPositions" output).
-                -
-                If not supplied, default value of 1 will be used.
+                             -
+                             If not supplied, default value of 1 will be used.
         precision_: Overall shading precision. Ranges from 1-100. It represents the square root number of shading analysis points per sun window quadrant.
                     Example - precision of 20 would be 400 shading analysis points per single sun window quadrant.
                     CAUTION!!! Higher precision numbers (50 >) require stronger performance PCs. If your "_context" contains only straight shape buildings/objects, and you have just a couple of trees supplied to the "coniferousTrees_" and "deciduousTrees_" inputs, the precision of < 50 will be just fine.
@@ -66,23 +68,23 @@ Provided by Ladybug 0.0.59
         
     output:
         readMe!: ...
-        beamIndexPerHour: Transmission index of beam (direct) irradiance for each hour during a year. It is used for shading analysis of Solar hot water collectors.
+        beamIndexPerHour: Transmission index of beam (direct) irradiance for each hour during a year.
                           Transmission index of 0 means 100% shading. Transmission index of 1 means 0% shading.
                           It is calculated for each PVsurface vertex and then averaged. It ranges from 0-1.
                           Unitless.
         sunWindowShadedAreaPer: Percent of the overall sun window shaded area. It is calculated for PVsurface area centroid. It ranges from 0-100(%).
-                             In percent(%).
-        unweightedAnnualShading: Annual unweighted shading of the active sun window quadrants. Active sun window quadrants are only those which produce AC energy (or receive solar radiation, in case Solar hot water collectors are analysed for shading).
+                                In percent(%).
+        unweightedAnnualShading: Annual unweighted shading of the active sun window quadrants. Active sun window quadrants are only those which produce AC energy (or solar radiation in case you are using this component for other purposes than Photovoltaics)
                                  Unweighted means that each active sun window quadrant produces the same percentage of AC power. It is calculated for each PVsurface vertex and then averaged. It ranges from 0-100(%).
                                  In percent(%).
-        Sep21toMar21Shading: Weighted shading of the active sun window quadrants, for period between 21st September to 21st March. Active sun window quadrants are only those which produce AC energy (or receive solar radiation, in case Solar hot water collectors are analysed for shading).
+        Sep21toMar21Shading: Weighted shading of the active sun window quadrants, for period between 21st September to 21st March. Active sun window quadrants are only those which produce AC energy (or solar radiation in case you are using this component for other purposes than Photovoltaics)
                              It is calculated for each PVsurface vertex and then averaged. It ranges from 0-100(%).
                              In percent(%).
-        Mar21toSep21Shading: Weighted shading of the active sun window quadrants, for period between 21st March to 21st September. Active sun window quadrants are only those which produce AC energy (or receive solar radiation, in case Solar hot water collectors are analysed for shading).
-                       It is calculated for each PVsurface vertex and then averaged. It ranges from 0-100(%).
-                       In percent(%).
-        annualShading: Annual weighted shading of the active sun window quadrants. It is used for shading analysis of PV panels. To calculate it, input data to "ACenergyPerHour_" input.
-                       Active sun window quadrants are only those which produce AC energy (or receive solar radiation, in case Solar hot water collectors are analysed for shading).
+        Mar21toSep21Shading: Weighted shading of the active sun window quadrants, for period between 21st March to 21st September. Active sun window quadrants are only those which produce AC energy (or solar radiation in case you are using this component for other purposes than Photovoltaics)
+                             It is calculated for each PVsurface vertex and then averaged. It ranges from 0-100(%).
+                             In percent(%).
+        annualShading: Annual weighted shading of the active sun window quadrants. To calculate it, input data to "ACenergyPerHour_" input.
+                       Active sun window quadrants are only those which produce AC energy (or solar radiation in case you are using this component for other purposes than Photovoltaics)
                        It is calculated for each PVsurface vertex and then averaged. It ranges from 0-100(%).
                        In percent(%).
         annalysisPts: Each vertex of the inputted _PVsurface for which a separate shading analysis was conducted.
@@ -92,14 +94,14 @@ Provided by Ladybug 0.0.59
                        The whole sunWindowCrvs geometry output is calculated for PVsurface area centroid.
                        Connect this output to a Grasshopper's "Geo" parameter in order to preview the "sunWindowCrvs" geometry separately in the Rhino scene.
         sunWindowMesh: Sun window mesh based on 3D polar sun path diagram. It is calculated for PVsurface area centroid.
-                       Black areas represent 100% shaded portions of the sun window. Darker green and green areas represent partially shaded portions from the coniferous and deciduous trees, respectively.
+                       Black areas represent 100% shaded portions of the sun window (of both active and inactive quadrants). Darker green and green areas represent partially shaded portions from the coniferous and deciduous trees, respectively.
                        Connect this output to a Grasshopper's "Mesh" parameter in order to preview the "sunWindowMesh" geometry separately in the Rhino scene.
         legend: A legend of the sunWindowMesh. Connect this output to a Grasshopper's "Geo" parameter in order to preview the legend separately in the Rhino scene.  
         legendBasePt: Legend base point, which can be used to move the "legend" geometry with grasshopper's "Move" component.
         quadrantCentroids: Centroid for each sun window active quadrant above the horizon.
                            Use grasshopper's "Text tag" component to visualize them.
-        quadrantShadingPercents: Shadinging percent per each sun window active quadrant above the horizon.
-                                  Use grasshopper's "Text tag" component to visualize them.
+        quadrantShadingPercents: Shadinging percent per each sun window active quadrant above the horizon. Active quadrants with less than 0.01% are neglected.
+                                 Use grasshopper's "Text tag" component to visualize them.
         quadrantACenergyPercents: AC energy percent per each sun window active quadrant above the horizon.
                                   Use grasshopper's "Text tag" component to visualize them.
         hoursPositions: Solar time hour point positions.
@@ -251,10 +253,12 @@ def checkInputData(PVsurface, ACenergyPerHour, context, coniferousTrees, deciduo
     # coniferousTrees
     joinedMesh2, validContext2 = meshingGeometry(coniferousTrees)
     contextMeshes.append(joinedMesh2)
+    if validContext2 == 1: validContext2 = 2
     # deciduousTrees
     joinedMesh3, validContext3 = meshingGeometry(deciduousTrees)
     contextMeshes.append(joinedMesh3)
-    validContextCategories = validContext1 + validContext2 + validContext3
+    if validContext3 == 1: validContext3 = 3
+    validContextCategories = [index for index in [validContext1, validContext2, validContext3] if index > 0]
     
     # default transmission indices based on: Planning and Installing Photovoltaic Systems: A Guide for Installers, Architects and Engineers,
     # Deutsche Gesellschaft Für Sonnenenergie (Dgs), Dec 2007.
@@ -537,36 +541,34 @@ def legendGeometry(legendPar, scale, testPt, eachQuadrantACpercent, validContext
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend1 = [legendSrfs] + lb_preparation.flattenList(legendTextSrfs)
     
+    
     # legend 2
     BBYlength = 432*(scale/200)
     legendWidth = BBYlength/10*legendScale
     legendFontSize = (legendWidth/3) * legendScale
-    #legendFont = "Verdana"
-    #legendBold = False
     titleBasePt = lb_visualization.BoundingBoxPar[5]
     legend2BasePoint = Rhino.Geometry.Point3d(titleBasePt.X, titleBasePt.Y, titleBasePt.Z)
     legend2MeshStartPt = Rhino.Geometry.Point3d(legend2BasePoint.X-legendWidth, legend2BasePoint.Y, legend2BasePoint.Z)
     
     # inputted context and/or context coniferousTrees and/or deciduousTrees
-    if validContextCategories > 0:
+    if len(validContextCategories) > 0:
         legend2MeshPts = []
-        colors = [System.Drawing.Color.Black, System.Drawing.Color.FromArgb(0,60,0), System.Drawing.Color.FromArgb(0,120,0)]
-        newColors = []
         step = legendWidth
-        for i in range(validContextCategories+1):
+        for i in range(len(validContextCategories)+1):
             for k in range(2):
                 pt = Rhino.Geometry.Point3d(legend2MeshStartPt.X -k*step, legend2MeshStartPt.Y +i*step, legend2MeshStartPt.Z)
                 legend2MeshPts.append(pt)
-                newColors.append(colors[k])
         
-        legend2Mesh = lb_meshpreparation.meshFromPoints(validContextCategories+1, 2, legend2MeshPts)
-        legend2MeshColored = lb_visualization.colorMesh(colors, [legend2Mesh])
+        legend2Mesh = lb_meshpreparation.meshFromPoints(len(validContextCategories)+1, 2, legend2MeshPts)
+        allColors = ["dummy", System.Drawing.Color.Black, System.Drawing.Color.FromArgb(0,60,0), System.Drawing.Color.FromArgb(0,120,0)]
+        newColors = [allColors[index] for index in validContextCategories]
+        legend2MeshColored = lb_visualization.colorMesh(newColors, [legend2Mesh])
         
         legend2 = [legend2MeshColored]
-        labelText = ["context", "coniferous trees", "deciduous trees"]
-        for i in range(validContextCategories):
+        labelText = ["dummy", "context", "coniferous trees", "deciduous trees"]
+        for i,index in enumerate(validContextCategories):
             labelOrigin = Rhino.Geometry.Point3d(legend2MeshStartPt.X - (legendWidth + legendFontSize*0.5), legend2MeshStartPt.Y + i*legendWidth, legend2MeshStartPt.Z)
-            text = lb_visualization.text2srf([labelText[i]], [labelOrigin], legendFont, legendFontSize, legendBold, None, 2)[0]
+            text = lb_visualization.text2srf([labelText[index]], [labelOrigin], legendFont, legendFontSize, legendBold, None, 2)[0]
             legend2.extend(text)
         labelTitleOrigin = Rhino.Geometry.Point3d(legend2MeshStartPt.X - (legendWidth + legendFontSize*0.5), legend2MeshStartPt.Y + (i+1)*legendWidth, legend2MeshStartPt.Z)
         textTitle = lb_visualization.text2srf(["Shading from:"], [labelTitleOrigin], legendFont, legendFontSize, legendBold, None, 2)[0]
@@ -577,7 +579,7 @@ def legendGeometry(legendPar, scale, testPt, eachQuadrantACpercent, validContext
     
     legend = legend1 + legend2
     
-    if validContextCategories > 0:
+    if len(validContextCategories) > 0:
         legendBasePoint = (legend1BasePoint + legend2BasePoint)/2
     else:
         legendBasePoint = legend1BasePoint
@@ -744,13 +746,21 @@ def shadingAndQuadrantPercentages(testPt, createSunWindowMesh, contextMeshes, tr
         quadrantCentroidsFiltered = []
         quadrantShadingPercentRoundedFiltered = []
         quadrantACPercentUnshadedRoundedFiltered = []
-        for i,ACpercent in enumerate(quadrantsSumACPercentsUnshaded):
+        for i,ACpercent in enumerate(newQuadrantsACpercents):
             if quadrantCentroids[i].Z >= testPtLifted.Z:  # filter quadrant centroids bellow the analysisPt plane
-                if newQuadrantsACpercents[i] > 0:  # filter 0 AC quadrant percents
-                    roundedACpercent = round(ACpercent,1)
+                if newQuadrantsACpercents[i] >= 0.01:  # filter < 0.01 unshaded AC quadrant percents
+                    roundedACpercent = round(quadrantsSumACPercentsUnshaded[i],1)
                     if roundedACpercent == 0:
-                        roundedACpercent = 0.01  # very small value
+                        if quadrantsSumACPercentsUnshaded[i] >= 0.01:
+                            # (shaded AC quadrant >= 0.01) and (shaded AC quadrant <= 0.1)
+                            roundedACpercent = 0.01
+                        else:
+                            # (shaded AC quadrant <= 0.01)
+                            roundedACpercent = int(roundedACpercent)
                     roundedShadingPercent = int(round(quadrantsSumShadingPercents[i],0))
+                    # if (shaded AC quadrant <= 0.01): roundedShadingPercent = 100
+                    if roundedACpercent == 0:
+                        roundedShadingPercent = 100
                     
                     quadrantCentroidsFiltered.append(quadrantCentroids[i])
                     quadrantACPercentUnshadedRoundedFiltered.append(roundedACpercent)
@@ -859,7 +869,7 @@ def main(srfCornerPts, srfCentroid, contextMeshes, treesTransmissionIndices, eac
     Sep21toMar21ShadingL = []
     Mar21toSep21ShadingL = []
     for cornerPt in srfCornerPts:
-        # calculate shading (annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading)
+    # calculate shading (annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading)
         sunWindowCrvs, outerBaseCrv, solarTimeHourCrvs, twoMonthCrvsCutted, sunAboveHorizon, sunPsolarTimeLFlattenFlipMatrix, hoursPositions, hours = sunWindowCurves(latitude, northRad, northVec, cornerPt, scale, hoursPositionScale)
         createSunWindowMesh = False
         annualShading, unweightedAnnualShading, Sep21toMar21Shading, Mar21toSep21Shading = shadingAndQuadrantPercentages(cornerPt, createSunWindowMesh, contextMeshes, treesTransmissionIndices, outerBaseCrv, sunPsolarTimeLFlattenFlipMatrix, solarTimeHourCrvs, twoMonthCrvsCutted, sunAboveHorizon, eachQuadrantACpercent, colors, precision)

@@ -19,6 +19,7 @@ Provided by Ladybug 0.0.59
         _PVsurface: - Input planar Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
                     - Or input surface Area, in square meters (example: "100").
                     - Or input PV system size (nameplate DC power rating), in kiloWatts at standard test conditions (example: "4 kw").
+        _epwFile: Input .epw file path by using grasshopper's "File Path" component.
         PVsurfacePercent_: The percentage of surface which will be used for PV modules (range 0-100).
                            -
                            If not supplied, default value of 100 (all surface area will be covered in PV modules) is used.
@@ -30,6 +31,10 @@ Provided by Ladybug 0.0.59
                                 -
                                 If not supplied, but surface inputted into "_PVsurface", PVsurfaceAzimuthAngle will be calculated from an angle PVsurface closes with its north.
                                 If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area or system size inputed), default value of 180° (south-facing) for locations in the northern hemisphere or 0° (north-facing) for locations in the southern hemisphere, will be used.
+        DCtoACderateFactor_: Factor which accounts for various locations and instances in a PV system where power is lost from DC system nameplate to AC power. It ranges from 0 to 1.
+                                    It can be calculated with Ladybug's "DC to AC derate factor" component.
+                                    -
+                                    If not supplied, default value of 0.85 will be used.
         moduleActiveAreaPercent_: Percentage of the module's area excluding module framing and gaps between cells. 
                                   -
                                   If not supplied, default value of 90(%) will be used.
@@ -45,16 +50,6 @@ Provided by Ladybug 0.0.59
                            Current typical module efficiencies for crystalline silicon modules range from 14-20%
                            -
                            If not defined, default value of 15(%) will be used.
-        DCtoACderateFactor_: Factor which accounts for various locations and instances in a PV system where power is lost from DC system nameplate to AC power. It ranges from 0 to 1.
-                                    It can be calculated with Ladybug's "DC to AC derate factor" component.
-                                    -
-                                    If not supplied, default value of 0.85 will be used.
-        _location: Input data from Ladybug's "Import epw" "location" output, or create your own location data with Ladybug's "Construct Location" component
-        _dryBulbTemperature: Hourly Dry Bulb Temperature (air temperature), in Celsius
-        _windSpeed: Hourly Wind Speed, in meters/second
-        _directNormalRadiation: Amount of solar radiation received directly from the solar disk on a surface perpendicular to the sun's rays, in Wh/m2
-        _diffuseHorizontalRadiation: Amount of solar radiation received from the sky on a horizontal surface, in Wh/m2
-        _modelYear: Input model year data from Ladybug's "Import epw" "modelYear" output.
         north_: Input a vector to be used as a true North direction, or a number between 0 and 360 that represents the clockwise degrees off from the Y-axis.
                 -
                 If not supplied, default North direction will be set to the Y-axis (0 degrees).
@@ -84,19 +79,14 @@ Provided by Ladybug 0.0.59
         ACenergyPerHour: AC power output for each hour during a year, in kWh
         ACenergyPerMonth: Total AC power output for each month, in kWh
         ACenergyPerYear: Total AC power output for a whole year, in kWh
-        beamRadiationPerHour: Beam (direct) POA (Plane of array) irradiance for each hour during a year, in kWh/m2
-        diffuseRadiationPerHour: Diffuse POA (Plane of array) irradiance for each hour during a year, in kWh/m2
-        reflectedRadiationPerHour: Ground reflected POA (Plane of array) irradiance for each hour during a year, in kWh/m2
+        averageDailyACenergyPerMonth: An average AC power output per day in each month, in kWh/day
+        averageDailyACenergyPerYear: An average AC power output per day in a whole year, in kWh/day
         totalRadiationPerHour: Total Incident POA (Plane of array) irradiance for each hour during a year, in kWh/m2
-        totalRadiationPerMonth: Total Incident POA (Plane of array) irradiance for each month, in kWh/m2
-        totalRadiationPerYear: Total Incident POA (Plane of array) irradiance for a whole year, in kWh/m2
-        averageDailyRadiationPerMonth: An average incident POA (Plane of array) irradiance per day in each month, in kWh/m2/day
-        averageDailyRadiationPerYear: An average incident POA (Plane of array) irradiance per day in a whole year, in kWh/m2/day
         moduleTemperaturePerHour: Module temperature for each hour during year, in °C
         cellTemperaturePerHour: Cell temperature for each hour during year, in °C
-        nameplateDCpowerRating: DC rating or system size. In kW
-        surfaceArea: Total area of the inputted _PVsurface. In m2
-        surfaceActiveArea: Total active area of the inputted _PVsurface. Active area being the _PVsurface area excluding module framing and gaps between cells. In m2
+        nameplateDCpowerRating: DC rating or system size of the PV system. In kW
+        PVcoverArea: An area of the inputted _PVsurface which will be covered with Photovoltaics. In m2
+        PVcoverActiveArea: coverArea with excluded module framing and gaps between cells. In m2
 """
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
@@ -116,25 +106,63 @@ import math
 import re
 
 
-def getLocationData(location):
+def getEpwData(epwFile, albedo):
     
-    if location:
+    if epwFile:
         try:
-            locationName, latitude, longitude, timeZone, elevation = lb_preparation.decomposeLocation(location)
-            validLocationData = True
+            # location data
+            locationName, latitude, longitude, timeZone, elevation, locationString = lb_preparation.epwLocation(epwFile)
+            # weather data
+            weatherData = lb_preparation.epwDataReader(epwFile, locationName)
+            dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, liquidPrecipitationDepth, barometricPressure, modelYear = weatherData
+            
+            if (albedo == None) or (albedo < 0) or (albedo > 1):
+                albedo = 0.2  # default
+            
+            Ta = dryBulbTemperature[7:]
+            ws = windSpeed[7:]
+            DNI = directNormalRadiation[7:]
+            DHI = diffuseHorizontalRadiation[7:]
+            yearsHOY = modelYear[7:]
+            
+            monthsHOY = [1 for i in range(744)] + [2 for i in range(672)] + [3 for i in range(744)] + [4 for i in range(720)] + [5 for i in range(744)] + [6 for i in range(720)] + [7 for i in range(744)] + [8 for i in range(744)] + [9 for i in range(720)] + [10 for i in range(744)] + [11 for i in range(720)] + [12 for i in range(744)]
+            
+            numberOfDaysMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
+            daysHOY = []
+            day = 1
+            for i,item in enumerate(numberOfDaysMonth):
+                for k in range(item):
+                    for g in range(24):
+                        daysHOY.append(day)
+                    day += 1
+                day = 1
+            
+            hoursHOY = []
+            hour = 1
+            for i in range(365):
+                for k in range(24):
+                    hoursHOY.append(hour)
+                    hour += 1
+                hour = 1
+            
+            HOYs = range(1,8761)
+            
+            validEpwData = True
             printMsg = "ok"
+            
+            return locationName, float(latitude), float(longitude), float(timeZone), float(elevation), Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validEpwData, printMsg
         
         except Exception, e:
-            # something is wrong with "_location" input (the input is not from Ladybug 'Import epw' component 'location' ouput)
-            latitude = longitude = timeZone = elevation = locationName = None
-            validLocationData = False
-            printMsg = "Something is wrong with \"_location\" input."
+            # something is wrong with "_epwFile" input
+            locationName = latitude = longitude = timeZone = elevation = Ta = ws = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = albedo = None
+            validEpwData = False
+            printMsg = "Something is wrong with \"_epwFile\" input."
     else:
-        latitude = longitude = timeZone = elevation = locationName = None
-        validLocationData = False
-        printMsg = "Please input \"location\" output from Ladybug \"Import epw\" component."
+        locationName = latitude = longitude = timeZone = elevation = Ta = ws = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = albedo = None
+        validEpwData = False
+        printMsg = "Please supply .epw file path to \"_epwFile\" input"
     
-    return latitude, longitude, timeZone, elevation, locationName, validLocationData, printMsg
+    return locationName, latitude, longitude, timeZone, elevation, Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validEpwData, printMsg
 
 
 def PVsurfaceInputData(PVsurface, PVsurfacePercent, unitAreaConversionFactor, DCtoACderateFactor, moduleActiveAreaPercent, moduleType, moduleEfficiency):
@@ -217,85 +245,6 @@ def PVsurfaceInputData(PVsurface, PVsurfacePercent, unitAreaConversionFactor, DC
             printMsg = "Something is wrong with your \"PVsurface\" input data"
             
             return PVsurfaceInputType, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, moduleActiveAreaPercent, moduleType, moduleEfficiency, validPVsurfaceData, printMsg
-
-
-def getWeatherData(dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, modelYear, albedo):
-    
-    if (len(dryBulbTemperature) == 0) or (dryBulbTemperature[0] is ""):
-        Ta = ws = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = albedo = None
-        validWeatherData = False
-        printMsg = "Please input \"_dryBulbTemperature\" from Ladybug \"Import epw\" component."
-        return Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validWeatherData, printMsg
-    if (len(windSpeed) == 0) or (windSpeed[0] is ""):
-        Ta = ws = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = albedo = None
-        validWeatherData = False
-        printMsg = "Please input \"_windSpeed\" from Ladybug \"Import epw\" component."
-        return Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validWeatherData, printMsg
-    if (len(directNormalRadiation) == 0) or (directNormalRadiation[0] is ""):
-        Ta = ws = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = albedo = None
-        validWeatherData = False
-        printMsg = "Please input \"_directNormalRadiation\" from Ladybug \"Import epw\" component."
-        return Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validWeatherData, printMsg
-    if (len(diffuseHorizontalRadiation) == 0) or (diffuseHorizontalRadiation[0] is ""):
-        Ta = ws = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = albedo = None
-        validWeatherData = False
-        printMsg = "Please input \"_diffuseHorizontalRadiation\" from Ladybug \"Import epw\" component."
-        return Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validWeatherData, printMsg
-    if (len(modelYear) == 0) or (modelYear[0] is ""):
-        Ta = ws = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = albedo = None
-        validWeatherData = False
-        printMsg = "Please input \"_modelYear\" from Ladybug \"Import epw\" component."
-        return Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validWeatherData, printMsg
-    if (albedo == None) or (albedo < 0) or (albedo > 1):
-        albedo = 0.2  # default
-    
-    if len(dryBulbTemperature) == 8767:
-        Ta = dryBulbTemperature[7:]
-    elif len(dryBulbTemperature) == 8760:
-        Ta = dryBulbTemperature
-    if len(windSpeed) == 8767:
-        ws = windSpeed[7:]
-    elif len(windSpeed) == 8760:
-        ws = windSpeed
-    if len(directNormalRadiation) == 8767:
-        DNI = directNormalRadiation[7:]
-    elif len(directNormalRadiation) == 8760:
-        DNI = directNormalRadiation
-    if len(diffuseHorizontalRadiation) == 8767:
-        DHI = diffuseHorizontalRadiation[7:]
-    elif len(diffuseHorizontalRadiation) == 8760:
-        DHI = diffuseHorizontalRadiation
-    if len(modelYear) == 8767:
-        yearsHOY = modelYear[7:]
-    elif len(modelYear) == 8760:
-        yearsHOY = modelYear
-    
-    monthsHOY = [1 for i in range(744)] + [2 for i in range(672)] + [3 for i in range(744)] + [4 for i in range(720)] + [5 for i in range(744)] + [6 for i in range(720)] + [7 for i in range(744)] + [8 for i in range(744)] + [9 for i in range(720)] + [10 for i in range(744)] + [11 for i in range(720)] + [12 for i in range(744)]
-    
-    numberOfDaysMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
-    daysHOY = []
-    day = 1
-    for i,item in enumerate(numberOfDaysMonth):
-        for k in range(item):
-            for g in range(24):
-                daysHOY.append(day)
-            day += 1
-        day = 1
-    
-    hoursHOY = []
-    hour = 1
-    for i in range(365):
-        for k in range(24):
-            hoursHOY.append(hour)
-            hour += 1
-        hour = 1
-    
-    HOYs = range(1,8761)
-    
-    validWeatherData = True
-    printMsg = "ok"
-    
-    return Ta, ws, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, albedo, validWeatherData, printMsg
 
 
 def checkAnnualHourlyInputData(annualHourlyData):
@@ -515,52 +464,37 @@ def correctSrfAzimuthDforNorth(north, srfAzimuthD):
 
 
 def radiation_ACenergy(latitude, longitude, timeZone, locationName, years, months, days, hours, HOYs, nameplateDCpowerRating, DCtoACderateFactor, srfArea, srfTiltD, srfAzimuthD, moduleType, moduleEfficiency, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, albedo):
-    # solar radiation, AC power output, energy value, module temperature, cell temperature
+    # solar radiation, AC power output, module temperature, cell temperature
     ACenergyPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "AC power output", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)]
     totalRadiationPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Total POA irradiance", "kWh/m2", "Hourly", (1, 1, 1), (12, 31, 24)]
-    beamRadiationPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "POA beam irradiance", "kWh/m2", "Hourly", (1, 1, 1), (12, 31, 24)]
-    diffuseRadiationPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "POA diffuse irradiance", "kWh/m2", "Hourly", (1, 1, 1), (12, 31, 24)]
-    reflectedRadiationPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "POA ground reflected irradiance", "kWh/m2", "Hourly", (1, 1, 1), (12, 31, 24)]
     moduleTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Module temperature", "°C", "Hourly", (1, 1, 1), (12, 31, 24)]
     cellTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Cell temperature", "°C", "Hourly", (1, 1, 1), (12, 31, 24)]
     hoyForMonths = [0, 744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016, 8760, 9000]
     numberOfDaysInThatMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
-    monthsOfYearHoyEpoa = [[],[],[],[],[],[],[],[],[],[],[],[]]
     monthsOfYearHoyPac = [[],[],[],[],[],[],[],[],[],[],[],[]]
-    averageDailyRadiationPerMonth = []
+    averageDailyACenergyPerMonth = []
     for i,hoy in enumerate(HOYs):
         sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, years[i], months[i], days[i], hours[i]-1)
         Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, directNormalRadiation[i], diffuseHorizontalRadiation[i], albedo)
         Tm, Tcell, Pac = lb_photovoltaics.pvwatts(nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, dryBulbTemperature[i], windSpeed[i], directNormalRadiation[i], diffuseHorizontalRadiation[i])
         Epoa = Epoa/1000 # to kWh/m2
-        Eb = Eb/1000 # to kWh/m2
-        Ed_sky = Ed_sky/1000 # to kWh/m2
-        Eground = Eground/1000 # to kWh/m2
         ACenergyPerHour.append(Pac)
         totalRadiationPerHour.append(Epoa)
-        beamRadiationPerHour.append(Eb)
-        diffuseRadiationPerHour.append(Ed_sky)
-        reflectedRadiationPerHour.append(Eground)
         moduleTemperaturePerHour.append(Tm)
         cellTemperaturePerHour.append(Tcell)
         for k,item in enumerate(hoyForMonths):
             if hoy >= hoyForMonths[k]+1 and hoy <= hoyForMonths[k+1]:
-                monthsOfYearHoyEpoa[k].append(Epoa)
                 monthsOfYearHoyPac[k].append(Pac)
-    
-    monthsOfYearSumEpoa = [sum(monthEpoa) for monthEpoa in monthsOfYearHoyEpoa]  # in kWh/m2
-    sumEpoaPerYear = sum(monthsOfYearSumEpoa)  # in kWh/m2
-    for g,sumMonthEpoa in enumerate(monthsOfYearSumEpoa):
-        MonthPoa = (sumMonthEpoa)/numberOfDaysInThatMonth[g]
-        averageDailyRadiationPerMonth.append(MonthPoa)  # in kWh/m2/day
-    
-    averageDailyRadiationPerYear = sum(averageDailyRadiationPerMonth)/12  # in kWh/m2/day
     
     ACenergyPerMonth = [sum(monthPac) for monthPac in monthsOfYearHoyPac]  # in kWh
     ACenergyPerYear = sum(ACenergyPerMonth)  # in kWh
+    for g,sumMonthPac in enumerate(ACenergyPerMonth):
+        MonthPac = (sumMonthPac)/numberOfDaysInThatMonth[g]
+        averageDailyACenergyPerMonth.append(MonthPac)  # in kWh/day
     
+    averageDailyACenergyPerYear = sum(averageDailyACenergyPerMonth)/12  # in kWh/day
     
-    return ACenergyPerHour, ACenergyPerMonth, ACenergyPerYear, beamRadiationPerHour, diffuseRadiationPerHour, reflectedRadiationPerHour, totalRadiationPerHour, monthsOfYearSumEpoa, sumEpoaPerYear, averageDailyRadiationPerMonth, averageDailyRadiationPerYear, moduleTemperaturePerHour, cellTemperaturePerHour
+    return ACenergyPerHour, ACenergyPerMonth, ACenergyPerYear, averageDailyACenergyPerMonth, averageDailyACenergyPerYear, totalRadiationPerHour, moduleTemperaturePerHour, cellTemperaturePerHour
 
 
 def printOutput(unitAreaConversionFactor, north, latitude, longitude, timeZone, elevation, locationName, albedo, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, srfTiltD, srfAzimuthD, moduleActiveAreaPercent, moduleType, moduleEfficiency, conditionalStatementForFinalPrint):
@@ -609,28 +543,23 @@ if sc.sticky.has_key("ladybug_release"):
             unitAreaConversionFactor = unitConversionFactor**2
             PVsurfaceInputType, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, moduleActiveAreaPercent, moduleType, moduleEfficiency, validPVsurfaceData, printMsg = PVsurfaceInputData(_PVsurface, PVsurfacePercent_, unitAreaConversionFactor, DCtoACderateFactor_, moduleActiveAreaPercent_, moduleType_, moduleEfficiency_)
             if validPVsurfaceData:
-                latitude, longitude, timeZone, elevation, locationName, validLocationData, printMsg = getLocationData(_location)
-                if validLocationData:
-                    dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, albedo, validWeatherData, printMsg = getWeatherData(_dryBulbTemperature, _windSpeed, _directNormalRadiation, _diffuseHorizontalRadiation, _modelYear, albedo_)
-                    if validWeatherData:
-                        validAnnualHourlyData, annualHourlyDataLists, annualHourlyDataListsEpwNames, printMsg = checkAnnualHourlyInputData(annualHourlyData_)
-                        if validAnnualHourlyData:
-                            validConditionalStatement, weatherPerHourDataConditionalStatementSubLists, conditionalStatementForFinalPrint, printMsg = checkConditionalStatement(conditionalStatement_, annualHourlyDataLists, annualHourlyDataListsEpwNames, [dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation], True)
-                            if validConditionalStatement:
-                                dryBulbTemperatureCondStat, windSpeedCondStat, directNormalRadiationCondStat, diffuseHorizontalRadiationCondStat = weatherPerHourDataConditionalStatementSubLists
-                                # all inputs ok
-                                if _runIt:
-                                    srfAzimuthD, surfaceTiltDCalculated = srfAzimuthAngle(PVsurfaceAzimuthAngle_, PVsurfaceInputType, _PVsurface, latitude)
-                                    correctedSrfAzimuthD, northDeg, validNorth, printMsg = correctSrfAzimuthDforNorth(north_, srfAzimuthD)
-                                    srfTiltD = srfTiltAngle(PVsurfaceTiltAngle_, surfaceTiltDCalculated, PVsurfaceInputType, _PVsurface, latitude)
-                                    ACenergyPerHour, ACenergyPerMonth, ACenergyPerYear, beamRadiationPerHour, diffuseRadiationPerHour, reflectedRadiationPerHour, totalRadiationPerHour, totalRadiationPerMonth, totalRadiationPerYear, averageDailyRadiationPerMonth, averageDailyRadiationPerYear, moduleTemperaturePerHour, cellTemperaturePerHour = radiation_ACenergy(latitude, longitude, timeZone, locationName, years, months, days, hours, HOYs, nameplateDCpowerRating, DCtoACderateFactor, srfArea, srfTiltD, correctedSrfAzimuthD, moduleType, moduleEfficiency, dryBulbTemperatureCondStat, windSpeedCondStat, directNormalRadiationCondStat, diffuseHorizontalRadiationCondStat, albedo)
-                                    printOutput(unitAreaConversionFactor, northDeg, latitude, longitude, timeZone, elevation, locationName, albedo, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, srfTiltD, correctedSrfAzimuthD, moduleActiveAreaPercent, moduleType, moduleEfficiency, conditionalStatementForFinalPrint)
-                                    surfaceArea = srfArea; surfaceActiveArea = activeArea
-                                else:
-                                    print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Photovoltaics surface component"
+                locationName, latitude, longitude, timeZone, elevation, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, albedo, validEpwData, printMsg = getEpwData(_epwFile, albedo_)
+                if validEpwData:
+                    validAnnualHourlyData, annualHourlyDataLists, annualHourlyDataListsEpwNames, printMsg = checkAnnualHourlyInputData(annualHourlyData_)
+                    if validAnnualHourlyData:
+                        validConditionalStatement, weatherPerHourDataConditionalStatementSubLists, conditionalStatementForFinalPrint, printMsg = checkConditionalStatement(conditionalStatement_, annualHourlyDataLists, annualHourlyDataListsEpwNames, [dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation], True)
+                        if validConditionalStatement:
+                            dryBulbTemperatureCondStat, windSpeedCondStat, directNormalRadiationCondStat, diffuseHorizontalRadiationCondStat = weatherPerHourDataConditionalStatementSubLists
+                            # all inputs ok
+                            if _runIt:
+                                srfAzimuthD, surfaceTiltDCalculated = srfAzimuthAngle(PVsurfaceAzimuthAngle_, PVsurfaceInputType, _PVsurface, latitude)
+                                correctedSrfAzimuthD, northDeg, validNorth, printMsg = correctSrfAzimuthDforNorth(north_, srfAzimuthD)
+                                srfTiltD = srfTiltAngle(PVsurfaceTiltAngle_, surfaceTiltDCalculated, PVsurfaceInputType, _PVsurface, latitude)
+                                ACenergyPerHour, ACenergyPerMonth, ACenergyPerYear, averageDailyACenergyPerMonth, averageDailyACenergyPerYear, totalRadiationPerHour, moduleTemperaturePerHour, cellTemperaturePerHour = radiation_ACenergy(latitude, longitude, timeZone, locationName, years, months, days, hours, HOYs, nameplateDCpowerRating, DCtoACderateFactor, srfArea, srfTiltD, correctedSrfAzimuthD, moduleType, moduleEfficiency, dryBulbTemperatureCondStat, windSpeedCondStat, directNormalRadiationCondStat, diffuseHorizontalRadiationCondStat, albedo)
+                                printOutput(unitAreaConversionFactor, northDeg, latitude, longitude, timeZone, elevation, locationName, albedo, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, srfTiltD, correctedSrfAzimuthD, moduleActiveAreaPercent, moduleType, moduleEfficiency, conditionalStatementForFinalPrint)
+                                PVcoverArea = srfArea; PVcoverActiveArea = activeArea
                             else:
-                                print printMsg
-                                ghenv.Component.AddRuntimeMessage(level, printMsg)
+                                print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Photovoltaics surface component"
                         else:
                             print printMsg
                             ghenv.Component.AddRuntimeMessage(level, printMsg)
@@ -658,3 +587,4 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
+    
