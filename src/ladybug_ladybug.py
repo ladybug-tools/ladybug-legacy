@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nMAY_26_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_14_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -4876,8 +4876,8 @@ class Photovoltaics(object):
             angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
             srfAzimuthR = angleToYaxis
             srfAzimuthD = math.degrees(srfAzimuthR)
-            
-            return srfAzimuthD, surfaceTiltD
+        
+        return srfAzimuthD, surfaceTiltD
     
     def srfTiltAngle(self, PVsurface):
         # calculate PVsurface tilt angle
