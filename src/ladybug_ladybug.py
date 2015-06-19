@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_14_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_19_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -3191,7 +3191,7 @@ class ComfortModels(object):
         while abs(upDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
             if eightyPercent == True:
-                upDelta = 1 - pmv
+                upDelta = 0.84373 - pmv
                 upTemper = upTemper + upDelta
             else:
                 upDelta = 0.5 - pmv
@@ -3204,7 +3204,7 @@ class ComfortModels(object):
         while abs(downDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
             if eightyPercent == True:
-                downDelta = -1 - pmv
+                downDelta = -0.84373 - pmv
                 downTemper = downTemper + downDelta
             else:
                 downDelta = -0.5 - pmv
