@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -90,6 +90,8 @@ def checkTheInputs():
     #Define a value that will indicate whether someone has hooked up epw data.
     epwData = False
     epwStr = []
+    epwPrevailTemp = False
+    epwPrevailStr = []
     
     #Define a function to duplicate data
     def duplicateData(data, calcLength):
@@ -159,7 +161,7 @@ def checkTheInputs():
     prevailMultVal = False
     if len(_prevailingOutdoorTemp) != 0:
         try:
-            if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature' and (len(airTemp) == 8760 or len(airTemp) == 1):
+            if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature':
                 prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7:751])/744)], 744))
                 prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[751:1423])/672)], 672))
                 prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[1423:2167])/744)], 744))
@@ -173,9 +175,8 @@ def checkTheInputs():
                 prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7303:8023])/720)], 720))
                 prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[8023:])/744)], 744))
                 checkData3 = True
-                epwData = True
-                if epwStr == []:
-                    epwStr = _prevailingOutdoorTemp[0:7]
+                epwPrevailTemp = True
+                epwPrevailStr = _prevailingOutdoorTemp[0:7]
         except: pass
         if checkData3 == False:
             for item in _prevailingOutdoorTemp:
@@ -229,10 +230,17 @@ def checkTheInputs():
     if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True:
         if airMultVal == True or radMultVal == True or prevailMultVal == True or windMultVal == True:
             listLenCheck = []
-            if airMultVal == True: listLenCheck.append(len(airTemp))
-            if radMultVal == True: listLenCheck.append(len(radTemp))
+            secondListLenCheck = []
+            if airMultVal == True:
+                listLenCheck.append(len(airTemp))
+                secondListLenCheck.append(len(airTemp))
+            if radMultVal == True:
+                listLenCheck.append(len(radTemp))
+                secondListLenCheck.append(len(radTemp))
             if prevailMultVal == True: listLenCheck.append(len(prevailTemp))
-            if windMultVal == True: listLenCheck.append(len(windSpeed))
+            if windMultVal == True:
+                listLenCheck.append(len(windSpeed))
+                secondListLenCheck.append(len(windSpeed))
             
             if all(x == listLenCheck[0] for x in listLenCheck) == True:
                 checkData5 = True
@@ -242,7 +250,18 @@ def checkTheInputs():
                 if radMultVal == False: radTemp = duplicateData(radTemp, calcLength)
                 if prevailMultVal == False: prevailTemp = duplicateData(prevailTemp, calcLength)
                 if windMultVal == False: windSpeed = duplicateData(windSpeed, calcLength)
+            elif all(x == secondListLenCheck[0] for x in secondListLenCheck) == True and epwPrevailTemp == True and epwData == True and epwPrevailStr[5] == (1,1,1) and epwPrevailStr[6] == (12,31,24):
+                checkData5 = True
+                calcLength = listLenCheck[0]
                 
+                if airMultVal == False: airTemp = duplicateData(airTemp, calcLength)
+                if radMultVal == False: radTemp = duplicateData(radTemp, calcLength)
+                if windMultVal == False: windSpeed = duplicateData(windSpeed, calcLength)
+                HOYs, mon, days = lb_preparation.getHOYsBasedOnPeriod([epwStr[5], epwStr[6]], 1)
+                newPrevailTemp = []
+                for hour in HOYs:
+                    newPrevailTemp.append(prevailTemp[hour-1])
+                prevailTemp = newPrevailTemp
             else:
                 calcLength = None
                 warning = 'If you have put in lists with multiple values, the lengths of these lists must match across the parameters or you have a single value for a given parameter to be applied to all values in the list.'
@@ -264,128 +283,125 @@ def checkTheInputs():
     return checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed
 
 
-def main():
-    # import the classes
-    if sc.sticky.has_key('ladybug_release'):
-        try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-        except:
-            warning = "You need a newer version of Ladybug to use this compoent." + \
-            "Use updateLadybug component to update userObjects.\n" + \
-            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
-            "into canvas and try again."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
-            
-        lb_preparation = sc.sticky["ladybug_Preparation"]()
-        lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
-        
-        #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
-        checkData = False
-        checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed = checkTheInputs()
-        
-        #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
-        if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
-            runPeriod = analysisPeriod_
-            calcLength = len(HOYS)
-        elif len(analysisPeriod_)==0 and epwData == True:
-            HOYS = range(calcLength)
-            runPeriod = [epwStr[5], epwStr[6]]
-        else:
-            HOYS = range(calcLength)
-            runPeriod = [(1,1,1), (12,31,24)]
-        
-        #If things are good, run it through the comfort model.
-        comfortableOrNot = []
-        extremeColdComfortableHot = []
-        upperTemperatureBound = []
-        lowerTemperatureBound = []
-        targetTemperature = []
-        degreesFromTarget = []
-        percentOfTimeComfortable = None
-        percentHotColdAndExtreme = []
-        if checkData == True and epwData == True and 'for' not in epwStr[2]:
-            targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-            degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-            comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not', 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
-            extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
-            upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-            lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-        elif checkData == True and epwData == True and 'for' in epwStr[2]:
-            targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-            degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-            comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
-            extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
-            upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-            lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
-        if checkData == True:
-            try:
-                comfOrNot = []
-                extColdComfHot = []
-                upperTemp = []
-                lowerTemp = []
-                comfortTemp = []
-                degreesTarget = []
-                for count in HOYS:
-                    # let the user cancel the process
-                    if gh.GH_Document.IsEscapeKeyDown(): assert False
-                    
-                    comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(airTemp[count], radTemp[count], prevailTemp[count], windSpeed[count], eightyPercentComfortable_)
-                    
-                    if comf == True:comfOrNot.append(1)
-                    else: comfOrNot.append(0)
-                    extColdComfHot.append(condition)
-                    upperTemp.append(upTemp)
-                    lowerTemp.append(lowTemp)
-                    comfortTemp.append(comfTemp)
-                    degreesTarget.append(distFromTarget)
-                percentOfTimeComfortable = ((sum(comfOrNot))/calcLength)*100
-                extreme = []
-                hot = []
-                cold = []
-                for item in extColdComfHot:
-                    if item == -1: extreme.append(1.0)
-                    elif item == 0: cold.append(1.0)
-                    elif item == 2: hot.append(1.0)
-                    else: pass
-                percentHot = ((sum(hot))/calcLength)*100
-                percentCold = ((sum(cold))/calcLength)*100
-                percentExtreme = ((sum(extreme))/calcLength)*100
-                percentHotColdAndExtreme = [percentHot, percentCold, percentExtreme]
-                comfortableOrNot.extend(comfOrNot)
-                extremeColdComfortableHot.extend(extColdComfHot)
-                upperTemperatureBound.extend(upperTemp)
-                lowerTemperatureBound.extend(lowerTemp)
-                targetTemperature.extend(comfortTemp)
-                degreesFromTarget.extend(degreesTarget)
-            except:
-                comfortableOrNot = []
-                extremeColdComfortableHot = []
-                upperTemperatureBound = []
-                lowerTemperatureBound = []
-                targetTemperature = []
-                degreesFromTarget = []
-                percentOfTimeComfortable = None
-                percentHotColdAndExtreme = []
-                print "The calculation has been terminated by the user!"
-                e = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
-        
-        #Return all of the info.
-        return comfortableOrNot, extremeColdComfortableHot, percentOfTimeComfortable, percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget
+def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, lb_preparation, lb_comfortModels):
+    #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
+    if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
+        HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+        runPeriod = analysisPeriod_
+        calcLength = len(HOYS)
+    elif len(analysisPeriod_)==0 and epwData == True:
+        HOYS = range(calcLength)
+        runPeriod = [epwStr[5], epwStr[6]]
     else:
+        HOYS = range(calcLength)
+        runPeriod = [(1,1,1), (12,31,24)]
+    
+    #If things are good, run it through the comfort model.
+    comfortableOrNot = []
+    extremeColdComfortableHot = []
+    upperTemperatureBound = []
+    lowerTemperatureBound = []
+    targetTemperature = []
+    degreesFromTarget = []
+    percentOfTimeComfortable = None
+    percentHotColdAndExtreme = []
+    if checkData == True and epwData == True and 'for' not in epwStr[2]:
+        targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not', 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
+        extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+        upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+    elif checkData == True and epwData == True and 'for' in epwStr[2]:
+        targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
+        extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+        upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+        lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+    if checkData == True:
+        try:
+            comfOrNot = []
+            extColdComfHot = []
+            upperTemp = []
+            lowerTemp = []
+            comfortTemp = []
+            degreesTarget = []
+            for count in HOYS:
+                # let the user cancel the process
+                if gh.GH_Document.IsEscapeKeyDown(): assert False
+                
+                comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(airTemp[count], radTemp[count], prevailTemp[count], windSpeed[count], eightyPercentComfortable_)
+                
+                if comf == True:comfOrNot.append(1)
+                else: comfOrNot.append(0)
+                extColdComfHot.append(condition)
+                upperTemp.append(upTemp)
+                lowerTemp.append(lowTemp)
+                comfortTemp.append(comfTemp)
+                degreesTarget.append(distFromTarget)
+            percentOfTimeComfortable = ((sum(comfOrNot))/calcLength)*100
+            extreme = []
+            hot = []
+            cold = []
+            for item in extColdComfHot:
+                if item == -1: extreme.append(1.0)
+                elif item == 0: cold.append(1.0)
+                elif item == 2: hot.append(1.0)
+                else: pass
+            percentHot = ((sum(hot))/calcLength)*100
+            percentCold = ((sum(cold))/calcLength)*100
+            percentExtreme = ((sum(extreme))/calcLength)*100
+            percentHotColdAndExtreme = [percentHot, percentCold, percentExtreme]
+            comfortableOrNot.extend(comfOrNot)
+            extremeColdComfortableHot.extend(extColdComfHot)
+            upperTemperatureBound.extend(upperTemp)
+            lowerTemperatureBound.extend(lowerTemp)
+            targetTemperature.extend(comfortTemp)
+            degreesFromTarget.extend(degreesTarget)
+        except:
+            comfortableOrNot = []
+            extremeColdComfortableHot = []
+            upperTemperatureBound = []
+            lowerTemperatureBound = []
+            targetTemperature = []
+            degreesFromTarget = []
+            percentOfTimeComfortable = None
+            percentHotColdAndExtreme = []
+            print "The calculation has been terminated by the user!"
+            e = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
+    
+    #Return all of the info.
+    return comfortableOrNot, extremeColdComfortableHot, percentOfTimeComfortable, percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget
+
+
+
+checkData = False
+if sc.sticky.has_key('ladybug_release'):
+    try:
+        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): pass
+    except:
+        warning = "You need a newer version of Ladybug to use this compoent." + \
+        "Use updateLadybug component to update userObjects.\n" + \
+        "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+        "into canvas and try again."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, warning)
+        
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
+    
+    #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
+    checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed = checkTheInputs()
+else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return -1
 
 
-
-
-if _runIt == True:
-    results = main()
+if _runIt == True and checkData == True:
+    results = main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, lb_preparation, lb_comfortModels)
     if results!=-1:
         comfortableOrNot, conditionOfPerson, percentOfTimeComfortable, \
         percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget = results
