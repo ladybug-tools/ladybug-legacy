@@ -32,7 +32,7 @@ Provided by Ladybug 0.0.59
         readMe!: ...
         ------------------------------: ...
         comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether occupants are comfortable under the input conditions given the fact that these occupants tend to adapt themselves to the prevailing mean monthly temperature. 0 indicates that a person is not comfortable while 1 indicates that a person is comfortable.
-        conditionOfPerson: A stream of interger values from -1 to +2 that correspond to each hour of the input data and indicate the following: -1 = The average monthly temperature is too extreme for the adaptive model. 0 = The input conditions are too cold for occupants. 1 = The input conditions are comfortable for occupants. 2 = The input conditions are too hot for occupants.
+        conditionOfPerson: A stream of interger values from -1 to +1 that correspond to each hour of the input data and indicate the following: -1 = The input conditions are too cold for occupants. 0 = The input conditions are comfortable for occupants. +1 = The input conditions are too hot for occupants.
         degreesFromTarget: A stream of temperature values in degrees Celcius indicating how far from the target temperature the conditions of the people are.  Positive values indicate conditions hotter than the target temperature while negative values indicate degrees below the target temperture.
         ------------------------------: ...
         targetTemperature: A stream of temperature values in degrees Celcius indicating the mean target temperture or neutral temperature that the most people will find comfortable.
@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.59
         lowerTemperatureBound: A stream of temperature values in degrees Celcius indicating the lowest possible temperature in the comfort range for each hour of the input conditions.
         ------------------------------: ...
         percentOfTimeComfortable: The percent of the input data for which the occupants are comfortable.  Comfortable conditions are when the indoor temperature is within the comfort range determined by the prevailing outdoor temperature.
-        percentHotColdAndExtreme: A list of 3 numerical values indicating the following: 0) The percent of the input data for which the occupants are too hot.  1) The percent of the input data for which the occupants are too cold. 2) The percent of the input data falling in a month where the prevailing mean temperature is below 10 C or above 33.5 C and is therefore not suitable for the adaptive comfort method.
+        percentHotCold: A list of 2 numerical values indicating the following: 0) The percent of the input data for which the occupants are too hot.  1) The percent of the input data for which the occupants are too cold.
         
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
@@ -340,19 +340,17 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
                 lowerTemp.append(lowTemp)
                 comfortTemp.append(comfTemp)
                 degreesTarget.append(distFromTarget)
-            percentOfTimeComfortable = ((sum(comfOrNot))/calcLength)*100
+            percentOfTimeComfortable = [((sum(comfOrNot))/calcLength)*100]
             extreme = []
             hot = []
             cold = []
             for item in extColdComfHot:
-                if item == -1: extreme.append(1.0)
-                elif item == 0: cold.append(1.0)
-                elif item == 2: hot.append(1.0)
+                if item == -1: cold.append(1.0)
+                elif item == 1: hot.append(1.0)
                 else: pass
             percentHot = ((sum(hot))/calcLength)*100
             percentCold = ((sum(cold))/calcLength)*100
-            percentExtreme = ((sum(extreme))/calcLength)*100
-            percentHotColdAndExtreme = [percentHot, percentCold, percentExtreme]
+            percentHotCold = [percentHot, percentCold]
             comfortableOrNot.extend(comfOrNot)
             extremeColdComfortableHot.extend(extColdComfHot)
             upperTemperatureBound.extend(upperTemp)
@@ -366,14 +364,14 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
             lowerTemperatureBound = []
             targetTemperature = []
             degreesFromTarget = []
-            percentOfTimeComfortable = None
-            percentHotColdAndExtreme = []
+            percentOfTimeComfortable = []
+            percentHotCold = []
             print "The calculation has been terminated by the user!"
             e = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
     
     #Return all of the info.
-    return comfortableOrNot, extremeColdComfortableHot, percentOfTimeComfortable, percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget
+    return comfortableOrNot, extremeColdComfortableHot, percentOfTimeComfortable, percentHotCold, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget
 
 
 
@@ -404,7 +402,7 @@ if _runIt == True and checkData == True:
     results = main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, lb_preparation, lb_comfortModels)
     if results!=-1:
         comfortableOrNot, conditionOfPerson, percentOfTimeComfortable, \
-        percentHotColdAndExtreme, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget = results
+        percentHotCold, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget = results
 
 
 

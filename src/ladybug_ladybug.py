@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_19_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -3255,9 +3255,9 @@ class ComfortModels(object):
             r.append(acceptability)
             
             # Append a number to the result list to show whether the values are too hot, too cold, or comfortable.
-            if acceptability == True: r.append(1)
-            elif to > tComfUpper: r.append(2)
-            else: r.append(0)
+            if acceptability == True: r.append(0)
+            elif to > tComfUpper: r.append(1)
+            else: r.append(-1)
             
         elif runningMean < 10.0:
             # The prevailing temperature is too cold for the adaptive method.
@@ -3267,7 +3267,10 @@ class ComfortModels(object):
             tComfUpper = tComf + offset
             if to > tComfLower and to < tComfUpper: acceptability = True
             else: acceptability = False
-            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, -1]
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
             r.extend(outputs)
         else:
             # The prevailing temperature is too hot for the adaptive method.
@@ -3277,7 +3280,10 @@ class ComfortModels(object):
             tComfUpper = tComf + offset
             if to > tComfLower and to < tComfUpper: acceptability = True
             else: acceptability = False
-            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, -1]
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
             r.extend(outputs)
         
         return r
