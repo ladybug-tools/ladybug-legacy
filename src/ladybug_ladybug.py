@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_20_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_21_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2841,21 +2841,18 @@ class ComfortModels(object):
             # root-finding only
             res = []
             def fn(t):
-                return (set - self.comfPierceSET(t, tr, 0.15, rh, met, clo, wme));
+                return (set - self.comfPierceSET(ta-t, tr-t, 0.1, rh, met, clo, wme));
             f1 = fn(a)
-            f2 = fn(b)
-            if abs(f1) <= epsilon:
-                res.append(a)
-            elif abs(f2) <= epsilon:
-                res.append(b)
+            if abs(f1) <= epsilon: res.append(a)
             else:
-                rangeCheck = True
-                count = range(100)
-                for i in count:
-                    if (b - a) != 0 and (f2 - f1) != 0 and rangeCheck == True:
-                        slope = (f2 - f1) / (b - a)
-                        c = b - f2/slope
-                        if c <= 200 and c >= -200:
+                f2 = fn(b)
+                if abs(f2) <= epsilon: res.append(b)
+                else:
+                    count = range(100)
+                    for i in count:
+                        if (b - a) != 0 and (f2 - f1) != 0:
+                            slope = (f2 - f1) / (b - a)
+                            c = b - f2/slope
                             f3 = fn(c)
                             if abs(f3) < epsilon:
                                 res.append(c)
@@ -2863,43 +2860,41 @@ class ComfortModels(object):
                             b = c
                             f1 = f2
                             f2 = f3
-                        else: rangeCheck = False
-                    else: pass
-            res.append('NaN')
+                res.append('NaN')
+            
             return res[0]
         
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
         def utilBisect(a, b, epsilon, target):
             def fn(t):
-                return (set - self.comfPierceSET(t, tr, 0.15, rh, met, clo, wme))
+                return (set - self.comfPierceSET(ta-t, tr-t, 0.1, rh, met, clo, wme))
             while abs(b - a) > (2 * epsilon):
                 midpoint = (b + a) / 2
                 a_T = fn(a)
                 b_T = fn(b)
                 midpoint_T = fn(midpoint)
-                if (a_T - target) * (midpoint_T - target) < 0:
-                    b = midpoint
-                elif (b_T - target) * (midpoint_T - target) < 0:
-                    a = midpoint
+                if (a_T - target) * (midpoint_T - target) < 0: b = midpoint
+                elif (b_T - target) * (midpoint_T - target) < 0: a = midpoint
                 else: return -999
             return midpoint
         
         
-        if vel <= 0.15:
+        if vel <= 0.1:
             pmv, ppd = self.comfPMV(ta, tr, vel, rh, met, clo, wme)
             ta_adj = ta
             ce = 0
         else:
-            ta_adj_l = -200
-            ta_adj_r = 200
-            eps = 0.001  # precision of ta_adj
+            ce_l = 0
+            ce_r = 40
+            eps = 0.001  # precision of ce
             
-            ta_adj = utilSecant(ta_adj_l, ta_adj_r, eps)
-            if ta_adj == 'NaN':
-                ta_adj = utilBisect(ta_adj_l, ta_adj_r, eps, 0)
+            ce = utilSecant(ce_l, ce_r, eps)
+            if ce == 'NaN':
+                ce = utilBisect(ce_l, ce_r, eps, 0)
             
-            pmv, ppd = self.comfPMV(ta_adj, tr, 0.15, rh, met, clo, wme)
-            ce = abs(ta - ta_adj)
+            pmv, ppd = self.comfPMV(ta - ce, tr - ce, 0.1, rh, met, clo, wme)
+            ta_adj = ta - ce
+            tr_adj = tr - ce
         
         r.append(pmv)
         r.append(ppd)
