@@ -3179,17 +3179,33 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercent):
+    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD):
         upTemper = initialGuessUp
         upDelta = 3
+        if targetPPD == 10.0: targetPMV = 0.5
+        elif targetPPD == 6.0: targetPMV = 0.220
+        elif targetPPD == 15.0: targetPMV = 0.690
+        elif targetPPD == 20.0: targetPMV = 0.84373
+        elif targetPPD < 5.0: targetPMV = 0.0001
+        else:
+            #Use Rhino's geometry functions to compute a target pmv
+            def pmvCrv(pmv):
+                return 100.0 - 95.0 * math.exp(-0.03353 * pow(pmv, 4.0) - 0.2179 * pow(pmv, 2.0))
+            
+            distribPts = []
+            startPMV = 0
+            for pmvCount in range(20):
+                distribPts.append(rc.Geometry.Point3d(startPMV, pmvCrv(startPMV), 0))
+                startPMV += 0.25
+            distribCrv = rc.Geometry.Curve.CreateInterpolatedCurve(distribPts, 3)
+            testLine = rc.Geometry.LineCurve(rc.Geometry.Point3d(0, targetPPD, 0), rc.Geometry.Point3d(5, targetPPD, 0))
+            intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
+            targetPMV = intersectPts[0].PointA.X
+        
         while abs(upDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            if eightyPercent == True:
-                upDelta = 0.84373 - pmv
-                upTemper = upTemper + upDelta
-            else:
-                upDelta = 0.5 - pmv
-                upTemper = upTemper + upDelta
+            upDelta = targetPMV - pmv
+            upTemper = upTemper + upDelta
         
         if initialGuessDown == None:
             downTemper = upTemper - 6
@@ -3197,12 +3213,8 @@ class ComfortModels(object):
         downDelta = 3
         while abs(downDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            if eightyPercent == True:
-                downDelta = -0.84373 - pmv
-                downTemper = downTemper + downDelta
-            else:
-                downDelta = -0.5 - pmv
-                downTemper = downTemper + downDelta
+            downDelta = -targetPMV - pmv
+            downTemper = downTemper + downDelta
         
         return upTemper, downTemper
     

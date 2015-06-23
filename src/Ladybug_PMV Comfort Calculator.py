@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_28_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_22_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -379,11 +379,11 @@ def checkTheInputs():
     checkData8 = True
     if comfortPar_ != []:
         try:
-            eightyPercentComfortable = bool(comfortPar_[0])
+            PPDComfortThresh = float(comfortPar_[0])
             humidRatioUp = float(comfortPar_[1])
             humidRatioLow = float(comfortPar_[2])
         except:
-            eightyPercentComfortable = False
+            PPDComfortThresh = 10.0
             humidRatioUp = 0.03
             humidRatioLow = 0.0
             checkData8 = False
@@ -391,7 +391,7 @@ def checkTheInputs():
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
-        eightyPercentComfortable = False
+        PPDComfortThresh = 10.0
         humidRatioUp = 0.03
         humidRatioLow = 0.0
     
@@ -402,7 +402,7 @@ def checkTheInputs():
         checkData = False
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercentComfortable, humidRatioUp, humidRatioLow
+    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, PPDComfortThresh, humidRatioUp, humidRatioLow
 
 
 
@@ -425,7 +425,7 @@ def main():
         
         #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
         checkData = False
-        checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercentComfortable, humidRatioUp, humidRatioLow = checkTheInputs()
+        checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, PPDComfortThresh, humidRatioUp, humidRatioLow = checkTheInputs()
         
         #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
         if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
@@ -467,19 +467,11 @@ def main():
                     standardEffectiveTemperature.append(set)
                     if humidRatioUp != 0.03 or humidRatioLow != 0.0:
                         HR, EN, vapPress, satPress = lb_comfortModels.calcHumidRatio(airTemp[count], relHumid[count], 101325)
-                        if eightyPercentComfortable == True:
-                            if ppd < 20 and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
-                        else:
-                            if ppd < 10 and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
+                        if ppd < PPDComfortThresh and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
+                        else: comfortableOrNot.append(0)
                     else:
-                        if eightyPercentComfortable == True:
-                            if ppd < 20: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
-                        else:
-                            if ppd < 10: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
+                        if ppd < PPDComfortThresh: comfortableOrNot.append(1)
+                        else: comfortableOrNot.append(0)
                 if epwData == True:
                     percentOfTimeComfortable = ((sum(comfortableOrNot[7:]))/calcLength)*100
                 else: percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100

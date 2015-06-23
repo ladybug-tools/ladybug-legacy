@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_17_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_22_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -376,11 +376,11 @@ def checkTheInputs():
     checkData10 = True
     if comfortPar_ != []:
         try:
-            eightyPercentComfortable = bool(comfortPar_[0])
+            PPDComfortThresh = float(comfortPar_[0])
             humidRatioUp = float(comfortPar_[1])
             humidRatioLow = float(comfortPar_[2])
         except:
-            eightyPercentComfortable = False
+            PPDComfortThresh = 10.0
             humidRatioUp = 0.030
             humidRatioLow = 0.0
             checkData10 = False
@@ -388,7 +388,7 @@ def checkTheInputs():
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
-        eightyPercentComfortable = False
+        PPDComfortThresh = 10.0
         humidRatioUp = 0.030
         humidRatioLow = 0.0
     
@@ -437,7 +437,7 @@ def checkTheInputs():
     
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLength2, eightyPercentComfortable, titleStatement, patternList
+    return checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLength2, PPDComfortThresh, titleStatement, patternList
 
 
 
@@ -879,7 +879,7 @@ def unionAllCurves(Curves):
     return res
 
 
-def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, eightyPercentComfort):
+def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh):
     #Take just the top middle and bottom lines for making the comofrt range in order to speed up the calculation.
     relHumidLines = [relHumidLines[0], relHumidLines[5], relHumidLines[10]]
     
@@ -890,7 +890,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         upTemperPts = []
         downTemperPts = []
         for count, humidity in enumerate(range(0,150,50)):
-            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], eightyPercentComfort)
+            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh)
             
             if upTemper < 50:
                 if upTemper > -20:
@@ -1195,7 +1195,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     #Calculate the upper boundary of Natural ventilation.
                     upTemperPts = []
                     for count, humidity in enumerate(range(0,150,50)):
-                        upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], eightyPercentComfort)
+                        upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh)
                         
                         if upTemper < 50:
                             if upTemper > -20:
@@ -1513,7 +1513,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     return pointColors, colorLegends
 
 
-def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, eightyPercentComfortable, titleStatement, patternList):
+def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, PPDComfortThresh, titleStatement, patternList):
     #Import the classes.
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -1625,7 +1625,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         chartBoundary = rc.Geometry.Curve.JoinCurves([chartCurves[0], chartCurves[25], chartCurves[31], chartCurves[10], chartCurves[11]])[0]
         
         # Calculate the comfort and strategy polygons.
-        comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, eightyPercentComfortable)
+        comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh)
         
         #Calculate how many hours are in each comfort or strategy and comfort polygons.
         totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList)
@@ -1679,7 +1679,7 @@ checkData = False
 if _runIt == True:
     checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
     avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, \
-    humidRatioLow, calcLengthComf, eightyPercentComfortable, titleStatement, \
+    humidRatioLow, calcLengthComf, PPDComfortThresh, titleStatement, \
     patternList = checkTheInputs()
 
 #If the inputs are good, run the function.
@@ -1688,7 +1688,7 @@ if checkData == True:
     results = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
                    avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, \
                    humidRatioUp, humidRatioLow, calcLengthComf, \
-                   eightyPercentComfortable, titleStatement, patternList)
+                   PPDComfortThresh, titleStatement, patternList)
                    
     if results != -1:
         totalComfortPercent, totalComfortOrNot, strategyNames, strategyPercentOfTime, \
