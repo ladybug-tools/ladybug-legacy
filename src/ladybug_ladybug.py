@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_21_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_22_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2835,13 +2835,14 @@ class ComfortModels(object):
         
         r = []
         set = self.comfPierceSET(ta, tr, vel, rh, met , clo, wme)
+        stillAirThreshold = 0.15
         
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function 
         def utilSecant(a, b, epsilon):
             # root-finding only
             res = []
             def fn(t):
-                return (set - self.comfPierceSET(ta-t, tr-t, 0.1, rh, met, clo, wme));
+                return (set - self.comfPierceSET(ta-t, tr-t, stillAirThreshold, rh, met, clo, wme));
             f1 = fn(a)
             if abs(f1) <= epsilon: res.append(a)
             else:
@@ -2867,7 +2868,7 @@ class ComfortModels(object):
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
         def utilBisect(a, b, epsilon, target):
             def fn(t):
-                return (set - self.comfPierceSET(ta-t, tr-t, 0.1, rh, met, clo, wme))
+                return (set - self.comfPierceSET(ta-t, tr-t, stillAirThreshold, rh, met, clo, wme))
             while abs(b - a) > (2 * epsilon):
                 midpoint = (b + a) / 2
                 a_T = fn(a)
@@ -2879,7 +2880,7 @@ class ComfortModels(object):
             return midpoint
         
         
-        if vel <= 0.1:
+        if vel <= stillAirThreshold:
             pmv, ppd = self.comfPMV(ta, tr, vel, rh, met, clo, wme)
             ta_adj = ta
             ce = 0
@@ -2892,7 +2893,7 @@ class ComfortModels(object):
             if ce == 'NaN':
                 ce = utilBisect(ce_l, ce_r, eps, 0)
             
-            pmv, ppd = self.comfPMV(ta - ce, tr - ce, 0.1, rh, met, clo, wme)
+            pmv, ppd = self.comfPMV(ta - ce, tr - ce, stillAirThreshold, rh, met, clo, wme)
             ta_adj = ta - ce
             tr_adj = tr - ce
         
@@ -2921,10 +2922,8 @@ class ComfortModels(object):
         m = met * 58.15 #metabolic rate in W/M2
         w = wme * 58.15 #external work in W/M2
         mw = m - w #internal heat production in the human body
-        if (icl <= 0.078):
-            fcl = 1 + (1.29 * icl)
-        else:
-            fcl = 1.05 + (0.645 * icl)
+        if (icl <= 0.078): fcl = 1 + (1.29 * icl)
+        else: fcl = 1.05 + (0.645 * icl)
         
         #heat transf. coeff. by forced convection
         hcf = 12.1 * math.sqrt(vel)
