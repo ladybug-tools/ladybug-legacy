@@ -16,7 +16,7 @@ Further note that cultures differ widely in terms of their treatment of humidity
 Provided by Ladybug 0.0.59
     
     Args:
-        eightyOrNinetyPercent_: Set to "True" to have the comfort standard be 80 percent of occupants comfortable and set to "False" to have the comfort standard be 90 percent of all occupants comfortable.  The default is set to "False" for 90 percent, which is the more rigorous comfort standard and is arguably more fair to an occupant for which you are restricting their clothing and metabolic rate by using a PMV model. Note that, if you try to restrict everyone's clothing and metabolic rate as the PMV model assumed, you can never make 100% of the people comfortable.
+        PPDComfortThreshold_: A number between 5 and 100 that represents the percent of people dissatisfied (PPD) at which point a given set of conditions are outside of a comfortable range.  The default is set to 10 percent, which is the typical criteria for both US and European (ISO) standards. However, both of these standards allow an expanded range for infrequenlty-occupied buildings (20% in the US and 15% in Europe) and the European standard requires 6% for 'Class I' buildings.  Note that, if you try to restrict everyone's clothing and metabolic rate as the PMV model assumes, you can never make 100% of the people comfortable.  This is why the smallest acceptable input here is 5%.
         humidRatioUpBound_: An optional number between 0.012 and 0.030 that limits the maximum humidity ratio acceptable for comfort.  In many cultures and to many people, humidity in conditions of no thermal stress is not considered a source of discomfort and, accordingly, this component does not set an upper limit on humidity by default.  However, for some people, stickyness from humidity in cool conditons is considered uncomfortable and, if you want to account for such a situation, you may want to set an upper limit on the acceptable humidity ratio here.  The ASHRAE 55 PMV comfort standard recommends a maximum humidity of 0.012 kg water/kg air.
         humidRatioLowBound_: An optional number between 0.000 and 0.005 that limits the minimum humidity ratio acceptable for comfort.  In many cultures, a lack of humidity is not considred uncomfortable since people compensate for its effects by using chap stick and lotions.  Accordingly, this component does not set a lower limit on humidity by default.  However, in some more tropical where people are not accustomed to very dry environments, chaping of lips and drying of skin can occur more easily and, if you want to account for such a situation, you may want to set a lower limit on the acceptable humidity ratio here. The ASHRAE 55 PMV comfort recommends no lower limit on humidity.
         
@@ -25,7 +25,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Parameters"
 ghenv.Component.NickName = 'ComfortPar'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_23_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -37,10 +37,16 @@ import Grasshopper.Kernel as gh
 
 comfortPar = []
 
-if eightyOrNinetyPercent_ != None:
-    comfortPar.append(eightyOrNinetyPercent_)
+if PPDComfortThreshold_ != None:
+    if PPDComfortThreshold_ <= 100 and PPDComfortThreshold_ >= 5:
+        comfortPar.append(PPDComfortThreshold_)
+    else:
+        comfortPar.append(10.0)
+        warning = 'The PPDComfortThreshold_ must be a number between 5 and 100.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
 else:
-    comfortPar.append(False)
+    comfortPar.append(10.0)
 
 if humidRatioUpBound_ != None:
     if humidRatioUpBound_ <= 0.03 and humidRatioUpBound_ >= 0.012:
