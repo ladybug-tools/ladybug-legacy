@@ -56,7 +56,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.59\nAPR_03_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -151,6 +151,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 
 
 def readLocation(location):
+    solarTimeZonesPos = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180]
     locationStr = location.split('\n')
     newLocStr = ""
     #clean the idf file
@@ -164,6 +165,12 @@ def readLocation(location):
     newLocStr = newLocStr.replace(';', "")
     
     site, locationName, latitude, longitude, timeZone, elevation = newLocStr.split(',')
+    
+    
+    if solarOrStandardTime_:
+        if int(float(timeZone)) == 0: longitude = 0.0
+        elif int(float(timeZone)) > 0: longitude = solarTimeZonesPos[int(float(timeZone))]
+        elif int(float(timeZone)) < 0: longitude = -solarTimeZonesPos[-int(float(timeZone))]
     
     return float(latitude), float(longitude), float(timeZone), float(elevation)
 
@@ -243,6 +250,8 @@ def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
     
     
 def main(latitude, longitude, timeZone, elevation, north, hour, day, month, timeStep, analysisPeriod, centerPt, sunPathScale, sunScale, annualHourlyData, conditionalStatement, legendPar, dailyOrAnnualSunPath, bakeIt):
+    if solarOrStandardTime_: solarOrStandardTime = solarOrStandardTime_
+    else: solarOrStandardTime = False
     
     if dailyOrAnnualSunPath:
         dailySunPath, annualSunPath = False, True
@@ -373,7 +382,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             for HOY in HOYs:
                 d, m, h = lb_preparation.hour2Date(HOY, True)
                 m += 1
-                lb_sunpath.solInitOutput(m, d, h)
+                lb_sunpath.solInitOutput(m, d, h, solarOrStandardTime)
                 
                 if lb_sunpath.solAlt >= 0: SUH += 1
                 if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))]:
@@ -401,22 +410,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             annualSunPathCrvs = []
             baseCrvs = []
             if annualSunPath!=False:
-                if solarOrStandardTime_:
-                    annualSunPathCrvs = [item.ToNurbsCurve() for i,sublist in enumerate(lb_sunpath.drawSunPath()) for item in sublist if i > 2 or i < 1]
-                    newAnnualSunPathCrvs = []
-                    try: trimRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(centerPt, rc.Geometry.Vector3d.ZAxis), rc.Geometry.Point3d(-10000, -10000, 0), rc.Geometry.Point3d(10000, 10000, 0)).ToNurbsCurve()
-                    except: trimRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane.WorldXY, rc.Geometry.Point3d(-10000, -10000, 0), rc.Geometry.Point3d(10000, 10000, 0)).ToNurbsCurve()
-                    trimPln = rc.Geometry.Brep.CreatePlanarBreps(trimRect)[0]
-                    for curve in annualSunPathCrvs:
-                        
-                        try:
-                            newCrv = curve.Split(trimPln, sc.doc.ModelAbsoluteTolerance)[-1]
-                        except:
-                            newCrv = curve
-                        newAnnualSunPathCrvs.append(newCrv)
-                    annualSunPathCrvs = newAnnualSunPathCrvs
-                else:
-                    annualSunPathCrvs = [item.ToNurbsCurve() for i,sublist in enumerate(lb_sunpath.drawSunPath()) for item in sublist if i < 2]
+                annualSunPathCrvs = [item.ToNurbsCurve() for i,sublist in enumerate(lb_sunpath.drawSunPath(solarOrStandardTime)) for item in sublist if i < 2]
             if dailySunPath:
                 dailySunPathCrvs = []
                 for HOY in HOYs:

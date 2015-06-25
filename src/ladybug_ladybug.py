@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_22_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1407,7 +1407,7 @@ class Sunpath(object):
         self.timeZone = timeZone
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
-    def solInitOutput(self, month, day, hour):
+    def solInitOutput(self, month, day, hour, solarTime = False):
         year = 2015
         self.time = hour
         
@@ -1456,7 +1456,10 @@ class Sunpath(object):
             - 0.5*(varY**2)*math.sin(4*math.radians(geomMeanLongSun)) \
             - 1.25*(eccentOrbit**2)*math.sin(2*math.radians(geomMeanAnomSun)))
         #hours
-        self.solTime = ((self.time*60 + eqOfTime + 4*math.degrees(self.s_longtitude) - 60*self.timeZone) % 1440)/60
+        if solarTime == False:
+            self.solTime = ((self.time*60 + eqOfTime + 4*math.degrees(self.s_longtitude) - 60*self.timeZone) % 1440)/60
+        else: self.solTime = self.time
+        
         #degrees
         hourAngle = (self.solTime*15 + 180) if (self.solTime*15 < 0) else (self.solTime*15 - 180)
         #RADIANS
@@ -1464,11 +1467,14 @@ class Sunpath(object):
             + math.cos(self.solLat)*math.cos(self.solDec)*math.cos(math.radians(hourAngle)))
         self.solAlt = (math.pi/2) - self.zenith
         
-        self.solAz = ((math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
-            - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith))) + math.pi) % (2*math.pi)) \
-            if (hourAngle > 0) else \
-                ((3*math.pi - math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
-                - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith)))) % (2*math.pi))
+        if hourAngle == 0.0: self.solAz = math.pi
+        elif hourAngle == 180.0: self.solAz = 0.0
+        else:
+            self.solAz = ((math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
+                - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith))) + math.pi) % (2*math.pi)) \
+                if (hourAngle > 0) else \
+                    ((3*math.pi - math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
+                    - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith)))) % (2*math.pi))
     
     def sunReverseVectorCalc(self):
         basePoint = rc.Geometry.Point3d.Add(rc.Geometry.Point3d.Origin,rc.Geometry.Vector3f(0,1,0))
@@ -1522,7 +1528,7 @@ class Sunpath(object):
         else:
                 pass
 
-    def drawSunPath(self):
+    def drawSunPath(self, solarTime = False):
         # draw daily curves for 21st of all the months
         
         monthlyCrvs = []
@@ -1539,7 +1545,7 @@ class Sunpath(object):
         
         # find the hours that the sun is up
         for hour in range(0,25):
-            self.solInitOutput(month, 21, hour)
+            self.solInitOutput(month, 21, hour, solarTime)
             if self.sunPosPt()[2].Z > self.cenPt.Z: selHours.append(hour)
         
         sunPsolarTimeL = []
@@ -1548,7 +1554,7 @@ class Sunpath(object):
             for day in days:
                 sunP = []
                 for month in range(1,13):
-                    self.solInitOutput(month, day, hour)
+                    self.solInitOutput(month, day, hour, solarTime)
                     sunP.append(self.sunPosPt()[2])
             sunP.append(sunP[0])
             sunPsolarTime = [sunP[11], (sunP[0]+sunP[10])/2, (sunP[1]+sunP[9])/2, (sunP[2]+sunP[8])/2, (sunP[3]+sunP[7])/2, (sunP[4]+sunP[6])/2, sunP[5]]
