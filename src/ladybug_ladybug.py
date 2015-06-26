@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_24_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_25_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1467,8 +1467,9 @@ class Sunpath(object):
             + math.cos(self.solLat)*math.cos(self.solDec)*math.cos(math.radians(hourAngle)))
         self.solAlt = (math.pi/2) - self.zenith
         
-        if hourAngle == 0.0: self.solAz = math.pi
-        elif hourAngle == 180.0: self.solAz = 0.0
+        if hourAngle == 0.0 or hourAngle == -180.0 or hourAngle == 180.0:
+            if self.solDec < self.solLat: self.solAz = math.pi
+            else: self.solAz = 0.0
         else:
             self.solAz = ((math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
                 - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith))) + math.pi) % (2*math.pi)) \
