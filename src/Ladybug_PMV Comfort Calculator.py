@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_22_2015'
+ghenv.Component.Message = 'VER 0.0.59\nJUN_30_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -363,6 +363,7 @@ def checkTheInputs():
                 exWork = duplicateData([0], calcLength)
                 
             else:
+                exWork = []
                 calcLength = None
                 warning = 'If you have put in lists with multiple values, the lengths of these lists must match across the parameters or you have a single value for a given parameter to be applied to all values in the list.'
                 print warning
@@ -427,17 +428,18 @@ def main():
         checkData = False
         checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, PPDComfortThresh, humidRatioUp, humidRatioLow = checkTheInputs()
         
-        #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
-        if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
-            runPeriod = analysisPeriod_
-            calcLength = len(HOYS)
-        elif len(analysisPeriod_)==0 and epwData == True:
-            HOYS = range(calcLength)
-            runPeriod = [epwStr[5], epwStr[6]]
-        else:
-            HOYS = range(calcLength)
-            runPeriod = [(1,1,1), (12,31,24)]
+        if checkData == True:
+            #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
+            if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
+                HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+                runPeriod = analysisPeriod_
+                calcLength = len(HOYS)
+            elif len(analysisPeriod_)==0 and epwData == True:
+                HOYS = range(calcLength)
+                runPeriod = [epwStr[5], epwStr[6]]
+            else:
+                HOYS = range(calcLength)
+                runPeriod = [(1,1,1), (12,31,24)]
         
         #If things are good, run it through the comfort model.
         predictedMeanVote = []
