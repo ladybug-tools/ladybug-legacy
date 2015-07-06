@@ -33,23 +33,23 @@ Useful links
 
 Contributors(a-z):
 ========================================
-Anton Szilasi @antonszilasi
+[Anton Szilasi](https://github.com/antonszilasi)
 
 Alex Jacobson
 
-Abraham Yezioro @ayezioro
+[Abraham Yezioro](https://github.com/ayezioro)
 
-Boris Plotnikov @boris-p
+[Boris Plotnikov](https://github.com/boris-p)
 
-Chris Mackey @chriswmackey
+[Chris Mackey](https://github.com/chriswmackey)
 
-Djordje Spasic @stgeorges
+[Djordje Spasic](https://github.com/stgeorges)
 
-Mostapha Roudsari @mostapharoudsari
+[Mostapha Roudsari](https://github.com/mostapharoudsari)
 
-Saeran Vasanthakumar @saeranv
+[Saeran Vasanthakumar](https://github.com/saeranv)
 
-Trygve Wastvedt @twastvedt
+[Trygve Wastvedt](https://github.com/twastvedt)
 
 
 ![Screenshot](http://api.ning.com/files/n6JmThHrscbO0NxgLueUYrQPy4fLA8xdzP2COHyD1QEQ3DwfUxXlyjBtQMAxuSYvCXRAw0TfZ25DeARWbsMBKw0*wFlKWzeT/Untitledpresentation.png?width=1200)
