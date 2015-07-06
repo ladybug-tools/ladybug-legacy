@@ -25,11 +25,11 @@ You should have received a copy of the GNU General Public License along with Lad
 
 Useful links
 ========================================
-[Ladybug group page fo Grasshopper](http://www.grasshopper3d.com/group/ladybug)
+[Ladybug group page on Grasshopper](http://www.grasshopper3d.com/group/ladybug)
 
 [Facebook page](https://www.facebook.com/LadyBugforGrasshopper)
 
-[Ladybug on Twitter](@ladybug_tool)
+[Ladybug on Twitter](https://www.twitter.com/ladybug_tool)
 
 Contributors(a-z):
 ========================================
