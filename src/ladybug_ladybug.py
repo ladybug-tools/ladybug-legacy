@@ -545,13 +545,13 @@ class Preparation(object):
                 #based on analysis period
                 if monthCount == 0:
                     # first month
-                    days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
+                    days = range(stDay, numberOfDaysEachMonth[m-1] + 1)
                 elif monthCount == len(months) - 1:
                     # last month
                     days = range(1, self.checkDay(endDay, m) + 1)
                 else:
                     #rest of the months
-                    days = range(1, numberOfDaysEachMonth[monthCount] + 1)
+                    days = range(1, numberOfDaysEachMonth[m-1] + 1)
             
             for d in days:
                 for h in hours:
@@ -3243,31 +3243,29 @@ class ComfortModels(object):
         return upTemper, downTemper
     
     
-    def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety):
-        r = []
+    def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety, levelOfConditioning = 0):
         # Define the variables that will be used throughout the calculation.
+        r = []
         coolingEffect = 0
         if eightyOrNinety == True: offset = 3.5
         else: offset = 2.5
         to = (ta + tr) / 2
-        # See if the running mean temperature is between 10 C and 33.5 C and, if not, label the data as too extreme for the adaptive method.
+        # See if the running mean temperature is between 10 C and 33.5 C (the range where the adaptive model is supposed to be used).
         if runningMean >= 10.0 and runningMean <= 33.5:
-            # Define a function to tell if values are in the comfort range.
-            def comfBetween (x, l, r):
-                return (x > l and x < r)
             
-            if (vel > 0.45 and to >= 25):
+            if (vel >= 0.6 and to >= 25):
                 # calculate cooling effect of elevated air speed
                 # when top > 25 degC.
-                if vel > 0.45 and vel < 0.75:
-                    coolingEffect = 1.2
-                elif vel > 0.75 and vel < 1.05:
-                    coolingEffect = 1.8
-                elif vel > 1.05:
-                    coolingEffect = 2.2
+                if vel < 0.9: coolingEffect = 1.2
+                elif  vel < 1.2: coolingEffect = 1.8
+                elif vel > 1.2: coolingEffect = 2.2
                 else: pass
             
-            tComf = 0.31 * runningMean + 17.8
+            #Figure out the relation between comfort and outdoor temperature depending on the level of conditioning.
+            if levelOfConditioning == 0: tComf = 0.31 * runningMean + 17.8
+            elif levelOfConditioning == 1: tComf = 0.09 * runningMean + 22.6
+            else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * runningMean + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
+            
             tComfLower = tComf - offset
             tComfUpper = tComf + offset + coolingEffect
             r.append(tComf)
@@ -3290,8 +3288,10 @@ class ComfortModels(object):
             else: r.append(-1)
             
         elif runningMean < 10.0:
-            # The prevailing temperature is too cold for the adaptive method.
-            tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            # The prevailing temperature is too cold for the adaptive standard but we will use some correlations from adaptive-style surveys of conditioned buildings to give a good guess.
+            if levelOfConditioning == 0: tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 10 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
+            
             tempDiff = to - tComf
             tComfLower = tComf - offset
             tComfUpper = tComf + offset
@@ -3303,11 +3303,103 @@ class ComfortModels(object):
             outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
             r.extend(outputs)
         else:
-            # The prevailing temperature is too hot for the adaptive method.
-            tComf = 0.31 * 33.5 + 17.8
+            # The prevailing temperature is too hot for the adaptive method.  This should usually not happen for climates on today's earth but it might be possible in the future with global warming. For this case, we will just use the adaptive model at its hottest limit.
+            if (vel >= 0.6 and to >= 25):
+                if vel < 0.9: coolingEffect = 1.2
+                elif  vel < 1.2: coolingEffect = 1.8
+                elif vel > 1.2: coolingEffect = 2.2
+                else: pass
+            if levelOfConditioning == 0: tComf = 0.31 * 33.5 + 17.8
+            else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 33.5 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
             tempDiff = to - tComf
             tComfLower = tComf - offset
             tComfUpper = tComf + offset
+            if to > tComfLower and to < tComfUpper: acceptability = True
+            else: acceptability = False
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
+            r.extend(outputs)
+        
+        return r
+    
+    def comfAdaptiveComfortEN15251(self, ta, tr, runningMean, vel, comfortClass, levelOfConditioning = 0):
+        # Define the variables that will be used throughout the calculation.
+        r = []
+        coolingEffect = 0
+        if comfortClass == 1: offset = 2
+        elif comfortClass == 2: offset = 3
+        else: offset = 4
+        to = (ta + tr) / 2
+        
+        # See if the running mean temperature is between 10 C and 33.5 C (the range where the adaptive model is supposed to be used).
+        if runningMean >= 10.0 and runningMean <= 30.0:
+            if (vel >= 0.2 and to >= 25):
+                # calculate cooling effect of elevated air speed
+                # when top > 25 degC.
+                coolingEffect = 1.7856 * math.log(vel) + 2.9835
+            
+            tComf = 0.33 * runningMean + 18.8
+            
+            if runningMean > 15:
+                tComfLower = tComf - offset
+                tComfUpper = tComf + offset + coolingEffect
+            elif runningMean > 12.73 and runningMean < 15:
+                tComfLow = 0.33 * 15 + 18.8
+                tComfLower = tComfLow - offset
+                tComfUpper = tComf + offset + coolingEffect
+            else:
+                tComfLow = 0.33 * 15 + 18.8
+                tComfLower = tComfLow - offset
+                if comfortClass == 1: tComfUpper = tComf + offset
+                else: tComfUpper = tComf + offset + coolingEffect
+            
+            r.append(tComf)
+            r.append(to - tComf)
+            r.append(tComfLower)
+            r.append(tComfUpper)
+            
+            # See if the conditions are comfortable.
+            if to > tComfLower and to < tComfUpper:
+                # compliance
+                acceptability = True
+            else:
+                # nonCompliance
+                acceptability = False
+            r.append(acceptability)
+            
+            # Append a number to the result list to show whether the values are too hot, too cold, or comfortable.
+            if acceptability == True: r.append(0)
+            elif to > tComfUpper: r.append(1)
+            else: r.append(-1)
+            
+        elif runningMean < 10.0:
+            # The prevailing temperature is too cold for the adaptive standard but we will use some correlations from adaptive-style surveys of conditioned buildings to give a good guess.
+            if levelOfConditioning == 0: tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            else: tComf = ((0.09*levelOfConditioning)+(0.33*(1-levelOfConditioning))) * 10 + ((22.6*levelOfConditioning)+(18.8*(1-levelOfConditioning)))
+            
+            tempDiff = to - tComf
+            tComfLower = tComf - offset
+            tComfUpper = tComf + offset
+            if to > tComfLower and to < tComfUpper: acceptability = True
+            else: acceptability = False
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
+            r.extend(outputs)
+        else:
+            # The prevailing temperature is too hot for the adaptive method.  This should usually not happen for climates on today's earth but it might be possible in the future with global warming. For this case, we will just use the adaptive model at its hottest limit.
+            if (vel >= 0.2 and to >= 25):
+                # calculate cooling effect of elevated air speed
+                # when top > 25 degC.
+                coolingEffect = 1.7856 * math.log(vel) + 2.9835
+            if levelOfConditioning == 0: tComf = 0.33 * 30.0 + 18.8
+            else: tComf = ((0.09*levelOfConditioning)+(0.33*(1-levelOfConditioning))) * 30.0 + ((22.6*levelOfConditioning)+(18.8*(1-levelOfConditioning)))
+            tempDiff = to - tComf
+            tComfLower = tComf - offset
+            tComfUpper = tComf + offset + coolingEffect
             if to > tComfLower and to < tComfUpper: acceptability = True
             else: acceptability = False
             if acceptability == True: condit = 0

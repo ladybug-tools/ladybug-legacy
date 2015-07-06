@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The Adaptive model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.59
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.60
         _prevailingOutdoorTemp: A number representing the average monthly outdoor temperature in degrees Celcius.  This average monthly outdoor temperature is the temperature that occupants in naturally ventilated buildings tend to adapt themselves to. For this reason, this input can also accept the direct output of dryBulbTemperature from the Import EPW component if houlry values for the full year are connected for the other inputs of this component.
         windSpeed_: A number representing the wind speed of the air in meters per second.  If no value is plugged in here, this component will assume a very low wind speed of 0.3 m/s, characteristic of most naturally ventilated buildings.  This input can also accept a list of wind speeds representing conditions at different times or the direct output of windSpeed from of the Import EPW component.
         ------------------------------: ...
-        eightyPercentComfortable_: Set to "True" to have the comfort standard be 80 percent of occupants comfortable and set to "False" to have the comfort standard be 90 percent of all occupants comfortable.  The default is set to "True" for 80 percent, which is what most members of the building industry aim for.  However some projects will occasionally use 90%.
+        comfortPar_: Optional comfort parameters from the "Ladybug_Adaptive Comfort Parameters" component.  Use this to select either the US or European comfort model, set the threshold of acceptibility for comfort or compute prevailing outdoor temperature by a monthly average or running mean.  These comfortPar can also be used to set a levelOfConditioning, which makes use of research outside of the official published standards that surveyed people in air conditioned buildings.
         analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
         _runIt: Set to "True" to run the component and calculate the adaptive comfort metrics.
     Returns:
@@ -65,7 +65,7 @@ ghenv.Component.NickName = 'AdaptiveComfortCalculator'
 ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.60\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -109,6 +109,25 @@ def checkTheInputs():
     epwStr = []
     epwPrevailTemp = False
     epwPrevailStr = []
+    coldTimes = []
+    
+    #Check to see if there are any comfortPar connected and, if not, set the defaults to ASHRAE.
+    checkData6 = True
+    ASHRAEorEN = True
+    comfClass = False
+    avgMonthOrRunMean = True
+    levelOfConditioning = 0
+    if comfortPar_ != []:
+        try:
+            ASHRAEorEN = comfortPar_[0]
+            comfClass = comfortPar_[1]
+            avgMonthOrRunMean = comfortPar_[2]
+            levelOfConditioning = comfortPar_[3]
+        except:
+            checkData6 = False
+            warning = 'The connected comfortPar_ are not valid comfort parameters from the "Ladybug_Adaptive Comfort Parameters" component.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
     #Define a function to duplicate data
     def duplicateData(data, calcLength):
@@ -178,32 +197,48 @@ def checkTheInputs():
     prevailMultVal = False
     if len(_prevailingOutdoorTemp) != 0:
         try:
-            if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature':
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7:751])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[751:1423])/672)], 672))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[1423:2167])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[2167:2887])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[2887:3631])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[3631:4351])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[4351:5095])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[5095:5839])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[5839:6559])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[6559:7303])/744)], 744))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[7303:8023])/720)], 720))
-                prevailTemp.extend(duplicateData([float(sum(_prevailingOutdoorTemp[8023:])/744)], 744))
+            if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature' and _prevailingOutdoorTemp[3] == 'C' and _prevailingOutdoorTemp[4] == 'Hourly' and _prevailingOutdoorTemp[5] == (1, 1, 1) and _prevailingOutdoorTemp[6] == (12, 31, 24):
+                if avgMonthOrRunMean == True:
+                    #Calculate the monthly average temperatures.
+                    monthPrevailList = [float(sum(_prevailingOutdoorTemp[7:751])/744), float(sum(_prevailingOutdoorTemp[751:1423])/672), float(sum(_prevailingOutdoorTemp[1423:2167])/744), float(sum(_prevailingOutdoorTemp[2167:2887])/720), float(sum(_prevailingOutdoorTemp[2887:3631])/744), float(sum(_prevailingOutdoorTemp[3631:4351])/720), float(sum(_prevailingOutdoorTemp[4351:5095])/744), float(sum(_prevailingOutdoorTemp[5095:5839])/744), float(sum(_prevailingOutdoorTemp[5839:6559])/720), float(sum(_prevailingOutdoorTemp[6559:7303])/744), float(sum(_prevailingOutdoorTemp[7303:8023])/720), float(sum(_prevailingOutdoorTemp[8023:])/744)]
+                    hoursInMonth = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]
+                    for monthCount, monthPrevailTemp in enumerate(monthPrevailList):
+                        prevailTemp.extend(duplicateData([monthPrevailTemp], hoursInMonth[monthCount]))
+                        if monthPrevailTemp < 10: coldTimes.append(monthCount+1)
+                else:
+                    #Calculate a running mean temperature.
+                    alpha = 0.8
+                    divisor = 1 + alpha + math.pow(alpha,2) + math.pow(alpha,3) + math.pow(alpha,4) + math.pow(alpha,5)
+                    dividend = (sum(_prevailingOutdoorTemp[-24:-1] + [_prevailingOutdoorTemp[-1]])/24) + (alpha*(sum(_prevailingOutdoorTemp[-48:-24])/24)) + (math.pow(alpha,2)*(sum(_prevailingOutdoorTemp[-72:-48])/24)) + (math.pow(alpha,3)*(sum(_prevailingOutdoorTemp[-96:-72])/24)) + (math.pow(alpha,4)*(sum(_prevailingOutdoorTemp[-120:-96])/24)) + (math.pow(alpha,5)*(sum(_prevailingOutdoorTemp[-144:-120])/24))
+                    startingTemp = divisor/dividend
+                    if startingTemp < 10: coldTimes.append(0)
+                    outdoorTemp = _prevailingOutdoorTemp[7:]
+                    startingMean = sum(outdoorTemp[:24])/24
+                    dailyRunMeans = [startingTemp]
+                    dailyMeans = [startingMean]
+                    prevailTemp.extend(duplicateData([startingTemp], 24))
+                    startHour = 24
+                    for count in range(364):
+                        dailyMean = sum(outdoorTemp[startHour:startHour+24])/24
+                        dailyRunMeanTemp = ((1-alpha)*dailyMeans[-1]) + alpha*dailyRunMeans[-1]
+                        if dailyRunMeanTemp < 10: coldTimes.append(count+1)
+                        prevailTemp.extend(duplicateData([dailyRunMeanTemp], 24))
+                        dailyRunMeans.append(dailyRunMeanTemp)
+                        dailyMeans.append(dailyMean)
+                        startHour +=24
                 checkData3 = True
                 epwPrevailTemp = True
                 epwPrevailStr = _prevailingOutdoorTemp[0:7]
         except: pass
         if checkData3 == False:
+            checkData3 = True
             for item in _prevailingOutdoorTemp:
                 try:
                     prevailTemp.append(float(item))
-                    checkData3 = True
                 except: checkData3 = False
         if len(prevailTemp) > 1: prevailMultVal = True
         if checkData3 == False:
-            warning = '_prevailingOutdoorTemp input does not contain valid temperature values in degrees Celcius.'
+            warning = '_prevailingOutdoorTemp input must either be the annual hourly dryBulbTemperature from the ImportEPW component, a list of temperature values that matches the length other inputs or a single temperature to be used for all cases.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
@@ -291,27 +326,70 @@ def checkTheInputs():
         calcLength = 0
     
     #If all of the checkDatas have been good to go, let's give a final go ahead.
-    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True:
+    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True:
         checkData = True
     else:
         checkData = False
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed
+    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning
 
 
-def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, lb_preparation, lb_comfortModels):
+def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, lb_preparation, lb_comfortModels):
     #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
+    individualCases = False
+    daysForMonths = lb_preparation.numOfDays
     if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
         HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
         runPeriod = analysisPeriod_
         calcLength = len(HOYS)
+        dayNums = []
+        for month in months:
+            if days[0] == 1 and days[-1] == 31: dayNums.extend(range(daysForMonths[month-1], daysForMonths[month]))
+            elif days[0] == 1 and days[-1] != 31: dayNums.extend(range(daysForMonths[month-1], daysForMonths[month-1]+days[-1]))
+            elif days[0] != 1 and days[-1] == 31: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month]))
+            else: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month-1]+days[-1]))
     elif len(analysisPeriod_)==0 and epwData == True:
-        HOYS = range(calcLength)
+        HOYS = range(calcLength)[1:] + [calcLength]
         runPeriod = [epwStr[5], epwStr[6]]
+        months = [1,2,3,4,5,6,7,8,9,10,11,12]
+        dayNums = range(365)
     else:
-        HOYS = range(calcLength)
+        HOYS = range(calcLength)[1:] + [calcLength]
         runPeriod = [(1,1,1), (12,31,24)]
+        months = []
+        days = []
+        individualCases = True
+    
+    #Check to see if there are any times when the prevailing temperature is too cold and give a comment that we are using a non-standard model.
+    monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    if ASHRAEorEN == True: modelName = "ASHRAE 55"
+    else: modelName = "EN-15251"
+    if coldTimes != []:
+        if avgMonthOrRunMean == True:
+            coldMsg = "The following months were too cold for the official " + modelName + " standard and have used a correlation from recent research:"
+            for month in months:
+                if month in coldTimes:
+                    coldMsg += '\n'
+                    coldMsg += monthNames[month-1]
+            print coldMsg
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
+        else:
+            totalColdInPeriod = []
+            for day in dayNums:
+                if day in coldTimes: totalColdInPeriod.append(day)
+            if totalColdInPeriod != []:
+                coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + "standard. \n A correlation from recent research has been used in these cases."
+                print coldMsg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
+    elif individualCases:
+        totalColdInPeriod = []
+        for temp in prevailTemp:
+            if temp < 10: totalColdInPeriod.append(temp)
+        if totalColdInPeriod != []:
+            coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + "standard. \n A correlation from recent research has been used in these cases."
+            print coldMsg
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
     
     #If things are good, run it through the comfort model.
     comfortableOrNot = []
@@ -348,7 +426,8 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
                 # let the user cancel the process
                 if gh.GH_Document.IsEscapeKeyDown(): assert False
                 
-                comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(airTemp[count], radTemp[count], prevailTemp[count], windSpeed[count], eightyPercentComfortable_)
+                if ASHRAEorEN == True: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(airTemp[count-1], radTemp[count-1], prevailTemp[count-1], windSpeed[count-1], comfClass, levelOfConditioning)
+                else: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortEN15251(airTemp[count-1], radTemp[count-1], prevailTemp[count-1], windSpeed[count-1], comfClass, levelOfConditioning)
                 
                 if comf == True:comfOrNot.append(1)
                 else: comfOrNot.append(0)
@@ -408,7 +487,7 @@ if sc.sticky.has_key('ladybug_release'):
     lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
     
     #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
-    checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed = checkTheInputs()
+    checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning = checkTheInputs()
 else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
@@ -416,7 +495,7 @@ else:
 
 
 if _runIt == True and checkData == True:
-    results = main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, lb_preparation, lb_comfortModels)
+    results = main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, lb_preparation, lb_comfortModels)
     if results!=-1:
         comfortableOrNot, conditionOfPerson, percentOfTimeComfortable, \
         percentHotCold, upperTemperatureBound, lowerTemperatureBound, targetTemperature, degreesFromTarget = results

@@ -41,11 +41,11 @@ Provided by Ladybug 0.0.60
         comfortPar: Comfort parameters that you can plug into either the "Ladybug_PMV Comfort Calculator" or the "Ladybug_Psychrometric Chart."
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Parameters"
-ghenv.Component.NickName = 'ComfortPar'
+ghenv.Component.NickName = 'PMVComfortPar'
 ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.60\nJUL_06_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
