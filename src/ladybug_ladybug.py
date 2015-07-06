@@ -1,25 +1,42 @@
 # This is the heart of the Ladybug
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 This component carries all of Ladybug's main classes. Other components refer to these
 classes to run the studies. Therefore, you need to let her fly before running the studies so the
 classes will be copied to Rhinos shared space. So let her fly!
+
 -
-Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
-Based on a work at https://github.com/mostaphaRoudsari/ladybug.
+Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+You should have received a copy of the GNU General Public License
+along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+
+@license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
+Source code is available at: https://github.com/mostaphaRoudsari/ladybug
+
 -
-Check this link for more information about the license:
-http://creativecommons.org/licenses/by-sa/3.0/deed.en_US
--
-Source code is available at:
-https://github.com/mostaphaRoudsari/ladybug
--
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -29,7 +46,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_25_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

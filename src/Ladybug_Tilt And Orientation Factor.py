@@ -1,14 +1,31 @@
 # Tilt and orientation factor
-# By Djordje Spasic
-# djordjedspasic@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 This component calculates the Tilt and Orientation Factor (TOF) for PV modules/Solar hot watter collectors.
 TOF is a solar radiation at the actual tilt and orientation divided by the solar radiation at the optimum tilt and orientation, expressed in percent. 
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     input:
         _PVsurface: - Input planar Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
@@ -21,7 +38,7 @@ Provided by Ladybug 0.0.59
         PVsurfaceAzimuthAngle_: The orientation angle (clockwise from the true north) of the PVsurface normal vector. (range 0-360)
                                 -
                                 If not supplied, but surface inputted into "_PVsurface", PVsurfaceAzimuthAngle will be calculated from an angle PVsurface closes with its north.
-                                If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area inputed), default value of 180° (south-facing) for locations in the northern hemisphere or 0° (north-facing) for locations in the southern hemisphere, will be used.
+                                If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area inputed), default value of 180 (south-facing) for locations in the northern hemisphere or 0 (north-facing) for locations in the southern hemisphere, will be used.
         annualShading_: Losses due to buildings, structures, trees, mountains or other objects that prevent solar radiation from reaching the PV module/Solar hot water collector.
                   Input range: 0 to 100(%), 0 being unshaded, and 100 being totally shaded PV module/SHW collector.
                   -
@@ -74,13 +91,13 @@ Provided by Ladybug 0.0.59
               -
               In percent(%).
         PVsurfaceTilt: Tilt angle of the inputted PVsurface.
-                       In degrees (°).
+                       In degrees ().
         PVsurfaceAzimuth: Orientation angle of the inputted PVsurface.
-                          In degrees (°).
+                          In degrees ().
         optimalTilt: Optimal tilt of the PVsurface for a given location. Optimal tilt being the one that receives the most annual solar radiation.
-                     In degrees (°).
+                     In degrees ().
         optimalAzimuth: Optimal orientation of the PVsurface for a given location. Optimal azimuth being the one that receives the most annual solar radiation.
-                        In degrees (°).
+                        In degrees ().
         optimalRoofPitch: Optimal steepness of the PVsurface for a given location. Optimal steepness being the one that receives the most annual solar radiation.
                           In inches/inches
         optimalRadiation: Total solar radiation per square meter for a whole year received on a PVsurface of optimal tilt and azimuth, at given location.
@@ -96,7 +113,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = "VER 0.0.59\nMAY_26_2015"
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
@@ -625,8 +642,8 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
     y2AxisLabelOrigin = Rhino.Geometry.Point3d(originOffset.X + 80+12, originOffset.Y+45/2, originOffset.Z)
     
     # xAxis, yAxis, y2Axis LabelMeshes
-    xAxisLabelMeshes = lb_visualization.text2srf(["Azimuth (°)"], [xAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 1)[0]
-    yAxisLabelMeshes = lb_visualization.text2srf(["Tilt (°)"], [yAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 2)[0]
+    xAxisLabelMeshes = lb_visualization.text2srf(["Azimuth ()"], [xAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 1)[0]
+    yAxisLabelMeshes = lb_visualization.text2srf(["Tilt ()"], [yAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 2)[0]
     y2AxisLabelMeshes = lb_visualization.text2srf(["Roof pitch"], [y2AxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 3)[0]
     
     # title LabelOrigin
@@ -636,7 +653,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
     TSRFoptimal = 100 # always 100%
     titleLabelText = "Annual total solar radiation as a function of panel tilt/orientation"
     titleLabelMeshes = lb_visualization.text2srf([titleLabelText], [titleLabelOrigin], legendFont, legendFontSize*1.6, legendBold, None, 6)[0]
-    descriptionLabelText = "Location: %s, Latitude: %s°, Longitude: %s°\nOptimal: Tilt: %0.1f°, Azimuth: %0.1f°, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f\nAnalysed: Tilt: %0.1f°, Azimuth: %0.1f°, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f" %(locationName, latitude, longitude, optimalTiltD, optimalAzimuthD, maximalTotalRadiationPerYear, TOFoptimal, TSRFoptimal, srfTiltD, srfAzimuthD, totalRadiationPerYear, TOF, TSRF)
+    descriptionLabelText = "Location: %s, Latitude: %s, Longitude: %s\nOptimal: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f\nAnalysed: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f" %(locationName, latitude, longitude, optimalTiltD, optimalAzimuthD, maximalTotalRadiationPerYear, TOFoptimal, TSRFoptimal, srfTiltD, srfAzimuthD, totalRadiationPerYear, TOF, TSRF)
     descriptionLabelMeshes = lb_visualization.text2srf([descriptionLabelText], [descriptionLabelOrigin], legendFont, legendFontSize*1.3, legendBold, None, 6)[0]
     
     # region percent values
@@ -792,4 +809,3 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
-    

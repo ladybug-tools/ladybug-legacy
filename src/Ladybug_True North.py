@@ -1,8 +1,25 @@
 # True north
-# By Djordje Spasic
-# djordjedspasic@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to calculate Earth's true north from magnetic north.
@@ -12,7 +29,7 @@ http://www.ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
 All credit goes to Christopher Weiss (cmweiss@gmail.com), the author of the World Magnetic Model python code.
 source: https://pypi.python.org/pypi/geomag
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     input:
         _location: Input data from Ladybug's "Import epw" "location" output, or create your own location data with Ladybug's "Construct Location" component.
@@ -32,17 +49,17 @@ Provided by Ladybug 0.0.59
     output:
         readMe!: ...
         trueNorth: Geographic north (direction towards the North Pole) - magnetic north corrected for the value of magnetic declination. Ranges from 0-360.
-                       In decimal degrees (°).
+                       In decimal degrees ().
         trueNorthVec: Vector representation of the upper "trueNorth".
         magneticDeclination: An angle between magnetic north and true north. It is positive east of true north and negative west of true north.
-                             In decimal degrees (°).
+                             In decimal degrees ().
         magneticFieldVec: Earth's magnetic field vector at chosen location.
                           Vector's intensity represents the strength in nanoTeslas (nT).
 """
 
 ghenv.Component.Name = "Ladybug_True North"
 ghenv.Component.NickName = "TrueNorth"
-ghenv.Component.Message = "VER 0.0.59\nAPR_26_2015"
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
@@ -210,4 +227,3 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
-    

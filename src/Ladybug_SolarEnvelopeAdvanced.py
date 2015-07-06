@@ -1,15 +1,32 @@
 # Solar Envelope
 # Provides an envelope (as a list of points) which represents the area in which new masses could be placed withought
 # interfering with the sun rights of surrounding buildings, given a filtered list of suns
-# By Boris Plotnikov with the assistance and guidance of Prof. Guedi Capeluto
-# pborisp@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Boris Plotnikov with the assistance and guidance of Prof. Guedi Capeluto <pborisp@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 """
 Use this component to generate a solar envelope for a given test surface, set of solar vectors, and context geometry that you want to ensure solar access to.  Solar envelopes are typically used to illustrate the volume that can be built within in order to ensure that a new development does not shade the surrounding properties for a given set of sun vectors.
 
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     Args:
         _baseSrf: A surface representing the area for which you want to create the solar envelope.
@@ -24,7 +41,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelopeAdvanced'
 ghenv.Component.NickName = 'SolarEnvelopeAdvanced'
-ghenv.Component.Message = 'VER 0.0.59\nMAY_02_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

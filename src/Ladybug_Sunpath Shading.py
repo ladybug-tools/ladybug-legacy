@@ -1,8 +1,25 @@
 # Sunpath shading
-# By Djordje Spasic
-# djordjedspasic@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 This component calculates the amount of annual shading of sun window due to location's surroundings. Sun (or solar) window being an area of the the sky dome between winter and summer solstice sun paths.
@@ -14,7 +31,7 @@ Use "annualShading" or "beamIndexPerHour" output for Photovoltaic arrays and "be
 Based on "Using sun path charts to estimate the effects of shading on PV arrays", University of Oregon, Frank Vignola:
 http://solardat.uoregon.edu/download/Papers/UsingSunPathChartstoEstimatetheEffectofShadingonPVArrays.pdf
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     input:
         _PVsurface: Input planar Surface (not polysurface) on which the PV modules/Solar hot water collectors will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
@@ -112,7 +129,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = "VER 0.0.59\nMAY_26_2015"
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
@@ -261,7 +278,7 @@ def checkInputData(PVsurface, ACenergyPerHour, context, coniferousTrees, deciduo
     validContextCategories = [index for index in [validContext1, validContext2, validContext3] if index > 0]
     
     # default transmission indices based on: Planning and Installing Photovoltaic Systems: A Guide for Installers, Architects and Engineers,
-    # Deutsche Gesellschaft Für Sonnenenergie (Dgs), Dec 2007.
+    # Deutsche Gesellschaft Fr Sonnenenergie (Dgs), Dec 2007.
     if (coniferousAllyearIndex == None) or (coniferousAllyearIndex < 0) or (coniferousAllyearIndex > 1):
         coniferousAllyearIndex = 0.30
     if (deciduousInleafIndex == None) or (deciduousInleafIndex < 0) or (deciduousInleafIndex > 1):
@@ -1059,4 +1076,3 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
-    

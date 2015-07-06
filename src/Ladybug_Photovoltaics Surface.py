@@ -1,8 +1,25 @@
 # Photovoltaics surface
-# By Djordje Spasic and Jason Sensibaugh
-# djordjedspasic@gmail.com and sensij@yahoo.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Djordje Spasic and Jason Sensibaugh <djordjedspasic@gmail.com and sensij@yahoo.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to calculate amount of electrical energy that can be produced by a surface
@@ -13,7 +30,7 @@ Sources:
 http://www.nrel.gov/docs/fy14osti/60272.pdf
 https://pvpmc.sandia.gov
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     input:
         _PVsurface: - Input planar Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
@@ -30,7 +47,7 @@ Provided by Ladybug 0.0.59
         PVsurfaceAzimuthAngle_: The orientation angle (clockwise from the true north) of the PVsurface normal vector. (range 0-360)
                                 -
                                 If not supplied, but surface inputted into "_PVsurface", PVsurfaceAzimuthAngle will be calculated from an angle PVsurface closes with its north.
-                                If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area or system size inputed), default value of 180° (south-facing) for locations in the northern hemisphere or 0° (north-facing) for locations in the southern hemisphere, will be used.
+                                If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area or system size inputed), default value of 180 (south-facing) for locations in the northern hemisphere or 0 (north-facing) for locations in the southern hemisphere, will be used.
         DCtoACderateFactor_: Factor which accounts for various locations and instances in a PV system where power is lost from DC system nameplate to AC power. It ranges from 0 to 1.
                                     It can be calculated with Ladybug's "DC to AC derate factor" component.
                                     -
@@ -71,7 +88,7 @@ Provided by Ladybug 0.0.59
         annualHourlyData_: An optional list of hourly data from Ladybug's "Import epw" component (e.g. dryBulbTemperature), which will be used for "conditionalStatement_".
         conditionalStatement_: This input allows users to calculate the Photovoltaics surface component results only for those annualHourlyData_ values which fit specific conditions or criteria. To use this input correctly, hourly data, such as dryBulbTemperature or windSpeed, must be plugged into the "annualHourlyData_" input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<3" (without the quotation marks).
                                conditionalStatement_ accepts "and" and "or" operators. To visualize the hourly data, English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
-                               For example, if you have an hourly dryBulbTemperature connected as the first list, and windSpeed connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18°C and 23°C, and windSpeed is larger than 3m/s, the conditionalStatement_ should be written as "18<a<23 and b>3" (without the quotation marks).
+                               For example, if you have an hourly dryBulbTemperature connected as the first list, and windSpeed connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and windSpeed is larger than 3m/s, the conditionalStatement_ should be written as "18<a<23 and b>3" (without the quotation marks).
         _runIt: ...
         
     output:
@@ -82,8 +99,8 @@ Provided by Ladybug 0.0.59
         averageDailyACenergyPerMonth: An average AC power output per day in each month, in kWh/day
         averageDailyACenergyPerYear: An average AC power output per day in a whole year, in kWh/day
         totalRadiationPerHour: Total Incident POA (Plane of array) irradiance for each hour during a year, in kWh/m2
-        moduleTemperaturePerHour: Module temperature for each hour during year, in °C
-        cellTemperaturePerHour: Cell temperature for each hour during year, in °C
+        moduleTemperaturePerHour: Module temperature for each hour during year, in C
+        cellTemperaturePerHour: Cell temperature for each hour during year, in C
         nameplateDCpowerRating: DC rating or system size of the PV system. In kW
         PVcoverArea: An area of the inputted _PVsurface which will be covered with Photovoltaics. In m2
         PVcoverActiveArea: coverArea with excluded module framing and gaps between cells. In m2
@@ -91,7 +108,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
 ghenv.Component.NickName = "PhotovoltaicsSurface"
-ghenv.Component.Message = "VER 0.0.59\nMAY_26_2015"
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
@@ -467,8 +484,8 @@ def radiation_ACenergy(latitude, longitude, timeZone, locationName, years, month
     # solar radiation, AC power output, module temperature, cell temperature
     ACenergyPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "AC power output", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)]
     totalRadiationPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Total POA irradiance", "kWh/m2", "Hourly", (1, 1, 1), (12, 31, 24)]
-    moduleTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Module temperature", "°C", "Hourly", (1, 1, 1), (12, 31, 24)]
-    cellTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Cell temperature", "°C", "Hourly", (1, 1, 1), (12, 31, 24)]
+    moduleTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Module temperature", "C", "Hourly", (1, 1, 1), (12, 31, 24)]
+    cellTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Cell temperature", "C", "Hourly", (1, 1, 1), (12, 31, 24)]
     hoyForMonths = [0, 744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016, 8760, 9000]
     numberOfDaysInThatMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
     monthsOfYearHoyPac = [[],[],[],[],[],[],[],[],[],[],[],[]]
@@ -587,4 +604,3 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
-    

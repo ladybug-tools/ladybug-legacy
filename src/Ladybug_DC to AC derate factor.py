@@ -1,8 +1,25 @@
 # DC to AC derate factor
-# By Djordje Spasic
-# djordjedspasic@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to calculate overall DC to AC derate factor for Photovoltaics Surface's "DCtoACderateFactor_" input.
@@ -14,7 +31,7 @@ Based on PVWatts v5 Manual: http://www.nrel.gov/docs/fy14osti/62641.pdf
 If nothing supplied to the inputs, default value of 0.85 will be used.
 
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     input:
         annualShading_: Losses due to buildings, structures, trees, mountains or other objects that prevent solar radiation from reaching the cells.
@@ -68,7 +85,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_DC to AC derate factor"
 ghenv.Component.NickName = "DCtoACderateFactor"
-ghenv.Component.Message = "VER 0.0.59\nMAY_26_2015"
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
@@ -169,4 +186,3 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
-    
