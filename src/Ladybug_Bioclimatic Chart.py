@@ -1211,10 +1211,12 @@ def createFrequencyMesh(orgY, dryBulbTemperature, relativeHumidity, cullMesh, lb
     
     addGridToIndex = abs(orgY/2)
     module = gridSize/2
+    
     for hour, temp in enumerate(dryBulbTemperature):
         tempIndex = int((float(temp)+addGridToIndex) / module)
         humIndex = getHumidityIndex(hour)
-        meshFrequency[tempIndex][humIndex].append(1)
+        if tempIndex < 28:
+            meshFrequency[tempIndex][humIndex].append(1)
         
         
     #Sum all of the lists together to get the frequency.
@@ -1350,7 +1352,7 @@ def main(epwData, epwStr):
             zP = 0.0 #basePoint_.Z
         else: 
             basePoint = rc.Geometry.Point3d(0,0,0)
-            xP, yP, zP = 0.0
+            xP, yP, zP = 0.0, 0.0, 0.0
 
     
         if metabolicRate_ :
