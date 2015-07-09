@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_08_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_09_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.60\nFEB_01_2015
@@ -379,7 +379,7 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
             for day in dayNums:
                 if day in coldTimes: totalColdInPeriod.append(day)
             if totalColdInPeriod != []:
-                coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + "standard. \n A correlation from recent research has been used in these cases."
+                coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
                 print coldMsg
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
     elif individualCases:
@@ -387,7 +387,7 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
         for temp in prevailTemp:
             if temp < 10: totalColdInPeriod.append(temp)
         if totalColdInPeriod != []:
-            coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + "standard. \n A correlation from recent research has been used in these cases."
+            coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
             print coldMsg
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
     

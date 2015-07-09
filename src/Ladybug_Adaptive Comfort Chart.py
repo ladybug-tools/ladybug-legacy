@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_08_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_09_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nJUL_08_2015
@@ -929,6 +929,12 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 for hour in HOYS:
                     newPatternList.append(patternList[hour-1])
                 patternList = newPatternList
+        else:
+            months = [1,2,3,4,5,6,7,8,9,10,11,12]
+            dayNums = range(365)
+    else:
+        months = [1,2,3,4,5,6,7,8,9,10,11,12]
+        dayNums = range(365)
     if annualHourlyDataSplit != [[]]:
         annualHourlyDataSplitNew = []
         for annList in annualHourlyDataSplit:
@@ -955,6 +961,57 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         prevailTemp = newPrevailTemp
         annualHourlyDataSplit = newAnnualHourlyDataSplit
     
+    #If the user has set incluse cold times to True, remove them from the list and give a comment.
+    monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    if ASHRAEorEN == True: modelName = "ASHRAE 55"
+    else: modelName = "EN-15251"
+    if coldTimes != []:
+        if avgMonthOrRunMean == True:
+            if includeColdTimes == False: coldMsg = "The following months were too cold for the official " + modelName + " standard and have been removed from the analysis:"
+            else: coldMsg = "The following months were too cold for the official " + modelName + " standard and a correlation from recent research has been used in these cases:"
+            for month in months:
+                if month in coldTimes:
+                    coldMsg += '\n'
+                    coldMsg += monthNames[month-1]
+            print coldMsg
+            if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
+        else:
+            totalColdInPeriod = []
+            for day in dayNums:
+                if day in coldTimes: totalColdInPeriod.append(day)
+            if totalColdInPeriod != []:
+                if includeColdTimes == True: coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
+                else: coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + " standard. \n These cases have been removed from the analysis."
+                print coldMsg
+                if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
+    else:
+        totalColdInPeriod = []
+        for temp in prevailTemp:
+            if temp < 10: totalColdInPeriod.append(temp)
+        if totalColdInPeriod != []:
+            if includeColdTimes == True: coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
+            else: coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + " standard. \n These cases have been removed from the analysis."
+            print coldMsg
+            if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
+    if includeColdTimes == False:
+        newAirTemp = []
+        newRadTemp = []
+        newPrevailTemp = []
+        newAnnualHourlyDataSplit = []
+        for list in annualHourlyDataSplit:
+            newAnnualHourlyDataSplit.append([])
+        for count, preTemp in enumerate(prevailTemp):
+            if preTemp > 10:
+                newPrevailTemp.append(preTemp)
+                newRadTemp.append(radTemp[count])
+                newAirTemp.append(airTemp[count])
+                if patternList != []:
+                    for listCount in range(len(annualHourlyDataSplit)):
+                        newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
+        airTemp = newAirTemp
+        radTemp = newRadTemp
+        prevailTemp = newPrevailTemp
+        if patternList != []: annualHourlyDataSplit = newAnnualHourlyDataSplit
     
     # Generate the chart curves.
     chartCurvesAndTxt, finalComfortPolygons, belowTen, bound = drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, lb_visualization, lb_comfortModels)
