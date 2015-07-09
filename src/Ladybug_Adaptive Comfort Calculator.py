@@ -366,14 +366,17 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
     if ASHRAEorEN == True: modelName = "ASHRAE 55"
     else: modelName = "EN-15251"
     if coldTimes != []:
+        coldThere = False
         if avgMonthOrRunMean == True:
             coldMsg = "The following months were too cold for the official " + modelName + " standard and have used a correlation from recent research:"
             for month in months:
                 if month in coldTimes:
+                    coldThere = True
                     coldMsg += '\n'
                     coldMsg += monthNames[month-1]
-            print coldMsg
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
+            if coldThere == True:
+                print coldMsg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
         else:
             totalColdInPeriod = []
             for day in dayNums:

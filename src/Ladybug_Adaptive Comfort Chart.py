@@ -923,15 +923,26 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = lb_preparation.selectHourlyData(_dryBulbTemperature, analysisPeriod_)[7:]
         radTemp = lb_preparation.selectHourlyData(radTemp, analysisPeriod_)[7:]
         prevailTemp = lb_preparation.selectHourlyData(prevailTemp, analysisPeriod_)[7:]
+        daysForMonths = lb_preparation.numOfDays
+        dayNums = []
         if len(patternList) == 8760:
-                HOYS, months, days = getHOYsBasedOnPeriod(analysisPeriod_, 1)
-                newPatternList = []
-                for hour in HOYS:
-                    newPatternList.append(patternList[hour-1])
-                patternList = newPatternList
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+            newPatternList = []
+            for hour in HOYS:
+                newPatternList.append(patternList[hour-1])
+            patternList = newPatternList
+            for month in months:
+                if days[0] == 1 and days[-1] == 31: dayNums.extend(range(daysForMonths[month-1], daysForMonths[month]))
+                elif days[0] == 1 and days[-1] != 31: dayNums.extend(range(daysForMonths[month-1], daysForMonths[month-1]+days[-1]))
+                elif days[0] != 1 and days[-1] == 31: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month]))
+                else: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month-1]+days[-1]))
         else:
-            months = [1,2,3,4,5,6,7,8,9,10,11,12]
-            dayNums = range(365)
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+            for month in months:
+                if days[0] == 1 and days[-1] == 31: dayNums.extend(range(daysForMonths[month-1], daysForMonths[month]))
+                elif days[0] == 1 and days[-1] != 31: dayNums.extend(range(daysForMonths[month-1], daysForMonths[month-1]+days[-1]))
+                elif days[0] != 1 and days[-1] == 31: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month]))
+                else: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month-1]+days[-1]))
     else:
         months = [1,2,3,4,5,6,7,8,9,10,11,12]
         dayNums = range(365)
@@ -966,15 +977,18 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
     if ASHRAEorEN == True: modelName = "ASHRAE 55"
     else: modelName = "EN-15251"
     if coldTimes != []:
+        coldThere = False
         if avgMonthOrRunMean == True:
             if includeColdTimes == False: coldMsg = "The following months were too cold for the official " + modelName + " standard and have been removed from the analysis:"
             else: coldMsg = "The following months were too cold for the official " + modelName + " standard and a correlation from recent research has been used in these cases:"
             for month in months:
                 if month in coldTimes:
+                    coldThere = True
                     coldMsg += '\n'
                     coldMsg += monthNames[month-1]
-            print coldMsg
-            if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
+            if coldThere == True:
+                print coldMsg
+                if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
         else:
             totalColdInPeriod = []
             for day in dayNums:
