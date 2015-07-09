@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_08_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.60\nFEB_01_2015
@@ -404,14 +404,14 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
         targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not', 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
-        extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+        extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Cold, 0 = Comfortable, 1 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
         upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
     elif checkData == True and epwData == True and 'for' in epwStr[2]:
         targetTemperature.extend([epwStr[0], epwStr[1], 'Adaptive Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         degreesFromTarget.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
-        extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-1 = Extreme Prevailing, 0 = Cold, 1 = Comfortable, 2 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+        extremeColdComfortableHot.extend([epwStr[0], epwStr[1], 'Adaptive Comfort' + ' for ' + epwStr[2].split('for ')[-1], '-1 = Cold, 0 = Comfortable, 1 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
         upperTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Upper Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         lowerTemperatureBound.extend([epwStr[0], epwStr[1], 'Adaptive Lower Comfort Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
     if checkData == True:

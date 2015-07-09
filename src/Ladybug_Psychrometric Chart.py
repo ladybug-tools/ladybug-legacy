@@ -85,7 +85,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_08_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -1610,8 +1610,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                     newAirTemp.append(airTemp[count])
                     newRelHumid.append(relHumid[count])
                     newBarPress.append(barPress[count])
-                    for listCount in range(len(annualHourlyDataSplit)):
-                        newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
+                    if annualHourlyDataSplit != [[]]:
+                        for listCount in range(len(annualHourlyDataSplit)):
+                            newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
             airTemp = newAirTemp
             relHumid = newRelHumid
             barPress = newBarPress

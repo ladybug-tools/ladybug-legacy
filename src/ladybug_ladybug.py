@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_08_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -3290,7 +3290,9 @@ class ComfortModels(object):
         elif runningMean < 10.0:
             # The prevailing temperature is too cold for the adaptive standard but we will use some correlations from adaptive-style surveys of conditioned buildings to give a good guess.
             if levelOfConditioning == 0: tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
-            else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 10 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
+            else:
+                conditOffset = 2.6*levelOfConditioning
+                tComf = conditOffset+ 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
             
             tempDiff = to - tComf
             tComfLower = tComf - offset
@@ -3313,7 +3315,7 @@ class ComfortModels(object):
             else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 33.5 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
             tempDiff = to - tComf
             tComfLower = tComf - offset
-            tComfUpper = tComf + offset
+            tComfUpper = tComf + offset + coolingEffect
             if to > tComfLower and to < tComfUpper: acceptability = True
             else: acceptability = False
             if acceptability == True: condit = 0
@@ -3333,24 +3335,30 @@ class ComfortModels(object):
         else: offset = 4
         to = (ta + tr) / 2
         
-        # See if the running mean temperature is between 10 C and 33.5 C (the range where the adaptive model is supposed to be used).
+        # See if the running mean temperature is between 10 C and 30.0 C (the range where the adaptive model is supposed to be used).
         if runningMean >= 10.0 and runningMean <= 30.0:
             if (vel >= 0.2 and to >= 25):
                 # calculate cooling effect of elevated air speed
                 # when top > 25 degC.
                 coolingEffect = 1.7856 * math.log(vel) + 2.9835
             
-            tComf = 0.33 * runningMean + 18.8
+            if levelOfConditioning == 0: tComf = 0.33 * runningMean + 18.8
+            elif levelOfConditioning == 1: tComf = 0.09 * runningMean + 22.6
+            else: tComf = ((0.09*levelOfConditioning)+(0.33*(1-levelOfConditioning))) * runningMean + ((22.6*levelOfConditioning)+(18.8*(1-levelOfConditioning)))
             
             if runningMean > 15:
                 tComfLower = tComf - offset
                 tComfUpper = tComf + offset + coolingEffect
-            elif runningMean > 12.73 and runningMean < 15:
-                tComfLow = 0.33 * 15 + 18.8
+            elif runningMean > 12.73 and runningMean < 15 and levelOfConditioning == 0:
+                tComfLow = 23.75
                 tComfLower = tComfLow - offset
                 tComfUpper = tComf + offset + coolingEffect
+            elif levelOfConditioning != 0:
+                tComfLower = tComf - offset
+                tComfUpper = tComf + offset + coolingEffect
+                #tComfLow = 23.75 - (0.25*levelOfConditioning)
             else:
-                tComfLow = 0.33 * 15 + 18.8
+                tComfLow = 23.75
                 tComfLower = tComfLow - offset
                 if comfortClass == 1: tComfUpper = tComf + offset
                 else: tComfUpper = tComf + offset + coolingEffect
@@ -3376,8 +3384,10 @@ class ComfortModels(object):
             
         elif runningMean < 10.0:
             # The prevailing temperature is too cold for the adaptive standard but we will use some correlations from adaptive-style surveys of conditioned buildings to give a good guess.
-            if levelOfConditioning == 0: tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
-            else: tComf = ((0.09*levelOfConditioning)+(0.33*(1-levelOfConditioning))) * 10 + ((22.6*levelOfConditioning)+(18.8*(1-levelOfConditioning)))
+            if levelOfConditioning == 0: tComf = 25.224 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            else:
+                conditOffset = 1.4*levelOfConditioning
+                tComf = conditOffset + 25.224 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
             
             tempDiff = to - tComf
             tComfLower = tComf - offset
