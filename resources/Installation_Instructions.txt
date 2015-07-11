@@ -17,14 +17,17 @@ Instructions for Installing Ladybug + Honeybee:
 
 5. Restart Rhino and Grasshopper. You now have a fully-functioning Ladybug.  For Honeybee, continue to the following:
 
-6. Install Radiance to C:\Radiance by downloading it from this link
-     (https://github.com/NREL/Radiance/releases/download/4.2.2/radiance-4.2.2-win32.exe) and running the exe. 
+6. Install Radiance to o the root of your machine (C:\ ) by downloading it from this link
+     (https://github.com/NREL/Radiance/releases/download/4.2.2/radiance-4.2.2-win32.exe) and running the exe.
+     You should see the folder C:\Radiance appear on your system, indicating a successful install.
 
-7. Install Daysim 4.0 for Windows to C:\DAYSIM by downloading it at this link (http://daysim.ning.com/page/download) and running the exe. 
+7. Install Daysim 4.0 for Windows to the root of your machine (C:\ ) by downloading it at this link 
+     (http://daysim.ning.com/page/download) and running the exe.
+     You should see the folder C:\DAYSIM appear on your system, indicating a successful install.
 
-8. Install EnergyPlus 8.1 to C:\EnergyPlusV8-1-0 by going to the DOE website
-     (http://apps1.eere.energy.gov/buildings/energyplus/energyplus_download.cfm), making an account, going to "download older
-     versions of EnergyPlus, selecting 8.1 and  running the exe.
+8. Install EnergyPlus 8.3 to the root of your machine (C:\ ) by going to the EnergyPlus github
+     (https://github.com/NREL/EnergyPlus/releases/tag/v8.3.0), downloading the exe, and running it.
+     You should see the folder C:\EnergyPlusV8-1-0 appear on your system, indicating a successful install.
 
 9. Copy falsecolor2.exe (http://pyrat.googlecode.com/files/falsecolor2.exe) and evalglare.exe 
      (http://www.ise.fraunhofer.de/en/downloads-englisch/software/evalglare_windows.zip/at_download/file) to C:\Radiance\bin
