@@ -32,12 +32,12 @@ Provided by Ladybug 0.0.60
         _selectedSkyMatrix: The output from a Ladybug selectedSkyMtx component.  This matrix basically carries all of the radiation values that define a sky and includes a radiation value for each sky patch on the sky dome.  You should use the selectSkyMxt component connected here to scroll through radiation results.
         _intersectionMatrix: The intersectionMxt output from a Ladybug Radiation Analysis component that has been run for test geometry.  This matrix is basically a python list that includes the relation between each test point in the Radiation Analysis and all the sky patchs on the sky dome.
     Returns:
-        radiationResult: New radiation values in Wh/m2 for each test point in the original Radiation Analysis.  Values indicate radiation for the the connected sky matrix.  To visualize these new radiation values in the Rhino scene, connect these values to the Ladybug Re-Color Mesh component to re-color the mesh from the original Radiation Analysis with these new values.
+        radiationResult: New radiation values for each test point in the original Radiation Analysis.  Values indicate radiation for the the connected sky matrix.  To visualize these new radiation values in the Rhino scene, connect these values to the Ladybug Re-Color Mesh component to re-color the mesh from the original Radiation Analysis with these new values.
 """
 
 ghenv.Component.Name = "Ladybug_Real Time Radiation Analysis"
 ghenv.Component.NickName = 'RTRadiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_12_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
