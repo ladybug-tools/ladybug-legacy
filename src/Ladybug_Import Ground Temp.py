@@ -45,11 +45,11 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_15_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_10_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
 
@@ -169,8 +169,6 @@ if _epwFile and _epwFile.endswith('.epw') and  _epwFile != 'C:\Example.epw':
 elif _epwFile == 'C:\Example.epw': pass
 else:
     print "Please connect a valid epw file address to _epw_file input..."
-    w = gh.GH_RuntimeMessageLevel.Warning
-    ghenv.Component.AddRuntimeMessage(w, "Please connect a valid epw file address to _epw_file input...")
     
 # Graphing the ground temperature data 
 
