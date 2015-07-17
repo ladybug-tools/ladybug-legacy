@@ -25,7 +25,7 @@
 Use this component to access a library of typical gradients useful throughout Ladybug.  The output from this component should be plugged into the customColors_ input of the "Ladybug_Legend Parameters" component.
 _
 For an image of each of the gardients in the library, check here:
-http://www.mackeyarchitecture.com/gradients.png
+https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/gradients.jpg
 -
 Provided by Ladybug 0.0.60
     
