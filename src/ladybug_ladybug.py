@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_15_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_16_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2358,11 +2358,31 @@ class ExportAnalysis2Radiance(object):
         
 
 class ResultVisualization(object):
-    
     # This wasn't agood idea since multiple studies have different Bounding boxes
     def __init__(self):
         self.BoundingBoxPar = None
         self.monthList = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+        self.gradientLibrary = {
+        0: [System.Drawing.Color.FromArgb(75, 107, 169), System.Drawing.Color.FromArgb(115, 147, 202), System.Drawing.Color.FromArgb(170, 200, 247), System.Drawing.Color.FromArgb(193, 213, 208), System.Drawing.Color.FromArgb(245, 239, 103), System.Drawing.Color.FromArgb(252, 230, 74), System.Drawing.Color.FromArgb(239, 156, 21), System.Drawing.Color.FromArgb(234, 123, 0), System.Drawing.Color.FromArgb(234, 74, 0), System.Drawing.Color.FromArgb(234, 38, 0)],
+        1: [System.Drawing.Color.FromArgb(49,54,149), System.Drawing.Color.FromArgb(69,117,180), System.Drawing.Color.FromArgb(116,173,209), System.Drawing.Color.FromArgb(171,217,233), System.Drawing.Color.FromArgb(224,243,248), System.Drawing.Color.FromArgb(255,255,191), System.Drawing.Color.FromArgb(254,224,144), System.Drawing.Color.FromArgb(253,174,97), System.Drawing.Color.FromArgb(244,109,67), System.Drawing.Color.FromArgb(215,48,39), System.Drawing.Color.FromArgb(165,0,38)],
+        2: [System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(7,48,224), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(138,17,0)],
+        3: [System.Drawing.Color.FromArgb(255,20,147), System.Drawing.Color.FromArgb(240,47,145), System.Drawing.Color.FromArgb(203,117,139), System.Drawing.Color.FromArgb(160,196,133), System.Drawing.Color.FromArgb(132,248,129), System.Drawing.Color.FromArgb(124,253,132), System.Drawing.Color.FromArgb(96,239,160), System.Drawing.Color.FromArgb(53,217,203), System.Drawing.Color.FromArgb(15,198,240), System.Drawing.Color.FromArgb(0,191,255)],
+        4: [System.Drawing.Color.FromArgb(0,13,255), System.Drawing.Color.FromArgb(0,41,234), System.Drawing.Color.FromArgb(0,113,181), System.Drawing.Color.FromArgb(0,194,122), System.Drawing.Color.FromArgb(0,248,82), System.Drawing.Color.FromArgb(8,247,75), System.Drawing.Color.FromArgb(64,191,58), System.Drawing.Color.FromArgb(150,105,32), System.Drawing.Color.FromArgb(225,30,9), System.Drawing.Color.FromArgb(255,0,0)],
+        5: [System.Drawing.Color.FromArgb(55,55,55), System.Drawing.Color.FromArgb(235,235,235)],
+        6: [System.Drawing.Color.FromArgb(0,0,128), System.Drawing.Color.FromArgb(53,0,128), System.Drawing.Color.FromArgb(124,0,128), System.Drawing.Color.FromArgb(160,0,96), System.Drawing.Color.FromArgb(240,0,15), System.Drawing.Color.FromArgb(255,15,0), System.Drawing.Color.FromArgb(255,96,0), System.Drawing.Color.FromArgb(255,132,0), System.Drawing.Color.FromArgb(255,203,0), System.Drawing.Color.FromArgb(255,255,0)],
+        7: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(110,0,153), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(255,255,102), System.Drawing.Color.FromArgb(255,255,255)],
+        8: [System.Drawing.Color.FromArgb(0,136,255), System.Drawing.Color.FromArgb(200,225,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,230,230), System.Drawing.Color.FromArgb(255,0,0)],
+        9: [System.Drawing.Color.FromArgb(0,136,255), System.Drawing.Color.FromArgb(67,176,255), System.Drawing.Color.FromArgb(134,215,255), System.Drawing.Color.FromArgb(174,228,255), System.Drawing.Color.FromArgb(215,242,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,243), System.Drawing.Color.FromArgb(255,0,0)],
+        10: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,0,0)],
+        11: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(0,136,255)],
+        12: [System.Drawing.Color.FromArgb(5,48,97), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(247,247,247), System.Drawing.Color.FromArgb(253,219,199), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(214,96,77), System.Drawing.Color.FromArgb(178,24,43), System.Drawing.Color.FromArgb(103,0,31)],
+        13: [System.Drawing.Color.FromArgb(5,48,97), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(247,247,247), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(178,24,43)],
+        14: [System.Drawing.Color.FromArgb(247,247,247), System.Drawing.Color.FromArgb(253,219,199), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(214,96,77), System.Drawing.Color.FromArgb(178,24,43), System.Drawing.Color.FromArgb(103,0,31)],
+        15: [System.Drawing.Color.FromArgb(247,247,247), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(5,48,97)],
+        16: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(255,255,255)],
+        17: [System.Drawing.Color.FromArgb(0,16,120), System.Drawing.Color.FromArgb(38,70,160), System.Drawing.Color.FromArgb(5,180,222), System.Drawing.Color.FromArgb(16,180,109), System.Drawing.Color.FromArgb(59,183,35), System.Drawing.Color.FromArgb(143,209,19), System.Drawing.Color.FromArgb(228,215,29), System.Drawing.Color.FromArgb(246,147,17), System.Drawing.Color.FromArgb(243,74,0), System.Drawing.Color.FromArgb(255,0,0)],
+        18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
+        }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
         if not runningPeriod or runningPeriod[0]==None:
@@ -2742,8 +2762,6 @@ class ResultVisualization(object):
         return lines, textBasePts, compassText
     
     
-    
-    
     def setupLayers(self, result = 'No result', parentLayerName = 'LADYBUG', projectName = 'Option',
                         studyLayerName = 'RADIATION_KWH', CheckTheName = True,
                         OrientationStudy = False, rotationAngle = 0, l = 0):
@@ -2819,7 +2837,7 @@ class ResultVisualization(object):
                     newLayerIndex = layerT.Add(newLayer)
                 
             return newLayerIndex, l
-
+    
     def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None):
             attr = rc.DocObjects.ObjectAttributes()
             attr.LayerIndex = newLayerIndex
