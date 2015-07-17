@@ -51,7 +51,7 @@ Provided by Ladybug 0.0.60
         gridSize_: The length of each of the shade's test cells in model units.  Please note that, as this value gets lower, simulation times will increase exponentially even though this will give a higher resolution of shade benefit.
         ============: ...
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
-        skyResolution_: An interger between 0 and 4 to set the number of times that the tergenza sky patches are split.  A higher number will ensure a greater accuracy but will take longer.  At a sky resolution of 4, each hour's temperature is essentially matched with an individual sun vector for that hour.  The default is set to 0 for quick calculations.
+        skyResolution_: An interger equal to 0 or above to set the number of times that the tergenza sky patches are split.  A higher number will ensure a greater accuracy but will take longer.  At a sky resolution of 4, each hour's temperature is essentially matched with an individual sun vector for that hour.  At a resolution of 5, a sun vector is produced for every half-hour, at 6, every quarter hour, and so on. The default is set to 4, which should be high enough of a resolution to produce a meaningful reault in all cases.
         delNonIntersect_: Set to "True" to delete mesh cells with no intersection with sun vectors.  Mesh cells where shading will have little effect because an equal amount of warm and cool temperature vectors will still be left in white.
         legendPar_: Legend parameters that can be used to re-color the shade, change the high and low boundary, or sync multiple evaluated shades with the same colors and legend parameters.
         parallel_: Set to "True" to run the simulation with multiple cores.  This can increase the speed of the calculation substantially and is recommended if you are not running other big or important processes.
@@ -71,10 +71,10 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_17_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nJUL_16_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -276,15 +276,15 @@ def checkTheInputs():
     #Check the sky resolution and set a default.
     checkData8 = True
     if skyResolution_ == None:
-        skyResolution = 0
-        print "Sky resolution has been set to 0 for a fast simulation."
+        skyResolution = 4
+        print "Sky resolution has been set to 4, which should be a high enough resolution to deal with almost all cases.\n You may want to decrease it for a faster simulation or increase it for a smoother gradient."
     else:
-        if skyResolution_ <= 4 and skyResolution_ >= 0:
+        if skyResolution_ >= 0:
             skyResolution = skyResolution_
             print "Sky resolution set to " + str(skyResolution)
         else:
             checkData8 = False
-            warning = 'Sky resolution must be a value between 0 and 4.'
+            warning = 'Sky resolution must be greater than 0.'
             print warning
             ghenv.Component.AddRuntimeMessage(w, warning)
     
@@ -448,17 +448,42 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
     HOYStart = HOYs[0]
     
     
-    for count, hoy in enumerate(HOYs):
-        d, m, h = lb_preparation.hour2Date(hoy, True)
-        m += 1
-        lb_sunpath.solInitOutput(m, d, h)
-        
-        if lb_sunpath.solAlt >= 0:
-            sunVec = lb_sunpath.sunReverseVectorCalc()
-            sunVectors.append(sunVec)
-            sunUpHoys.append(count)
-            for path in allDataDict:
-                allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][count]))
+    
+    if skyResolution <= 4:
+        for count, hoy in enumerate(HOYs):
+            d, m, h = lb_preparation.hour2Date(hoy, True)
+            m += 1
+            lb_sunpath.solInitOutput(m, d, h)
+            
+            if lb_sunpath.solAlt >= 0:
+                sunVec = lb_sunpath.sunReverseVectorCalc()
+                sunVectors.append(sunVec)
+                sunUpHoys.append(count)
+                for path in allDataDict:
+                    allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][count]))
+    else:
+        newHOYs = []
+        hourDivisions = []
+        dividend = 1/(math.pow(2, (skyResolution-4)))
+        startVal = dividend
+        while startVal < 1:
+            hourDivisions.append(startVal)
+            startVal += dividend
+        for hoy in HOYs:
+            for division in hourDivisions:
+                newHOYs.append(hoy - 1 + division)
+            newHOYs.append(hoy)
+        for hoy in newHOYs:
+            d, m, h = lb_preparation.hour2Date(hoy, True)
+            m += 1
+            lb_sunpath.solInitOutput(m, d, h)
+            
+            if lb_sunpath.solAlt >= 0:
+                sunVec = lb_sunpath.sunReverseVectorCalc()
+                sunVectors.append(sunVec)
+                sunUpHoys.append(hoy)
+                for path in allDataDict:
+                    allDataDict[path]["tempertureSun"].append(float(allDataDict[path]["temperture"][int(hoy)]))
     
     #Check to see if the user has requested the highest resolution and, if not, consolidate the sun vectors into sky patches.
     finalSunVecs = []
@@ -467,7 +492,7 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
         allDataDict[path]["tempertureFinal"] = []
         allDataDict[path]["divisor"] = []
     
-    if skyResolution != 4:
+    if skyResolution < 4:
         newVecs = []
         skyPatches = lb_preparation.generateSkyGeo(rc.Geometry.Point3d.Origin, skyResolution, .5)
         skyPatchMeshes = []
@@ -505,11 +530,10 @@ def checkSkyResolution(skyResolution, allDataDict, analysisPeriod, latitude, lon
         for path in allDataDict:
             for vecCount2, tempSum in enumerate(allDataDict[path]["tempertureFinal"]):
                 allDataDict[path]["tempertureFinal"][vecCount2] = tempSum/allDataDict[path]["divisor"][vecCount2]
-    else:
+    elif skyResolution >= 4:
         finalSunVecs = sunVectors
         for path in allDataDict:
             allDataDict[path]["tempertureFinal"] = allDataDict[path]["tempertureSun"]
-    
     
     return allDataDict, finalSunVecs
 
@@ -552,7 +576,7 @@ def parallel_projection(analysisMesh, sunLines, regionTestPts):
     return faceInt
 
 
-def valCalc(percentBlocked, deltaBal, cellArea):
+def valCalc(percentBlocked, deltaBal, cellArea, numDaySteps):
     #Multiply the percentBlocked by the deltaBal to get a measure of how helpful or harmful the shade is in each hour of the year
     hourlyEffect = [a*b for a,b in zip(percentBlocked,deltaBal)]
     
@@ -571,14 +595,14 @@ def valCalc(percentBlocked, deltaBal, cellArea):
     netEffectInit = coolEffectInit + heatEffectInit
     
     #Normalize the effects by the area of the cell such that there is a consistent metric between cells of different areas.  Also, divide the value by 24 such that the final unit is in degree-days/model unit instead of degree-hours/model unit.
-    coolEffect = ((coolEffectInit)/cellArea)/24
-    heatEffect = ((heatEffectInit)/cellArea)/24
-    netEffect = ((netEffectInit)/cellArea)/24
+    coolEffect = ((coolEffectInit)/cellArea)/numDaySteps
+    heatEffect = ((heatEffectInit)/cellArea)/numDaySteps
+    netEffect = ((netEffectInit)/cellArea)/numDaySteps
     
     return coolEffect, heatEffect, netEffect
 
 
-def evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, analysisMesh, analysisAreas, regionMesh, regionTestPts, sunVectors):
+def evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, analysisMesh, analysisAreas, regionMesh, regionTestPts, sunVectors, skyResolution):
     #Determine the length to make the sun lines based on the scale of the bounding box around the input geometry.
     def joinMesh(meshList):
         joinedMesh = rc.Geometry.Mesh()
@@ -655,11 +679,17 @@ def evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, analysis
                 deltaBal.append(0)
     
     #Compare the percent blocked for each hour with the temperatre at that hour in relation to the balance point in order to determine the net value of shading.
+    if skyResolution == 4: numDaySteps = 24
+    elif skyResolution == 0: numDaySteps = 8
+    elif skyResolution == 1: numDaySteps = 10
+    elif skyResolution == 2: numDaySteps = 13
+    elif skyResolution == 3: numDaySteps = 17
+    else: numDaySteps = (math.pow(2, (skyResolution-4)))*24
     shadeHelpfulness = []
     shadeHarmfulness = []
     shadeNetEffect = []
     for cellCount, cell in enumerate(percentBlocked):
-        shadeHelp, shadeHarm, shadeNet = valCalc(cell, deltaBal, analysisAreas[cellCount])
+        shadeHelp, shadeHarm, shadeNet = valCalc(cell, deltaBal, analysisAreas[cellCount], numDaySteps)
         shadeHelpfulness.append(shadeHelp)
         shadeHarmfulness.append(shadeHarm)
         shadeNetEffect.append(shadeNet)
@@ -668,7 +698,7 @@ def evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, analysis
 
 
 
-def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar, lb_preparation, lb_visualization):
+def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution, legendPar, lb_preparation, lb_visualization):
     #Create lists to be filled.
     totalNetEffect = []
     totalShadeGeo = []
@@ -701,7 +731,7 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar, lb_
                 totalShadeGeo.append(shadeMesh)
                 shadeMeshListInit[regionCount].append(shadeMesh)
                 shadeMeshAreas = allDataDict[path]["shadeMeshAreas"][shadeCount]
-                shadeHelpfulness, shadeHarmfulness, shadeNetEffect = evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, shadeMesh, shadeMeshAreas, regionMesh, regionPoints, sunVectors)
+                shadeHelpfulness, shadeHarmfulness, shadeNetEffect = evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, shadeMesh, shadeMeshAreas, regionMesh, regionPoints, sunVectors, skyResolution)
                 
                 
                 for item in shadeNetEffect: totalNetEffect.append(item)
@@ -725,7 +755,8 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar, lb_
             lowB = -1 * legendVal
             highB = legendVal
             numSeg = 11
-            customColors = [System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(255,51,51), System.Drawing.Color.FromArgb(255,102,102), System.Drawing.Color.FromArgb(255,153,153), System.Drawing.Color.FromArgb(255,204,204), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(204,204,255), System.Drawing.Color.FromArgb(153,153,255), System.Drawing.Color.FromArgb(102,102,255), System.Drawing.Color.FromArgb(51,51,255), System.Drawing.Color.FromArgb(0,0,255)]
+            customColors = lb_visualization.gradientLibrary[12]
+            customColors.reverse()
             legendBasePoint = None
             legendFontSize = None
             legendBold = False
@@ -839,7 +870,7 @@ if checkLB == True and checkData == True:
 #If all of the data is good and the user has set "_runIt" to "True", run the shade benefit calculation to generate all results.
 if checkLB == True and checkData == True and _runIt == True:
     finalAllDataDict, sunVectors = checkSkyResolution(skyResolution, geoAllDataDict, analysisPeriod, latitude, longitude, timeZone, north, lb_sunpath, lb_preparation)
-    result = main(finalAllDataDict, balanceTemp, temperatureOffest, sunVectors, legendPar_, lb_preparation, lb_visualization)
+    result = main(finalAllDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution, legendPar_, lb_preparation, lb_visualization)
     
     if result != -1:
         shadeHelpfulnessList, shadeHarmfulnessList, shadeNetEffectList, shadeMeshList, legend, legendBasePt = result

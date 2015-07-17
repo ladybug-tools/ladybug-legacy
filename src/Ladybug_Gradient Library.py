@@ -43,10 +43,10 @@ Provided by Ladybug 0.0.60
             9 - Thermal Comfort Colors 1 (UTCI)
             10 - Hot Hours 1
             11 - Cold Hours 1
-            12 - Thermal Comfort Colors 2
+            12 - Shade Benefit/Harm
             13 - Thermal Comfort Colors 2 (UTCI)
-            14 - Hot Hours 2
-            15 - Cold Hours 2
+            14 - Shade Harm
+            15 - Shade Benefit
             16 - Black to White
             17 - CFD Colors 1
             18 - CFD Colors 2
@@ -56,7 +56,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Gradient Library"
 ghenv.Component.NickName = 'GradientLibrary'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_16_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_17_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
