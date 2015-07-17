@@ -595,12 +595,11 @@ class Preparation(object):
         if legendPar[2] == None: numSeg = 11
         else: numSeg = float(legendPar[2])
         if not legendPar[3] or legendPar[3][0] == None:
-            customColors = [System.Drawing.Color.FromArgb(49,54,149), System.Drawing.Color.FromArgb(69,117,180),
-                        System.Drawing.Color.FromArgb(116,173,209), System.Drawing.Color.FromArgb(171,217,233),
-                        System.Drawing.Color.FromArgb(224,243,248), System.Drawing.Color.FromArgb(255,255,191),
-                        System.Drawing.Color.FromArgb(254,224,144), System.Drawing.Color.FromArgb(253,174,97),
-                        System.Drawing.Color.FromArgb(244,109,67), System.Drawing.Color.FromArgb(215,48,39),
-                        System.Drawing.Color.FromArgb(165,0,38)]
+            customColors = [System.Drawing.Color.FromArgb(75, 107, 169), System.Drawing.Color.FromArgb(115, 147, 202),
+                        System.Drawing.Color.FromArgb(170, 200, 247), System.Drawing.Color.FromArgb(193, 213, 208),
+                        System.Drawing.Color.FromArgb(245, 239, 103), System.Drawing.Color.FromArgb(252, 230, 74),
+                        System.Drawing.Color.FromArgb(239, 156, 21), System.Drawing.Color.FromArgb(234, 123, 0),
+                        System.Drawing.Color.FromArgb(234, 74, 0), System.Drawing.Color.FromArgb(234, 38, 0)]
         else: customColors = legendPar[3]
         
         # get the base point
