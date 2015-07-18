@@ -36,20 +36,21 @@ Provided by Ladybug 0.0.60
             2 - Multi-colored Ladybug
             3 - View Analysis 1
             4 - View Analysis 2 (Red,Green,Blue)
-            5 - Sunlight Hours 1
-            6 - Sunlight Hours 2
+            5 - Sunlight Hours
+            6 - Ecotect
             7 - Thermal Comfort Percentage
-            8 - Thermal Comfort Colors 1
-            9 - Thermal Comfort Colors 1 (UTCI)
-            10 - Hot Hours 1
-            11 - Cold Hours 1
+            8 - Thermal Comfort Colors
+            9 - Thermal Comfort Colors (UTCI)
+            10 - Hot Hours
+            11 - Cold Hours
             12 - Shade Benefit/Harm
-            13 - Thermal Comfort Colors 2 (UTCI)
+            13 - Thermal Comfort Colors v2 (UTCI)
             14 - Shade Harm
             15 - Shade Benefit
             16 - Black to White
             17 - CFD Colors 1
             18 - CFD Colors 2
+            19 - Blue to Yellow
     Returns:
         customColors: A series of colors to be plugged into the "Ladybug_Legend Parameters" component.
 """
@@ -88,6 +89,6 @@ def main(gradIndex):
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
 
-if _gradIndex >=0 and _gradIndex <=18:
+if _gradIndex >=0 and _gradIndex <=19:
     result = main(_gradIndex)
     if result != -1: customColors = result
