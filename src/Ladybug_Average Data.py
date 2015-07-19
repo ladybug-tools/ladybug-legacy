@@ -23,37 +23,66 @@
 
 """
 Use this component to select the data out of an annual hourly data stream (from the importEPW component) using the "Analysis Period" component.
-This componenent also averages this selected data for each day during the analysis period, each month during the analysis period, and for the average hour of each month for the analysis period.
+This componenent also averages or totals the connected hourly data for each day, month, and average hour of each month in the analysis period.
 -
 Provided by Ladybug 0.0.60
     
     Args:
         _annualHourlyData: An hourly data stream from the "Import epw" component.
         _analysisPeriod_: The "analysisPeriod" Output from "Analysis Period" component. If no input is provided, the default analysis period is set to the whole year.
+        totalOrAverage_: Set to 'True' to have the component total the values for the given periods and set to 'False' to have the component average them.  The default is set to 'False' to average data.
     Returns:
         readMe!: A text confirmation of the analysis period.
         selHourlyData: The hourly data stream for the analysis period.
-        averagedDaily: The averaged data for each day during the analysis period
-        averagedMonthly: The averaged data for each month during the analysis period
-        avrMonthlyPerHour: The data for the average hour of each month during the analysis period
-        avrAnalysisPeriod: The averaged data for the analysis period
+        averagedDaily: The averaged data for each day during the analysis period.
+        averagedMonthly: The averaged data for each month during the analysis period.
+        avrMonthlyPerHour: The data for the average hour of each month during the analysis period.
+        avrAnalysisPeriod: The averaged data for the analysis period.
 """
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_18_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
-
-
 import scriptcontext as sc
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
+
+outputsDictAvg = {
+0: ["readMe!", "A text confirmation of the analysis period."],
+1: ["selHourlyData", "The hourly data stream for the analysis period."],
+2: ["averagedDaily", "The averaged data for each day during the analysis period."],
+3: ["averagedMonthly", "The averaged data for each month during the analysis period."],
+4: ["avrMonthlyPerHour", "The data for the average hour of each month during the analysis period."],
+5: ["avrAnalysisPeriod", "The averaged data for the analysis period."]
+}
+
+outputsDictTot = {
+0: ["readMe!", "A text confirmation of the analysis period."],
+1: ["selHourlyData", "The hourly data stream for the analysis period."],
+2: ["totaledDaily", "The totaled data for each day during the analysis period."],
+3: ["totaledMonthly", "The totaled data for each month during the analysis period."],
+4: ["totMonthlyPerHour", "The data for the totaled hour of each month during the analysis period."],
+5: ["totAnalysisPeriod", "The totaled data for the analysis period."]
+}
+
+def restoreOutput():
+    for output in range(6):
+        ghenv.Component.Params.Output[output].NickName = outputsDictAvg[output][0]
+        ghenv.Component.Params.Output[output].Name = outputsDictAvg[output][0]
+        ghenv.Component.Params.Output[output].Description = outputsDictAvg[output][1]
+
+def totalOutput():
+    for output in range(6):
+        ghenv.Component.Params.Output[output].NickName = outputsDictTot[output][0]
+        ghenv.Component.Params.Output[output].Name = outputsDictTot[output][0]
+        ghenv.Component.Params.Output[output].Description = outputsDictTot[output][1]
 
 def main(annualHourlyData, analysisPeriod):
     # import the classes
@@ -94,7 +123,10 @@ def main(annualHourlyData, analysisPeriod):
             
             def average(list):
                 return sum(list)/len(list)
-        
+            
+            def total(list):
+                return sum(list)
+            
             selHourlyData =[];
             selDailyData = []; avDailyData = []
             selWeeklyData = []; avWeeklyData = []
@@ -130,12 +162,17 @@ def main(annualHourlyData, analysisPeriod):
                             selectedData.append(item)
                     type = False
                 
-                
                 [avrAnalysisPeriod.append(item) for item in listInfo[l][:4]]
-                avrAnalysisPeriod.append('Analysis Period -> averaged')
-                avrAnalysisPeriod.append((stMonth, stDay, stHour))
-                avrAnalysisPeriod.append((endMonth, endDay, endHour))
-                avrAnalysisPeriod.append(average(selectedData))
+                if totalOrAverage_:
+                    avrAnalysisPeriod.append('Analysis Period -> total')
+                    avrAnalysisPeriod.append((stMonth, stDay, stHour))
+                    avrAnalysisPeriod.append((endMonth, endDay, endHour))
+                    avrAnalysisPeriod.append(total(selectedData))
+                else:
+                    avrAnalysisPeriod.append('Analysis Period -> averaged')
+                    avrAnalysisPeriod.append((stMonth, stDay, stHour))
+                    avrAnalysisPeriod.append((endMonth, endDay, endHour))
+                    avrAnalysisPeriod.append(average(selectedData))
                 
                 
                 # add list informations
@@ -145,19 +182,22 @@ def main(annualHourlyData, analysisPeriod):
                 selDailyData.append((endMonth, endDay, endHour))
                 
                 [avDailyData.append(item) for item in listInfo[l][:4]]
-                avDailyData.append('Daily-> averaged')
+                if totalOrAverage_: avDailyData.append('Daily-> total')
+                else: avDailyData.append('Daily-> averaged')
                 avDailyData.append((stMonth, stDay, stHour))
                 avDailyData.append((endMonth, endDay, endHour))
                 
                 if type:
                     for JD in range(lb_preparation.getJD(stMonth,stDay), lb_preparation.getJD(endMonth,endDay) + 1):
                         dailyData = separatedLists[l][lb_preparation.getHour(JD, stHour)-1 : lb_preparation.getHour(JD, endHour)]
-                        avDailyData.append(average(dailyData))
+                        if totalOrAverage_: avDailyData.append(total(dailyData))
+                        else: avDailyData.append(average(dailyData))
                         for hour in range(endHour - stHour + 1): selDailyData.append(dailyData[hour])
                 else:
                     for JD in range(lb_preparation.getJD(stMonth,stDay), 365 + 1):
                         dailyData = separatedLists[l][lb_preparation.getHour(JD, stHour)-1 : lb_preparation.getHour(JD, endHour)]
-                        avDailyData.append(average(dailyData))
+                        if totalOrAverage_: avDailyData.append(total(dailyData))
+                        else: avDailyData.append(average(dailyData))
                         for hour in range(endHour - stHour + 1): selDailyData.append(dailyData[hour])
                     
                     for JD in range(1, lb_preparation.getJD(endMonth,endDay) +1):
@@ -168,12 +208,14 @@ def main(annualHourlyData, analysisPeriod):
 
                 # average monthly
                 [selMonthlyData.append(item) for item in listInfo[l][:4]]
-                selMonthlyData.append('Monthly-> averaged for each hour')
+                if totalOrAverage_: selMonthlyData.append('Monthly-> total for each hour')
+                else: selMonthlyData.append('Monthly-> averaged for each hour')
                 selMonthlyData.append((stMonth, stDay, stHour))
                 selMonthlyData.append((endMonth, endDay, endHour))
                 
                 [avMonthlyData.append(item) for item in listInfo[l][:4]]
-                avMonthlyData.append('Monthly-> averaged')
+                if totalOrAverage_: avMonthlyData.append('Monthly-> total')
+                else: avMonthlyData.append('Monthly-> averaged')
                 avMonthlyData.append((stMonth, stDay, stHour))
                 avMonthlyData.append((endMonth, endDay, endHour))
 
@@ -187,13 +229,15 @@ def main(annualHourlyData, analysisPeriod):
                         for i, item in enumerate(monthlyData):
                             if stHour-1 <= (i + stHour -1)%24 <= endHour-1: selMonthly.append(item)
                         
-                        avMonthlyData.append(average(selMonthly))
+                        if totalOrAverage_: avMonthlyData.append(total(selMonthly))
+                        else: avMonthlyData.append(average(selMonthly))
                         
                         for hour in range(endHour - stHour + 1):
                             eachHourData = []
                             for day in range(monthDays[month]):
                                 eachHourData.append(monthlyData[hour + (day * (endHour - stHour + 1))])
-                            selMonthlyData.append(average(eachHourData))
+                            if totalOrAverage_: selMonthlyData.append(total(eachHourData))
+                            else: selMonthlyData.append(average(eachHourData))
                 else:
                     for month in range(stMonth, 12 + 1):
                         stJD = lb_preparation.getJD(month, 1)
@@ -205,25 +249,29 @@ def main(annualHourlyData, analysisPeriod):
                         for i, item in enumerate(monthlyData):
                             if stHour-1 <= (i + stHour -1)%24 <= endHour-1: selMonthly.append(item)
                         
-                        avMonthlyData.append(average(selMonthly))
-                    
+                        if totalOrAverage_: avMonthlyData.append(total(selMonthly))
+                        else: avMonthlyData.append(average(selMonthly))
+                        
                         for hour in range(endHour - stHour + 1):
                             eachHourData = []
                             for day in range(monthDays[month]):
                                 eachHourData.append(monthlyData[hour + (day * (endHour - stHour + 1))])
-                            selMonthlyData.append(average(eachHourData))
+                            if totalOrAverage_: selMonthlyData.append(total(eachHourData))
+                            else: selMonthlyData.append(average(eachHourData))
                     
                     for month in range(1, endMonth + 1):
                         stJD = lb_preparation.getJD(month, 1)
                         endJD = lb_preparation.getJD(month, monthDays[month])
                         monthlyData = separatedLists[l][lb_preparation.getHour(stJD, stHour)-1 : lb_preparation.getHour(endJD , endHour)]
-                        avMonthlyData.append(average(monthlyData))
-                    
+                        if totalOrAverage_: avMonthlyData.append(total(monthlyData))
+                        else: avMonthlyData.append(average(monthlyData))
+                        
                         for hour in range(endHour - stHour + 1):
                             eachHourData = []
                             for day in range(monthDays[month]):
                                 eachHourData.append(monthlyData[hour + (day * (endHour - stHour + 1))])
-                            selMonthlyData.append(average(eachHourData))
+                            if totalOrAverage_: selMonthlyData.append(average(eachHourData))
+                            else: selMonthlyData.append(average(eachHourData))
                 
             return selHourlyData, avDailyData, selDailyData, selWeeklyData, selMonthlyData, avMonthlyData, avrAnalysisPeriod
         elif _annualHourlyData[0] == "Connect Data Here!":
@@ -240,8 +288,14 @@ def main(annualHourlyData, analysisPeriod):
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
 
+if totalOrAverage_: totalOutput()
+else: restoreOutput()
 
 result = main(_annualHourlyData, _analysisPeriod_)
 if result!= -1:
-            selHourlyData, averagedDaily, avrDailyPerHour, avrWeeklyPerHour, \
-            avrMonthlyPerHour, averagedMonthly, avrAnalysisPeriod = result
+    if totalOrAverage_:
+        selHourlyData, totaledDaily, totDailyPerHour, totWeeklyPerHour, \
+        totMonthlyPerHour, totaledMonthly, totAnalysisPeriod = result
+    else:
+        selHourlyData, averagedDaily, avrDailyPerHour, avrWeeklyPerHour, \
+        avrMonthlyPerHour, averagedMonthly, avrAnalysisPeriod = result

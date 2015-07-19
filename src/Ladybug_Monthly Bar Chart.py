@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_18_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -132,10 +132,10 @@ def checkTheInputs():
             checkData1 = True
             methodsList = []
             for list in listInfo:
-                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged': methodsList.append(0)
-                elif list[4] == 'Monthly-> averaged for each hour': methodsList.append(1)
+                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged' or list[4] == 'Monthly-> total': methodsList.append(0)
+                elif list[4] == 'Monthly-> averaged for each hour' or list[4] == 'Monthly-> total for each hour': methodsList.append(1)
                 elif list[4] == 'Hourly': methodsList.append(2)
-                elif list[4] == 'Daily' or list[4] == 'Daily-> averaged': methodsList.append(3)
+                elif list[4] == 'Daily' or list[4] == 'Daily-> averaged' or list[4] == 'Daily-> total': methodsList.append(3)
                 else:
                     checkData1 = False
                     warning = 'The timestep of the inputData is not recognized. Data must have a Ladybug header with a recognizable timestep.'
@@ -150,7 +150,7 @@ def checkTheInputs():
                 if 'Temperature' in list[2] or 'Universal Thermal Climate Index' in list[2]:
                     tempInList = True
                     if list[3] == 'F' or list[3] == 'F': farenheitCheck = True
-                    if list[4] == 'Hourly' or list[4] == 'Monthly-> averaged for each hour': hourCheckList.append(1)
+                    if list[4] == 'Hourly' or list[4] == 'Monthly-> averaged for each hour' or list[4] == 'Monthly-> total for each hour': hourCheckList.append(1)
                     else: hourCheckList.append(0)
                 else: hourCheckList.append(0)
             
