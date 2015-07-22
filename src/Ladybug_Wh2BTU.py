@@ -22,19 +22,19 @@
 
 #Wh to BTU
 """
-Use this component to convert energy values in Wh to BTU or Wh/m2 to BTU/ft2.
+Use this component to convert energy values in Wh to BTU, kWh to kBTU, Wh/m2 to BTU/ft2, or kWh/m2 to kBTU/ft2.
 -
 Provided by Ladybug 0.0.60
     
     Args:
-        _Wh: An energy value or list of energy values in Wh or Wh/m2.  Note that, for the component to recognize flux or floor normalization, the input must have a Ladybug header.
+        _Wh: An energy value or list of energy values in Wh, kWh, Wh/m2, kWh/m2.  Note that, for the component to recognize flux (division by m2), the input must have a Ladybug header.
     Returns:
-        BTU: The input enervy values converted to BTU.
+        BTU: The input enervy values converted to BTU, kBTU, BTU/ft2, or kBTU/ft2 (depeding on input).
 """
 
 ghenv.Component.Name = "Ladybug_Wh2BTU"
 ghenv.Component.NickName = 'Wh2BTU'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
