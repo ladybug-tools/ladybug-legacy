@@ -896,6 +896,8 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
             for geo in comfortBand: geo.Transform(moveTransform)
         except: pass
         legendBasePt.Transform(moveTransform)
+        for geo in titleTxt:geo.Transform(moveTransform)
+        titleTxtPt.Transform(moveTransform)
         for lst in dataMesh:
             for geo in lst: geo.Transform(moveTransform)
         for lst in dataCurves:
@@ -940,4 +942,4 @@ if checkData == True:
 
 
 ghenv.Component.Params.Output[7].Hidden = True
-
+ghenv.Component.Params.Output[9].Hidden = True
