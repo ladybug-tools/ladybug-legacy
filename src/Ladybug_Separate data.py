@@ -1,15 +1,32 @@
 # This component separates numbers and strings from an input list
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to separate the text strings from the numbers in the climate data streams output from the Import EPW component.
 You can then perform mathamatical functions on the numerical climate data using the Grasshopper math components or quickly preview the numerical data stream using the Grasshopper "Quick Graph" component.
 This component can also be used generally to separate any data stream that contains both numbers and text strings.
 -
-Provided by Ladybug 0.0.57
+Provided by Ladybug 0.0.60
     
     Args:
         _inputList: A list of data that contains both text srtings and numbers.  For example, a data stream output from the Import EPW component.
@@ -20,10 +37,10 @@ Provided by Ladybug 0.0.57
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
-ghenv.Component.Message = 'VER 0.0.57\nJUL_06_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
 

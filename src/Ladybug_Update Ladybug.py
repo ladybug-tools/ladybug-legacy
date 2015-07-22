@@ -1,13 +1,30 @@
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Code Developers and Beta Testers of new Ladybug components can use this component to remove old Ladybug components, add new Ladybug components, and update existing Ladybug components from a synced Github folder on their computer.
 This component can also update outdated Ladybug components in an old Grasshopper file so long as the updates to the components do not involve new inputs or outputs.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         sourceDirectory_: An optional address to a folder on your computer that contains the updated Ladybug userObjects. If no input is provided here, the component will download the latest version from GitHUB.
@@ -19,10 +36,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | Developers"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+ghenv.Component.SubCategory = "5 | Developers"
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -35,7 +52,7 @@ import zipfile
 import time
 import urllib
 import Grasshopper.Folders as folders
-
+import System
 
 def downloadSourceAndUnzip(lb_preparation):
     """
@@ -43,8 +60,6 @@ def downloadSourceAndUnzip(lb_preparation):
     """
     url = "https://github.com/mostaphaRoudsari/ladybug/archive/master.zip"
     targetDirectory = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "ladybugSrc")
-    
-
     
     # download the zip file
     print "Downloading the source code..."
@@ -63,13 +78,14 @@ def downloadSourceAndUnzip(lb_preparation):
     if not os.path.isdir(targetDirectory): os.mkdir(targetDirectory)
 
     if download:
-        webFile = urllib.urlopen(url)
-        localFile = open(zipFile, 'wb')
-        localFile.write(webFile.read())
-        webFile.close()
-        localFile.close()
-        if not os.path.isfile(zipFile):
-            print "Download failed! Try to download and unzip the file manually form:\n" + url
+        try:
+            client = System.Net.WebClient()
+            client.DownloadFile(url, zipFile)
+            if not os.path.isfile(zipFile):
+                print "Download failed! Try to download and unzip the file manually form:\n" + url
+                return
+        except Exception, e:
+            print `e` + "\nDownload failed! Try to download and unzip the file manually form:\n" + url
             return
     
     #unzip the file
@@ -195,17 +211,29 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         
     # copy files from source to destination
     if updateAllUObjects:
-        if not userObjectsFolder  or not os.path.exists(userObjectsFolder ):
+        if not userObjectsFolder  or not os.path.exists(userObjectsFolder):
             warning = 'source directory address is not a valid address!'
             print warning
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+        
+        srcFiles = os.listdir(userObjectsFolder)
+        print 'Removing Old Version...'
+        # remove userobjects that are currently removed
+        fileNames = os.listdir(destinationDirectory)
+        for fileName in fileNames:
+            # check for ladybug userObjects and delete the files if they are not
+            # in source anymore
+            if fileName.StartsWith('Ladybug') and fileName not in srcFiles:
+                fullPath = os.path.join(destinationDirectory, fileName)
+                os.remove(fullPath)                
+
         print 'Updating...'
-        srcFiles = os.listdir(userObjectsFolder )
+        
         for srcFileName in srcFiles:
             # check for ladybug userObjects
-            if srcFileName.StartsWith('Ladybug') or srcFileName.StartsWith('Honeybee'):
+            if srcFileName.StartsWith('Ladybug'):
                 srcFullPath = os.path.join(userObjectsFolder, srcFileName)
                 dstFullPath = os.path.join(destinationDirectory, srcFileName) 
                 
@@ -213,6 +241,7 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
                 if not os.path.isfile(dstFullPath): shutil.copy2(srcFullPath, dstFullPath)
                 # or is older than the new file
                 elif os.stat(srcFullPath).st_mtime - os.stat(dstFullPath).st_mtime > 1: shutil.copy2(srcFullPath, dstFullPath)
+        
         return "Done!" , True
 
 if _updateThisFile or _updateAllUObjects:

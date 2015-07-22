@@ -1,8 +1,25 @@
 # GenCumulativeSkyMtx
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 This component uses Radiance's gendaymtx function to calculate the sky's radiation for each hour of the year. This is a necessary pre-step before doing radiation analysis with Rhino geometry or generating a radiation rose.
@@ -13,12 +30,12 @@ Gendaymtx is written by Ian Ashdown and Greg Ward. For more information, check t
 http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymtx.pdf
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         _epwFile: The output of the Ladybug Open EPW component or the file path location of the epw weather file on your system.
         _skyDensity_: Set to 0 to generate a Tregenza sky, which will divide up the sky dome with a coarse density of 145 sky patches.  Set to 1 to generate a Reinhart sky, which will divide up the sky dome using a very fine density of 580 sky patches.  Note that, while the Reinhart sky is more accurate, it will result in considerably longer calculation times.  Accordingly, the default is set to 0 for a Tregenza sky.
-        workingDir_: An optional working directory in your system where the sky will be generated. Default is set to C:\Ladybug and any valid file path location can be connected.
+        workingDir_: An optional working directory in your system where the sky will be generated. Default is set to C:\Ladybug or C:\Users\yourUserName\AppData\Roaming\Ladybug.  The latter is used if you cannot write to the C:\ drive of your computer.  Any valid file path location can be connected.
         useOldRes_: Set this to "True" if you have already run this component previously and you want to use the already-generated data for this weather file.
         _runIt: Set to "True" to run the component and generate a sky matrix.
     Returns:
@@ -28,10 +45,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -42,6 +59,7 @@ from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 from itertools import izip
+import shutil
 
 def date2Hour(month, day, hour):
     # fix the end day
@@ -128,11 +146,28 @@ def main(epwFile, skyType, workingDir, useOldRes):
         workingDrive = workingDir[0:1]
         
         # GenCumulativeSky
-        lb_preparation.downloadGendaymtx(workingDir)
-        if not os.path.isfile(workingDir + '\gendaymtx.exe'): return -3
+        gendaymtxFile = os.path.join(workingDir, 'gendaymtx.exe')
+        
+        if not os.path.isfile(gendaymtxFile):
+            # let's see if we can grab it from radiance folder
+            if os.path.isfile("c:/radiance/bin/gendaymtx.exe"):
+                # just copy this file
+                shutil.copyfile("c:/radiance/bin/gendaymtx.exe", gendaymtxFile)
+            else:
+                # download the file
+                lb_preparation.downloadGendaymtx(workingDir)
+        
+        #check if the file is there
+        if not os.path.isfile(gendaymtxFile) or  os.path.getsize(gendaymtxFile)< 15000 : return -3
         
         ## check for epw file to be connected
         if epwFile != None and epwFile[-3:] == 'epw':
+            if not os.path.isfile(epwFile):
+                print "Can't find epw file at " + epwFile
+                w = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(w, "Can't find epw file at " + epwFile)
+                return -1
+                
             # import data from epw file
             locName, lat, lngt, timeZone, elev, locationStr = lb_preparation.epwLocation(epwFile)
             newLocName = lb_preparation.removeBlank(locName)
@@ -190,15 +225,19 @@ def main(epwFile, skyType, workingDir, useOldRes):
 def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZone):
     # All the patches on top high get the same values so maybe
     # I should re-create the geometry 577 instead of 580
-    
-    skyPatchesDict = {1 : 145 + 1,
-                      2 : 580 - 3 + 1}
-    
+    # and keep in mind that first patch is ground!
+    # I create the dictionary only for sky patches and don't collect the data
+    # for the first patch
+    # this line could have saved me 5 hours
+    skyPatchesDict = {1 : 145,
+                      2 : 580 - 3}
+
     numOfPatchesInEachRow = {1: [30, 30, 24, 24, 18, 12, 6, 1],
                              2: [60, 60, 60, 60, 48, 48, 48, 48, 36, 36, 24, 24, 12, 12, 1]}
                              
-    strConv = {1 : [0.0435449227, 0.0416418006, 0.0473984151, 0.0406730411, 0.0428934136, 0.0445221864, 0.0445221864, 0.0344199465],
-               2: [0.0113221971, 0.0111894547, 0.0109255262, 0.0105335058, 0.0125224872, 0.0117312774, 0.0108025291, 0.00974713106, 0.011436609, 0.00974295956, 0.0119026242, 0.00905126163, 0.0121875626, 0.00612971396]} #steradians conversion
+    # first row is horizon and last row is the one 
+    strConv = {1 : [0.0435449227, 0.0416418006, 0.0473984151, 0.0406730411, 0.0428934136, 0.0445221864, 0.0455168385, 0.0344199465],
+               2: [0.0113221971, 0.0111894547, 0.0109255262, 0.0105335058, 0.0125224872, 0.0117312774, 0.0108025291, 0.00974713106, 0.011436609, 0.00974295956, 0.0119026242, 0.00905126163, 0.0121875626, 0.00612971396, 0.00921483254]}
     
     numOfSkyPatches = skyPatchesDict[n]
     
@@ -210,48 +249,67 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
     resFileDif = open(daylightMtxDif, "r") 
     resFileDir = open(daylightMtxDir, "r") 
     
-    def getValue(line):
+    def getValue(line, rowNumber):
         R, G, B = line.split(' ')
         value = (.265074126 * float(R) + .670114631 * float(G) + .064811243 * float(B)) * strConv[n][rowNumber]
         return value
         
     lineCount = 0
+    extraHeadingLines = 0 # no heading
     warnOff = False
     failedHours = {}
     for difLine, dirLine in izip(resFileDif, resFileDir):
-        # that line is an empty line to separate patches
-        hour = (lineCount+1)% 8761
+        # each line is the data for each hour for a single patch
+        
+        # new version of gendaymtx genrates a header
+        # this is a check to make sure the component will work for both versions
+        if lineCount == 0 and difLine.startswith("#?RADIANCE"):
+            # the file has a header
+            extraHeadingLines = -8
+            
+        if lineCount + extraHeadingLines < 0:
+            # pass heading line
+            lineCount += 1
+            continue
+        
+        # these lines is an empty line to separate patches do let's pass them
+        hour = (lineCount + 1 + extraHeadingLines)% 8761
+        
+        #print lineCount, hour
+        
         if hour != 0:
-            patchNumber = int((lineCount + 1) /8761)
+            patchNumber = int((lineCount + 1 + extraHeadingLines) /8761)
             
-            #
-            for rowCount, patchCountInRow in enumerate(numOfPatchesInEachRow[n]):
-                if patchNumber <= sum(numOfPatchesInEachRow[n][:rowCount]):
-                    rowNumber = rowCount
-                    break
-            try:
-                difValue = getValue(difLine)
-                dirValue = getValue(dirLine)
-            
-            except Exception, e:
-                value = 0
-                if not warnOff:
-                    print "genDayMtx returns null Values for few hours. The study will run anyways." + \
-                          "\nMake sure that you are using an standard epw file." + \
-                          "\nThe failed hours are listed below in [Month/Day @Hour] format."
-                warnOff = True
-                day, month, time = hour2Date(hour - 1)
-                if hour-1 not in failedHours.keys():
-                    failedHours[hour-1] = [day, month, time]
-                    print month + "/" + day + " @" + time
-                
-            try: radValuesDict[patchNumber][hour] = [difValue, dirValue]
-            except: print patchNumber, hour, value
+            # first patch is ground!
+            if patchNumber != 0: #and patchNumber < numOfSkyPatches:
+                for rowCount, patchCountInRow in enumerate(numOfPatchesInEachRow[n]):
+                    if patchNumber - 1 < sum(numOfPatchesInEachRow[n][:rowCount+1]):
+                        rowNumber = rowCount
+                        # print rowNumber
+                        break
+                try:
+                    difValue = getValue(difLine, rowNumber)
+                    dirValue = getValue(dirLine, rowNumber)
+                except Exception, e:
+                    value = 0
+                    if not warnOff:
+                        print "genDayMtx returns null Values for few hours. The study will run anyways." + \
+                              "\nMake sure that you are using an standard epw file." + \
+                              "\nThe failed hours are listed below in [Month/Day @Hour] format."
+                    warnOff = True
+                    day, month, time = hour2Date(hour - 1)
+                    if hour-1 not in failedHours.keys():
+                        failedHours[hour-1] = [day, month, time]
+                        print "Failed to read the results > " + month + "/" + day + " @" + time
+                    
+                try: radValuesDict[patchNumber-1][hour] = [difValue, dirValue]
+                except:print patchNumber-1, hour, value
             
         lineCount += 1
     
     resFileDif.close()
     resFileDir.close()
+
     
     class SkyResultsCollection(object):
         def __init__(self, valuesDict, locationName, lat, lngt, timeZone):

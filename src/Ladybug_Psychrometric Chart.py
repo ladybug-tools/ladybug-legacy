@@ -1,8 +1,25 @@
 # Psychrometric Chart
-# By Chris Mackey
-# Chris@MackeyArchitecture.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to draw a psychrometric chart in the Rhino scene and evaluate a set of temperatures and humidity ratios in terms of indoor comfort.  Connected data can include either outdoor temperature and humidty ratios from imported EPW weather data, indoor temperature and humidity ratios from an energy simulation, or indivdual numerical inputs of temperature and humidity.  The input data will be plotted alongside polygons on the chart representing comfort as well as polygons representing the efects of passive building strategies on comfort.
@@ -20,7 +37,7 @@ _
 The information for the polygons representing passive strategies comes from the climate consultant psychrometric chart.  Further information on how these polygons are calculated can be found here:
 http://apps1.eere.energy.gov/buildings/tools_directory/software.cfm/ID=123/pagename=alpha_list
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -36,6 +53,7 @@ Provided by Ladybug 0.0.58
         comfortPar_: Optional comfort parameters from the "Ladybug_PMV Comfort Parameters" component.  Use this to adjust maximum and minimum acceptable humidity ratios.  These comfortPar can also change whether comfort is defined by eighty or ninety percent of people comfortable.
         passiveStrategy_: An optional text input of passive strategies to be laid over the psychrometric chart as polygons.  It is recommended that you use the "Ladybug_Passive Strategy List" to select which polygons you would like to display.  Otherwise, acceptable text inputs include "Evaporative Cooling", "Thermal Mass + Night Vent", "Occupant Use of Fans", "Internal Heat Gain", and "Dessicant Dehumidification".
         strategyPar_: Optional passive strategy parameters from the "Ladybug_Passive Strategy Parameters" component.  Use this to adjust the maximum comfortable wind speed, the building balance temperature, and the temperature limits for thermal mass and night flushing.
+        mollierHX_: Set to "True" to visualize the psychrometric chart as a mollier-hx diagram.  This is essentially a psychrometric chart where the axes have been switched, which is popular in Europe.
         -------------------------: ...
         analysisPeriod_: An optional analysis period from the Ladybug_Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
         annualHourlyData_: An optional list of hourly data from the Import epw component, which will be used to create hourPointColors that correspond to the hours of the data (e.g. windSpeed).  You can connect up several different annualHourly data here.
@@ -63,15 +81,15 @@ Provided by Ladybug 0.0.58
         strategyPolygons: A brep representing the area of the chart made comfortable by the passive strategies.  If multiple strategies have been hooked up to the passiveStrategy_ input, multiple polygons will be output here.
         -------------------------: ...
         chartHourPoints: Points representing each of the hours of input temperature and humidity ratio.  By default, this ouput is hidden and, to see it, you should connect it to a Grasshopper preview component.
-        hourPointColors: Colors that correspond to the chartHourPoints above and can be hooked up to the "Swatch" input of a Grasshopper Preview component that has the hour points above connected as geometry.  By default, points are colored red if they lie inside comfort or strategy polygons and are colored red if they do not meet such comfort criteria.  In the event that you have hooked up annualHourlyData_ this output will be a grafted list of colors.  The first list corresponds to the comfort conditions while the second list colors points based on the annualHourlyData.
+        hourPointColors: Colors that correspond to the chartHourPoints above and can be hooked up to the "Swatch" input of a Grasshopper Preview component that has the hour points above connected as geometry.  By default, points are colored red if they lie inside comfort or strategy polygons and are colored blue if they do not meet such comfort criteria.  In the event that you have hooked up annualHourlyData_ this output will be a grafted list of colors.  The first list corresponds to the comfort conditions while the second list colors points based on the annualHourlyData.
         hourPointLegend: A legend that corresponds to the hour point colors above.  In the event that annualHourlyData_ is connected, this output will be a grafted list of legends that each correspond to the grafted lists of colors.
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.58\nSEP_08_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_09_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -376,11 +394,11 @@ def checkTheInputs():
     checkData10 = True
     if comfortPar_ != []:
         try:
-            eightyPercentComfortable = bool(comfortPar_[0])
+            PPDComfortThresh = float(comfortPar_[0])
             humidRatioUp = float(comfortPar_[1])
             humidRatioLow = float(comfortPar_[2])
         except:
-            eightyPercentComfortable = False
+            PPDComfortThresh = 10.0
             humidRatioUp = 0.030
             humidRatioLow = 0.0
             checkData10 = False
@@ -388,7 +406,7 @@ def checkTheInputs():
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
-        eightyPercentComfortable = False
+        PPDComfortThresh = 10.0
         humidRatioUp = 0.030
         humidRatioLow = 0.0
     
@@ -437,7 +455,7 @@ def checkTheInputs():
     
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLength2, eightyPercentComfortable, titleStatement, patternList
+    return checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLength2, PPDComfortThresh, titleStatement, patternList
 
 
 
@@ -511,8 +529,19 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         
         return titleStatement, patternList
 
+def mollierHXTransform(geometry):
+    molTransRotat = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.YAxis, rc.Geometry.Vector3d(-1,0,0), rc.Geometry.Point3d.Origin)
+    molTransReflect = rc.Geometry.Transform.Mirror(rc.Geometry.Plane.WorldYZ)
+    geometry.Transform(molTransRotat)
+    geometry.Transform(molTransReflect)
+    
+    return geometry
 
-def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, scaleFactor, epwData, epwStr, lb_visualization):
+def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, lb_visualization):
+    #Set a default text height if the user has not provided one.
+    if legendFontSize == None:
+        legendFontSize = 0.6
+    
     #Generate a list of temperatures that will be used to make the relative humidity curves.
     tempNum = range(-20, 55, 5)
     relHumidNum = range(10, 110, 10)
@@ -570,6 +599,10 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
         tempCurves.append(rc.Geometry.LineCurve(rc.Geometry.Point3d(temp, 0, 0), rc.Geometry.Point3d(temp, humidRatio[-1][count], 0)))
         tempLabelBasePts.append(rc.Geometry.Point3d(temp-0.75, -1, 0))
         tempText.append(str(temp))
+    if mollierHX_ == True:
+        for ptCount, point in enumerate(tempLabelBasePts):
+            mollierHXTransform(point)
+            tempLabelBasePts[ptCount] = rc.Geometry.Point3d(point.X-(1.5*legendFontSize), point.Y+(0.25/legendFontSize), 0)
     
     #Split the isothermal lines.
     maxTempCurves = []
@@ -601,29 +634,60 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
             maxHrLines.append(splitCrv[-1])
         else:
             maxHrLines.append(curve)
+    if mollierHX_ == True:
+        for ptCount, point in enumerate(ratioBasePt):
+            mollierHXTransform(point)
+            ratioBasePt[ptCount] = rc.Geometry.Point3d(point.X-(legendFontSize), point.Y, 0)
+    
+    
+    #Make lines of constant enthalpy.
+    enthalpyForLines = range(-10,120,10)
+    enthalLines = []
+    enthText = []
+    
+    for enthl in enthalpyForLines:
+        enthText.append(str(enthl)+" kJ/kg")
+        startVal = lb_comfortModels.calcTempFromEnthalpy(enthl, 0.0)
+        startPt = rc.Geometry.Point3d(startVal, 0.0, 0.0)
+        endVal = lb_comfortModels.calcTempFromEnthalpy(enthl, 0.03)
+        endPt = rc.Geometry.Point3d(endVal, 0.03*scaleFactor, 0.0)
+        enthLine = rc.Geometry.LineCurve(startPt, endPt)
+        enthalLines.append(enthLine)
+    
+    #Split the enthalpy lines with the boundary of the chart.
+    for crvCount, curve in enumerate(enthalLines):
+        splitCrv = curve.Split(satBrep, sc.doc.ModelAbsoluteTolerance)
+        if len(splitCrv) != 0: enthalLines[crvCount] = splitCrv[0]
+    maxTBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(maxTempCurves[-1], rc.Geometry.Vector3d.ZAxis))
+    for crvCount, curve in enumerate(enthalLines):
+        splitCrv = curve.Split(maxTBrep, sc.doc.ModelAbsoluteTolerance)
+        if len(splitCrv) != 0: enthalLines[crvCount] = splitCrv[-1]
+    
+    #Make the text for the lines of constant enthalpy.
+    enthLabelBasePts = []
+    for count, enth in enumerate(enthalLines):
+        enthLabelBasePts.append(rc.Geometry.Point3d(enth.PointAtEnd.X-(legendFontSize*5), enth.PointAtEnd.Y+(legendFontSize*0.5), 0))
+    if mollierHX_ == True:
+        for ptCount, point in enumerate(enthLabelBasePts):
+            mollierHXTransform(point)
+            enthLabelBasePts[ptCount] = rc.Geometry.Point3d(point.X, point.Y+(1.26/legendFontSize), 0)
     
     # Bring all of the curves into one list.
     chartCurves = []
-    for curve in maxhumidCurves:
-        chartCurves.append(curve)
-    for curve in maxTempCurves:
-        chartCurves.append(curve)
-    for curve in maxHrLines:
-        chartCurves.append(curve)
-    
-    #Set a default text height if the user has not provided one.
-    if legendFontSize == None:
-        legendFontSize = 0.6
+    chartCurves.extend(maxhumidCurves)
+    chartCurves.extend(maxTempCurves)
+    chartCurves.extend(maxHrLines)
+    chartCurves.extend(enthalLines)
     
     # Make the temperature text for the chart.
     tempLabels = []
     for count, text in enumerate(tempText):
-        tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize)[0])
+        tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize, legendBold)[0])
     
     # Make the humidity ratio text for the chart.
     ratioLabels = []
     for count, text in enumerate(ratioText):
-        ratioLabels.extend(lb_visualization.text2srf([text], [ratioBasePt[count]], legendFont, legendFontSize)[0])
+        ratioLabels.extend(lb_visualization.text2srf([text], [ratioBasePt[count]], legendFont, legendFontSize, legendBold)[0])
     
     # Make the relative humidity text for the chart.
     relHumidBasePts = []
@@ -632,24 +696,42 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     for curve in maxhumidCurves[1:]:
         curvePt = curve.PointAtNormalizedLength(0.98)
         relHumidBasePts.append(rc.Geometry.Point3d(curvePt.X-1.75, curvePt.Y, 0))
+    if mollierHX_ == True:
+        for ptCount, point in enumerate(relHumidBasePts):
+            mollierHXTransform(point)
+            relHumidBasePts[ptCount] = rc.Geometry.Point3d(point.X, point.Y+(0.5/legendFontSize), 0)
     for humid in relHumidNum:
         relHumidTxt.append(str(humid)+"%")
     for count, text in enumerate(relHumidTxt[:-1]):
-        relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75)[0])
+        relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75, legendBold)[0])
+    
+    #Make the enthalpy labels for the chart.
+    enthLabels = []
+    for count, text in enumerate(enthText):
+        enthLabels.extend(lb_visualization.text2srf([text], [enthLabelBasePts[count]], legendFont, legendFontSize*0.75, legendBold)[0])
     
     #Make axis labels for the chart.
     xAxisLabels = []
     xAxisTxt = ["Dry Bulb Temperature"]
-    xAxisPt = [rc.Geometry.Point3d(-20.5, -2.5, 0)]
-    xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25)[0])
+    if mollierHX_ == True: xAxisPt = [rc.Geometry.Point3d(-5*legendFontSize, 15, 0)]
+    else: xAxisPt = [rc.Geometry.Point3d(-20.5, -2.5, 0)]
+    xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
+    if mollierHX_ == True:
+        rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, xAxisPt[0])
+        for geo in xAxisLabels:
+            geo.Transform(rotateTransf)
     
     yAxisLabels = []
     yAxisTxt = ["Humidity Ratio"]
-    yAxisPt = [rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0)]
-    yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25)[0])
-    rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0))
-    for geo in yAxisLabels:
-        geo.Transform(rotateTransf)
+    if mollierHX_ == True:
+        yAxisPt = [rc.Geometry.Point3d(20, 50+(4*legendFontSize), 0)]
+        yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
+    else:
+        yAxisPt = [rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0)]
+        yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
+        rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(55, 0.0245*scaleFactor, 0))
+        for geo in yAxisLabels:
+            geo.Transform(rotateTransf)
     
     #Make the chart title.
     def getDateStr(start, end):
@@ -660,24 +742,23 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     
     titleLabels = []
     if epwData == True:
-        titleTxt = ["Psychrometric Chart", epwStr[1]]
+        if mollierHX_ == True: titleTxt = ["Mollier HX Diagram", epwStr[1]]
+        else: titleTxt = ["Psychrometric Chart", epwStr[1]]
         if analysisPeriod_ == []:
             titleTxt.append(getDateStr(epwStr[5], epwStr[6]))
         else:
             titleTxt.append(getDateStr(analysisPeriod_[0], analysisPeriod_[1]))
-    else: titleTxt = ["Psychrometric Chart", "Unlown Location", "Unknown Time Period"]
-    titlePt = [rc.Geometry.Point3d(-19, 0.0295*scaleFactor, 0), rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*5), 0)]
+    else: titleTxt = ["Psychrometric Chart", "Unkown Location", "Unknown Time Period"]
+    if mollierHX_ == True: titlePt = [rc.Geometry.Point3d(20, -0.011*scaleFactor, 0), rc.Geometry.Point3d(20, (-0.011*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(20, (-0.011*scaleFactor)-(legendFontSize*5), 0)]
+    else: titlePt = [rc.Geometry.Point3d(-19, 0.0295*scaleFactor, 0), rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
-        titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5)[0])
+        titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
     
     #Bring all text and curves together in one list.
     chartCrvAndText = []
-    for item in chartCurves:
-        chartCrvAndText.append(item)
-    for item in tempLabels:
-        chartCrvAndText.append(item)
-    for item in ratioLabels:
-        chartCrvAndText.append(item)
+    for item in chartCurves: chartCrvAndText.append(item)
+    for item in tempLabels: chartCrvAndText.append(item)
+    for item in ratioLabels: chartCrvAndText.append(item)
     for item in relHumidLabels:
         chartCrvAndText.append(item)
     for item in xAxisLabels:
@@ -685,6 +766,8 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, sc
     for item in yAxisLabels:
         chartCrvAndText.append(item)
     for item in titleLabels:
+        chartCrvAndText.append(item)
+    for item in enthLabels:
         chartCrvAndText.append(item)
     
     
@@ -803,6 +886,9 @@ def colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_
             cullFaceIndices.append(count)
     uncoloredMesh.Faces.DeleteFaces(cullFaceIndices)
     
+    #Flip the mesh to be sure that it always displays correctly.
+    uncoloredMesh.Flip(True, True, True)
+    
     #Return everything that's useful.
     return hourPts, uncoloredMesh, finalMeshFrequency
 
@@ -843,7 +929,7 @@ def unionAllCurves(Curves):
     return res
 
 
-def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, eightyPercentComfort):
+def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh):
     #Take just the top middle and bottom lines for making the comofrt range in order to speed up the calculation.
     relHumidLines = [relHumidLines[0], relHumidLines[5], relHumidLines[10]]
     
@@ -854,7 +940,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         upTemperPts = []
         downTemperPts = []
         for count, humidity in enumerate(range(0,150,50)):
-            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], eightyPercentComfort)
+            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh)
             
             if upTemper < 50:
                 if upTemper > -20:
@@ -1159,7 +1245,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     #Calculate the upper boundary of Natural ventilation.
                     upTemperPts = []
                     for count, humidity in enumerate(range(0,150,50)):
-                        upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], eightyPercentComfort)
+                        upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh)
                         
                         if upTemper < 50:
                             if upTemper > -20:
@@ -1259,6 +1345,12 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     passiveStrategyCurves.append(joinedHumidBound)
                     passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
                     strategyListTest.append("Dessicant Dehumidification")
+                elif "Dessicant Dehumidification" in passiveStrategy:
+                    passiveStrategyCurves.append(None)
+                    strategyListTest.append("Dessicant Dehumidification")
+                    warning = 'Dessicant Dehumidification is only relevant when there is an upper bound of humidity ratio on the comfort polygon.  Use the "PMV Comfort Parameters" component to set this.'
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 
                 #If the user has hooked up dessicant dehumidification, add a dessicant dehumidification curve to the chart.
                 if "Dehumidification Only" in passiveStrategy and humidRatioUp*scaleFactor <= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
@@ -1315,7 +1407,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     strategyPercent = []
     strategyOrNot = []
     
-    #For each of the comfort polygons, determine how many of the hour points are inside of them and make a comfotr or not list.
+    #For each of the comfort polygons, determine how many of the hour points are inside of them and make a comfort or not list.
     for countComf, comfortPolygon in enumerate(comfortPolyline):
         comfBool = []
         for hourPt in hourPts:
@@ -1343,29 +1435,48 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     #For each of the strategy polygons, determine how many of the hour points are inside of them and make a comfort or not list.
     for countStrat, comfortPolygon in enumerate(strategyPolylines):
         comfBool = []
-        if strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" or epwData == False or patternList != []:
-            for hourPt in hourPts:
-                if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
-                else:comfBool.append(0)
-        else:
-            for hourCt, hourPt in enumerate(hourPts):
-                if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" and airTemp[hourCt-12] < maxComfortPolyTemp-tempBelowComf: comfBool.append(1)
-                else:comfBool.append(0)
-        comfPercent = (sum(comfBool)/len(comfBool))*100
-        strategyPercent.append(comfPercent)
-        if epwData == True:
-            if analysisPeriod_:
-                comfBool.insert(0,analysisPeriod_[1])
-                comfBool.insert(0,analysisPeriod_[0])
+        try:
+            if strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" or epwData == False or patternList != []:
+                for hourPt in hourPts:
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
+                    else:comfBool.append(0)
             else:
-                comfBool.insert(0, epwStr[6])
-                comfBool.insert(0, epwStr[5])
-            comfBool.insert(0, epwStr[4])
-            comfBool.insert(0, "Boolean Value")
-            comfBool.insert(0, "Comfortable Hours in " + strategyTextNames[countComf + countStrat + 1] + " Polygon")
-            comfBool.insert(0, epwStr[1])
-            comfBool.insert(0, epwStr[0])
-        strategyOrNot.append(comfBool)
+                for hourCt, hourPt in enumerate(hourPts):
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" and airTemp[hourCt-12] < maxComfortPolyTemp-tempBelowComf: comfBool.append(1)
+                    else:comfBool.append(0)
+            comfPercent = (sum(comfBool)/len(comfBool))*100
+            strategyPercent.append(comfPercent)
+            if epwData == True:
+                if analysisPeriod_:
+                    comfBool.insert(0,analysisPeriod_[1])
+                    comfBool.insert(0,analysisPeriod_[0])
+                else:
+                    comfBool.insert(0, epwStr[6])
+                    comfBool.insert(0, epwStr[5])
+                comfBool.insert(0, epwStr[4])
+                comfBool.insert(0, "Boolean Value")
+                comfBool.insert(0, "Comfortable Hours in " + strategyTextNames[countComf + countStrat + 1] + " Polygon")
+                comfBool.insert(0, epwStr[1])
+                comfBool.insert(0, epwStr[0])
+            strategyOrNot.append(comfBool)
+        except:
+            strategyPercent.append(0)
+            for count in range(len(hourPts)):
+                comfBool.append(0)
+            
+            if epwData == True:
+                if analysisPeriod_:
+                    comfBool.insert(0,analysisPeriod_[1])
+                    comfBool.insert(0,analysisPeriod_[0])
+                else:
+                    comfBool.insert(0, epwStr[6])
+                    comfBool.insert(0, epwStr[5])
+                comfBool.insert(0, epwStr[4])
+                comfBool.insert(0, "Boolean Value")
+                comfBool.insert(0, "Comfortable Hours in Dessicant Dehumidification Polygon")
+                comfBool.insert(0, epwStr[1])
+                comfBool.insert(0, epwStr[0])
+            strategyOrNot.append(comfBool)
     
     #For the total comfort, determine how many of the hour points are inside of them and make a comfort or not list.
     temporaryPercent = []
@@ -1409,7 +1520,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     return finalTotalPercent, finalComfOrNot, strategyPercent, strategyOrNot
 
 
-def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_visualization):
+def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization):
     #Define the lists.
     pointColors = []
     colorLegends = []
@@ -1439,7 +1550,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     for listCount, list in enumerate(annualHourlyDataSplit):
         if len(list) != 0:
             legend = []
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
             legendColors = lb_visualization.gradientColor(legendText[:-1], "min", "max", customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)
@@ -1452,7 +1563,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     return pointColors, colorLegends
 
 
-def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, eightyPercentComfortable, titleStatement, patternList):
+def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, PPDComfortThresh, titleStatement, patternList):
     #Import the classes.
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -1471,11 +1582,11 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         # Read the legend parameters.
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar_, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
         
         # Generate the chart curves.
         scaleFactor = 1500
-        chartCurves, humidityLines = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, scaleFactor, epwData, epwStr, lb_visualization)
+        chartCurves, humidityLines = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, lb_visualization)
         
         #If there is annual hourly data, split it up.
         if annualHourlyData_ != []:
@@ -1495,7 +1606,8 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if analysisPeriod_ != [] and epwData == True and calcLength == 8760:
             airTemp = lb_preparation.selectHourlyData(_dryBulbTemperature, analysisPeriod_)[7:]
             relHumid = lb_preparation.selectHourlyData(_relativeHumidity, analysisPeriod_)[7:]
-            if len(barPress) == 8760: barPress = lb_preparation.selectHourlyData(barometricPressure_, analysisPeriod_)[7:]
+            if len(barPress) == 8760:
+                barPress = lb_preparation.selectHourlyData(barPress, analysisPeriod_)[7:]
             else:
                 barPress2 = []
                 for num in range(len(airTemp)):
@@ -1531,8 +1643,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                     newAirTemp.append(airTemp[count])
                     newRelHumid.append(relHumid[count])
                     newBarPress.append(barPress[count])
-                    for listCount in range(len(annualHourlyDataSplit)):
-                        newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
+                    if annualHourlyDataSplit != [[]]:
+                        for listCount in range(len(annualHourlyDataSplit)):
+                            newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
             airTemp = newAirTemp
             relHumid = newRelHumid
             barPress = newBarPress
@@ -1543,8 +1656,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if calcLength > 1:
             hourPts, coloredMesh, meshFaceValues = colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_visualization, scaleFactor, lowB, highB, customColors)
             legendTitle = "Hours"
-            lb_visualization.calculateBB(chartCurves[62:70], True)
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+            if mollierHX_ == True: lb_visualization.calculateBB(chartCurves[:3], True)
+            else: lb_visualization.calculateBB(chartCurves[75:83], True)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)
@@ -1553,6 +1667,10 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                     legend.append(item)
             if legendBasePoint == None:
                 legendBasePoint = lb_visualization.BoundingBoxPar[0]
+            if mollierHX_ == True:
+                moveTrans = rc.Geometry.Transform.Translation(0,-20,0)
+                for geo in legend: geo.Transform(moveTrans)
+                legendBasePoint.Transform(moveTrans)
         else:
             hourPts = [rc.Geometry.Point3d(airTemp[0], lb_comfortModels.calcHumidRatio(airTemp, relHumid, barPress)[0][0]*scaleFactor, 0)]
             coloredMesh = None
@@ -1563,17 +1681,26 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         chartBoundary = rc.Geometry.Curve.JoinCurves([chartCurves[0], chartCurves[25], chartCurves[31], chartCurves[10], chartCurves[11]])[0]
         
         # Calculate the comfort and strategy polygons.
-        comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, eightyPercentComfortable)
+        comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh)
         
         #Calculate how many hours are in each comfort or strategy and comfort polygons.
         totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList)
         
         #Generate colors for the points.
         if len(totalComfOrNot) > 1:
-            pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_visualization)
+            pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization)
         else:
             pointColors = []
             pointLegends = []
+        
+        #If the molier transform is selected, apply it to the chart curves.
+        if mollierHX_ == True:
+            for item in chartCurves:
+                if str(item.ObjectType) == 'Curve': mollierHXTransform(item)
+            mollierHXTransform(coloredMesh)
+            for geo in comfortPolygon: mollierHXTransform(geo)
+            for geo in strategyPolygons: mollierHXTransform(geo)
+            for geo in hourPts: mollierHXTransform(geo)
         
         #If the user has selected to scale or move the geometry, scale it all and/or move it all.
         if basePoint_ != None:
@@ -1617,7 +1744,7 @@ checkData = False
 if _runIt == True:
     checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
     avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, \
-    humidRatioLow, calcLengthComf, eightyPercentComfortable, titleStatement, \
+    humidRatioLow, calcLengthComf, PPDComfortThresh, titleStatement, \
     patternList = checkTheInputs()
 
 #If the inputs are good, run the function.
@@ -1626,7 +1753,7 @@ if checkData == True:
     results = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
                    avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, \
                    humidRatioUp, humidRatioLow, calcLengthComf, \
-                   eightyPercentComfortable, titleStatement, patternList)
+                   PPDComfortThresh, titleStatement, patternList)
                    
     if results != -1:
         totalComfortPercent, totalComfortOrNot, strategyNames, strategyPercentOfTime, \

@@ -1,8 +1,25 @@
 # Predicted Mean Vote Comfort Calculator
-# By Chris Mackey
-# Chris@MackeyArchitecture.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to calculate comfort metrics of Predicted Mean Vote (PMV), the Percent of People Dissatisfied (PPD), and the Standard Effective Temperature (SET) for a set of climate conditions and occupant behavior/clothing.
@@ -17,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The PMV model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript comfort models: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
@@ -50,10 +67,10 @@ Provided by Ladybug 0.0.58
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -363,6 +380,7 @@ def checkTheInputs():
                 exWork = duplicateData([0], calcLength)
                 
             else:
+                exWork = []
                 calcLength = None
                 warning = 'If you have put in lists with multiple values, the lengths of these lists must match across the parameters or you have a single value for a given parameter to be applied to all values in the list.'
                 print warning
@@ -377,14 +395,13 @@ def checkTheInputs():
     
     #If there are comfort parameters hooked up, read them out.
     checkData8 = True
-    print comfortPar_
     if comfortPar_ != []:
         try:
-            eightyPercentComfortable = bool(comfortPar_[0])
+            PPDComfortThresh = float(comfortPar_[0])
             humidRatioUp = float(comfortPar_[1])
             humidRatioLow = float(comfortPar_[2])
         except:
-            eightyPercentComfortable = False
+            PPDComfortThresh = 10.0
             humidRatioUp = 0.03
             humidRatioLow = 0.0
             checkData8 = False
@@ -392,7 +409,7 @@ def checkTheInputs():
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
-        eightyPercentComfortable = False
+        PPDComfortThresh = 10.0
         humidRatioUp = 0.03
         humidRatioLow = 0.0
     
@@ -403,7 +420,7 @@ def checkTheInputs():
         checkData = False
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercentComfortable, humidRatioUp, humidRatioLow
+    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, PPDComfortThresh, humidRatioUp, humidRatioLow
 
 
 
@@ -426,19 +443,20 @@ def main():
         
         #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
         checkData = False
-        checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercentComfortable, humidRatioUp, humidRatioLow = checkTheInputs()
+        checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, PPDComfortThresh, humidRatioUp, humidRatioLow = checkTheInputs()
         
-        #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
-        if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
-            runPeriod = analysisPeriod_
-            calcLength = len(HOYS)
-        elif len(analysisPeriod_)==0 and epwData == True:
-            HOYS = range(calcLength)
-            runPeriod = [epwStr[5], epwStr[6]]
-        else:
-            HOYS = range(calcLength)
-            runPeriod = [(1,1,1), (12,31,24)]
+        if checkData == True:
+            #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
+            if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
+                HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+                runPeriod = analysisPeriod_
+                calcLength = len(HOYS)
+            elif len(analysisPeriod_)==0 and epwData == True:
+                HOYS = range(calcLength)
+                runPeriod = [epwStr[5], epwStr[6]]
+            else:
+                HOYS = range(calcLength)
+                runPeriod = [(1,1,1), (12,31,24)]
         
         #If things are good, run it through the comfort model.
         predictedMeanVote = []
@@ -468,19 +486,11 @@ def main():
                     standardEffectiveTemperature.append(set)
                     if humidRatioUp != 0.03 or humidRatioLow != 0.0:
                         HR, EN, vapPress, satPress = lb_comfortModels.calcHumidRatio(airTemp[count], relHumid[count], 101325)
-                        if eightyPercentComfortable == True:
-                            if ppd < 20 and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
-                        else:
-                            if ppd < 10 and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
+                        if ppd < PPDComfortThresh and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
+                        else: comfortableOrNot.append(0)
                     else:
-                        if eightyPercentComfortable == True:
-                            if ppd < 20: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
-                        else:
-                            if ppd < 10: comfortableOrNot.append(1)
-                            else: comfortableOrNot.append(0)
+                        if ppd < PPDComfortThresh: comfortableOrNot.append(1)
+                        else: comfortableOrNot.append(0)
                 if epwData == True:
                     percentOfTimeComfortable = ((sum(comfortableOrNot[7:]))/calcLength)*100
                 else: percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100

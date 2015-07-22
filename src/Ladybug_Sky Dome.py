@@ -1,14 +1,31 @@
 # Sky Domes
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 This component allows you to visualize a selected sky matrix from the selectSkyMxt component in order to see the patches of the sky dome where radiation is coming from.
 The component will produce 3 sky domes by default: a dome showing just the diffuse radiation, a dome showing just the direct radiation, and a dome showing the total radiation.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -28,15 +45,15 @@ Provided by Ladybug 0.0.58
         skyPatchesCenPts: The center points of sky patches, which can be used to shape Rhino geometry in relation to radiation from different sky patches.
         skyPatchesAreas: The area of sky patches in Rhino model units.
         skyPatchesAsBrep: The geometry of sky patches as breps.
-        values: Radiation values for the sky patches in Wh/m2.
+        values: Radiation values for the sky patches in kWh/m2.
 """
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -111,7 +128,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         elif legendPar[5] == None: overwriteScale = True
         
         # read the legend parameters legend
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
         
         # this is not a good idea to set the default to 0.9!
         # should be fixed later
@@ -119,11 +136,11 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         
         # generate the legend
         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
         
         #print listInfo[i], customHeading[i]
         # generate the title
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False,  legendFont, legendFontSize)
+        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False,  legendFont, legendFontSize, legendBold)
         
         # generate compass curve
         # northVector = rc.Geometry.Vector3d.YAxis
@@ -187,6 +204,9 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         
         # color the meshed patches
         domeMeshed = lb_visualization.colorMesh(colForMesh, domeMeshed)
+        
+        #Flip it so that the mesh faces are outward.
+        domeMeshed.Flip(True, True, True)
         
         if legendBasePoint == None:
             nlegendBasePoint = lb_visualization.BoundingBoxPar[0]

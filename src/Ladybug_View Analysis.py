@@ -1,9 +1,26 @@
 # This script used to be ladybug all in one
 # I separated them into three parts before distribution which made it such a mess
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to evaluate the visibility of input _geometry from a set of key viewing points.
@@ -14,7 +31,7 @@ This component outputs a percentage of viewpoints seen by the input _geometry.  
 This component will evaluate view from the test points objectively in all directions. 
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         _geometry: Geometry for which visibility analysis will be conducted.  Geometry must be either a Brep, a Mesh, or a list of Breps or Meshes.
@@ -49,11 +66,11 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 
@@ -205,11 +222,13 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
         return results, totalResults, listInfo, ptVisibility
     
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
-        
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+        #Read Legend Parameters.
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+        if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[3]
+        elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[3]
         
         colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
-
+        
         # color mesh surfaces
         analysisSrfs = lb_visualization.colorMesh(colors, analysisSrfs)
         
@@ -218,7 +237,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
         if not (runOrientation and legendBasePoint==None):
             lb_visualization.calculateBB([analysisSrfs, contextSrfs])
         # legend geometry
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
         
         # legend colors
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -229,7 +248,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
         if runOrientation:
             try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
             except: pass
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
+        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
         
         if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
         
@@ -349,12 +368,15 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
             
             # preset the legen parameters if it is not set by the user
             if legendPar== []:
-                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, None]
+                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, 1, 'Verdana', None, False]
             else:
                 if legendPar[0] == None: legendPar[0] = [minValue]
                 if legendPar[1] == None: legenPar[1] = maxValue
                 if legendPar[4] == None: legendPar[4] = lb_visualization.BoundingBoxPar
-                
+                if legendPar[5] == None or float(legendPar[5])==0: legendPar[5] = 1           
+                if legendPar[6] == None: legendPar[6] = 'Verdana'
+                if legendPar[7] == None: legendPar[7] = None
+                if legendPar[8] == None: legendPar[8] = False
         
         for angleCount, angle in enumerate(range(len(angles) - 1)):
             if (bakeIt or angles[angle + 1] == angles[-1]) and results!=-1:
