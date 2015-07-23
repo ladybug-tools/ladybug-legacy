@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Wh2BTU"
 ghenv.Component.NickName = 'Wh2BTU'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_22_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -58,8 +58,8 @@ for num in _Wh:
         floorNorm = True
     else:
         if floorNorm == True:
-            try: BTU.append(float(num)/0.316998331)
+            try: BTU.append(float(num)*0.316998331)
             except: BTU.append(num)
         else:
-            try: BTU.append(float(num)/3.41214163)
+            try: BTU.append(float(num)*3.41214163)
             except: BTU.append(num)
