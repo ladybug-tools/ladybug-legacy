@@ -1,12 +1,29 @@
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to calculate the day of the year and hour of the year from an input date with a day of the month, month of the year and hour of the day.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         _days_: A number (or list of numbers) between 1 and 31 that represents the day(s) of the month.
@@ -21,10 +38,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -51,15 +68,15 @@ def main(days, months, hours):
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
         lb_preparation = sc.sticky["ladybug_Preparation"]()
-        for d in days:
-            for m in months:
+        for m in months:
+            for d in days:
                 for h in hours:
-                    h = lb_preparation.checkHour(float(h))
-                    m  = lb_preparation.checkMonth(int(m))
-                    d = lb_preparation.checkDay(int(d), m)
-                    HOY.append(lb_preparation.date2Hour(m, d, h))
-                    DOY.append(int(lb_preparation.getJD(m, d)))
-                    date.append(lb_preparation.hour2Date(lb_preparation.date2Hour(m, d, h)))
+                    hour = lb_preparation.checkHour(float(h))
+                    month  = lb_preparation.checkMonth(int(m))
+                    day = lb_preparation.checkDay(int(d), m, ghenv.Component)
+                    HOY.append(lb_preparation.date2Hour(month, day, hour))
+                    DOY.append(int(lb_preparation.getJD(month, day)))
+                    date.append(lb_preparation.hour2Date(lb_preparation.date2Hour(month, day, hour)))
         return HOY, DOY, date
     else:
         print "You should first let the Ladybug fly..."

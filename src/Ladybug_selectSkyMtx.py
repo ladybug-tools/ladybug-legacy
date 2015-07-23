@@ -1,14 +1,31 @@
 # Select GenCumulativeSkyMtx
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to select a specific sky matrix (skyMxt) for an hour of the year or for an analysis period.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         _cumulativeSkyMtx: The output from a GenCumulativeSkyMtx component.
@@ -23,17 +40,15 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 
 import scriptcontext as sc
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import System
 from Grasshopper import DataTree
@@ -48,9 +63,9 @@ def getHourlySky(daylightMtxDict, HOY):
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        # first patch is the ground
-        if patchNumber!=0:
-            hourlyMtx.append(daylightMtxDict[patchNumber][HOY])
+        convertedMtx = []
+        for val in daylightMtxDict[patchNumber][HOY]: convertedMtx.append(val/1000)
+        hourlyMtx.append(convertedMtx)
     return hourlyMtx, analysisP
     
 def getCumulativeSky(daylightMtxDict, runningPeriod):
@@ -85,19 +100,18 @@ def getCumulativeSky(daylightMtxDict, runningPeriod):
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        if patchNumber!=0:
-            cumulativeDifValue = 0
-            cumulativeDirValue = 0
-            # adding upp the values
-            try:
-                for HOY in HOYS:
-                    difValue, dirValue = daylightMtxDict[patchNumber][HOY + 1]
-                    cumulativeDifValue += difValue
-                    cumulativeDirValue += dirValue 
-            except Exception, e:
-                print `e`
-                
-            hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
+        cumulativeDifValue = 0
+        cumulativeDirValue = 0
+        # adding upp the values
+        try:
+            for HOY in HOYS:
+                difValue, dirValue = daylightMtxDict[patchNumber][HOY + 1]
+                cumulativeDifValue += difValue
+                cumulativeDirValue += dirValue 
+        except Exception, e:
+            print `e`
+            
+        hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
     
     return hourlyMtx
 
@@ -154,7 +168,7 @@ def isLadybugFlying():
 skyMtxLists = []
 if _cumulativeSkyMtx and HOY_ and isLadybugFlying:
     skyMtxLists, _analysisPeriod_ = getHourlySky(_cumulativeSkyMtx.d, HOY_)
-    unit = 'Wh/m2'
+    unit = 'kWh/m2'
 elif _cumulativeSkyMtx and isLadybugFlying:
     skyMtxLists = getCumulativeSky(_cumulativeSkyMtx.d, _analysisPeriod_)
     unit = 'kWh/m2'

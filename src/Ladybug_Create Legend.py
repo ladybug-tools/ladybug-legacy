@@ -1,13 +1,30 @@
 # Create legend
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to create a custom legend for any set of data or to create a more flexible legend for any ladybug component with a legend.  Specifically, this component outputs data that can be plugged into the grasshopper "Text Tag 3D" component so that the legend text can be baked into the Rhino scene as actual text instead of surfaces representing text.
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
 
     Args:
         _valuesOrRange: The list of numerical data that the legend refers to (or just the minimum and maximum numerical values of this data).  If the original numerical data is hooked up, the legend's maximum and minimum values will be set by the max and min of the data set.
@@ -28,11 +45,11 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_Create Legend"
 ghenv.Component.NickName = 'createLegend'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 import Grasshopper.Kernel as gh
@@ -53,7 +70,7 @@ def main(results, legendPar, legendTitle, legendWidth):
     if not legendTitle:  legendTitle = 'unknown units  '
     
     # read the legend parameters legend
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
     
     if legendBasePoint == None and legendBasePt_ != None: legendBasePoint = legendBasePt_
     else: legendBasePoint = rc.Geometry.Point3d(0,0,0)
@@ -62,7 +79,7 @@ def main(results, legendPar, legendTitle, legendWidth):
     
     # generate the legend
     legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(results
-    , lowB, highB, numSeg, legendTitle, boundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    , lowB, highB, numSeg, legendTitle, boundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
     
     #
     legendTextSrfsFlattened = []

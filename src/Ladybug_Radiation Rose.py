@@ -1,14 +1,31 @@
 # Radiation Rose
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to make a radiation rose in the Rhino scene.  Radiation roses give a sense of how much radiation comes from the different cardinal directions, which will give an initial idea of where glazing should be minimized, shading applied, or solar collectors placed.
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -17,7 +34,7 @@ Provided by Ladybug 0.0.58
         _numOfArrows_: An interger that sets the number of arrows (or cardingal directions) in the radiation rose. The default is set to 36.
         _surfaceTiltAngle_: A number between 0 and 90 that sets the tilt angle in degrees of the analysis plane (0 = roof, 90 = vertical wall). The defult is set to 90 for a radiation study of a wall (ie. radiation on a curtain wall).
         _centerPoint_: A point that sets the location of the radiation rose.  The default is set to the Rhino origin (0,0,0).
-        _scale_: Use this input to change the scale of the radiation rose.  The default is set to 1.
+        _scale_: Use this input to change the scale of the radiation rose.  The default is set to 1 for any selSkyMtx that is longer than a day and 1000 for any selSkyMtx that is less than a day.
         _arrowHeadScale_: Use this input to change the scale of the arrow heads of the radiation rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         showTotalOnly_: Set to "True" to only show a radiation rose with the total radiation.  The default is "False", which will produce 3 radiation roses: one of diffuse radiation, one of direct radiation, and one of the total radiation.
@@ -30,15 +47,15 @@ Provided by Ladybug 0.0.58
         legend:  A legend of the radiation rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePts: The legend base point(s), which can be used to move the legend(s) in relation to the rose with the grasshopper "move" component.
         radRoseEndPts: The end points of the rose arrows.
-        radRoseValues: The radiation values in Wh/m2 for each rose arrow.
+        radRoseValues: The radiation values in kWh/m2 for each rose arrow.
 """
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -102,12 +119,16 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
             if round(roseAngles[-1]) == 360: roseAngles.remove(roseAngles[-1])
     
             # check the scale
-            try:
-                if float(scale)!=0:
-                    try:scale = 0.5 * float(scale)/conversionFac
-                    except: scale = 0.5/conversionFac
-                else: scale = 0.5/conversionFac
-            except: scale = 0.5/conversionFac
+            if scale:
+                scale = 0.5 * float(scale)/conversionFac
+            else:
+                HOY1 = lb_preparation.date2Hour(listInfo[0][5][0], listInfo[0][5][1], listInfo[0][5][1])
+                HOY2 = lb_preparation.date2Hour(listInfo[0][6][0], listInfo[0][6][1], listInfo[0][6][1])
+                if HOY2 - HOY1 > 24:
+                    scale = 0.5/conversionFac
+                else:
+                    scale = 500/conversionFac
+            internalScale = 0.3
             
             # check vertical surface angle
             if surfaceTiltAngle == None: surfaceTiltAngle = 90
@@ -139,17 +160,17 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                 if legendPar == []: overwriteScale = True
                 elif legendPar[5] == None: overwriteScale = True
                 
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
                 if overwriteScale: legendScale = 0.9
                 
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                 
-                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False, legendFont, legendFontSize)
+                titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False, legendFont, legendFontSize, legendBold)
                 
                 # print legendMax[i]
                 compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 0.3 * scale * legendMax[i], roseAngles, 1.2*textSize, True)
-                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.7)
+                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.7, False)
                 compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                 
                 for crv in legendTextCrv + [compassCrvs]:
@@ -186,6 +207,7 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                 colForMesh = []; arrowsEndPts = []
                 
                 for arrow in arrows:
+                    arrow.Flip(True, True, True)
                     newMesh = arrow.DuplicateMesh()
                     if newMesh:
                         newMesh.Translate(movingVector) # move it to the right place
@@ -290,7 +312,7 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                     legendPar[0] = legendMin[i]
                     normLegend = True
                 
-                internalScale = 0.3
+                
                 # generate arrows
                 cenPt = lb_preparation.getCenPt(centerPoint)
                 arrows = lb_preparation.genRadRoseArrows(movingVectors, radResult[i], cenPt, float(scale), internalScale, arrowHeadScale)

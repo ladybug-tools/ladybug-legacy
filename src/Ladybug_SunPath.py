@@ -1,8 +1,25 @@
 # this script is based on RADIANCE sun.c script
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to make a 3D sun-path (aka. sun plot) in the Rhino scene.  The component also outputs sun vectors that can be used for sunlight hours analysis or shading design with the other Ladybug components.
@@ -10,7 +27,7 @@ The sun-path function used here is a Python version of the RADIANCE sun-path scr
 http://www.radiance-online.org/download-install/CVS%20source%20code
 
 -
-Provided by Ladybug 0.0.58
+Provided by Ladybug 0.0.60
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -34,6 +51,7 @@ Provided by Ladybug 0.0.58
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         ---------------- : ...
         _dailyOrAnnualSunPath_: By default, this value is set to "True" (or 1), which will produce a sun path for the whole year.  Set this input to "False" (or 0) to generate a sun path for just one day of the year (or several days if multiple days are included in the analysis period).
+        solarOrStandardTime_: Set to 'True' to have the sunPath display in solar time and set to 'False' to have it display in standard time.  The default is set to 'False.'  Note that this input only changes the way in which the supath curves are drawn currently and does not yet change the position of the sun based on the input hour.
         bakeIt_: Set to True to bake the sunpath into the Rhino scene.
     Returns:
         readMe!: ...
@@ -55,10 +73,10 @@ Provided by Ladybug 0.0.58
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.58\nAUG_20_2014'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_08_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.58\nAUG_20_2014
+#compatibleLBVersion = VER 0.0.59\nJUL_06_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -150,6 +168,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 
 
 def readLocation(location):
+    solarTimeZonesPos = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180]
     locationStr = location.split('\n')
     newLocStr = ""
     #clean the idf file
@@ -163,6 +182,12 @@ def readLocation(location):
     newLocStr = newLocStr.replace(';', "")
     
     site, locationName, latitude, longitude, timeZone, elevation = newLocStr.split(',')
+    
+    
+    if solarOrStandardTime_:
+        if int(float(timeZone)) == 0: longitude = 0.0
+        elif int(float(timeZone)) > 0: longitude = solarTimeZonesPos[int(float(timeZone))]
+        elif int(float(timeZone)) < 0: longitude = -solarTimeZonesPos[-int(float(timeZone))]
     
     return float(latitude), float(longitude), float(timeZone), float(elevation)
 
@@ -242,6 +267,8 @@ def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
     
     
 def main(latitude, longitude, timeZone, elevation, north, hour, day, month, timeStep, analysisPeriod, centerPt, sunPathScale, sunScale, annualHourlyData, conditionalStatement, legendPar, dailyOrAnnualSunPath, bakeIt):
+    if solarOrStandardTime_: solarOrStandardTime = solarOrStandardTime_
+    else: solarOrStandardTime = False
     
     if dailyOrAnnualSunPath:
         dailySunPath, annualSunPath = False, True
@@ -372,7 +399,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             for HOY in HOYs:
                 d, m, h = lb_preparation.hour2Date(HOY, True)
                 m += 1
-                lb_sunpath.solInitOutput(m, d, h)
+                lb_sunpath.solInitOutput(m, d, h, solarOrStandardTime)
                 
                 if lb_sunpath.solAlt >= 0: SUH += 1
                 if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))]:
@@ -400,7 +427,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             annualSunPathCrvs = []
             baseCrvs = []
             if annualSunPath!=False:
-                annualSunPathCrvs = [item.ToNurbsCurve() for sublist in lb_sunpath.drawSunPath() for item in sublist]
+                annualSunPathCrvs = [item.ToNurbsCurve() for i,sublist in enumerate(lb_sunpath.drawSunPath(solarOrStandardTime)) for item in sublist if i < 2]
             if dailySunPath:
                 dailySunPathCrvs = []
                 for HOY in HOYs:
@@ -418,7 +445,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == []: overwriteScale = True
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.9
             
@@ -467,7 +494,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         customHeading = '\n\n\n\nSun-Path Diagram - Latitude: ' + `latitude` + '\n'
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(values
-                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
                         
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -493,7 +520,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                             # print resultStr
                             customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
                         
-                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize)
+                        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
                         
                         
                         legend = lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]])
@@ -505,7 +532,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         ##
                         compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
-                        numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                        numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
                         compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
 
@@ -568,7 +595,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     
                 textSize = legendScale * 0.5 * lb_visualization.BoundingBoxPar[2]/20
                 titlebasePt = lb_visualization.BoundingBoxPar[-2]
-                titleTextCurve = lb_visualization.text2srf(['\n\n' + customHeading], [titlebasePt], 'Veranda', textSize)
+                titleTextCurve = lb_visualization.text2srf(['\n\n' + customHeading], [titlebasePt], 'Veranda', textSize, legendBold)
                 legend = None, lb_preparation.flattenList(titleTextCurve)
                 
                 legendText.append('\n\n' + customHeading)
@@ -576,7 +603,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 sunsJoined = colorSun(sunSpheres, colors)
                 
                 compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
-                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5)
+                numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
                 compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                 
                 if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvs)
