@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.SubCategory = "6 | WIP"
@@ -444,8 +444,8 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
     circCenter = []
     circPolyline = []
     for m in range(0, 2):   # 0 to 2 for Comfort or NoComfort possibilities
-        if m == 0: text = "Comfort"
-        else     : text = "No Comfort"
+        if m == 0: text = "No Comfort"
+        else     : text = "Comfort"
         circCenter.append(rc.Geometry.Point3d(orgX + 55, leg + radius/2, 0)) # Base point for each month circle
         legComfLabelBasePts.append(rc.Geometry.Point3d(orgX + 57, leg + 0.0, 0)) # Base point for each month name
         leg += -3
