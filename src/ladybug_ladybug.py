@@ -5080,7 +5080,7 @@ class Photovoltaics(object):
         
         return srfTiltD
 
-   def inletWaterTemperature(self, dryBulbTemperature_C, method=0, depth_m=2, soilThermalDiffusivity_m2_s=2.5, minimalTemperature_C=1):
+    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, depth_m=2, soilThermalDiffusivity_m2_s=2.5, minimalTemperature_C=1):
         # calculate cold (inlet) water temperature
         # soilThermalDiffusivity (m2/s) per material (valid for method "0" only):
         # 0.00000024 - dry sand
