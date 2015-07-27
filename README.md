@@ -7,45 +7,51 @@ Ladybug is a free and open source environmental plugin for Grasshopper to help d
 Ladybug imports standard EnergyPlus Weather files (.EPW) in Grasshopper and provides a variety of 2D and 3D designer-friendly interactive graphics to support the decision-making process during the initial stages of design. The tool also provides further support for designers to test their initial design options for implications from radiation and sunlight-hours analyses results. Integration with Grasshopper allows for an almost instantaneous feedback on design modifications, and as it runs within the design environment, the information and analysis is interactive.
 
 
-Here is Ladybug in a less than 5-minute video (http://www.youtube.com/watch?v=OEjwAyC2l_0)!
+[Here is Ladybug in a less than 5-minute video](http://www.youtube.com/watch?v=OEjwAyC2l_0)
 
 
 Licence
 ========================================
-Ladybug started by Mostapha Sadeghipour Roudsari is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License. Based on a work at https://github.com/mostaphaRoudsari/ladybug.
-	
-It means you can copy, distribute and transmit the work or remix it to adapt the work. You can also use it to make commercial use of the work, BUT you must attribute that the work is based on Ladybug, and if you alter, transform, or build upon Ladybug, you may distribute the resulting work only under the same or similar license. This process will ensure that Ladybug and its future versions will stay free and accessible for everyone.
+Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+ 
+Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari
+
+Ladybug is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version. 
+ 
+Ladybug is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ 
+You should have received a copy of the GNU General Public License along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+ 
+@license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 Useful links
 ========================================
-Group page: http://www.grasshopper3d.com/group/ladybug
+[Ladybug group page on Grasshopper](http://www.grasshopper3d.com/group/ladybug)
 
-Facebook page: https://www.facebook.com/LadyBugforGrasshopper
+[Facebook page](https://www.facebook.com/LadyBugforGrasshopper)
 
-Ladybug on Twitter: @ladybug_tool
+[Ladybug on Twitter](https://www.twitter.com/ladybug_tool)
 
 Contributors(a-z):
 ========================================
-Anton Szilasi @antonszilasi
+[Anton Szilasi](https://github.com/antonszilasi)
 
 Alex Jacobson
 
-Abraham Yezioro @ayezioro
+[Abraham Yezioro](https://github.com/ayezioro)
 
-Boris Plotnikov @boris-p
+[Boris Plotnikov](https://github.com/boris-p)
 
-Chris Mackey @chriswmackey
+[Chris Mackey](https://github.com/chriswmackey)
 
-Djordje Spasic @stgeorges
+[Djordje Spasic](https://github.com/stgeorges)
 
-Mostapha Roudsari @mostapharoudsari
+[Mostapha Roudsari](https://github.com/mostapharoudsari)
 
-Saeran Vasanthakumar @saeranv
+[Saeran Vasanthakumar](https://github.com/saeranv)
 
-Trygve Wastvedt @twastvedt
+[Trygve Wastvedt](https://github.com/twastvedt)
 
 
 ![Screenshot](http://api.ning.com/files/n6JmThHrscbO0NxgLueUYrQPy4fLA8xdzP2COHyD1QEQ3DwfUxXlyjBtQMAxuSYvCXRAw0TfZ25DeARWbsMBKw0*wFlKWzeT/Untitledpresentation.png?width=1200)
-
-
-So many thanks to Radiance!

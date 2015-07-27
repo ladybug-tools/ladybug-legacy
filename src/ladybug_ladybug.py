@@ -1,25 +1,42 @@
 # This is the heart of the Ladybug
-# By Mostapha Sadeghipour Roudsari
-# Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 This component carries all of Ladybug's main classes. Other components refer to these
 classes to run the studies. Therefore, you need to let her fly before running the studies so the
 classes will be copied to Rhinos shared space. So let her fly!
+
 -
-Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
-Based on a work at https://github.com/mostaphaRoudsari/ladybug.
+Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+You should have received a copy of the GNU General Public License
+along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+
+@license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
+Source code is available at: https://github.com/mostaphaRoudsari/ladybug
+
 -
-Check this link for more information about the license:
-http://creativecommons.org/licenses/by-sa/3.0/deed.en_US
--
-Source code is available at:
-https://github.com/mostaphaRoudsari/ladybug
--
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -29,7 +46,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.59\nJUN_14_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_17_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -528,13 +545,13 @@ class Preparation(object):
                 #based on analysis period
                 if monthCount == 0:
                     # first month
-                    days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
+                    days = range(stDay, numberOfDaysEachMonth[m-1] + 1)
                 elif monthCount == len(months) - 1:
                     # last month
                     days = range(1, self.checkDay(endDay, m) + 1)
                 else:
                     #rest of the months
-                    days = range(1, numberOfDaysEachMonth[monthCount] + 1)
+                    days = range(1, numberOfDaysEachMonth[m-1] + 1)
             
             for d in days:
                 for h in hours:
@@ -1407,7 +1424,7 @@ class Sunpath(object):
         self.timeZone = timeZone
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
-    def solInitOutput(self, month, day, hour):
+    def solInitOutput(self, month, day, hour, solarTime = False):
         year = 2015
         self.time = hour
         
@@ -1456,7 +1473,10 @@ class Sunpath(object):
             - 0.5*(varY**2)*math.sin(4*math.radians(geomMeanLongSun)) \
             - 1.25*(eccentOrbit**2)*math.sin(2*math.radians(geomMeanAnomSun)))
         #hours
-        self.solTime = ((self.time*60 + eqOfTime + 4*math.degrees(self.s_longtitude) - 60*self.timeZone) % 1440)/60
+        if solarTime == False:
+            self.solTime = ((self.time*60 + eqOfTime + 4*math.degrees(self.s_longtitude) - 60*self.timeZone) % 1440)/60
+        else: self.solTime = self.time
+        
         #degrees
         hourAngle = (self.solTime*15 + 180) if (self.solTime*15 < 0) else (self.solTime*15 - 180)
         #RADIANS
@@ -1464,11 +1484,15 @@ class Sunpath(object):
             + math.cos(self.solLat)*math.cos(self.solDec)*math.cos(math.radians(hourAngle)))
         self.solAlt = (math.pi/2) - self.zenith
         
-        self.solAz = ((math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
-            - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith))) + math.pi) % (2*math.pi)) \
-            if (hourAngle > 0) else \
-                ((3*math.pi - math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
-                - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith)))) % (2*math.pi))
+        if hourAngle == 0.0 or hourAngle == -180.0 or hourAngle == 180.0:
+            if self.solDec < self.solLat: self.solAz = math.pi
+            else: self.solAz = 0.0
+        else:
+            self.solAz = ((math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
+                - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith))) + math.pi) % (2*math.pi)) \
+                if (hourAngle > 0) else \
+                    ((3*math.pi - math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
+                    - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith)))) % (2*math.pi))
     
     def sunReverseVectorCalc(self):
         basePoint = rc.Geometry.Point3d.Add(rc.Geometry.Point3d.Origin,rc.Geometry.Vector3f(0,1,0))
@@ -1522,7 +1546,7 @@ class Sunpath(object):
         else:
                 pass
 
-    def drawSunPath(self):
+    def drawSunPath(self, solarTime = False):
         # draw daily curves for 21st of all the months
         
         monthlyCrvs = []
@@ -1539,7 +1563,7 @@ class Sunpath(object):
         
         # find the hours that the sun is up
         for hour in range(0,25):
-            self.solInitOutput(month, 21, hour)
+            self.solInitOutput(month, 21, hour, solarTime)
             if self.sunPosPt()[2].Z > self.cenPt.Z: selHours.append(hour)
         
         sunPsolarTimeL = []
@@ -1548,7 +1572,7 @@ class Sunpath(object):
             for day in days:
                 sunP = []
                 for month in range(1,13):
-                    self.solInitOutput(month, day, hour)
+                    self.solInitOutput(month, day, hour, solarTime)
                     sunP.append(self.sunPosPt()[2])
             sunP.append(sunP[0])
             sunPsolarTime = [sunP[11], (sunP[0]+sunP[10])/2, (sunP[1]+sunP[9])/2, (sunP[2]+sunP[8])/2, (sunP[3]+sunP[7])/2, (sunP[4]+sunP[6])/2, sunP[5]]
@@ -2333,11 +2357,32 @@ class ExportAnalysis2Radiance(object):
         
 
 class ResultVisualization(object):
-    
     # This wasn't agood idea since multiple studies have different Bounding boxes
     def __init__(self):
         self.BoundingBoxPar = None
         self.monthList = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+        self.gradientLibrary = {
+        0: [System.Drawing.Color.FromArgb(75, 107, 169), System.Drawing.Color.FromArgb(115, 147, 202), System.Drawing.Color.FromArgb(170, 200, 247), System.Drawing.Color.FromArgb(193, 213, 208), System.Drawing.Color.FromArgb(245, 239, 103), System.Drawing.Color.FromArgb(252, 230, 74), System.Drawing.Color.FromArgb(239, 156, 21), System.Drawing.Color.FromArgb(234, 123, 0), System.Drawing.Color.FromArgb(234, 74, 0), System.Drawing.Color.FromArgb(234, 38, 0)],
+        1: [System.Drawing.Color.FromArgb(49,54,149), System.Drawing.Color.FromArgb(69,117,180), System.Drawing.Color.FromArgb(116,173,209), System.Drawing.Color.FromArgb(171,217,233), System.Drawing.Color.FromArgb(224,243,248), System.Drawing.Color.FromArgb(255,255,191), System.Drawing.Color.FromArgb(254,224,144), System.Drawing.Color.FromArgb(253,174,97), System.Drawing.Color.FromArgb(244,109,67), System.Drawing.Color.FromArgb(215,48,39), System.Drawing.Color.FromArgb(165,0,38)],
+        2: [System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(7,48,224), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(138,17,0)],
+        3: [System.Drawing.Color.FromArgb(255,20,147), System.Drawing.Color.FromArgb(240,47,145), System.Drawing.Color.FromArgb(203,117,139), System.Drawing.Color.FromArgb(160,196,133), System.Drawing.Color.FromArgb(132,248,129), System.Drawing.Color.FromArgb(124,253,132), System.Drawing.Color.FromArgb(96,239,160), System.Drawing.Color.FromArgb(53,217,203), System.Drawing.Color.FromArgb(15,198,240), System.Drawing.Color.FromArgb(0,191,255)],
+        4: [System.Drawing.Color.FromArgb(0,13,255), System.Drawing.Color.FromArgb(0,41,234), System.Drawing.Color.FromArgb(0,113,181), System.Drawing.Color.FromArgb(0,194,122), System.Drawing.Color.FromArgb(0,248,82), System.Drawing.Color.FromArgb(8,247,75), System.Drawing.Color.FromArgb(64,191,58), System.Drawing.Color.FromArgb(150,105,32), System.Drawing.Color.FromArgb(225,30,9), System.Drawing.Color.FromArgb(255,0,0)],
+        5: [System.Drawing.Color.FromArgb(55,55,55), System.Drawing.Color.FromArgb(235,235,235)],
+        6: [System.Drawing.Color.FromArgb(0,0,255), System.Drawing.Color.FromArgb(53,0,202), System.Drawing.Color.FromArgb(107,0,148), System.Drawing.Color.FromArgb(160,0,95), System.Drawing.Color.FromArgb(214,0,41), System.Drawing.Color.FromArgb(255,12,0), System.Drawing.Color.FromArgb(255,66,0), System.Drawing.Color.FromArgb(255,119,0), System.Drawing.Color.FromArgb(255,173,0), System.Drawing.Color.FromArgb(255,226,0), System.Drawing.Color.FromArgb(255,255,0)],
+        7: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(110,0,153), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(255,255,102), System.Drawing.Color.FromArgb(255,255,255)],
+        8: [System.Drawing.Color.FromArgb(0,136,255), System.Drawing.Color.FromArgb(200,225,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,230,230), System.Drawing.Color.FromArgb(255,0,0)],
+        9: [System.Drawing.Color.FromArgb(0,136,255), System.Drawing.Color.FromArgb(67,176,255), System.Drawing.Color.FromArgb(134,215,255), System.Drawing.Color.FromArgb(174,228,255), System.Drawing.Color.FromArgb(215,242,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,243), System.Drawing.Color.FromArgb(255,0,0)],
+        10: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,0,0)],
+        11: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(0,136,255)],
+        12: [System.Drawing.Color.FromArgb(5,48,97), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(253,219,199), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(214,96,77), System.Drawing.Color.FromArgb(178,24,43), System.Drawing.Color.FromArgb(103,0,31)],
+        13: [System.Drawing.Color.FromArgb(5,48,97), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(178,24,43)],
+        14: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(253,219,199), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(214,96,77), System.Drawing.Color.FromArgb(178,24,43), System.Drawing.Color.FromArgb(103,0,31)],
+        15: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(5,48,97)],
+        16: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(255,255,255)],
+        17: [System.Drawing.Color.FromArgb(0,16,120), System.Drawing.Color.FromArgb(38,70,160), System.Drawing.Color.FromArgb(5,180,222), System.Drawing.Color.FromArgb(16,180,109), System.Drawing.Color.FromArgb(59,183,35), System.Drawing.Color.FromArgb(143,209,19), System.Drawing.Color.FromArgb(228,215,29), System.Drawing.Color.FromArgb(246,147,17), System.Drawing.Color.FromArgb(243,74,0), System.Drawing.Color.FromArgb(255,0,0)],
+        18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
+        19: [System.Drawing.Color.FromArgb(153,153,153), System.Drawing.Color.FromArgb(100,149,237), System.Drawing.Color.FromArgb(104,152,231), System.Drawing.Color.FromArgb(115,159,214), System.Drawing.Color.FromArgb(132,171,188), System.Drawing.Color.FromArgb(154,186,155), System.Drawing.Color.FromArgb(178,202,119), System.Drawing.Color.FromArgb(201,218,82), System.Drawing.Color.FromArgb(223,233,49), System.Drawing.Color.FromArgb(240,245,23), System.Drawing.Color.FromArgb(251,252,6), System.Drawing.Color.FromArgb(255,255,0)]
+        }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
         if not runningPeriod or runningPeriod[0]==None:
@@ -2717,8 +2762,6 @@ class ResultVisualization(object):
         return lines, textBasePts, compassText
     
     
-    
-    
     def setupLayers(self, result = 'No result', parentLayerName = 'LADYBUG', projectName = 'Option',
                         studyLayerName = 'RADIATION_KWH', CheckTheName = True,
                         OrientationStudy = False, rotationAngle = 0, l = 0):
@@ -2794,7 +2837,7 @@ class ResultVisualization(object):
                     newLayerIndex = layerT.Add(newLayer)
                 
             return newLayerIndex, l
-
+    
     def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None):
             attr = rc.DocObjects.ObjectAttributes()
             attr.LayerIndex = newLayerIndex
@@ -2835,27 +2878,25 @@ class ComfortModels(object):
         
         r = []
         set = self.comfPierceSET(ta, tr, vel, rh, met , clo, wme)
+        stillAirThreshold = 0.15
         
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function 
         def utilSecant(a, b, epsilon):
             # root-finding only
             res = []
             def fn(t):
-                return (set - self.comfPierceSET(t, tr, 0.15, rh, met, clo, wme));
+                return (set - self.comfPierceSET(ta-t, tr-t, stillAirThreshold, rh, met, clo, wme));
             f1 = fn(a)
-            f2 = fn(b)
-            if abs(f1) <= epsilon:
-                res.append(a)
-            elif abs(f2) <= epsilon:
-                res.append(b)
+            if abs(f1) <= epsilon: res.append(a)
             else:
-                rangeCheck = True
-                count = range(100)
-                for i in count:
-                    if (b - a) != 0 and (f2 - f1) != 0 and rangeCheck == True:
-                        slope = (f2 - f1) / (b - a)
-                        c = b - f2/slope
-                        if c <= 200 and c >= -200:
+                f2 = fn(b)
+                if abs(f2) <= epsilon: res.append(b)
+                else:
+                    count = range(100)
+                    for i in count:
+                        if (b - a) != 0 and (f2 - f1) != 0:
+                            slope = (f2 - f1) / (b - a)
+                            c = b - f2/slope
                             f3 = fn(c)
                             if abs(f3) < epsilon:
                                 res.append(c)
@@ -2863,43 +2904,41 @@ class ComfortModels(object):
                             b = c
                             f1 = f2
                             f2 = f3
-                        else: rangeCheck = False
-                    else: pass
-            res.append('NaN')
+                res.append('NaN')
+            
             return res[0]
         
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
         def utilBisect(a, b, epsilon, target):
             def fn(t):
-                return (set - self.comfPierceSET(t, tr, 0.15, rh, met, clo, wme))
+                return (set - self.comfPierceSET(ta-t, tr-t, stillAirThreshold, rh, met, clo, wme))
             while abs(b - a) > (2 * epsilon):
                 midpoint = (b + a) / 2
                 a_T = fn(a)
                 b_T = fn(b)
                 midpoint_T = fn(midpoint)
-                if (a_T - target) * (midpoint_T - target) < 0:
-                    b = midpoint
-                elif (b_T - target) * (midpoint_T - target) < 0:
-                    a = midpoint
+                if (a_T - target) * (midpoint_T - target) < 0: b = midpoint
+                elif (b_T - target) * (midpoint_T - target) < 0: a = midpoint
                 else: return -999
             return midpoint
         
         
-        if vel <= 0.15:
+        if vel <= stillAirThreshold:
             pmv, ppd = self.comfPMV(ta, tr, vel, rh, met, clo, wme)
             ta_adj = ta
             ce = 0
         else:
-            ta_adj_l = -200
-            ta_adj_r = 200
-            eps = 0.001  # precision of ta_adj
+            ce_l = 0
+            ce_r = 40
+            eps = 0.001  # precision of ce
             
-            ta_adj = utilSecant(ta_adj_l, ta_adj_r, eps)
-            if ta_adj == 'NaN':
-                ta_adj = utilBisect(ta_adj_l, ta_adj_r, eps, 0)
+            ce = utilSecant(ce_l, ce_r, eps)
+            if ce == 'NaN':
+                ce = utilBisect(ce_l, ce_r, eps, 0)
             
-            pmv, ppd = self.comfPMV(ta_adj, tr, 0.15, rh, met, clo, wme)
-            ce = abs(ta - ta_adj)
+            pmv, ppd = self.comfPMV(ta - ce, tr - ce, stillAirThreshold, rh, met, clo, wme)
+            ta_adj = ta - ce
+            tr_adj = tr - ce
         
         r.append(pmv)
         r.append(ppd)
@@ -2926,10 +2965,8 @@ class ComfortModels(object):
         m = met * 58.15 #metabolic rate in W/M2
         w = wme * 58.15 #external work in W/M2
         mw = m - w #internal heat production in the human body
-        if (icl <= 0.078):
-            fcl = 1 + (1.29 * icl)
-        else:
-            fcl = 1.05 + (0.645 * icl)
+        if (icl <= 0.078): fcl = 1 + (1.29 * icl)
+        else: fcl = 1.05 + (0.645 * icl)
         
         #heat transf. coeff. by forced convection
         hcf = 12.1 * math.sqrt(vel)
@@ -3185,17 +3222,33 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, eightyPercent):
+    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD):
         upTemper = initialGuessUp
         upDelta = 3
+        if targetPPD == 10.0: targetPMV = 0.5
+        elif targetPPD == 6.0: targetPMV = 0.220
+        elif targetPPD == 15.0: targetPMV = 0.690
+        elif targetPPD == 20.0: targetPMV = 0.84373
+        elif targetPPD < 5.0: targetPMV = 0.0001
+        else:
+            #Use Rhino's geometry functions to compute a target pmv
+            def pmvCrv(pmv):
+                return 100.0 - 95.0 * math.exp(-0.03353 * pow(pmv, 4.0) - 0.2179 * pow(pmv, 2.0))
+            
+            distribPts = []
+            startPMV = 0
+            for pmvCount in range(20):
+                distribPts.append(rc.Geometry.Point3d(startPMV, pmvCrv(startPMV), 0))
+                startPMV += 0.25
+            distribCrv = rc.Geometry.Curve.CreateInterpolatedCurve(distribPts, 3)
+            testLine = rc.Geometry.LineCurve(rc.Geometry.Point3d(0, targetPPD, 0), rc.Geometry.Point3d(5, targetPPD, 0))
+            intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
+            targetPMV = intersectPts[0].PointA.X
+        
         while abs(upDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            if eightyPercent == True:
-                upDelta = 1 - pmv
-                upTemper = upTemper + upDelta
-            else:
-                upDelta = 0.5 - pmv
-                upTemper = upTemper + upDelta
+            upDelta = targetPMV - pmv
+            upTemper = upTemper + upDelta
         
         if initialGuessDown == None:
             downTemper = upTemper - 6
@@ -3203,41 +3256,35 @@ class ComfortModels(object):
         downDelta = 3
         while abs(downDelta) > 0.01:
             pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            if eightyPercent == True:
-                downDelta = -1 - pmv
-                downTemper = downTemper + downDelta
-            else:
-                downDelta = -0.5 - pmv
-                downTemper = downTemper + downDelta
+            downDelta = -targetPMV - pmv
+            downTemper = downTemper + downDelta
         
         return upTemper, downTemper
     
     
-    def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety):
-        r = []
+    def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety, levelOfConditioning = 0):
         # Define the variables that will be used throughout the calculation.
+        r = []
         coolingEffect = 0
         if eightyOrNinety == True: offset = 3.5
         else: offset = 2.5
         to = (ta + tr) / 2
-        # See if the running mean temperature is between 10 C and 33.5 C and, if not, label the data as too extreme for the adaptive method.
+        # See if the running mean temperature is between 10 C and 33.5 C (the range where the adaptive model is supposed to be used).
         if runningMean >= 10.0 and runningMean <= 33.5:
-            # Define a function to tell if values are in the comfort range.
-            def comfBetween (x, l, r):
-                return (x > l and x < r)
             
-            if (vel > 0.45 and to >= 25):
+            if (vel >= 0.6 and to >= 25):
                 # calculate cooling effect of elevated air speed
                 # when top > 25 degC.
-                if vel > 0.45 and vel < 0.75:
-                    coolingEffect = 1.2
-                elif vel > 0.75 and vel < 1.05:
-                    coolingEffect = 1.8
-                elif vel > 1.05:
-                    coolingEffect = 2.2
+                if vel < 0.9: coolingEffect = 1.2
+                elif  vel < 1.2: coolingEffect = 1.8
+                elif vel > 1.2: coolingEffect = 2.2
                 else: pass
             
-            tComf = 0.31 * runningMean + 17.8
+            #Figure out the relation between comfort and outdoor temperature depending on the level of conditioning.
+            if levelOfConditioning == 0: tComf = 0.31 * runningMean + 17.8
+            elif levelOfConditioning == 1: tComf = 0.09 * runningMean + 22.6
+            else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * runningMean + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
+            
             tComfLower = tComf - offset
             tComfUpper = tComf + offset + coolingEffect
             r.append(tComf)
@@ -3255,29 +3302,139 @@ class ComfortModels(object):
             r.append(acceptability)
             
             # Append a number to the result list to show whether the values are too hot, too cold, or comfortable.
-            if acceptability == True: r.append(1)
-            elif to > tComfUpper: r.append(2)
-            else: r.append(0)
+            if acceptability == True: r.append(0)
+            elif to > tComfUpper: r.append(1)
+            else: r.append(-1)
             
         elif runningMean < 10.0:
-            # The prevailing temperature is too cold for the adaptive method.
-            tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            # The prevailing temperature is too cold for the adaptive standard but we will use some correlations from adaptive-style surveys of conditioned buildings to give a good guess.
+            if levelOfConditioning == 0: tComf = 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            else:
+                conditOffset = 2.6*levelOfConditioning
+                tComf = conditOffset+ 24.024 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            
             tempDiff = to - tComf
             tComfLower = tComf - offset
             tComfUpper = tComf + offset
             if to > tComfLower and to < tComfUpper: acceptability = True
             else: acceptability = False
-            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, -1]
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
             r.extend(outputs)
         else:
-            # The prevailing temperature is too hot for the adaptive method.
-            tComf = 0.31 * 33.5 + 17.8
+            # The prevailing temperature is too hot for the adaptive method.  This should usually not happen for climates on today's earth but it might be possible in the future with global warming. For this case, we will just use the adaptive model at its hottest limit.
+            if (vel >= 0.6 and to >= 25):
+                if vel < 0.9: coolingEffect = 1.2
+                elif  vel < 1.2: coolingEffect = 1.8
+                elif vel > 1.2: coolingEffect = 2.2
+                else: pass
+            if levelOfConditioning == 0: tComf = 0.31 * 33.5 + 17.8
+            else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 33.5 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
+            tempDiff = to - tComf
+            tComfLower = tComf - offset
+            tComfUpper = tComf + offset + coolingEffect
+            if to > tComfLower and to < tComfUpper: acceptability = True
+            else: acceptability = False
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
+            r.extend(outputs)
+        
+        return r
+    
+    def comfAdaptiveComfortEN15251(self, ta, tr, runningMean, vel, comfortClass, levelOfConditioning = 0):
+        # Define the variables that will be used throughout the calculation.
+        r = []
+        coolingEffect = 0
+        if comfortClass == 1: offset = 2
+        elif comfortClass == 2: offset = 3
+        else: offset = 4
+        to = (ta + tr) / 2
+        
+        # See if the running mean temperature is between 10 C and 30.0 C (the range where the adaptive model is supposed to be used).
+        if runningMean >= 10.0 and runningMean <= 30.0:
+            if (vel >= 0.2 and to >= 25):
+                # calculate cooling effect of elevated air speed
+                # when top > 25 degC.
+                coolingEffect = 1.7856 * math.log(vel) + 2.9835
+            
+            if levelOfConditioning == 0: tComf = 0.33 * runningMean + 18.8
+            elif levelOfConditioning == 1: tComf = 0.09 * runningMean + 22.6
+            else: tComf = ((0.09*levelOfConditioning)+(0.33*(1-levelOfConditioning))) * runningMean + ((22.6*levelOfConditioning)+(18.8*(1-levelOfConditioning)))
+            
+            if runningMean > 15:
+                tComfLower = tComf - offset
+                tComfUpper = tComf + offset + coolingEffect
+            elif runningMean > 12.73 and runningMean < 15 and levelOfConditioning == 0:
+                tComfLow = 23.75
+                tComfLower = tComfLow - offset
+                tComfUpper = tComf + offset + coolingEffect
+            elif levelOfConditioning != 0:
+                tComfLower = tComf - offset
+                tComfUpper = tComf + offset + coolingEffect
+                #tComfLow = 23.75 - (0.25*levelOfConditioning)
+            else:
+                tComfLow = 23.75
+                tComfLower = tComfLow - offset
+                if comfortClass == 1: tComfUpper = tComf + offset
+                else: tComfUpper = tComf + offset + coolingEffect
+            
+            r.append(tComf)
+            r.append(to - tComf)
+            r.append(tComfLower)
+            r.append(tComfUpper)
+            
+            # See if the conditions are comfortable.
+            if to > tComfLower and to < tComfUpper:
+                # compliance
+                acceptability = True
+            else:
+                # nonCompliance
+                acceptability = False
+            r.append(acceptability)
+            
+            # Append a number to the result list to show whether the values are too hot, too cold, or comfortable.
+            if acceptability == True: r.append(0)
+            elif to > tComfUpper: r.append(1)
+            else: r.append(-1)
+            
+        elif runningMean < 10.0:
+            # The prevailing temperature is too cold for the adaptive standard but we will use some correlations from adaptive-style surveys of conditioned buildings to give a good guess.
+            if levelOfConditioning == 0: tComf = 25.224 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            else:
+                conditOffset = 1.4*levelOfConditioning
+                tComf = conditOffset + 25.224 + (0.295*(runningMean - 22.0)) * math.exp((-1)*(((runningMean-22)/(33.941125))*((runningMean-22)/(33.941125))))
+            
             tempDiff = to - tComf
             tComfLower = tComf - offset
             tComfUpper = tComf + offset
             if to > tComfLower and to < tComfUpper: acceptability = True
             else: acceptability = False
-            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, -1]
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
+            r.extend(outputs)
+        else:
+            # The prevailing temperature is too hot for the adaptive method.  This should usually not happen for climates on today's earth but it might be possible in the future with global warming. For this case, we will just use the adaptive model at its hottest limit.
+            if (vel >= 0.2 and to >= 25):
+                # calculate cooling effect of elevated air speed
+                # when top > 25 degC.
+                coolingEffect = 1.7856 * math.log(vel) + 2.9835
+            if levelOfConditioning == 0: tComf = 0.33 * 30.0 + 18.8
+            else: tComf = ((0.09*levelOfConditioning)+(0.33*(1-levelOfConditioning))) * 30.0 + ((22.6*levelOfConditioning)+(18.8*(1-levelOfConditioning)))
+            tempDiff = to - tComf
+            tComfLower = tComf - offset
+            tComfUpper = tComf + offset + coolingEffect
+            if to > tComfLower and to < tComfUpper: acceptability = True
+            else: acceptability = False
+            if acceptability == True: condit = 0
+            elif to > tComfUpper: condit = 1
+            else: condit = -1 
+            outputs = [tComf, tempDiff, tComfLower, tComfUpper, acceptability, condit]
             r.extend(outputs)
         
         return r

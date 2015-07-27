@@ -1,13 +1,30 @@
 # This component creates a 3D chart of hourly or daily data.
-# By Chris Mackey and Mostapha Sadeghipour Roudsari
-# Chris@MackeyArchitecture.com and Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to make a 3D chart in the Rhino scene of any climate data or hourly simulation data.
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     Args:
         _inputData: A list of input data to plot.
@@ -22,17 +39,17 @@ Provided by Ladybug 0.0.59
     Returns:
         readMe!: ...
         graphMesh: A 3D plot of the input data as a colored mesh.  Multiple meshes will be output for several input data streams or graph scales.
-        graphCurves: A list of curves and test surfaces representing the time periods corresponding to the input data.  Note that if the time period of the input data is not clear, no curves will be generated here.
-        legend: A legend of the chart. Connect this output to a grasshopper "Geo" component in order to preview the legend in the Rhino scene.
-        legendBasePts: The legend base point, which can be used to move the legend in relation to the chart with the grasshopper "move" component.
-        titleText: String values representing the title and time labels of the chart.  Hook this up to a Ladybug "TextTag3D" component in order to get text that bakes into Rhino as text.
-        titleBasePts: Points for placement of the title and time labels of the chart.  Hook this up to a Ladybug "TextTag3D" component in order to get text that bakes into Rhino as text.
+        graphCurves: A list of curves and text surfaces representing the time periods corresponding to the input data.  Note that if the time period of the input data is not clear, no curves or labels will be generated here.
+        legend: A legend of the chart. Connect this output to a grasshopper "Geo" component in order to preview the legend in the Rhino scene.g
+        legendBasePts: The legend base point, which can be used to move the legend in relation to the chart with the native rasshopper "Move" component.
+        title: The title text of the char.  Hook this up to a native Grasshopper 'Geo' component to preview it separately from the other outputs.
+        titleBasePt: Point for the placement of the title, which can be used to move the title in relation to the chart with the native Grasshopper "Move" component.
         conditionalHOY: The input data for the hours of the year that pass the conditional statement.
 """
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_18_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -383,6 +400,19 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 [selList.append(float(x)) for x in inputData[indexList[i]+7:indexList[i+1]]]
                 separatedLists.append(selList)
             
+            # Organize the data tree of legend parameters
+            legendPs = []
+            for i in range(legendPar.BranchCount):
+                legendPs.append(legendPar.Branch(i))
+            if len(legendPs) == 0: legendPs.append([])
+            elif len(legendPs) == 1: pass
+            elif len(legendPs) == len(separatedLists): pass
+            else:
+                warning = "The input for legendPar must be either a single set of parameters for all charts or a data tree of parameters matching the number of connected data streams in _inputData."
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+            
             
             res = [[],[], [], [], [], [], []]
             # legendBasePoints = []
@@ -462,7 +492,8 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 zSC = abs(zSC)
                 
                 # read legend parameters
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+                if len(legendPs) == 1: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
+                else: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[i], False)
                 
                 # Get the graph colors
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
@@ -577,6 +608,9 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 fullLegTxt = lb_preparation.flattenList(legendTextCrv + titleTextCurve)
                 
+                legendTextCrv = lb_preparation.flattenList(legendTextCrv)
+                titleTextCurve = lb_preparation.flattenList(titleTextCurve)
+                
                 # If the user has specified a base point, move all geometry to align with that base point.
                 if basePoint:
                     translation = rc.Geometry.Transform.Translation(basePoint.X, basePoint.Y, basePoint.Z)
@@ -584,12 +618,10 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     coloredChart.Transform(translation)
                     movedLegendBasePoint.Transform(translation)
                     legendSrfs.Transform(translation)
-                    for item in fullLegTxt:
-                        item.Transform(translation)
-                    for item in finalChartCrvs:
-                        item.Transform(translation)
-                    for point in titleBasePoints:
-                        point.Transform(translation)
+                    for item in legendTextCrv: item.Transform(translation)
+                    for item in titleTextCurve: item.Transform(translation)
+                    for item in finalChartCrvs: item.Transform(translation)
+                    for point in titleBasePoints: point.Transform(translation)
                 else: pass
                 
                 if bakeIt:
@@ -604,10 +636,10 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, [], textPt, textSize, legendFont, finalChartCrvs+fullLegTxt)
                 
                 res[0].append(coloredChart)
-                res[1].append([legendSrfs, fullLegTxt])
+                res[1].append([legendSrfs, legendTextCrv])
                 res[2].append(movedLegendBasePoint)
-                res[3].append(titleText)
-                res[4].append(titleBasePoints)
+                res[3].append(titleTextCurve)
+                res[4].append([titleBasePoints[0]])
                 res[5].append(hoursOfYear)
                 res[6].append(finalChartCrvs)
             return res
@@ -637,7 +669,7 @@ if result!= -1:
     graphCurves = DataTree[System.Object]()
     legendBasePts = DataTree[System.Object]()
     conditionalPts = DataTree[System.Object]()
-    titleText = DataTree[System.Object]()
+    title = DataTree[System.Object]()
     titleBasePts = DataTree[System.Object]()
     conditionalHOY = DataTree[System.Object]()
     
@@ -647,11 +679,10 @@ if result!= -1:
         legend.Add(leg[0], p)
         legend.AddRange(leg[1], p)
         legendBasePts.Add(result[2][i], p)
-        titleText.AddRange(result[3][i], p)
+        title.AddRange(result[3][i], p)
         titleBasePts.AddRange(result[4][i], p)
         conditionalHOY.AddRange(result[5][i], p)
         graphCurves.AddRange(result[6][i], p)
     ghenv.Component.Params.Output[4].Hidden = True
-    ghenv.Component.Params.Output[5].Hidden = True
     ghenv.Component.Params.Output[6].Hidden = True
     ghenv.Component.Params.Output[7].Hidden = True

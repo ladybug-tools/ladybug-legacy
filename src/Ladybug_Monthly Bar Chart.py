@@ -1,15 +1,32 @@
 # This component creates a bar chart of monthly or avrMonthlyPerHour data.
-# By Chris Mackey and Mostapha Sadeghipour Roudsari
-# Chris@MackeyArchitecture.com and Sadeghipour@gmail.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and Sadeghipour@gmail.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to make a bar chart in the Rhino scene of any monhtly or avrMonthyPerHour climate data or simulation data.
 _
 This component can also plot daily or hourly data but, for visualizing this type of data, it is recommended that you use the "Ladybug_3D Chart" component.
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     Args:
         _inputData: A list of input data to plot.  This should usually be data out of the "Ladybug_Average Data" component or monthly data from an energy simulation but can also be hourly or daily data from the "Ladybug_Import EPW."  However, it is recommended that you use the "Ladybug_3D Chart" component for daily or hourly data as this is usually a bit clearer.
@@ -22,6 +39,7 @@ Provided by Ladybug 0.0.59
         bldgBalancePt_: An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions.
         _______________: ...
         stackValues_: Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other.
+        altYAxisTitle_: An optional text label for the Y-Axis of the chart.  The default is set to pick out the name of the first list connected to the 'inputData.'
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
         _xScale_: The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year).
         _yScale_: The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units.
@@ -41,7 +59,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -70,10 +88,11 @@ inputsDict = {
 2: ["bldgBalancePt_", "An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions."],
 3: ["_______________", "..."],
 4: ["stackValues_", "Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other."],
-5: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
-6: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
-7: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
-8: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
+5: ["altYAxisTitle_", "An optional text label for the Y-Axis of the chart.  The default is set to pick out the name of the first list connected to the 'inputData.'"],
+6: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
+7: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
+8: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
+9: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
 }
 
 
@@ -115,10 +134,10 @@ def checkTheInputs():
             checkData1 = True
             methodsList = []
             for list in listInfo:
-                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged': methodsList.append(0)
-                elif list[4] == 'Monthly-> averaged for each hour': methodsList.append(1)
+                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged' or list[4] == 'Monthly-> total': methodsList.append(0)
+                elif list[4] == 'Monthly-> averaged for each hour' or list[4] == 'Monthly-> total for each hour': methodsList.append(1)
                 elif list[4] == 'Hourly': methodsList.append(2)
-                elif list[4] == 'Daily' or list[4] == 'Daily-> averaged': methodsList.append(3)
+                elif list[4] == 'Daily' or list[4] == 'Daily-> averaged' or list[4] == 'Daily-> total': methodsList.append(3)
                 else:
                     checkData1 = False
                     warning = 'The timestep of the inputData is not recognized. Data must have a Ladybug header with a recognizable timestep.'
@@ -133,7 +152,7 @@ def checkTheInputs():
                 if 'Temperature' in list[2] or 'Universal Thermal Climate Index' in list[2]:
                     tempInList = True
                     if list[3] == 'F' or list[3] == 'F': farenheitCheck = True
-                    if list[4] == 'Hourly' or list[4] == 'Monthly-> averaged for each hour': hourCheckList.append(1)
+                    if list[4] == 'Hourly' or list[4] == 'Monthly-> averaged for each hour' or list[4] == 'Monthly-> total for each hour': hourCheckList.append(1)
                     else: hourCheckList.append(0)
                 else: hourCheckList.append(0)
             
@@ -181,8 +200,17 @@ def checkTheInputs():
             if _yScale_ != None: yS = _yScale_
             else: yS = 1
             
+            #Check the altYAxisTitle_ input.
+            checkData3 = True
+            if len(altYAxisTitle_) <=2: pass
+            else:
+                checkData3 = False
+                warning = 'altYAxisTitle_ cannot be more than 2 values (one for each side of the chart).'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            
             #Put everything into a final check.
-            if checkData1 == True and checkData2 == True: checkData = True
+            if checkData1 == True and checkData2 == True and checkData3 == True: checkData = True
             else: checkData = False
             
             return checkData, separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, lb_preparation, lb_visualization, lb_comfortModels
@@ -195,7 +223,7 @@ def checkTheInputs():
 
 def manageInput():
     #If some of the component inputs and outputs are not right, blot them out or change them.
-    for input in range(9):
+    for input in range(10):
         if input == 1:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
@@ -210,7 +238,7 @@ def manageInput():
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def restoreInput():
-    for input in range(9):
+    for input in range(10):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
@@ -428,7 +456,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     
     #Put in right Y axis labels.
     basePt = rc.Geometry.Point3d(-9*legendFontSize, 0,0)
-    yAxisSrf = lb_visualization.text2srf([dataTypeList[0][0] + ' (' + unitsList[0] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
+    if len(altYAxisTitle_) == 0: yAxisSrf = lb_visualization.text2srf([dataTypeList[0][0] + ' (' + unitsList[0] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
+    else: yAxisSrf = lb_visualization.text2srf([altYAxisTitle_[0]], [basePt], legendFont, legendFontSize*1.5, legendBold)
     rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
     for srf in yAxisSrf[0]:
         srf.Transform(rotation)
@@ -463,7 +492,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
         if unit != unit1 and done == False:
             unit2 = unitsList[uCount+1]
             basePt = rc.Geometry.Point3d(9*legendFontSize+width, 0,0)
-            yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
+            if len(altYAxisTitle_) !=2: yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
+            else: yAxisSrf = lb_visualization.text2srf([altYAxisTitle_[1]], [basePt], legendFont, legendFontSize*1.5, legendBold)
             rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
             for srf in yAxisSrf[0]:
                 srf.Transform(rotation)
@@ -500,10 +530,9 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
     
     #Create a title.
     newlistInfo = str(listInfo[0][1])
-    txtPt = rc.Geometry.Point3d(-10*legendFontSize, -7*legendFontSize, 0)
-    titleTextSrfs = lb_visualization.text2srf([newlistInfo], [txtPt], legendFont, legendFontSize*1.5, legendBold)
-    for txt in titleTextSrfs:
-        textSrfs.extend(txt)
+    titleTxtPt = rc.Geometry.Point3d(-10*legendFontSize, -7*legendFontSize, 0)
+    titleTextSrfs = lb_visualization.text2srf([newlistInfo], [titleTxtPt], legendFont, legendFontSize*1.5, legendBold)
+    titleTextSrfs = lb_preparation.flattenList(titleTextSrfs)
     
     # Group eveything together to use it for the bounding box.
     allGeo = []
@@ -579,7 +608,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb
             newColors[listCount].append(colors[colorCount])
             colorCount += 1
     
-    return chartAxes, textSrfs, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp
+    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp
 
 
 def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth):
@@ -846,7 +875,7 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
 
 def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, lb_preparation, lb_visualization, lb_comfortModels):
     #Make the chart curves.
-    graphAxes, graphLabels, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb_preparation, lb_visualization)
+    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
     dataMesh, dataCurves, curveColors = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth)
@@ -867,13 +896,15 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
             for geo in comfortBand: geo.Transform(moveTransform)
         except: pass
         legendBasePt.Transform(moveTransform)
+        for geo in titleTxt:geo.Transform(moveTransform)
+        titleTxtPt.Transform(moveTransform)
         for lst in dataMesh:
             for geo in lst: geo.Transform(moveTransform)
         for lst in dataCurves:
             for geo in lst: geo.Transform(moveTransform)
     
     
-    return dataMesh, dataCurves, curveColors, graphAxes, graphLabels, legend, legendBasePt, comfortBand
+    return dataMesh, dataCurves, curveColors, graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, comfortBand
 
 
 #Check the inputs.
@@ -891,7 +922,7 @@ else: restoreInput()
 if checkData == True:
     result = main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, lb_preparation, lb_visualization, lb_comfortModels)
     if result != -1:
-        dataMeshInit, dataCurvesInit, dataCrvColorsInit, graphAxes, graphLabels, legend, legendBasePt, comfortBand = result
+        dataMeshInit, dataCurvesInit, dataCrvColorsInit, graphAxes, graphLabels, title, titleBasePt, legend, legendBasePt, comfortBand = result
         
         dataMesh = DataTree[Object]()
         dataCurves = DataTree[Object]()
@@ -911,4 +942,4 @@ if checkData == True:
 
 
 ghenv.Component.Params.Output[7].Hidden = True
-
+ghenv.Component.Params.Output[9].Hidden = True

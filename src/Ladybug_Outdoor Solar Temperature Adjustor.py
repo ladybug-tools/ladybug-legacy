@@ -1,8 +1,25 @@
 # Outdoor Solar Adjusted Temperature Calculator
-# By Chris Mackey
-# Chris@MackeyArchitecture.com
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 Use this component to adjust an existing Mean Radiant Temperature for shortwave solar radiation.  This adjusted mean radiant temperature can then be used in comfort studies.
@@ -15,7 +32,7 @@ Lastly, the formulas to translate this radiation into an effective radiant field
 Arens, Edward; Huang, Li; Hoyt, Tyler; Zhou, Xin; Shiavon, Stefano. (2014). Modeling the comfort effects of short-wave solar radiation indoors.  Indoor Environmental Quality (IEQ).
 http://escholarship.org/uc/item/89m1h2dg#page-4
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     Args:
         _location: The location output from the "Ladybug_Import epw" component.
@@ -25,7 +42,7 @@ Provided by Ladybug 0.0.59
         -------------------------: ...
         bodyPosture_: An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting.
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
-        bodyLocation_: An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. Note that this point should be the center of gravity of your person.  The default is set to a person just above the Rhino origin.
+        bodyLocation_: An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. Note that this point should be at the lowest point of the mannequin (atthe feet for sitting and standing).  The default is set to the Rhino origin.
         contextShading_: Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  If you are using this component for indoor studies, windows or any transparent materials should not be included in this geometry.  You should factor the transmissivity of these materials in with the windowTransmissivity_ input.  Also, note that, if you have a lot of this context geometry, you should make sure that you input a starting _meanRadTemperature that accounts for the temperature of all the temperture of these shading surfaces.
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         -------------------------: ...
@@ -55,7 +72,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -318,9 +335,7 @@ def checkTheInputs():
             else: pass
             #Change the location of the mannequin as the user wants.
             if bodyLocation_ != None:
-                if bodyPosture_ == 0 or bodyPosture_ == 3: moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z - 1/conversionFac)
-                elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None: moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z - 0.56/conversionFac)
-                else: moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z - 0.1/conversionFac)
+                moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z)
                 mannequinMesh.Transform(moveTransform)
             else: pass
             #Turn the mannequin brep into a mesh.
@@ -330,39 +345,39 @@ def checkTheInputs():
             #Get a series of 9 points to represent the person, which will be used to calculate the fraction of the body visible to the sun through the context.
             if bodyPosture_ == 0 or bodyPosture_ == 3:
                 if bodyLocation_ != None:
-                    mannequinAvgHeight = bodyLocation_.Z
+                    offsetDist = 0.8/conversionFac
+                    mannequinAvgHeight = bodyLocation_.Z + offsetDist
                     mannequinX = bodyLocation_.X
                     mannequinY = bodyLocation_.Y
                 else:
                     mannequinAvgHeight = 0.85/conversionFac
                     mannequinX = 0
                     mannequinY = 0
-                offsetDist = 0.8/conversionFac
                 if bodyPosture_ == 0: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
                 else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
                 for height in offsetHeights:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
             elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
+                offsetDist = 0.58/conversionFac
                 if bodyLocation_ != None:
-                    mannequinAvgHeight = bodyLocation_.Z
+                    mannequinAvgHeight = bodyLocation_.Z + offsetDist
                     mannequinX = bodyLocation_.X
                     mannequinY = bodyLocation_.Y
                 else:
                     mannequinAvgHeight = 0.65/conversionFac
                     mannequinX = 0
                     mannequinY = 0
-                offsetDist = 0.58/conversionFac
                 if bodyPosture_ == 1 or bodyPosture_ == None: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
                 else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
                 for height in offsetHeights:
                     mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
             else:
                 if bodyLocation_ != None:
-                    mannequinAvgHeight = bodyLocation_.Z
+                    mannequinAvgHeight = bodyLocation_.Z + 0.1/conversionFac
                     mannequinX = bodyLocation_.X
                     mannequinY = bodyLocation_.Y
                 else:
-                    mannequinAvgHeight = 0.1
+                    mannequinAvgHeight = 0.1/conversionFac
                     mannequinX = 0
                     mannequinY = 0
                 offsetDist = 0.8/conversionFac

@@ -1,8 +1,25 @@
 # Bioclimatic Chart
-# By Abraham Yezioro
-# ayez@ar.technion.ac.il
-# Ladybug started by Mostapha Sadeghipour Roudsari is licensed
-# under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+#
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2015, Abraham Yezioro <ayez@ar.technion.ac.il> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
 
 """
 This is the Bioclimactic Chart. It is based in the originally proposed chart by V. Olgyay and then in the chart presented in the book "Sun, Climate and Architecture" by Brown.
@@ -15,7 +32,7 @@ References:
     5. Brown G.Z. and DeKay M., 2001. Sun, WInd & Light. Architectural Design Strategies (2nd edition). John WIley  & Sons, Inc.
 
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.60
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius. This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -59,7 +76,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.59\nFEB_01_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.SubCategory = "6 | WIP"
@@ -427,8 +444,8 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
     circCenter = []
     circPolyline = []
     for m in range(0, 2):   # 0 to 2 for Comfort or NoComfort possibilities
-        if m == 0: text = "Comfort"
-        else     : text = "No Comfort"
+        if m == 0: text = "No Comfort"
+        else     : text = "Comfort"
         circCenter.append(rc.Geometry.Point3d(orgX + 55, leg + radius/2, 0)) # Base point for each month circle
         legComfLabelBasePts.append(rc.Geometry.Point3d(orgX + 57, leg + 0.0, 0)) # Base point for each month name
         leg += -3
@@ -1194,10 +1211,12 @@ def createFrequencyMesh(orgY, dryBulbTemperature, relativeHumidity, cullMesh, lb
     
     addGridToIndex = abs(orgY/2)
     module = gridSize/2
+    
     for hour, temp in enumerate(dryBulbTemperature):
         tempIndex = int((float(temp)+addGridToIndex) / module)
         humIndex = getHumidityIndex(hour)
-        meshFrequency[tempIndex][humIndex].append(1)
+        if tempIndex < 28:
+            meshFrequency[tempIndex][humIndex].append(1)
         
         
     #Sum all of the lists together to get the frequency.
@@ -1333,7 +1352,7 @@ def main(epwData, epwStr):
             zP = 0.0 #basePoint_.Z
         else: 
             basePoint = rc.Geometry.Point3d(0,0,0)
-            xP, yP, zP = 0.0
+            xP, yP, zP = 0.0, 0.0, 0.0
 
     
         if metabolicRate_ :
