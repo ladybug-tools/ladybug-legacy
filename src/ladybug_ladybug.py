@@ -1403,6 +1403,12 @@ class Preparation(object):
     (0.180057,-0.103956,0.978148),(0.0,-0.207912,0.978148),(-0.180057,-0.103956,0.978148),
     (-0.180057,0.103956,0.978148),(0.0,0.0,1)]
 
+    def celsiusToFahrenheit(self, C):
+        return (C*9/5)+32
+    
+    def fahrenheitToCelsius(self, F):
+        return (5/9)*(F-32)
+
 
 class Sunpath(object):
     """
@@ -5073,6 +5079,156 @@ class Photovoltaics(object):
         srfTiltD = math.degrees(srfTitlR)
         
         return srfTiltD
+
+    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, depth_m=2, soilThermalDiffusivity_m2_s=2.5, minimalTemperature_C=1):
+        # calculate cold (inlet) water temperature
+        # soilThermalDiffusivity (m2/s) per material (valid for method "0" only):
+        # 0.00000024 - dry sand
+        # 0.00000074 - wet sand
+        # 0.00000025 - dry clay
+        # 0.00000051 - wet clay
+        # 0.00000010 - dry peat
+        # 0.00000012 - wet peat
+        # 0.00000129 - dense rock
+        preparation = Preparation()
+        
+        depth_ft = depth_m * 3.2808399  # to feet
+        soilThermalDiffusivity_m2_s = soilThermalDiffusivity_m2_s * (10**(-7))  # convert from m2/s * 10**(-7) to m2/s
+        soilThermalDiffusivity_ft2_hr = soilThermalDiffusivity_m2_s * 38750.077512  # to ft2/hr
+        minimalTemperature_F = preparation.celsiusToFahrenheit(minimalTemperature_C)
+        
+        # Ta in Fahrenheit
+        dryBulbTemperature_F = [preparation.celsiusToFahrenheit(TaC) for TaC in dryBulbTemperature_C]
+        hoyForMonths = [0, 744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016, 8760, 9000]
+        hoyTaPerMonths_F = [[] for i in range(12)]
+        HOYs = range(1,8761)
+        for i,hoy in enumerate(HOYs):
+            for k,item in enumerate(hoyForMonths):
+                if hoy >= hoyForMonths[k]+1 and hoy <= hoyForMonths[k+1]:
+                    hoyTaPerMonths_F[k].append(dryBulbTemperature_F[i])
+        averageTa_perMonths_F = []
+        numberOfDaysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
+        for i in range(len(numberOfDaysInMonth)):
+            averageTa_F = sum(hoyTaPerMonths_F[i])/(numberOfDaysInMonth[i]*24)
+            averageTa_perMonths_F.append(averageTa_F)
+        
+        
+        averageTa_perYear_F = sum(dryBulbTemperature_F)/len(dryBulbTemperature_F)  # annualAverageTa in F
+        minAverageMonthlyTa = min(averageTa_perMonths_F)
+        maxAverageMonthlyTa = max(averageTa_perMonths_F)
+        
+        if method == 0:
+            # Carslaw and Jaeger semi-infinite medium conduction equations.
+            # source: "Residential alternative calculation method reference manual", California energy commission, June 2013:
+            averageTa_dec_JanToDec_perMonths = [averageTa_perMonths_F[-1]] + averageTa_perMonths_F[:-1]
+            
+            janToDecHOYs = dryBulbTemperature_F[:8017]
+            decHOYs = dryBulbTemperature_F[8017:]
+            dec_JanToDecHOYs = decHOYs + janToDecHOYs
+            
+            annualSurfaceTemperatureAmplitude = 0.5*(maxAverageMonthlyTa-minAverageMonthlyTa)
+            pb = 8760 
+            po = 0.6  # phase lag
+            beta = math.sqrt(math.pi/(soilThermalDiffusivity_ft2_hr*pb))*depth_ft
+            xb = math.exp(-beta) 
+            cb = math.cos(beta) 
+            sb = math.sin(beta) 
+            gm = math.sqrt((xb*xb - 2*xb*cb + 1)/(2*beta*beta)) 
+            phi = math.atan((1.-xb*(cb+sb)) / (1.-xb*(cb-sb))) 
+            
+            TinletPerHOY_F = []
+            HOYs = range(1,8761)
+            for i,hoy in enumerate(HOYs):
+                 Tground = averageTa_perYear_F - annualSurfaceTemperatureAmplitude*math.cos((2*math.pi*(hoy/pb))-po-phi)*gm
+                 last31Days = dec_JanToDecHOYs[i:(i+31)]
+                 Tavg31 = sum(last31Days)/len(last31Days)
+                 TinletF = Tground * 0.65 + Tavg31 * 0.35
+                 if TinletF < minimalTemperature_F:  # preventing freezing of inlet water
+                    TinletF = minimalTemperature_F
+                 TinletPerHOY_F.append(TinletF)
+        
+        elif method == 1:
+            # Christensen and Burch.
+            # source: "Development of an Energy Savings Benchmark for All Residential End-Uses", NREL, August 2004
+            montlyAvrMaximalDiff = maxAverageMonthlyTa - minAverageMonthlyTa
+            offset = 6
+            ratio = 0.4 + 0.01 * (averageTa_perYear_F - 44)
+            lag = 35 - 1.0 * (averageTa_perYear_F - 44)
+            TinletPerHOY_F = []
+            for hoy in range(1,8761):
+                day, month, dummyHour = preparation.hour2Date(hoy, True)
+                julianDay = preparation.getJD(month+1, day)
+                TinletF = (averageTa_perYear_F + offset) + ( ratio*(montlyAvrMaximalDiff/2) * math.sin(math.radians(0.986*(julianDay-15-lag)-90)) )
+                if TinletF < minimalTemperature_F:  # preventing freezing of inlet water
+                    TinletF = minimalTemperature_F
+                TinletPerHOY_F.append(TinletF)
+        
+        elif method == 2:
+            # RETScreen
+            # source: "Solar water heating project analysis chapter", Minister of Natural Resources Canada, 2004
+            averageTa_dec_JanToDec_perMonths = [averageTa_perMonths_F[-1]] + averageTa_perMonths_F[:-1]
+            TinletPerHOY_F = []
+            for hoy in range(1,8761):
+                dummyDay, month, dummyHour = preparation.hour2Date(hoy, True)
+                TinletF = averageTa_perYear_F + 0.35*(averageTa_dec_JanToDec_perMonths[month] - averageTa_perYear_F)
+                if TinletF < minimalTemperature_F:  # preventing freezing of inlet water
+                    TinletF = minimalTemperature_F
+                TinletPerHOY_F.append(TinletF)
+        
+        # converting to Celsius
+        TinletPerHOY_C = [preparation.fahrenheitToCelsius(Tinlet_F) for Tinlet_F in TinletPerHOY_F]
+        TinletHOYminimal_C = preparation.fahrenheitToCelsius(min(TinletPerHOY_F))
+        TinletHOYmaximal_C = preparation.fahrenheitToCelsius(max(TinletPerHOY_F))
+        TinletAverageAnnual_C = preparation.fahrenheitToCelsius(sum(TinletPerHOY_F)/len(TinletPerHOY_F))
+        
+        return TinletPerHOY_C, TinletAverageAnnual_C, TinletHOYminimal_C, TinletHOYmaximal_C
+    
+    def shwdesign(self, activeArea, Ta, Tw, SR, Qload, Fr, FrUL, tankLoss, tankSize, tankArea, TdeliveryW, TmaxW, TdischargeW, pipingLosses, minSR=None):
+        # based on "A simplified method for optimal design of solar water heating systems based on life-cycle energy analysis",
+        # Renewable Energy journal, Yan, Wang, Ma, Shi, Vol 74, Feb 2015
+        
+        if SR > 0:
+            collectorHeatLoss = FrUL*((Tw-Ta)/SR)
+        else:
+            collectorHeatLoss = 0
+        
+        if SR <= 0:
+            collectorEfficiency = Fr
+        else:
+            collectorEfficiency = Fr-collectorHeatLoss
+        if collectorEfficiency < 0:
+            collectorEfficiency = Fr
+        
+        if minSR == None:
+            minSR = (FrUL*(Tw-Ta))/Fr
+        
+        if SR > minSR:
+            Qsolar = pipingLosses*(collectorEfficiency*SR*activeArea/1000)
+        else:
+            Qsolar = 0
+        
+        Qloss = tankLoss*tankArea*(Tw-Ta)/1000
+        
+        if Tw > TdeliveryW:
+            Qsupply = pipingLosses*Qload
+        else:
+            Qsupply = 0
+        
+        if Tw > TdeliveryW:
+            Qaux = 0
+        else:
+            Qaux = Qload
+        
+        if Tw > TmaxW:
+            Qdis = (Tw-TdischargeW)*4.2*tankSize*1000/3600
+        else:
+            Qdis = 0
+        
+        dQ = Qsolar - Qloss - Qsupply - Qdis
+        dt = dQ*3600/(4.2*tankSize*1000)
+        Tw = Tw + dt
+        
+        return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, dQ, dt, Tw
     
     def WMMcoefficients(self, COFfilePath=None):
         # WMM coefficients extractor and WMM 2015-2020 coefficients
