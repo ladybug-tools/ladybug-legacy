@@ -64,7 +64,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -217,11 +217,12 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         return results, totalResults, listInfo, sunVisibility
     
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
-        
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+        if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[5]
+        elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[5]
         
         colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
-
+        
         # color mesh surfaces
         analysisSrfs = lb_visualization.colorMesh(colors, analysisSrfs)
         

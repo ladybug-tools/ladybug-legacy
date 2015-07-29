@@ -72,7 +72,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_28_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -350,6 +350,7 @@ def checkTheInputs():
                     mannequinX = bodyLocation_.X
                     mannequinY = bodyLocation_.Y
                 else:
+                    offsetDist = 0.8/conversionFac
                     mannequinAvgHeight = 0.85/conversionFac
                     mannequinX = 0
                     mannequinY = 0

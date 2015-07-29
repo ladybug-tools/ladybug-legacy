@@ -20,21 +20,21 @@
 # @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 
 
-#Wh to BTU
+#BTU to Wh
 """
-Use this component to convert energy values in BTU to Wh or BTU/ft2 to Wh/m2.
+Use this component to convert energy values in BTU to Wh, kBTU to kWh, BTU/ft2 to Wh/m2, or kBTU/ft2 to kWh/m2.
 -
 Provided by Ladybug 0.0.60
     
     Args:
-        _Wh: An energy value or list of energy values in BTU or BTU/ft2.  Note that, for the component to recognize flux or floor normalization, the input must have a Ladybug header.
+        _BTU: An energy value or list of energy values in BTU, kBTU, BTU/ft2, or kBTU/ft2.  Note that, for the component to recognize flux (division by ft2), the input must have a Ladybug header.
     Returns:
-        BTU: The input enervy values converted to Wh.
+        Wh: The input enervy values converted to Wh, kWh, Wh/m2, or kWh/m2 (depeding on input).
 """
 
 ghenv.Component.Name = "Ladybug_BTU2Wh"
 ghenv.Component.NickName = 'BTU2Wh'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_22_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -58,8 +58,8 @@ for num in _BTU:
         floorNorm = True
     else:
         if floorNorm == True:
-            try: Wh.append(float(num)*0.316998331)
+            try: Wh.append(float(num)/0.316998331)
             except: Wh.append(num)
         else:
-            try: Wh.append(float(num)*3.41214163)
+            try: Wh.append(float(num)/3.41214163)
             except: Wh.append(num)

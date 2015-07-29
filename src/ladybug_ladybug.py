@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_15_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_17_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -595,12 +595,11 @@ class Preparation(object):
         if legendPar[2] == None: numSeg = 11
         else: numSeg = float(legendPar[2])
         if not legendPar[3] or legendPar[3][0] == None:
-            customColors = [System.Drawing.Color.FromArgb(49,54,149), System.Drawing.Color.FromArgb(69,117,180),
-                        System.Drawing.Color.FromArgb(116,173,209), System.Drawing.Color.FromArgb(171,217,233),
-                        System.Drawing.Color.FromArgb(224,243,248), System.Drawing.Color.FromArgb(255,255,191),
-                        System.Drawing.Color.FromArgb(254,224,144), System.Drawing.Color.FromArgb(253,174,97),
-                        System.Drawing.Color.FromArgb(244,109,67), System.Drawing.Color.FromArgb(215,48,39),
-                        System.Drawing.Color.FromArgb(165,0,38)]
+            customColors = [System.Drawing.Color.FromArgb(75, 107, 169), System.Drawing.Color.FromArgb(115, 147, 202),
+                        System.Drawing.Color.FromArgb(170, 200, 247), System.Drawing.Color.FromArgb(193, 213, 208),
+                        System.Drawing.Color.FromArgb(245, 239, 103), System.Drawing.Color.FromArgb(252, 230, 74),
+                        System.Drawing.Color.FromArgb(239, 156, 21), System.Drawing.Color.FromArgb(234, 123, 0),
+                        System.Drawing.Color.FromArgb(234, 74, 0), System.Drawing.Color.FromArgb(234, 38, 0)]
         else: customColors = legendPar[3]
         
         # get the base point
@@ -1403,6 +1402,12 @@ class Preparation(object):
     (-0.203368,0.352244,0.913545),(0.0,0.207912,0.978148),(0.180057,0.103956,0.978148),
     (0.180057,-0.103956,0.978148),(0.0,-0.207912,0.978148),(-0.180057,-0.103956,0.978148),
     (-0.180057,0.103956,0.978148),(0.0,0.0,1)]
+
+    def celsiusToFahrenheit(self, C):
+        return (C*9/5)+32
+    
+    def fahrenheitToCelsius(self, F):
+        return (5/9)*(F-32)
 
 
 class Sunpath(object):
@@ -2358,11 +2363,32 @@ class ExportAnalysis2Radiance(object):
         
 
 class ResultVisualization(object):
-    
     # This wasn't agood idea since multiple studies have different Bounding boxes
     def __init__(self):
         self.BoundingBoxPar = None
         self.monthList = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+        self.gradientLibrary = {
+        0: [System.Drawing.Color.FromArgb(75, 107, 169), System.Drawing.Color.FromArgb(115, 147, 202), System.Drawing.Color.FromArgb(170, 200, 247), System.Drawing.Color.FromArgb(193, 213, 208), System.Drawing.Color.FromArgb(245, 239, 103), System.Drawing.Color.FromArgb(252, 230, 74), System.Drawing.Color.FromArgb(239, 156, 21), System.Drawing.Color.FromArgb(234, 123, 0), System.Drawing.Color.FromArgb(234, 74, 0), System.Drawing.Color.FromArgb(234, 38, 0)],
+        1: [System.Drawing.Color.FromArgb(49,54,149), System.Drawing.Color.FromArgb(69,117,180), System.Drawing.Color.FromArgb(116,173,209), System.Drawing.Color.FromArgb(171,217,233), System.Drawing.Color.FromArgb(224,243,248), System.Drawing.Color.FromArgb(255,255,191), System.Drawing.Color.FromArgb(254,224,144), System.Drawing.Color.FromArgb(253,174,97), System.Drawing.Color.FromArgb(244,109,67), System.Drawing.Color.FromArgb(215,48,39), System.Drawing.Color.FromArgb(165,0,38)],
+        2: [System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(7,48,224), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(138,17,0)],
+        3: [System.Drawing.Color.FromArgb(255,20,147), System.Drawing.Color.FromArgb(240,47,145), System.Drawing.Color.FromArgb(203,117,139), System.Drawing.Color.FromArgb(160,196,133), System.Drawing.Color.FromArgb(132,248,129), System.Drawing.Color.FromArgb(124,253,132), System.Drawing.Color.FromArgb(96,239,160), System.Drawing.Color.FromArgb(53,217,203), System.Drawing.Color.FromArgb(15,198,240), System.Drawing.Color.FromArgb(0,191,255)],
+        4: [System.Drawing.Color.FromArgb(0,13,255), System.Drawing.Color.FromArgb(0,41,234), System.Drawing.Color.FromArgb(0,113,181), System.Drawing.Color.FromArgb(0,194,122), System.Drawing.Color.FromArgb(0,248,82), System.Drawing.Color.FromArgb(8,247,75), System.Drawing.Color.FromArgb(64,191,58), System.Drawing.Color.FromArgb(150,105,32), System.Drawing.Color.FromArgb(225,30,9), System.Drawing.Color.FromArgb(255,0,0)],
+        5: [System.Drawing.Color.FromArgb(55,55,55), System.Drawing.Color.FromArgb(235,235,235)],
+        6: [System.Drawing.Color.FromArgb(0,0,255), System.Drawing.Color.FromArgb(53,0,202), System.Drawing.Color.FromArgb(107,0,148), System.Drawing.Color.FromArgb(160,0,95), System.Drawing.Color.FromArgb(214,0,41), System.Drawing.Color.FromArgb(255,12,0), System.Drawing.Color.FromArgb(255,66,0), System.Drawing.Color.FromArgb(255,119,0), System.Drawing.Color.FromArgb(255,173,0), System.Drawing.Color.FromArgb(255,226,0), System.Drawing.Color.FromArgb(255,255,0)],
+        7: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(110,0,153), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(255,255,102), System.Drawing.Color.FromArgb(255,255,255)],
+        8: [System.Drawing.Color.FromArgb(0,136,255), System.Drawing.Color.FromArgb(200,225,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,230,230), System.Drawing.Color.FromArgb(255,0,0)],
+        9: [System.Drawing.Color.FromArgb(0,136,255), System.Drawing.Color.FromArgb(67,176,255), System.Drawing.Color.FromArgb(134,215,255), System.Drawing.Color.FromArgb(174,228,255), System.Drawing.Color.FromArgb(215,242,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,243), System.Drawing.Color.FromArgb(255,0,0)],
+        10: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,0,0)],
+        11: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(0,136,255)],
+        12: [System.Drawing.Color.FromArgb(5,48,97), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(253,219,199), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(214,96,77), System.Drawing.Color.FromArgb(178,24,43), System.Drawing.Color.FromArgb(103,0,31)],
+        13: [System.Drawing.Color.FromArgb(5,48,97), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(178,24,43)],
+        14: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(253,219,199), System.Drawing.Color.FromArgb(244,165,130), System.Drawing.Color.FromArgb(214,96,77), System.Drawing.Color.FromArgb(178,24,43), System.Drawing.Color.FromArgb(103,0,31)],
+        15: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(209,229,240), System.Drawing.Color.FromArgb(146,197,222), System.Drawing.Color.FromArgb(67,147,195), System.Drawing.Color.FromArgb(33,102,172), System.Drawing.Color.FromArgb(5,48,97)],
+        16: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(255,255,255)],
+        17: [System.Drawing.Color.FromArgb(0,16,120), System.Drawing.Color.FromArgb(38,70,160), System.Drawing.Color.FromArgb(5,180,222), System.Drawing.Color.FromArgb(16,180,109), System.Drawing.Color.FromArgb(59,183,35), System.Drawing.Color.FromArgb(143,209,19), System.Drawing.Color.FromArgb(228,215,29), System.Drawing.Color.FromArgb(246,147,17), System.Drawing.Color.FromArgb(243,74,0), System.Drawing.Color.FromArgb(255,0,0)],
+        18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
+        19: [System.Drawing.Color.FromArgb(153,153,153), System.Drawing.Color.FromArgb(100,149,237), System.Drawing.Color.FromArgb(104,152,231), System.Drawing.Color.FromArgb(115,159,214), System.Drawing.Color.FromArgb(132,171,188), System.Drawing.Color.FromArgb(154,186,155), System.Drawing.Color.FromArgb(178,202,119), System.Drawing.Color.FromArgb(201,218,82), System.Drawing.Color.FromArgb(223,233,49), System.Drawing.Color.FromArgb(240,245,23), System.Drawing.Color.FromArgb(251,252,6), System.Drawing.Color.FromArgb(255,255,0)]
+        }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
         if not runningPeriod or runningPeriod[0]==None:
@@ -2742,8 +2768,6 @@ class ResultVisualization(object):
         return lines, textBasePts, compassText
     
     
-    
-    
     def setupLayers(self, result = 'No result', parentLayerName = 'LADYBUG', projectName = 'Option',
                         studyLayerName = 'RADIATION_KWH', CheckTheName = True,
                         OrientationStudy = False, rotationAngle = 0, l = 0):
@@ -2819,7 +2843,7 @@ class ResultVisualization(object):
                     newLayerIndex = layerT.Add(newLayer)
                 
             return newLayerIndex, l
-
+    
     def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None):
             attr = rc.DocObjects.ObjectAttributes()
             attr.LayerIndex = newLayerIndex
@@ -5055,6 +5079,156 @@ class Photovoltaics(object):
         srfTiltD = math.degrees(srfTitlR)
         
         return srfTiltD
+
+    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, depth_m=2, soilThermalDiffusivity_m2_s=2.5, minimalTemperature_C=1):
+        # calculate cold (inlet) water temperature
+        # soilThermalDiffusivity (m2/s) per material (valid for method "0" only):
+        # 0.00000024 - dry sand
+        # 0.00000074 - wet sand
+        # 0.00000025 - dry clay
+        # 0.00000051 - wet clay
+        # 0.00000010 - dry peat
+        # 0.00000012 - wet peat
+        # 0.00000129 - dense rock
+        preparation = Preparation()
+        
+        depth_ft = depth_m * 3.2808399  # to feet
+        soilThermalDiffusivity_m2_s = soilThermalDiffusivity_m2_s * (10**(-7))  # convert from m2/s * 10**(-7) to m2/s
+        soilThermalDiffusivity_ft2_hr = soilThermalDiffusivity_m2_s * 38750.077512  # to ft2/hr
+        minimalTemperature_F = preparation.celsiusToFahrenheit(minimalTemperature_C)
+        
+        # Ta in Fahrenheit
+        dryBulbTemperature_F = [preparation.celsiusToFahrenheit(TaC) for TaC in dryBulbTemperature_C]
+        hoyForMonths = [0, 744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016, 8760, 9000]
+        hoyTaPerMonths_F = [[] for i in range(12)]
+        HOYs = range(1,8761)
+        for i,hoy in enumerate(HOYs):
+            for k,item in enumerate(hoyForMonths):
+                if hoy >= hoyForMonths[k]+1 and hoy <= hoyForMonths[k+1]:
+                    hoyTaPerMonths_F[k].append(dryBulbTemperature_F[i])
+        averageTa_perMonths_F = []
+        numberOfDaysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
+        for i in range(len(numberOfDaysInMonth)):
+            averageTa_F = sum(hoyTaPerMonths_F[i])/(numberOfDaysInMonth[i]*24)
+            averageTa_perMonths_F.append(averageTa_F)
+        
+        
+        averageTa_perYear_F = sum(dryBulbTemperature_F)/len(dryBulbTemperature_F)  # annualAverageTa in F
+        minAverageMonthlyTa = min(averageTa_perMonths_F)
+        maxAverageMonthlyTa = max(averageTa_perMonths_F)
+        
+        if method == 0:
+            # Carslaw and Jaeger semi-infinite medium conduction equations.
+            # source: "Residential alternative calculation method reference manual", California energy commission, June 2013:
+            averageTa_dec_JanToDec_perMonths = [averageTa_perMonths_F[-1]] + averageTa_perMonths_F[:-1]
+            
+            janToDecHOYs = dryBulbTemperature_F[:8017]
+            decHOYs = dryBulbTemperature_F[8017:]
+            dec_JanToDecHOYs = decHOYs + janToDecHOYs
+            
+            annualSurfaceTemperatureAmplitude = 0.5*(maxAverageMonthlyTa-minAverageMonthlyTa)
+            pb = 8760 
+            po = 0.6  # phase lag
+            beta = math.sqrt(math.pi/(soilThermalDiffusivity_ft2_hr*pb))*depth_ft
+            xb = math.exp(-beta) 
+            cb = math.cos(beta) 
+            sb = math.sin(beta) 
+            gm = math.sqrt((xb*xb - 2*xb*cb + 1)/(2*beta*beta)) 
+            phi = math.atan((1.-xb*(cb+sb)) / (1.-xb*(cb-sb))) 
+            
+            TinletPerHOY_F = []
+            HOYs = range(1,8761)
+            for i,hoy in enumerate(HOYs):
+                 Tground = averageTa_perYear_F - annualSurfaceTemperatureAmplitude*math.cos((2*math.pi*(hoy/pb))-po-phi)*gm
+                 last31Days = dec_JanToDecHOYs[i:(i+31)]
+                 Tavg31 = sum(last31Days)/len(last31Days)
+                 TinletF = Tground * 0.65 + Tavg31 * 0.35
+                 if TinletF < minimalTemperature_F:  # preventing freezing of inlet water
+                    TinletF = minimalTemperature_F
+                 TinletPerHOY_F.append(TinletF)
+        
+        elif method == 1:
+            # Christensen and Burch.
+            # source: "Development of an Energy Savings Benchmark for All Residential End-Uses", NREL, August 2004
+            montlyAvrMaximalDiff = maxAverageMonthlyTa - minAverageMonthlyTa
+            offset = 6
+            ratio = 0.4 + 0.01 * (averageTa_perYear_F - 44)
+            lag = 35 - 1.0 * (averageTa_perYear_F - 44)
+            TinletPerHOY_F = []
+            for hoy in range(1,8761):
+                day, month, dummyHour = preparation.hour2Date(hoy, True)
+                julianDay = preparation.getJD(month+1, day)
+                TinletF = (averageTa_perYear_F + offset) + ( ratio*(montlyAvrMaximalDiff/2) * math.sin(math.radians(0.986*(julianDay-15-lag)-90)) )
+                if TinletF < minimalTemperature_F:  # preventing freezing of inlet water
+                    TinletF = minimalTemperature_F
+                TinletPerHOY_F.append(TinletF)
+        
+        elif method == 2:
+            # RETScreen
+            # source: "Solar water heating project analysis chapter", Minister of Natural Resources Canada, 2004
+            averageTa_dec_JanToDec_perMonths = [averageTa_perMonths_F[-1]] + averageTa_perMonths_F[:-1]
+            TinletPerHOY_F = []
+            for hoy in range(1,8761):
+                dummyDay, month, dummyHour = preparation.hour2Date(hoy, True)
+                TinletF = averageTa_perYear_F + 0.35*(averageTa_dec_JanToDec_perMonths[month] - averageTa_perYear_F)
+                if TinletF < minimalTemperature_F:  # preventing freezing of inlet water
+                    TinletF = minimalTemperature_F
+                TinletPerHOY_F.append(TinletF)
+        
+        # converting to Celsius
+        TinletPerHOY_C = [preparation.fahrenheitToCelsius(Tinlet_F) for Tinlet_F in TinletPerHOY_F]
+        TinletHOYminimal_C = preparation.fahrenheitToCelsius(min(TinletPerHOY_F))
+        TinletHOYmaximal_C = preparation.fahrenheitToCelsius(max(TinletPerHOY_F))
+        TinletAverageAnnual_C = preparation.fahrenheitToCelsius(sum(TinletPerHOY_F)/len(TinletPerHOY_F))
+        
+        return TinletPerHOY_C, TinletAverageAnnual_C, TinletHOYminimal_C, TinletHOYmaximal_C
+    
+    def shwdesign(self, activeArea, Ta, Tw, SR, Qload, Fr, FrUL, tankLoss, tankSize, tankArea, TdeliveryW, TmaxW, TdischargeW, pipingLosses, minSR=None):
+        # based on "A simplified method for optimal design of solar water heating systems based on life-cycle energy analysis",
+        # Renewable Energy journal, Yan, Wang, Ma, Shi, Vol 74, Feb 2015
+        
+        if SR > 0:
+            collectorHeatLoss = FrUL*((Tw-Ta)/SR)
+        else:
+            collectorHeatLoss = 0
+        
+        if SR <= 0:
+            collectorEfficiency = Fr
+        else:
+            collectorEfficiency = Fr-collectorHeatLoss
+        if collectorEfficiency < 0:
+            collectorEfficiency = Fr
+        
+        if minSR == None:
+            minSR = (FrUL*(Tw-Ta))/Fr
+        
+        if SR > minSR:
+            Qsolar = pipingLosses*(collectorEfficiency*SR*activeArea/1000)
+        else:
+            Qsolar = 0
+        
+        Qloss = tankLoss*tankArea*(Tw-Ta)/1000
+        
+        if Tw > TdeliveryW:
+            Qsupply = pipingLosses*Qload
+        else:
+            Qsupply = 0
+        
+        if Tw > TdeliveryW:
+            Qaux = 0
+        else:
+            Qaux = Qload
+        
+        if Tw > TmaxW:
+            Qdis = (Tw-TdischargeW)*4.2*tankSize*1000/3600
+        else:
+            Qdis = 0
+        
+        dQ = Qsolar - Qloss - Qsupply - Qdis
+        dt = dQ*3600/(4.2*tankSize*1000)
+        Tw = Tw + dt
+        
+        return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, dQ, dt, Tw
     
     def WMMcoefficients(self, COFfilePath=None):
         # WMM coefficients extractor and WMM 2015-2020 coefficients

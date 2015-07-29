@@ -20,46 +20,42 @@
 # @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 
 
-#Wh to BTU
+#kWh to Wh
 """
-Use this component to convert energy values in Wh to BTU, kWh to kBTU, Wh/m2 to BTU/ft2, or kWh/m2 to kBTU/ft2.
+Use this component to convert energy values in W to kW, W/m2 to kW/m2, Wh to kWh, Wh/m2 to kWh/m2, BTU to kBTU, or BTU/ft2 to kBTU/ft2.
 -
 Provided by Ladybug 0.0.60
     
     Args:
-        _Wh: An energy value or list of energy values in Wh, kWh, Wh/m2, kWh/m2.  Note that, for the component to recognize flux (division by m2), the input must have a Ladybug header.
+        _Wh: An energy value or list of energy values in W, W/m2, Wh, Wh/m2, BTU, or BTU/ft2.
     Returns:
-        BTU: The input enervy values converted to BTU, kBTU, BTU/ft2, or kBTU/ft2 (depeding on input).
+        BTU: The input energy values converted to kW, kW/m2, kWh, kWh/m2, kBTU, or kBTU/ft2 (depending on the input unit).
 """
 
-ghenv.Component.Name = "Ladybug_Wh2BTU"
-ghenv.Component.NickName = 'Wh2BTU'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_22_2015'
+ghenv.Component.Name = "Ladybug_Wh2kWh"
+ghenv.Component.NickName = 'Wh2kWh'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
-floorNorm = False
-BTU = []
+
+kWh = []
 for num in _Wh:
-    if num == 'Wh/m2':
-        BTU.append('BTU/ft2')
-        floorNorm = True
+    if num == 'W':
+        kWh.append('kW')
+    elif num == 'W/m2':
+        kWh.append('kW/m2')
     elif num == 'Wh':
-        BTU.append('BTU')
-        floorNorm = False
-    elif num == 'kWh':
-        BTU.append('kBTU')
-        floorNorm = False
-    elif num == 'kWh/m2':
-        BTU.append('kBTU/ft2')
-        floorNorm = True
+        kWh.append('kWh')
+    elif num == 'Wh/m2':
+        kWh.append('kWh/m2')
+    elif num == 'BTU':
+        kWh.append('kBTU')
+    elif num == 'BTU/ft2':
+        kWh.append('kBTU/ft2')
     else:
-        if floorNorm == True:
-            try: BTU.append(float(num)*0.316998331)
-            except: BTU.append(num)
-        else:
-            try: BTU.append(float(num)*3.41214163)
-            except: BTU.append(num)
+        try: kWh.append(float(num)/1000)
+        except: kWh.append(num)
