@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_17_2015'
+ghenv.Component.Message = 'VER 0.0.60\nJUL_30_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
