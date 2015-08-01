@@ -49,7 +49,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_18_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -463,7 +463,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                         xC = float(yCount[0])
                     except:
                         if 'Daily' in listInfo[i][4]: xC = 7
-                        elif listInfo[i][4] == 'Monthly' or listInfo[i][4] == 'Monthly-> averaged': xC = 1
+                        elif listInfo[i][4] == 'Monthly' or listInfo[i][4] == 'Monthly-> averaged' or listInfo[i][4] == 'Monthly-> total': xC = 1
                         else: xC = abs(endHour - stHour) + 1
                         
                 if xC == 0: xC = abs(endHour - stHour) + 1

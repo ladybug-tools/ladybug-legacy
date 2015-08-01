@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_18_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_01_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -106,6 +106,7 @@ def main(annualHourlyData, analysisPeriod):
             else: checkData = False
         except: 
             checkData = False
+            return -1
         
         if checkData:
             # separate data
