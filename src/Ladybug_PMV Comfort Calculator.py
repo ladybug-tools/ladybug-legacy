@@ -475,34 +475,34 @@ def main():
             standardEffectiveTemperature.extend([epwStr[0], epwStr[1], 'Standard Effective Temperature' + ' for ' + epwStr[2].split('for ')[-1], 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfortableOrNot.extend([epwStr[0], epwStr[1], 'Comfortable Or Not' + ' for ' + epwStr[2].split('for ')[-1], 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
         if checkData == True:
-            #try:
-            for count in HOYS:
-                # let the user cancel the process
-                if gh.GH_Document.IsEscapeKeyDown(): assert False
-                
-                pmv, ppd, set, taAdj, coolingEffect = lb_comfortModels.comfPMVElevatedAirspeed(airTemp[count], radTemp[count], windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
-                predictedMeanVote.append(pmv)
-                percentPeopleDissatisfied.append(ppd)
-                standardEffectiveTemperature.append(set)
-                if humidRatioUp != 0.03 or humidRatioLow != 0.0:
-                    HR, EN, vapPress, satPress = lb_comfortModels.calcHumidRatio(airTemp[count], relHumid[count], 101325)
-                    if ppd < PPDComfortThresh and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
-                    else: comfortableOrNot.append(0)
-                else:
-                    if ppd < PPDComfortThresh: comfortableOrNot.append(1)
-                    else: comfortableOrNot.append(0)
-            if epwData == True:
-                percentOfTimeComfortable = ((sum(comfortableOrNot[7:]))/calcLength)*100
-            else: percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100
-            #except:
-            #    predictedMeanVote = []
-            #    percentPeopleDissatisfied = []
-            #    standardEffectiveTemperature = []
-            #    comfortableOrNot = []
-            #    percentOfTimeComfortable = None
-            #    print "The calculation has been terminated by the user!"
-            #    e = gh.GH_RuntimeMessageLevel.Warning
-            #    ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
+            try:
+                for count in HOYS:
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    pmv, ppd, set, taAdj, coolingEffect = lb_comfortModels.comfPMVElevatedAirspeed(airTemp[count], radTemp[count], windSpeed[count], relHumid[count], metRate[count], cloLevel[count], exWork[count])
+                    predictedMeanVote.append(pmv)
+                    percentPeopleDissatisfied.append(ppd)
+                    standardEffectiveTemperature.append(set)
+                    if humidRatioUp != 0.03 or humidRatioLow != 0.0:
+                        HR, EN, vapPress, satPress = lb_comfortModels.calcHumidRatio(airTemp[count], relHumid[count], 101325)
+                        if ppd < PPDComfortThresh and HR < humidRatioUp and HR > humidRatioLow: comfortableOrNot.append(1)
+                        else: comfortableOrNot.append(0)
+                    else:
+                        if ppd < PPDComfortThresh: comfortableOrNot.append(1)
+                        else: comfortableOrNot.append(0)
+                if epwData == True:
+                    percentOfTimeComfortable = ((sum(comfortableOrNot[7:]))/calcLength)*100
+                else: percentOfTimeComfortable = ((sum(comfortableOrNot))/calcLength)*100
+            except:
+                predictedMeanVote = []
+                percentPeopleDissatisfied = []
+                standardEffectiveTemperature = []
+                comfortableOrNot = []
+                percentOfTimeComfortable = None
+                print "The calculation has been terminated by the user!"
+                e = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
         
         #If things are good and the user has set the calcBalanceTemperature to "True", calculate the balance temperature.
         balanceTemperature = []
