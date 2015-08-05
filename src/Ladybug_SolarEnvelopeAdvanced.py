@@ -1,22 +1,13 @@
 # Solar Envelope
-<<<<<<< HEAD
-# Provides an envelope (as a list of points) which represents the area in which new masses could be placed withought
-# interfering with the sun rights of surrounding buildings, given a filtered list of suns
-=======
 # Provides two solar envelopes as both a 3d point grid and a polysurface given a filtered list of suns and a border line representing the building site
 # The first (Solar Rights envelope) represents the maximum heights in which new masses could be placed in a given site withought interfering with the sun rights of surrounding buildings
 # The second (Solar Collection envelope) represents the opposite - the minimum heights from which new developemnt would recieve sun access, given an urban context
->>>>>>> pr/162
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
 # This file is part of Ladybug.
 # 
-<<<<<<< HEAD
-# Copyright (c) 2013-2015, Boris Plotnikov with the assistance and guidance of Prof. Guedi Capeluto <pborisp@gmail.com> 
-=======
 # Copyright (c) 2013-2015, Boris Plotnikov <pborisp@gmail.com> and with the assistance and guidance of Prof. Guedi Capeluto, based on SustArc model
->>>>>>> pr/162
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -37,24 +28,10 @@ Use this component to generate a solar envelope for a given test surface, set of
 
 -
 Provided by Ladybug 0.0.60
-<<<<<<< HEAD
-    
-    Args:
-        _baseSrf: A surface representing the area for which you want to create the solar envelope.
-        obstacleCurves_: A list of curves indicating the bottom borders of your surroundings for which you would like solar access to be kept. If left emptpy, calculating the self envelope - base surface used as the border for shadowing
-        _sunVectors: Sun vectors representing hours of the year when sun should be accessible to the properties surrounding the baseSrf.  sunVectors can be generated using the Ladybug sunPath component. 
-        gridSize_: An numeric value inidcating the gird size of the analysis in Rhino model units. The smaller the grid size - the more test points( more accurate but slower).DEfault value set to 6
-        _runIt: Set to True to run the component and generate a solar envelope.
-    Returns:
-        readMe!:Log of the component
-        finalPointList: A list of points representing the heights to which you can build without shading any of the obstacleCurves_ from the input _sunVectors.
-        total_ms: The time that it took this component to run
-=======
->>>>>>> pr/162
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelopeAdvanced'
 ghenv.Component.NickName = 'SolarEnvelopeAdvanced'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -203,30 +180,6 @@ class SolarEnvelope:
 
     def parallelFindPointHeights(self):
         
-<<<<<<< HEAD
-        def _findPointHeight(i):
-            g = GridPt(checkPointList[i],self.defaultHeight,self)
-            self.gridPoints.Add(g)
-            for obCurve in obstacleCurves:
-                #not using this for now
-                #lineAngles = getLineEdgeAngles(obCurve,checkPoint,yVector)
-                for sun in self.suns:
-                    tempHeight = g.getPointHeight(obCurve, sun)
-                    if self.solarEnvelope : 
-                        if  tempHeight < g.height : 
-                            g.height = tempHeight
-                    else :
-                        if  tempHeight > g.height : 
-                            g.height = tempHeight
-        tasks.Parallel.ForEach(xrange(len(checkPointList)),_findPointHeight)
-    
-    def __init__(self,_baseSrf,gridSize,obstacleCurves,azimuthAngles, alltitudeAngles):
-        self.initParameters()
-        self.buildSunPosList(azimuthAngles, alltitudeAngles)
-        self.getPtsFromClosedCrv(_baseSrf,gridSize)
-        self.parallelFindPointHeights(self.checkPointList, obstacleCurves)
-    
-=======
         def _findPointsHeight(i):
             chunk = self.chunks[i]
             for x in range(len(chunk.points)):
@@ -256,7 +209,6 @@ class SolarEnvelope:
         self.gridPoints = []
         for pointChunk in self.chunks:
             self.gridPoints.extend(pointChunk.points)    
->>>>>>> pr/162
     def getFinalPointList(self):
         for gridPt in self.gridPoints:
             self.finalPointsList.Add(gridPt.buildFinalPoint())
@@ -344,28 +296,6 @@ if _runIt == True:
     #    py.settrace()
     allDataProvided = True
     if not _baseSrf :
-<<<<<<< HEAD
-        print "[Solar Envelope] - Base surface must be provided"
-        allDataProvided = False
-    if len(_sunVectors) == 0:
-        print "[Solar Envelope] - A list of sun vectors from ladybug must be provided"
-        allDataProvided = False
-    if allDataProvided:
-        print "[Solar Envelope] - starting solar envelope simulation"
-        start = time.clock()
-        azimuthAngles, alltitudeAngles = computeAzAltFromSunVec(_sunVectors)
-        if not gridSize_ : 
-            print "[Solar Envelope] - no gridSize provided, using the default value of 6"
-            gridSize_ = 6
-        if not obstacleCurves_ :
-            print "[Solar Envelope] - no obstacle curves selected, taking the base surface as the solar envelope border"
-            obstacleCurves_ = _baseSrf.Curves3D
-        se = SolarEnvelope(_baseSrf,gridSize_,obstacleCurves_, azimuthAngles,alltitudeAngles)
-        finalPointList =se.getFinalPointList()
-        total_ms = time.clock() - start
-else:
-    print "[Solar Envelope] - To run the component set _runIt to true"
-=======
         allDataProvided = issueWarning("Base surface must be provided")
     if len(_sunVectors) == 0:
         allDataProvided = issueWarning("A list of sun vectors from ladybug must be provided")        
@@ -414,4 +344,3 @@ else:
 else:
     print "To run the component, set _runIt to True"
 ghenv.Component.Params.Output[1].Hidden = True
->>>>>>> pr/162
