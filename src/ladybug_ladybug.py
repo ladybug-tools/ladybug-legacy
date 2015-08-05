@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_30_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2555,6 +2555,7 @@ class ResultVisualization(object):
                 textPt.append(pt)
             pt = rc.Geometry.Point3d(meshVertices[-1].X + textSize*0.5, meshVertices[-1].Y, meshVertices[-1].Z)
             textPt.append(pt) # one more point for legend title
+            
             return legendSrf, textPt
         
         # check for user input
@@ -2574,7 +2575,8 @@ class ResultVisualization(object):
             else:
                 numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
         ###
-        if len(numbers) != numOfSeg: numbers.append(highB)
+        if len(numbers) < numOfSeg: numbers.append(highB)
+        elif len(numbers) > numOfSeg: numbers = numbers[:-1]
         numbersStr = [("%.2f" % x) for x in numbers]
         numbersStr[0] = "<=" + numbersStr[0]
         numbersStr[-1] = numbersStr[-1] + "<="
