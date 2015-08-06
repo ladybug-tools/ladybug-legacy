@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_07_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -506,7 +506,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     axesTextSrf = []
     done = False
     for uCount, unit in enumerate(unitsList[1:]):
-        if unit != unit1 and done == False:
+        if unit.strip('') != unit1.strip('') and done == False:
             unit2 = unitsList[uCount+1]
             basePt = rc.Geometry.Point3d(9*legendFontSize+width, 0,0)
             if len(altYAxisTitle_) !=2: yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
@@ -526,14 +526,14 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
                 axesTextSrf = lb_visualization.text2srf([valText], [yAxisRightPts[count]], legendFont, legendFontSize, legendBold)
                 textSrfs.extend(axesTextSrf[0])
             done = True
-        elif unit == unit1:
+        elif unit.strip('') == unit1.strip(''):
             startVals.append(lowVal1)
             scaleFacs.append(valRange1/height)
             if unit1 == 'C' or unit1 == 'C' or unit1 == 'F' or unit1 == 'F':
                 tempVals.append(lowVal1)
                 tempScale.append(valRange1)
                 if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
-        elif unit == unit2:
+        elif unit.strip('') == unit2.strip(''):
             startVals.append(lowVal2)
             scaleFacs.append(valRange2/height)
         else:
