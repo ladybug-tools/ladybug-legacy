@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_05_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -173,12 +173,12 @@ def checkTheInputs():
                         if comfortModel_ == 2:
                             outdoorDryBlubTest = False
                             for list in listInfo:
-                                if 'Dry Bulb Temperature' in list[2] or 'Effective Temperature' in list[2]:
+                                if 'Temperature' in list[2] or 'Universal Thermal Climate Index' in list[2]:
                                     if list[5] == (1,1,1) and list[6] == (12,31,24): outdoorDryBlubTest = True
                             if outdoorDryBlubTest == True: comfortModel = comfortModel_
                             else:
                                 checkData2 = False
-                                warning = 'To use the adaptive comfortModel_, one of the connected _inputData must be annual Outdoor Dry Bulb Temperature or Effective Temperature.'
+                                warning = 'To use the adaptive comfortModel_, one of the connected _inputData must be a temperature value.'
                                 print warning
                                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                         else: comfortModel = comfortModel_
@@ -492,7 +492,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     if unitsList[0] == 'C' or unitsList[0] == 'C' or unitsList[0] == 'F' or unitsList[0] == 'F':
         tempVals.append(lowVal1)
         tempScale.append(valRange1)
-        if dataTypeList[0][0] == 'Dry Bulb Temperature' or dataTypeList[0][0] == 'Effective Temperature':
+        if 'Temperature' in dataTypeList[0][0] or 'Universal Thermal Climate Index' in dataTypeList[0][0]:
             avgMonthTemp = dataList[0]
     for count, valText in enumerate(finalValues):
         textSrf = lb_visualization.text2srf([valText], [yAxisLeftPts[count]], legendFont, legendFontSize, legendBold)
@@ -521,7 +521,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             if unit2 == 'C' or unit2 == 'C' or unit2 == 'F' or unit2 == 'F':
                 tempVals.append(lowVal2)
                 tempScale.append(valRange2)
-                if dataTypeList[uCount+1][0] == 'Dry Bulb Temperature' or dataTypeList[uCount+1][0] == 'Effective Temperature': avgMonthTemp = dataList[uCount+1]
+                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
             for count, valText in enumerate(finalValues):
                 axesTextSrf = lb_visualization.text2srf([valText], [yAxisRightPts[count]], legendFont, legendFontSize, legendBold)
                 textSrfs.extend(axesTextSrf[0])
@@ -532,7 +532,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             if unit1 == 'C' or unit1 == 'C' or unit1 == 'F' or unit1 == 'F':
                 tempVals.append(lowVal1)
                 tempScale.append(valRange1)
-                if dataTypeList[uCount+1][0] == 'Dry Bulb Temperature' or dataTypeList[uCount+1][0] == 'Effective Temperature': avgMonthTemp = dataList[uCount+1]
+                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
         elif unit == unit2:
             startVals.append(lowVal2)
             scaleFacs.append(valRange2/height)
@@ -543,7 +543,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             if unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'F' or unitsList[uCount+1] == 'F':
                 tempVals.append(lowVal1)
                 tempScale.append(valRange1)
-                if dataTypeList[uCount+1][0] == 'Dry Bulb Temperature' or dataTypeList[uCount+1][0] == 'Effective Temperature': avgMonthTemp = dataList[uCount+1]
+                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
     
     #Create a title.
     if altTitle_ == None: newlistInfo = str(listInfo[0][1])
