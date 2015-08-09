@@ -44,12 +44,13 @@ Provided by Ladybug 0.0.60
         legendBasePts: The legend base point, which can be used to move the legend in relation to the chart with the native rasshopper "Move" component.
         title: The title text of the char.  Hook this up to a native Grasshopper 'Geo' component to preview it separately from the other outputs.
         titleBasePt: Point for the placement of the title, which can be used to move the title in relation to the chart with the native Grasshopper "Move" component.
+        dataPts: Points representing the location of each piece of data on the chart.  Use this to label the points of the chart with text lables using a native grasshopper "Text Tag" component.
         conditionalHOY: The input data for the hours of the year that pass the conditional statement.
 """
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_01_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_09_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -159,6 +160,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     # make a monocolor mesh without webbing between the primary faces.
     ySize = int(len(values)/xSize)
     meshFacePts = []
+    dataPts = []
     
     for i in range(len(values)):
         xMove = - xScale * (i % xSize)
@@ -173,6 +175,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
         facePt4 = rc.Geometry.Point3d(newPoint.X, newPoint.Y + yScale, newPoint.Z)
         
         meshFacePts.append([facePt1, facePt2, facePt3, facePt4])
+        dataPts.append(rc.Geometry.Point3d(newPoint.X + (xScale/2), newPoint.Y, newPoint.Z))
     
     joinedMesh = rc.Geometry.Mesh()
     
@@ -241,9 +244,11 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     # Cull mesh faces that do not meet the conditional statement.
     if condStatement_:
         cullFaceIndices = []
+        cullPtIndices = []
         for count, boolean in enumerate(patternList):
             if boolean == False:
                 cullFaceIndices.append(count)
+                cullPtIndices.append(count)
                 if count < len(values)-yCount:
                     cullFaceIndices.append(count+len(values))
                     cullFaceIndices.append(count+len(values)-yCount)
@@ -251,15 +256,18 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
                 cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal)
                 cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal+1)
             else: pass
-        
+        cullPtIndices.reverse()
+        for count in cullPtIndices: del dataPts[count]
         joinedMesh.Faces.DeleteFaces(cullFaceIndices)
     else: pass
     
     # Rotate the mesh to be correctly oriented towards the Rhino X and Y axes.
     joinedMesh.Rotate(-math.pi/2, rc.Geometry.Vector3d.ZAxis, basePoint)
     originalMesh.Rotate(-math.pi/2, rc.Geometry.Vector3d.ZAxis, basePoint)
+    rotateTrans = rc.Geometry.Transform.Rotation(-math.pi/2, basePoint)
+    for point in dataPts: point.Transform(rotateTrans)
     
-    return joinedMesh, originalMesh
+    return joinedMesh, originalMesh, dataPts
 
 def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize, legendBold, lb_visualization):
     ySize = int(len(values)/xSize)
@@ -414,7 +422,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 return -1
             
             
-            res = [[],[], [], [], [], [], []]
+            res = [[],[], [], [], [], [], [], []]
             # legendBasePoints = []
             for i, results in enumerate(separatedLists):
                 
@@ -499,7 +507,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
                 
                 # draw the graph mesh
-                coloredChart, originalMesh = makeChart(results, xC, xSC, ySC, zSC, patternList, rc.Geometry.Point3d.Origin, colors, yCount)
+                coloredChart, originalMesh, dataPts = makeChart(results, xC, xSC, ySC, zSC, patternList, rc.Geometry.Point3d.Origin, colors, yCount)
                 
                 #Create the chart curves.
                 if yCount == []: yHeight = 24*xSC
@@ -577,6 +585,13 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     textPt[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
                     ptCount += 1
                 
+                ptCount  = 0
+                for pt in dataPts:
+                    ptLocation = rc.Geometry.Point(pt)
+                    ptLocation.Translate(movingVector) # move it to the right place
+                    dataPts[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
+                    ptCount += 1
+                
                 transMtx = rc.Geometry.Transform.Translation(movingVector)
                 for crv in legendTextCrv:
                     for c in crv: c.Translate(movingVector)
@@ -622,6 +637,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     for item in titleTextCurve: item.Transform(translation)
                     for item in finalChartCrvs: item.Transform(translation)
                     for point in titleBasePoints: point.Transform(translation)
+                    for point in dataPts: point.Transform(translation)
                 else: pass
                 
                 if bakeIt:
@@ -642,6 +658,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 res[4].append([titleBasePoints[0]])
                 res[5].append(hoursOfYear)
                 res[6].append(finalChartCrvs)
+                res[7].append(dataPts)
             return res
         elif str(inputData[0]) == "Connect input data here":
             print 'Connect inputData!'
@@ -672,6 +689,7 @@ if result!= -1:
     title = DataTree[System.Object]()
     titleBasePts = DataTree[System.Object]()
     conditionalHOY = DataTree[System.Object]()
+    dataPts = DataTree[System.Object]()
     
     for i, leg in enumerate(result[1]):
         p = GH_Path(i)
@@ -683,6 +701,7 @@ if result!= -1:
         titleBasePts.AddRange(result[4][i], p)
         conditionalHOY.AddRange(result[5][i], p)
         graphCurves.AddRange(result[6][i], p)
+        dataPts.AddRange(result[7][i], p)
     ghenv.Component.Params.Output[4].Hidden = True
     ghenv.Component.Params.Output[6].Hidden = True
     ghenv.Component.Params.Output[7].Hidden = True
