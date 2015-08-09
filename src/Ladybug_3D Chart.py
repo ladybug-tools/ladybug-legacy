@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.60
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
         condStatement_ : An optional conditional statement, which will remove data from the chart that does not fit the conditions. The input must be a valid python conditional statement (e.g. a > 25).
-        bakeIt_ : If set to True, the chart will be Baked into the Rhino scene as a colored mesh.
+        bakeIt_ : If set to True, the chart will be Baked into the Rhino scene as a colored mesh.  Text will be baked as Rhino text objects, which facilitates easy export to PDF or vector-editing programs.
     Returns:
         readMe!: ...
         graphMesh: A 3D plot of the input data as a colored mesh.  Multiple meshes will be output for several input data streams or graph scales.
@@ -149,13 +149,10 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 
 def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, colors, yCount):
     #If there is no yCount, define it as 24
-    if yCount == []:
-        if len(values) == 24:
-            yCount = 1
-        else:
-            yCount = xSize
-    else:
-        yCount = yCount[0]
+    if yCount == []: yCount = xSize
+    else: yCount = yCount[0]
+    
+    numOfDays = len(values)/yCount
     
     # make a monocolor mesh without webbing between the primary faces.
     ySize = int(len(values)/xSize)
@@ -190,28 +187,31 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     
     if zScale > 0.0:
         #Create the first webbing in between the primary mesh faces.
-        for listCount, list in enumerate(meshFacePts):
-            if listCount < len(meshFacePts)-yCount:
-                mesh = rc.Geometry.Mesh()
-                mesh.Vertices.Add(list[2])
-                mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
-                mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
-                mesh.Vertices.Add(list[3])
-                
-                mesh.Faces.AddFace(0, 1, 2, 3)
-                joinedMesh.Append(mesh)
+        if numOfDays >= 2:
+            for listCount, list in enumerate(meshFacePts):
+                if listCount < len(meshFacePts)-yCount:
+                    mesh = rc.Geometry.Mesh()
+                    mesh.Vertices.Add(list[2])
+                    mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
+                    mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
+                    mesh.Vertices.Add(list[3])
+                    
+                    mesh.Faces.AddFace(0, 1, 2, 3)
+                    joinedMesh.Append(mesh)
         
         #Create the second webbing in between the primary mesh faces.
         for listCount, list in enumerate(meshFacePts):
             if listCount/yCount != int(listCount/yCount):
-                mesh = rc.Geometry.Mesh()
-                mesh.Vertices.Add(list[2])
-                mesh.Vertices.Add(list[1])
-                mesh.Vertices.Add(meshFacePts[listCount-1][0])
-                mesh.Vertices.Add(meshFacePts[listCount-1][3])
-                
-                mesh.Faces.AddFace(0, 1, 2, 3)
-                joinedMesh.Append(mesh)
+                try:
+                    mesh = rc.Geometry.Mesh()
+                    mesh.Vertices.Add(list[2])
+                    mesh.Vertices.Add(list[1])
+                    mesh.Vertices.Add(meshFacePts[listCount-1][0])
+                    mesh.Vertices.Add(meshFacePts[listCount-1][3])
+                    
+                    mesh.Faces.AddFace(0, 1, 2, 3)
+                    joinedMesh.Append(mesh)
+                except: pass
     
     # color the mesh faces.
     joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
@@ -223,20 +223,20 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
             joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum]
             joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum]
         if zScale > 0.0:
-            if srfNum >= len(values) and srfNum < len(values)*2 - yCount:
-                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
-                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
-                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
-                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
-            elif srfNum >= len(values)*2 - yCount:
-                extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
-                if yCount == 2: extraVal = extraVal+2
-                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
-                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
-            else: pass
-        else: pass
+            try:
+                if srfNum >= len(values) and srfNum < len(values)*2 - yCount:
+                    joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
+                    joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
+                    joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
+                    joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
+                elif srfNum >= len(values)*2 - yCount:
+                    extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
+                    if yCount == 2: extraVal = extraVal+2
+                    joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                    joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                    joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+                    joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+            except: pass
     
     #Make a copy of the mesh for purposes of placing the legend correctly.
     originalMesh = rc.Geometry.Mesh.Duplicate(joinedMesh)
