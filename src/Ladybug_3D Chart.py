@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.60
         graphCurves: A list of curves and text surfaces representing the time periods corresponding to the input data.  Note that if the time period of the input data is not clear, no curves or labels will be generated here.
         legend: A legend of the chart. Connect this output to a grasshopper "Geo" component in order to preview the legend in the Rhino scene.g
         legendBasePts: The legend base point, which can be used to move the legend in relation to the chart with the native rasshopper "Move" component.
-        title: The title text of the char.  Hook this up to a native Grasshopper 'Geo' component to preview it separately from the other outputs.
+        title: The title text of the chart.  Hook this up to a native Grasshopper 'Geo' component to preview it separately from the other outputs.
         titleBasePt: Point for the placement of the title, which can be used to move the title in relation to the chart with the native Grasshopper "Move" component.
         dataPts: Points representing the location of each piece of data on the chart.  Use this to label the points of the chart with text lables using a native grasshopper "Text Tag" component.
         conditionalHOY: The input data for the hours of the year that pass the conditional statement.
@@ -638,6 +638,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     for item in finalChartCrvs: item.Transform(translation)
                     for point in titleBasePoints: point.Transform(translation)
                     for point in dataPts: point.Transform(translation)
+                    for point in textPt: point.Transform(translation)
                 else: pass
                 
                 if bakeIt:
@@ -649,7 +650,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     except:
                         placeName = 'alternateLayerName'
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, [], textPt, textSize, legendFont, finalChartCrvs+fullLegTxt)
+                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText+textStrings, textPt+textBasePts, textSize, legendFont, chartCrvs)
                 
                 res[0].append(coloredChart)
                 res[1].append([legendSrfs, legendTextCrv])
