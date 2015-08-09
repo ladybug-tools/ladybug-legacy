@@ -63,6 +63,8 @@ Provided by Ladybug 0.0.60
         sunPathCrvs:  A set of guide curves that mark the path of the sun across the sky dome.
         legend: A legend for the sun path. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePts: The legend base point(s), which can be used to move the legend(s) in relation to the sun path with the grasshopper "move" component.
+        title: The title text of the sun path.  Hook this up to a native Grasshopper 'Geo' component to preview it separately from the other outputs.
+        titleBasePt: Point for the placement of the title, which can be used to move the title in relation to the sun path with the native Grasshopper "Move" component.
         --------------: ...
         sunPathCenPts: The center point of the sun path (or sun paths if multiple annualHourlyData_ streams are connected).  Use this to move sun paths around in the Rhino scene with the grasshopper "move" component.
         sunPositions: Point(s) idicating the location on the sun path of each sun position.
@@ -73,7 +75,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_08_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_09_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nJUL_06_2015
@@ -442,23 +444,17 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             if baseCrvs: sunPathCrvs = sunPathCrvs + baseCrvs
             if sunPathCrvs!=[]: lb_visualization.calculateBB(sunPathCrvs, True)
             # sunPathCrvs = sunPathCrvs - baseCrvs
-            overwriteScale = False
-            if legendPar == []: overwriteScale = True
-            elif legendPar[-1] == []: overwriteScale = True
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
-            
-            if overwriteScale: legendScale = 0.9
             
             
-            
-            legend = []; legendText = []; textPt = []; legendSrfs = None
+            legend = []; legendText = []; textPt = []; legendSrfs = None; title = []
             customHeading = '\n\n\n\nSun-Path Diagram - Latitude: ' + `latitude` + '\n'
             colors = [System.Drawing.Color.Yellow] * len(sunPositions)
             
             allSunPositions = []; allSunsJoined = []; allSunVectors = []
-            allSunPathCrvs = []; allLegend = []; allValues = []
+            allSunPathCrvs = []; allLegend = []; allValues = []; allTitle = []
             allSunAlt = []; allSunAzm = []; cenPts = []; allSunPosInfo = []
             legendBasePoints = []
+            titleBasePoints = []
             
             # hourly data
             if len(annualHourlyData)!=0 and annualHourlyData[0]!=None:
@@ -468,7 +464,32 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 #separate data
                 indexList, listInfo = lb_preparation.separateList(annualHourlyData, lb_preparation.strToBeFound)
                 
+                # Organize the data tree of legend parameters
+                legendPs = []
+                for i in range(legendPar.BranchCount):
+                    legendPs.append(legendPar.Branch(i))
+                if len(legendPs) == 0: legendPs.append([])
+                elif len(legendPs) == 1: pass
+                elif len(legendPs) == len(listInfo): pass
+                else:
+                    warning = "The input for legendPar must be either a single set of parameters for all sunPaths or a data tree of parameters matching the number of connected data streams in _annualHourlyData."
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    return -1
+                
                 for i in range(len(listInfo)):
+                    #Read the legendParameters.
+                    overwriteScale = False
+                    try:
+                        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[i], False)
+                        if legendPs[i] == []: overwriteScale = True
+                        elif legendPs[i][5] == None: overwriteScale = True
+                    except:
+                        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
+                        if legendPs[0] == []: overwriteScale = True
+                        elif legendPs[0][5] == None: overwriteScale = True
+                    if overwriteScale: legendScale = 0.9
+                    
                     movingVector = rc.Geometry.Vector3d(i * movingDist, 0, 0)
                     values= []
                     selList = [];
@@ -524,6 +545,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         
                         legend = lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]])
+                        title = [lb_preparation.flattenList(titleTextCurve)]
                         
                         legendText.append(titleStr)
                         textPt.append(titlebasePt)
@@ -531,11 +553,12 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         sunsJoined = colorSun(sunSpheres, colors)
                         
                         ##
-                        compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
+                        compassCrvsInit, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
                         numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
-                        compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
-                    
-
+                        numberCrvs = lb_preparation.flattenList(numberCrvs)
+                        legendText.extend(compassText)
+                        textPt.extend(compassTextPts)
+                        
                         # let's move it move it move it!
                         if legendScale>1: movingVector = legendScale * movingVector
                         sunsJoined.Translate(movingVector); allSunsJoined.append(sunsJoined)
@@ -554,29 +577,39 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                             movedLegendBasePoint = rc.Geometry.Point3d.Add(nlegendBasePoint, movingVector);
                         else:
                             movedLegendBasePoint = rc.Geometry.Point3d.Add(legendBasePoint, movingVector);
-                            
+                        
+                        movedTitlebasePt = rc.Geometry.Point3d.Add(titlebasePt, movingVector)
+                        
                         legendBasePoints.append(movedLegendBasePoint)
+                        titleBasePoints.append(movedTitlebasePt)
                         
                         for crv in legendTextCrv:
                             for c in crv: c.Translate(movingVector)
                         for crv in titleTextCurve:
                             for c in crv: c.Translate(movingVector)
                         crvsTemp = []
-                        for c in sunPathCrvs + compassCrvs:
+                        allCrvsTemp = []
+                        for c in sunPathCrvs + compassCrvsInit:
                             cDuplicate = c.Duplicate()
                             cDuplicate.Translate(movingVector)
                             crvsTemp.append(cDuplicate)
-                        allSunPathCrvs.append(crvsTemp)
+                            allCrvsTemp.append(cDuplicate)
+                        for c in numberCrvs:
+                            cDuplicate = c.Duplicate()
+                            cDuplicate.Translate(movingVector)
+                            allCrvsTemp.append(cDuplicate)
+                        allSunPathCrvs.append(allCrvsTemp)
                         
                         legendSrfs.Translate(movingVector)
-                        allLegend.append(lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]]))
+                        allLegend.append(lb_visualization.openLegend([legendSrfs, [lb_preparation.flattenList(legendTextCrv)]]))
+                        allTitle.append(lb_preparation.flattenList(title))
                         
                         allSunPosInfo.append(modifiedsunPosInfo)
                         allValues.append(values)
                         
                         if bakeIt: bakePlease(listInfo[i], sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, crvsTemp)
-            
-                return allSunPositions, allSunsJoined, sunVectors, allSunPathCrvs, allLegend, allValues, sunAlt, sunAzm, cenPts, allSunPosInfo, legendBasePoints, [sunUpHours]
+                
+                return allSunPositions, allSunsJoined, sunVectors, allSunPathCrvs, allLegend, allValues, sunAlt, sunAzm, cenPts, allSunPosInfo, legendBasePoints, [sunUpHours], allTitle, titleBasePoints
             
             # no hourly data tp overlay
             elif dailySunPath or annualSunPath:
@@ -592,25 +625,34 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     m  = lb_preparation.checkMonth(int(months[0]))
                     d = lb_preparation.checkDay(int(days[0]), m)
                     customHeading = customHeading + '\n' + `d` + ' ' + lb_preparation.monthList[ m -1]
-                    
+                
+                legendPs = []
+                for i in range(legendPar.BranchCount):
+                    legendPs.append(legendPar.Branch(i))
+                if len(legendPs) == 0: legendPs.append([])
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
+                
                 textSize = legendScale * 0.5 * lb_visualization.BoundingBoxPar[2]/20
                 titlebasePt = lb_visualization.BoundingBoxPar[-2]
                 titleTextCurve = lb_visualization.text2srf(['\n\n' + customHeading], [titlebasePt], 'Veranda', textSize, legendBold)
-                legend = None, lb_preparation.flattenList(titleTextCurve)
+                legend = lb_preparation.flattenList(titleTextCurve)
                 
                 legendText.append('\n\n' + customHeading)
                 textPt.append(titlebasePt)
                 sunsJoined = colorSun(sunSpheres, colors)
                 
-                compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
+                compassCrvsInit, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
                 numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
-                compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
+                compassCrvs = compassCrvsInit + lb_preparation.flattenList(numberCrvs)
                 
-                if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvs)
+                legendText.extend(compassText)
+                textPt.extend(compassTextPts)
+                
+                if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvsInit)
                 
             else: return -1
                 
-            return [sunPositions], [sunsJoined], sunVectors, [sunPathCrvs + compassCrvs], [legend], [values], sunAlt, sunAzm, [cenPt], [sunPosInfo], [titlebasePt], [sunUpHours]
+            return [sunPositions], [sunsJoined], sunVectors, [sunPathCrvs + compassCrvs], [[]], [values], sunAlt, sunAzm, [cenPt], [sunPosInfo], [], [sunUpHours], [legend], [titlebasePt]
         
         else:
             print 'Please input a number for Latitude'
@@ -630,13 +672,14 @@ if _location:
                   _month_, _timeStep_, analysisPeriod_, _centerPt_, _sunPathScale_,
                   _sunScale_, annualHourlyData_, conditionalStatement_, legendPar_,
                   _dailyOrAnnualSunPath_, bakeIt_)
-
+    
     if result!= -1:
-        sunPositionsList, sunSpheres, sunVectors, sunPathCrvsList, legendCrvs, selHourlyDataList, sunAltitudes, sunAzimuths, centerPoints, sunPosInfoList,  legendBasePtList, sunPosHOY = result
+        sunPositionsList, sunSpheres, sunVectors, sunPathCrvsList, legendCrvs, selHourlyDataList, sunAltitudes, sunAzimuths, centerPoints, sunPosInfoList,  legendBasePtList, sunPosHOY, titleInit, titleBasePointsInit = result
         
         # graft the data
         # I added this at the last minute! There should be a cleaner way
         legend = DataTree[System.Object]()
+        title = DataTree[System.Object]()
         sunSpheresMesh = DataTree[System.Object]()
         sunPathCrvs = DataTree[System.Object]()
         selHourlyData = DataTree[System.Object]()
@@ -645,10 +688,14 @@ if _location:
         sunPositionsInfo = DataTree[System.Object]()
         sunPositionsHOY = DataTree[System.Object]()
         legendBasePts = DataTree[System.Object]()
+        titleBasePt = DataTree[System.Object]()
         for i, leg in enumerate(legendCrvs):
             p = GH_Path(i)
-            legend.Add(leg[0], p)
-            legend.AddRange(leg[1], p)
+            try: legend.Add(leg[0], p)
+            except: pass
+            try: legend.AddRange(leg[1], p)
+            except: pass
+            title.AddRange(titleInit[i], p)
             sunSpheresMesh.Add(sunSpheres[i],p)
             sunPathCrvs.AddRange(sunPathCrvsList[i],p)
             selHourlyData.AddRange(selHourlyDataList[i],p)
@@ -656,12 +703,15 @@ if _location:
             sunPathCenPts.Add(centerPoints[i],p)
             sunPositionsInfo.AddRange(sunPosInfoList[i], p)
             sunPositionsHOY.AddRange(sunPosHOY[0], p)
-            legendBasePts.Add(legendBasePtList[i],p)
+            try: legendBasePts.Add(legendBasePtList[i],p)
+            except: pass
+            titleBasePt.Add(titleBasePointsInit[i],p)
         
         # hide preview of sunCnterpoints and legendBasePts
         ghenv.Component.Params.Output[8].Hidden = True      #legend base point
-        ghenv.Component.Params.Output[10].Hidden = True     #sunPath center
-        ghenv.Component.Params.Output[11].Hidden = True     #sun position
+        ghenv.Component.Params.Output[10].Hidden = True     #titleBasePt
+        ghenv.Component.Params.Output[12].Hidden = True     #sunPath center
+        ghenv.Component.Params.Output[13].Hidden = True     #sun position
     else:
         pass
 else:
