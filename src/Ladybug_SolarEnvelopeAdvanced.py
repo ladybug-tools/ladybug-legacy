@@ -8,6 +8,9 @@
 # This file is part of Ladybug.
 # 
 # Copyright (c) 2013-2015, Boris Plotnikov <pborisp@gmail.com> and with the assistance and guidance of Prof. Guedi Capeluto, based on SustArc model
+# For further reading it might be worth taking a look at Ralph Knowles's work, e.g - http://www.fau.usp.br/aut5823/Acesso_ao_Sol/Knowles_2003_Solar_Envelope.pdf
+# and G. Capeluto and E. Shaviv's, e.g - http://www.ibpsa.org/proceedings/BS1999/BS99_C-22.pdf
+# the component relies to a great extend on the concepts described there
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -31,7 +34,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelopeAdvanced'
 ghenv.Component.NickName = 'SolarEnvelopeAdvanced'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_05_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_14_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -55,10 +58,9 @@ inputsDictEnvelope = {
 2: ["_sunVectors", "Sun vectors representing hours of the year when sun should be accessible to the properties surrounding the baseSrf.  sunVectors can be generated using the Ladybug sunPath component."],
 3: ["gridSize_", "A numeric value inidcating the gird size of the analysis in Rhino model units. The smaller the grid size - the more test points( more accurate but slower). Default value is automatically set based on the size of the input _baseSrf."],
 4: ["maxHeight_", "If there are no obstrucsions, this would be the heighest value for the solar envelope points. The default value set to 100 meters above the average baseSrf height."],
-5: ["envelopeToRun_", "Set to 'True' if you would like the component to calculate a solar envelope boundary and 'False' if you would like a solar collection boundary.  The default is set to solar envelope."],
-6: ["parallel_", "Set to 'True' to run the component in parallel and 'False' to run the component with a single core.  The default is set to 'False' for safety."],
-7: ["_numOfCPUs_", "Number of CPUs to be used for the simulation. Default value would be " + str(defaultNumOfCPUs)],
-8: ["_runIt", "Set to 'True' to run the component and generate solar envelope points."]
+5: ["envelopeToRun_", "Set to 'True' if you would like the component to calculate a solar rights boundary and 'False' if you would like a solar collection boundary.  The default is set to solar envelope."],
+6: ["_numOfCPUs_", "Number of CPUs to be used for the simulation. Default value would be " + str(defaultNumOfCPUs)],
+7: ["_runIt", "Set to 'True' to run the component and generate solar envelope points."]
 }
 
 inputsDictCollection = {
@@ -67,11 +69,10 @@ inputsDictCollection = {
 1: ["_obstacleCrvs", "List of curves indicating the top borders of our surroundings that are taken into account in calculating the solar collection."],
 2: ["_sunVectors", "Sun vectors representing hours of the year when sun should be accessible to the properties surrounding the baseSrf.  sunVectors can be generated using the Ladybug sunPath component."],
 3: ["gridSize_", "A numeric value inidcating the gird size of the analysis in Rhino model units. The smaller the grid size - the more test points( more accurate but slower). Default value is automatically set based on the size of the input _baseSrf."],
-4: ["maxHeight_", "If there are no obstrucsions this would be the lowest value for the solar collection points. Default value set to 100 meters below the average baseSrf height."],
-5: ["envelopeToRun_", "Set to 'True' if you would like the component to calculate a solar envelope boundary and 'False' if you would like a solar collection boundary.  The default is set to solar envelope."],
-6: ["parallel_", "Set to 'True' to run the component in parallel and 'False' to run the component with a single core.  The default is set to 'False' for safety."],
-7: ["_numOfCPUs_", "Number of CPUs to be used for the simulation. Default value would be " + str(defaultNumOfCPUs)],
-8: ["_runIt", "Set to 'True' to run the component and generate solar collection points."]
+4: ["maxHeight_", "If there are no obstrucsions this would be the lowest value for the solar collection points. Default value set to 20 meters below the average baseSrf height."],
+5: ["envelopeToRun_", "Set to 'True' if you would like the component to calculate a solar rights boundary and 'False' if you would like a solar collection boundary.  The default is set to solar envelope."],
+6: ["_numOfCPUs_", "Number of CPUs to be used for the simulation. Default value would be " + str(defaultNumOfCPUs)],
+7: ["_runIt", "Set to 'True' to run the component and generate solar collection points."]
 }
 
 outputsDictEnvelope = {
@@ -136,16 +137,14 @@ def computeGridSize(baseSrf):
     return gridsize
 
 class SolarEnvelope:
-    def __init__(self,_baseSrf,gridSize,obstacleCurves,sunVectors, defaultHeight,parallel_,numOfCPUs_,_solarEnvelope = True) :
+    def __init__(self,_baseSrf,gridSize,obstacleCurves,sunVectors, defaultHeight,numOfCPUs_,_solarEnvelope = True) :
         self._solarEnvelope = _solarEnvelope # true for solar envelope and false for solar collection
         self.defaultHeight = self.computeHeightWithBaseSrf(defaultHeight,_baseSrf)
         self.suns = []
         self.gridPoints = []
         self.finalPointsList = []
         self.chunks = []
-        if parallel_:
-            self.NumOfThreads = numOfCPUs_
-        else : self.NumOfThreads = 1
+        self.NumOfThreads = numOfCPUs_
         #this is the minimum angle under which we consider the sun - below that angle 
         #(between the sun vector and the obstacle curve) we act as if the sun vector isn't relevant
         #currently not in use, WIP
@@ -191,11 +190,11 @@ class SolarEnvelope:
                     for j in range(len(chunk.suns)):
                         tempHeight = g.getPointHeight(obCurve, chunk.suns[j])
                         if self._solarEnvelope : 
-                            if  tempHeight < g.height : 
-                                g.height = tempHeight
+                            if  tempHeight < g.point.Z : 
+                                g.point.Z = tempHeight
                         else :
-                            if  tempHeight > g.height : 
-                                g.height = tempHeight
+                            if  tempHeight > g.point.Z : 
+                                g.point.Z = tempHeight
                             
         #split an array into equeal size chunks, the last item will contain the remaining elements
         itemsInEveryChunk = int(math.ceil(len(self.gridPoints) / self.NumOfThreads))
@@ -204,15 +203,10 @@ class SolarEnvelope:
         self.chunks = []    #do we really need this?
         for i in range(self.NumOfThreads):
             self.chunks.append(ParallelChunkObject(copy.deepcopy(splittedPoints[i]),copy.deepcopy(self.suns), copy.deepcopy(self.obstacleCurves)))
-            #self.chunks.append(ParallelChunkObject(copy.deepcopy(splittedPoints[i]),copy.deepcopy(self.suns),self.obstacleCurves))
         tasks.Parallel.ForEach(xrange(self.NumOfThreads),_findPointsHeight)
         self.gridPoints = []
         for pointChunk in self.chunks:
             self.gridPoints.extend(pointChunk.points)    
-    def getFinalPointList(self):
-        for gridPt in self.gridPoints:
-            self.finalPointsList.Add(gridPt.buildFinalPoint())
-        return self.finalPointsList
     def getPtsFromClosedCrv(self,srf,gridSize):
         regionMeshPar = Rhino.Geometry.MeshingParameters.Default
         regionMeshPar.MinimumEdgeLength = regionMeshPar.MaximumEdgeLength = gridSize/2
@@ -221,25 +215,14 @@ class SolarEnvelope:
         for item in vertices:
             g = GridPt(Rhino.Geometry.Point3d(item),self.defaultHeight,self)
             self.gridPoints.Add(g)
-    
     def computeFinalSolarVol(self):
         #Change the vertex heights of the initial mesh.
         finalPoints = []
         for vertexCount, gridPt in enumerate(self.gridPoints):
-            self.regionMesh.Vertices[vertexCount] = Rhino.Geometry.Point3f(gridPt.point.X, gridPt.point.Y, gridPt.height)
-            finalPoints.append(gridPt.buildFinalPoint())
-        #Convert the faces of the new mesh over to a brep.
-        topBrepList = []
-        for faceCount, face in enumerate(self.regionMesh.Faces):
-            if face.IsQuad:
-                faceBrep = Rhino.Geometry.Brep.CreateFromCornerPoints(Rhino.Geometry.Point3d(self.regionMesh.Vertices[face.A]), Rhino.Geometry.Point3d(self.regionMesh.Vertices[face.B]), 
-                Rhino.Geometry.Point3d(self.regionMesh.Vertices[face.C]), Rhino.Geometry.Point3d(self.regionMesh.Vertices[face.D]), scriptc.doc.ModelAbsoluteTolerance)
-            if face.IsTriangle:
-                faceBrep = Rhino.Geometry.Brep.CreateFromCornerPoints(Rhino.Geometry.Point3d(self.regionMesh.Vertices[face.A]), Rhino.Geometry.Point3d(self.regionMesh.Vertices[face.B]),
-                Rhino.Geometry.Point3d(self.regionMesh.Vertices[face.C]), scriptc.doc.ModelAbsoluteTolerance)
-            topBrepList.append(faceBrep)
-        finalEnvelopeBrep = Rhino.Geometry.Brep.JoinBreps(topBrepList, scriptc.doc.ModelAbsoluteTolerance)[0]
-        return finalEnvelopeBrep, finalPoints            
+            self.regionMesh.Vertices[vertexCount] = Rhino.Geometry.Point3f(gridPt.point.X, gridPt.point.Y, gridPt.point.Z)
+            finalPoints.Add(gridPt.point)
+        finalEnvelopeBrep = Rhino.Geometry.Brep.CreateFromMesh(self.regionMesh,True)
+        return finalEnvelopeBrep, finalPoints
 #divide our point array that we need to calculate to several subarrays and calculate every subarray in multithreading
 # seems like when we're doing multithreading, a race condition can occour even on just reading data so copy all the data
 #for every subarray and wrap it in an object
@@ -251,18 +234,19 @@ class ParallelChunkObject:
 class GridPt:
     def __init__(self, point, defaultHeight,mainRef):
         self.point = point
-        self.defaultHeight = self.height = defaultHeight
+        self.point.Z = defaultHeight
+        self.defaultHeight = defaultHeight
         self.mainRef = mainRef
         self.isStart = False        
     #handle all the logic and return the z (height) of the relevant point for one specified obstacle line
     #if the z value is lower than what we had replace it (because the lowest one is the relevant one)
     def getPointHeight(self, bLine, singleSun):
         self.initialHeight = bLine.PointAtEnd.Z
-        _checkPoint = Rhino.Geometry.Point2d(self.point[0],self.point[1])
+        _checkPoint = Rhino.Geometry.Point2d(self.point.X,self.point.Y)
         xAdd = - self.mainRef.lineExtention * math.sin(math.radians(singleSun.azimuth));
         yAdd = - self.mainRef.lineExtention * math.cos(math.radians(singleSun.azimuth)); 
-        point1 = Rhino.Geometry.Point3d( self.point[0],self.point[1],self.initialHeight )
-        point2 = Rhino.Geometry.Point3d( self.point[0] + xAdd,self.point[1] + yAdd,self.initialHeight)
+        point1 = Rhino.Geometry.Point3d( self.point.X,self.point.Y,self.initialHeight )
+        point2 = Rhino.Geometry.Point3d( self.point.X + xAdd,self.point.Y + yAdd,self.initialHeight)
         _sunLine = Rhino.Geometry.LineCurve(point1,point2)       
         _intersections = Rhino.Geometry.Intersect.Intersection.CurveCurve(_sunLine, bLine, 0.001, 0.0)
         if _intersections : 
@@ -274,11 +258,8 @@ class GridPt:
             else :
                 return self.initialHeight - dist * t 
         else :
-            #sun not relevant so no obstacles to look out for - return the heighest point defined
-            return self.defaultHeight + self.initialHeight    
-    def buildFinalPoint(self):
-        self.finalPoint = Rhino.Geometry.Point3d(self.point[0],self.point[1],self.height) 
-        return self.finalPoint
+            #sun not relevant so no obstacles to look out for - return the heighest(rights)/lowest(collection) point defined
+            return self.defaultHeight
 #class to organize all the data in a single sun object
 #properties for later use, when we'll get more comprehensive data from and epw file - hour, day, month, temperature, radiation
 class SingleSun:
@@ -305,13 +286,13 @@ if _runIt == True:
     
     #solar rights envelope specific conditions that must be met
     if envelopeToRun_ : 
-        if maxHeight_ != None and maxHeight_<0:
+        if maxHeight_ != None and maxHeight_< 0:
             allDataProvided = issueWarning("maxHeight_ must be greater than or equal to zero")
     #solar collection specific conditions that must be met
     else : 
         if not _obstacleCrvs:
             allDataProvided = issueWarning("Top obstacle curves must be provided")
-        if maxHeight_ != None and maxHeight_>0:
+        if maxHeight_ != None and maxHeight_ > 0:
             allDataProvided = issueWarning("maxHeight_ must be smaller than or equal to zero")
 
     if allDataProvided:
@@ -322,11 +303,10 @@ if _runIt == True:
         #let the default value be 1, at least for now, maybe later on calculate availible cpus and make this automatic
         if not _numOfCPUs_ : 
             _numOfCPUs_ = defaultNumOfCPUs
-            if parallel_:
-                print "No number of availible CPUs provided. Using the default value of  " + str(defaultNumOfCPUs)
+            print "No number of availible CPUs provided. Using the default value of  " + str(defaultNumOfCPUs)
         #solar rights envelope specific parameters, tests and settings
         if envelopeToRun_:
-            if not maxHeight_ :
+            if maxHeight_ == None :
                 maxHeight_ = maxHeightDefaultVal / conversionFactor
                 print "No height provided, using the default value of " + str(maxHeightDefaultVal) + " meters above the baseSrf height."
             if not _obstacleCrvs :
@@ -334,12 +314,10 @@ if _runIt == True:
                 _obstacleCrvs = _baseSrf.Curves3D
         #solar collection specific parameters, tests and settings
         else:
-            if maxHeight_ :
-                maxHeight_ = - maxHeight_
-            else :
+            if maxHeight_ == None:
                 maxHeight_ = minHeightDefaultVal / conversionFactor
                 print "No height provided, using the default value of " + str(minHeightDefaultVal) + " meters above the baseSrf height."         
-        se = SolarEnvelope(_baseSrf,gridSize_,_obstacleCrvs, _sunVectors, maxHeight_,parallel_,_numOfCPUs_,envelopeToRun_)
+        se = SolarEnvelope(_baseSrf,gridSize_,_obstacleCrvs, _sunVectors, maxHeight_,_numOfCPUs_,envelopeToRun_)
         envelopeBrep, envelopePts = se.computeFinalSolarVol()
 else:
     print "To run the component, set _runIt to True"
