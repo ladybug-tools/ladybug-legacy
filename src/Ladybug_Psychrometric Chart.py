@@ -86,7 +86,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_09_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_15_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -1242,45 +1242,48 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                 
                 #If the user has hooked up natural ventilation, add a natural ventilation curve to the chart.
                 if "Occupant Use of Fans" in passiveStrategy and windSpeed[comfCount] < maxWindSpeed:
-                    #Calculate the upper boundary of Natural ventilation.
-                    upTemperPts = []
-                    for count, humidity in enumerate(range(0,150,50)):
-                        upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh)
+                    try:
+                        #Calculate the upper boundary of Natural ventilation.
+                        upTemperPts = []
+                        for count, humidity in enumerate(range(0,150,50)):
+                            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh)
+                            
+                            if upTemper < 50:
+                                if upTemper > -20:
+                                    upIntersect = rc.Geometry.Intersect.Intersection.CurvePlane(relHumidLines[count], rc.Geometry.Plane(rc.Geometry.Point3d(upTemper, 0,0), rc.Geometry.Vector3d.XAxis), sc.doc.ModelAbsoluteTolerance)[0].PointA
+                                else: upIntersect = relHumidLines[count].PointAtStart
+                            else: upIntersect = relHumidLines[count].PointAtEnd
+                            upTemperPts.append(upIntersect)
+                        natVentBoundary = rc.Geometry.Curve.CreateInterpolatedCurve(upTemperPts, 3)
+                        try: natVentBoundary = upperBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                        except: pass
                         
-                        if upTemper < 50:
-                            if upTemper > -20:
-                                upIntersect = rc.Geometry.Intersect.Intersection.CurvePlane(relHumidLines[count], rc.Geometry.Plane(rc.Geometry.Point3d(upTemper, 0,0), rc.Geometry.Vector3d.XAxis), sc.doc.ModelAbsoluteTolerance)[0].PointA
-                            else: upIntersect = relHumidLines[count].PointAtStart
-                        else: upIntersect = relHumidLines[count].PointAtEnd
-                        upTemperPts.append(upIntersect)
-                    natVentBoundary = rc.Geometry.Curve.CreateInterpolatedCurve(upTemperPts, 3)
-                    try: natVentBoundary = upperBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
-                    except: pass
-                    
-                    if humidRatioLow == 0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                        strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
-                        strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
-                        boundaryLine = comfortCrvSegments[comfCount][0]
-                        natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
-                    elif humidRatioLow == 0:
-                        strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd, natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd)
-                        strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
-                        boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
-                        natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
-                    elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
-                        strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
-                        natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                        boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                        strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
-                    else:
-                        natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                        boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                        strategyLine1 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
-                        strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtEnd, natVentLine.PointAtEnd)
-                    joinedNatVentBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, natVentLine])[0]
-                    passiveStrategyCurves.append(joinedNatVentBound)
-                    passiveStrategyBreps.append(outlineCurve(joinedNatVentBound))
-                    strategyListTest.append("Occupant Use of Fans")
+                        if humidRatioLow == 0 and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                            strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
+                            strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
+                            boundaryLine = comfortCrvSegments[comfCount][0]
+                            natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                        elif humidRatioLow == 0:
+                            strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd, natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].PointAtEnd)
+                            strategyLine2 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtStart, natVentBoundary.PointAtStart)
+                            boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
+                            natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0]
+                        elif humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                            strategyLine1 = rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Intersect.Intersection.CurveCurve(natVentBoundary, rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)
+                            natVentLine = natVentBoundary.Split(rc.Geometry.Surface.CreateExtrusion(rc.Geometry.LineCurve(comfortCrvSegments[comfCount][0].PointAtEnd, rc.Geometry.Point3d(50, comfortCrvSegments[comfCount][0].PointAtEnd.Y, 0)), rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                            boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                            strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
+                        else:
+                            natVentLine = natVentBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                            boundaryLine = comfortCrvSegments[comfCount][0].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                            strategyLine1 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, natVentLine.PointAtStart)
+                            strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtEnd, natVentLine.PointAtEnd)
+                        joinedNatVentBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, natVentLine])[0]
+                        passiveStrategyCurves.append(joinedNatVentBound)
+                        passiveStrategyBreps.append(outlineCurve(joinedNatVentBound))
+                        strategyListTest.append("Occupant Use of Fans")
+                    except:
+                        print "Use of fans is not helful to ouccupants when the desired air is so hot."
                 
                 #If the user has hooked up internal gain, add an internal gain curve to the chart.
                 if "Internal Heat Gain" in passiveStrategy:

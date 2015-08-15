@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_05_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_15_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -344,11 +344,11 @@ class Preparation(object):
             endingHour = endingDay.split(' ')[-1]
             endingDate = endingDay.Replace(endingHour, "")[:-1]
             
-            if full:
-                print 'Analysis period is from', startDate, 'to', endingDate
-                print 'Between hours ' + startHour + ' to ' + endingHour
-            
-            else: print startDay, ' - ', endingDay
+            #if full:
+            #    print 'Analysis period is from', startDate, 'to', endingDate
+            #    print 'Between hours ' + startHour + ' to ' + endingHour
+            #
+            #else: print startDay, ' - ', endingDay
              
         return stMonth, stDay, stHour, endMonth, endDay, endHour
     
