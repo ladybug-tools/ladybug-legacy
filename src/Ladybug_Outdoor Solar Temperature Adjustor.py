@@ -72,7 +72,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_28_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -1200,7 +1200,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                         #Calculate the diffuse, direct, and global horizontal components of the solar radiation.
                         diffRad = diffSolarRad[hour-1]
                         dirNormRad = directSolarRad[hour-1]
-                        globHorizRad = dirNormRad*(math.sin(altitudes[count])) + diffRad
+                        globHorizRad = float(dirNormRad)*(math.sin(altitudes[count])) + diffRad
                         
                         #Define the Azimuth as the SolarCal function understands it.
                         azInit = math.degrees(azimuths[count])
@@ -1232,7 +1232,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                             ProjAreaFac = lb_comfortModels.splineStand(azFinal, 90-altFinal)
                         
                         # Calculate the ERF of the occupant
-                        hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*dirNormRad))*winTrans[hour-1])*(cloA/0.95)
+                        hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*float(dirNormRad)))*winTrans[hour-1])*(cloA/0.95)
                         
                         ERF.append(hourERF)
                         #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
