@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = 'Ladybug_SolarEnvelopeAdvanced'
 ghenv.Component.NickName = 'SolarEnvelopeAdvanced'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_14_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_18_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -311,7 +311,8 @@ if _runIt == True:
                 print "No height provided, using the default value of " + str(maxHeightDefaultVal) + " meters above the baseSrf height."
             if not _obstacleCrvs :
                 print "No top obstacle curves selected, taking the base surface as the solar envelope border"
-                _obstacleCrvs = _baseSrf.Curves3D
+                _obstacleCrvs = []
+                for crv in _baseSrf.Curves3D:   _obstacleCrvs.append(crv)
         #solar collection specific parameters, tests and settings
         else:
             if maxHeight_ == None:
