@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_15_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -845,12 +845,7 @@ class Preparation(object):
                     noData = False
                     groundtemp = epwfile.readline().split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
                     
-                    try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st)' + groundtemp[18]+ ' meters (2nd)'+ groundtemp[34]+'meters (3rd)respectively'
-                    except:
-                        if groundtemp[1] == '':
-                            print 'No ground temperatures found in weather file.'
-                            noData = True
-                        else: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters'
+                    self.groundtemp = groundtemp
                     
                     def stringtoFloat(sequence): # stringtoFloattion that converts strings to floats, if not possible it passes
                     	strings = []
@@ -884,6 +879,15 @@ class Preparation(object):
                 
         return groundtemp1st,groundtemp2nd,groundtemp3rd
     
+    def printgroundTempData(self,groundtemp):
+                    
+        try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st) ' + groundtemp[18]+ ' meters (2nd) '+ groundtemp[34]+' meters (3rd) respectively'
+        except:
+            if groundtemp[1] == '':
+                print 'No ground temperatures found in weather file.'
+                noData = True
+            else: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters'
+        
     
     strToBeFound = 'key:location/dataType/units/frequency/startsAt/endsAt'
     
