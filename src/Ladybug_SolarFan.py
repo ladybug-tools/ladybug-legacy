@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_06_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -326,29 +326,31 @@ def main(sunVectors):
         # adjust the seam of the shading curves.
         shadingCrvAdjust = []
         for curve in finalShdCrvs:
-            curve.Reverse()
-            curveParameter = curve.ClosestPoint(rc.Geometry.Intersect.Intersection.CurveCurve(curve, rc.Geometry.Line(rc.Geometry.AreaMassProperties.Compute(curve).Centroid, seamVectorPt).ToNurbsCurve(), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)[1]
-            curveParameterRound = round(curveParameter)
-            curveParameterTol = round(curveParameter, (len(list(str(sc.doc.ModelAbsoluteTolerance)))-2))
-            if curveParameterRound + sc.doc.ModelAbsoluteTolerance > curveParameter and curveParameterRound - sc.doc.ModelAbsoluteTolerance < curveParameter:
-                curve.ChangeClosedCurveSeam(curveParameterRound)
-                shadingCrvAdjust.append(curve)
-            else:
-                curve.ChangeClosedCurveSeam(curveParameterTol)
-                if curve.IsClosed == True:
+            try:
+                curve.Reverse()
+                curveParameter = curve.ClosestPoint(rc.Geometry.Intersect.Intersection.CurveCurve(curve, rc.Geometry.Line(rc.Geometry.AreaMassProperties.Compute(curve).Centroid, seamVectorPt).ToNurbsCurve(), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)[1]
+                curveParameterRound = round(curveParameter)
+                curveParameterTol = round(curveParameter, (len(list(str(sc.doc.ModelAbsoluteTolerance)))-2))
+                if curveParameterRound + sc.doc.ModelAbsoluteTolerance > curveParameter and curveParameterRound - sc.doc.ModelAbsoluteTolerance < curveParameter:
+                    curve.ChangeClosedCurveSeam(curveParameterRound)
                     shadingCrvAdjust.append(curve)
                 else:
-                    curve.ChangeClosedCurveSeam(curveParameterTol+sc.doc.ModelAbsoluteTolerance)
+                    curve.ChangeClosedCurveSeam(curveParameterTol)
                     if curve.IsClosed == True:
                         shadingCrvAdjust.append(curve)
                     else:
-                        curve.ChangeClosedCurveSeam(curveParameterTol-sc.doc.ModelAbsoluteTolerance)
+                        curve.ChangeClosedCurveSeam(curveParameterTol+sc.doc.ModelAbsoluteTolerance)
                         if curve.IsClosed == True:
                             shadingCrvAdjust.append(curve)
                         else:
-                            curve.ChangeClosedCurveSeam(curveParameter)
-                            curve.MakeClosed(sc.doc.ModelAbsoluteTolerance)
-                            shadingCrvAdjust.append(curve)
+                            curve.ChangeClosedCurveSeam(curveParameterTol-sc.doc.ModelAbsoluteTolerance)
+                            if curve.IsClosed == True:
+                                shadingCrvAdjust.append(curve)
+                            else:
+                                curve.ChangeClosedCurveSeam(curveParameter)
+                                curve.MakeClosed(sc.doc.ModelAbsoluteTolerance)
+                                shadingCrvAdjust.append(curve)
+            except: shadingCrvAdjust.append(curve)
         
         # loft the shading curves with the base curve and generate a surface to cap the loft.
         solarFanInit = []
