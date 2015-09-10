@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_07_2015'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_10_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -424,14 +424,28 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             newDataMethodsList.append(methodsList[listCount])
             futureColorsList.append([0])
     
+    #Have a value that tracks whether we have a stacked value graph with negative values.
+    negativeTrigger = False
+    
     #Make a function that checks the range of the data and comes up with a scaling factor for the data.
     def makeNumberLabels(valueList, leftOrRight, lowB, highB, method):
+        newNegativeTrigger = negativeTrigger
         cumulative = False
         if method == 0:
             valList = []
+            negValList= []
             for item in valueList:
-                if len(item) > 1: cumulative = True
-                valList.append(sum(item))
+                if len(item) > 1:
+                    cumulative = True
+                    posVals = []
+                    negVals = []
+                    for val in item:
+                        if val > 0: posVals.append(val)
+                        else: negVals.append(val)
+                    valList.append(sum(posVals))
+                    negValList.append(sum(negVals))
+                else:
+                    valList.append(sum(item))
         elif method == 1:
             valList = []
             for monthList in valueList:
@@ -445,15 +459,31 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
                         valList.append(item)
         elif method == 3:
             valList = []
+            negValList= []
             for monthList in valueList:
                 for item in monthList:
-                    if len(item) > 1: cumulative = True
+                    if len(item) > 1:
+                        cumulative = True
+                        posVals = []
+                        negVals = []
+                        for val in item:
+                            if val > 0: posVals.append(val)
+                            else: negVals.append(val)
+                        valList.append(sum(posVals))
+                        negValList.append(sum(negVals))
+                    else:
+                        valList.append(sum(item))
                     valList.append(sum(item))
         
         valList.sort()
         if lowB == 'min': lowB = valList[0]
         if highB == 'max': highB = valList[-1]
-        if cumulative == True: lowB = 0
+        if cumulative == True:
+            if sum(negValList) < 0:
+                newNegativeTrigger = True
+                if -lowB < highB: lowB = -highB
+                else: highB = -lowB
+            else: lowB = 0
         
         valRange = highB - lowB
         valStep = valRange/(numSeg-1)
@@ -462,7 +492,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
         for num in range(numSeg):
             finalValues.append(str(round(lowB + num*valStep, 2)))
         
-        return lowB, valRange, finalValues
+        return lowB, valRange, finalValues, newNegativeTrigger
     
     #Make lists of start values and scale factors for each of the data types.
     startVals = []
@@ -479,7 +509,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     for srf in yAxisSrf[0]:
         srf.Transform(rotation)
     textSrfs.extend(yAxisSrf[0])
-    lowVal1, valRange1, finalValues = makeNumberLabels(dataList[0], True, lowBList[0], highBList[0], newDataMethodsList[0])
+    lowVal1, valRange1, finalValues, negativeTrigger = makeNumberLabels(dataList[0], True, lowBList[0], highBList[0], newDataMethodsList[0])
     startVals.append(lowVal1)
     scaleFacs.append(valRange1/height)
     #Move the text based on how long it is.
@@ -626,10 +656,10 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             newColors[listCount].append(colors[colorCount])
             colorCount += 1
     
-    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp
+    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp, negativeTrigger
 
 
-def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac):
+def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger):
     #Perform an analysis of the number of each data type so that I know how to space out the bars.
     numOfMethod = [0,0,0,0]
     for dataMethod in dataMethodsList:
@@ -673,16 +703,24 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
             
             for monthCount, month in enumerate(dataList[dataCount]):
                 stackBottom = 0
+                negativeStackBotom = 0
                 
                 for stackCount, stack in enumerate(month):
                     #Calculate the height of the bar
-                    barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                    if negativeTrigger: barHeight = (stack)/scaleFacs[dataCount]
+                    else: barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
                     
                     #Generate the points that make the face of the mesh
-                    facePt1 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom, 0)
-                    facePt2 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom, 0)
-                    facePt3 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom+barHeight, 0)
-                    facePt4 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom+barHeight, 0)
+                    if barHeight > 0:
+                        facePt1 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom, 0)
+                        facePt2 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom, 0)
+                        facePt3 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom+barHeight, 0)
+                        facePt4 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom+barHeight, 0)
+                    else:
+                        facePt1 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, negativeStackBotom, 0)
+                        facePt2 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, negativeStackBotom, 0)
+                        facePt3 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, negativeStackBotom+barHeight, 0)
+                        facePt4 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, negativeStackBotom+barHeight, 0)
                     
                     #Create the mesh
                     barMesh = rc.Geometry.Mesh()
@@ -699,7 +737,14 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                     
                     #Add the mesh to the list and increase the bar height for the next item in the stack.
                     stackList[stackCount].append(barMesh)
-                    stackBottom += barHeight
+                    if barHeight > 0: stackBottom += barHeight
+                    else: negativeStackBotom += barHeight
+            
+            #If the negative trigger is true, move the values to the zero position.
+            if negativeTrigger:
+                zeroingTransform = rc.Geometry.Transform.Translation(0,-startVals[dataCount]/scaleFacs[dataCount], 0)
+                for monthMeshList in stackList:
+                    for monthMesh in monthMeshList: monthMesh.Transform(zeroingTransform)
             
             dataLabelPts.append(dataLabelPtsInit)
             monthCt += 1
@@ -766,16 +811,24 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                 dayCt = 0
                 for dayCount, day in enumerate(month):
                     stackBottom = 0
+                    negativeStackBotom = 0
                     
                     for stackCount, stack in enumerate(day):
                         #Calculate the height of the bar
-                        barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                        if negativeTrigger: barHeight = (stack)/scaleFacs[dataCount]
+                        else: barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
                         
                         #Generate the points that make the face of the mesh
-                        facePt1 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
-                        facePt2 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
-                        facePt3 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
-                        facePt4 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
+                        if barHeight > 0:
+                            facePt1 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
+                            facePt2 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
+                            facePt3 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
+                            facePt4 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
+                        else:
+                            facePt1 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom, 0)
+                            facePt2 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom, 0)
+                            facePt3 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom+barHeight, 0)
+                            facePt4 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom+barHeight, 0)
                         
                         #Create the mesh
                         barMesh = rc.Geometry.Mesh()
@@ -793,8 +846,15 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                         
                         #Add the mesh to the list and increase the bar height for the next item in the stack.
                         stackList[stackCount].append(barMesh)
-                        stackBottom += barHeight
+                        if barHeight > 0: stackBottom += barHeight
+                        else: negativeStackBotom += barHeight
                     dayCt +=1
+            
+            #If the negative trigger is true, move the values to the zero position.
+            if negativeTrigger:
+                zeroingTransform = rc.Geometry.Transform.Translation(0,-startVals[dataCount]/scaleFacs[dataCount], 0)
+                for monthMeshList in stackList:
+                    for monthMesh in monthMeshList: monthMesh.Transform(zeroingTransform)
             
             dataLabelPts.append(dataLabelPtsInit)
             dataMeshes.extend(stackList)
@@ -918,10 +978,10 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
 
 def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels):
     #Make the chart curves.
-    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
+    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
-    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac)
+    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger)
     
     #If the user has requested a comfort range, then draw it.
     comfortBand = None
