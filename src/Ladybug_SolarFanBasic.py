@@ -1,4 +1,4 @@
-#
+﻿#
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
 # This file is part of Ladybug.
@@ -21,9 +21,9 @@
 
 
 """
-Use this component to generate a Solar Fan for a closed boundary curve and a required minimum hours of solar access to the area inside this boundary curve.  
+Use this component to generate a solar fan with minimumal input data. This component predefines monthly and hourly ranges in order to simplify the creation of useful fan geometry.    
 The solar fan is used to ensure that a given property within a boundary curve is guarenteed a specified minimum hours of direct solar access for each day in a specified month range of the year.
-Thus, context geometries surrounding this boundary curve that do not penetrate the Solar Fan will not cast shadows onto the boundary area for the specified hour and month range.
+Thus, context geometries surrounding this boundary curve that do not penetrate the solar fan will not cast shadows onto the boundary area for the specified hour and month range.
 
 The start and end dates that determine the month range for solar access can be chosen from the following options:
 0) Mar 21 - Jun 21
@@ -42,11 +42,11 @@ Provided by Ladybug 0.0.60
     Args:
         _boundary:  closed boundary curve representing a piece of land (such as a park) or a window for which solar access is desired.
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
-        _requiredHours: The number of hours of direct solar access that the property inside the boundary curve should receive during the _monthRange.
+        _requiredHours: The number of hours of direct solar access that the property inside the boundary curve should receive during the _monthRange. For example an input of 4 will define the hour range roughly between 10AM and 2PM. The component will compute the hour range that will maximize the fan volume. 
         _height: The number of Rhino model units that the solar fan should be extended above the boundary curve.
         north_: Input a vector to be used as a true North direction or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _monthRange: An optional interger value to change the month range for which solar access is being considered. The default month range is Jun 21 - Sep 21.
-            Intergers input here must be between 0 - 5 and correspond to the following :
+            Integers input here must be between 0 - 5 and correspond to the following :
             ---
             0 = Mar 21 - Jun 21
             1 = Mar 21 - Sep 21
@@ -65,9 +65,9 @@ Provided by Ladybug 0.0.60
         solarFan: Brep representing a solar fan.  This volume should be clear of shading in order to ensure solar access to the area inside the boundary curve for the given number of hours.
 """
 
-ghenv.Component.Name = "Ladybug_SolarFan_alt"
-ghenv.Component.NickName = 'SolarFan Alternative'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Name = "Ladybug_SolarFanBasic"
+ghenv.Component.NickName = 'SolarFanBasic'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_04_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
