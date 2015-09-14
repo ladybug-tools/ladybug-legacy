@@ -39,6 +39,7 @@ Provided by Ladybug 0.0.60
         bldgBalancePt_: An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions.
         _______________: ...
         stackValues_: Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other.
+        plotFromZero_: Set to 'True' to have the component plot all bar values starting from zero (as opposed from the bottom of the chart, which might be a negative number).  This is useful when you are plotting the terms of an energy balance where you want gains to be above zero and losses to be below.  It can be detrimental if you are plotting temperatures in degrees celcius and do not want negative values to go below zero.  As such, the default is set to 'False' to not plot from zero.
         altTitle_: An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'
         altYAxisTitle_: An optional text string to replace the default Y-Axis label of the chart.  This can also be a list of 2 y-axis titles if there are two different types of data connected to _inputData.  The default is set to pick out the names of the first (and possibly the second) list connected to the 'inputData.'
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
@@ -62,7 +63,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.60\nSEP_10_2015'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_13_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -91,12 +92,13 @@ inputsDict = {
 2: ["bldgBalancePt_", "An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions."],
 3: ["_______________", "..."],
 4: ["stackValues_", "Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other."],
-5: ["altTitle_", "An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'"],
-6: ["altYAxisTitle_", "An optional text string to replace the default Y-Axis label of the chart.  This can also be a list of 2 y-axis titles if there are two different types of data connected to _inputData.  The default is set to pick out the names of the first (and possibly the second) list connected to the 'inputData.'"],
-7: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
-8: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
-9: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
-10: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."]
+5: ["plotFromZero_", "Set to 'True' to have the component plot all bar values starting from zero (as opposed from the bottom of the chart, which might be a negative number).  This is useful when you are plotting the terms of an energy balance where you want gains to be above zero and losses to be below.  It can be detrimental if you are plotting temperatures in degrees celcius and do not want negative values to go below zero.  As such, the default is set to 'False' to not plot from zero."],
+6: ["altTitle_", "An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'"],
+7: ["altYAxisTitle_", "An optional text string to replace the default Y-Axis label of the chart.  This can also be a list of 2 y-axis titles if there are two different types of data connected to _inputData.  The default is set to pick out the names of the first (and possibly the second) list connected to the 'inputData.'"],
+8: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
+9: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
+10: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
+11: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."]
 }
 
 
@@ -233,7 +235,7 @@ def checkTheInputs():
 
 def manageInput():
     #If some of the component inputs and outputs are not right, blot them out or change them.
-    for input in range(11):
+    for input in range(12):
         if input == 1:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
@@ -248,7 +250,7 @@ def manageInput():
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def restoreInput():
-    for input in range(11):
+    for input in range(12):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
@@ -425,7 +427,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             futureColorsList.append([0])
     
     #Have a value that tracks whether we have a stacked value graph with negative values.
-    negativeTrigger = False
+    if plotFromZero_: negativeTrigger = True
+    else: negativeTrigger = False
     
     #Make a function that checks the range of the data and comes up with a scaling factor for the data.
     def makeNumberLabels(valueList, leftOrRight, lowB, highB, method):
@@ -480,9 +483,11 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
         if highB == 'max': highB = valList[-1]
         if cumulative == True:
             if sum(negValList) < 0:
+                lowB = negValList[0]
                 newNegativeTrigger = True
                 if -lowB < highB: lowB = -highB
-                else: highB = -lowB
+                else:
+                    highB = -lowB
             else: lowB = 0
         
         valRange = highB - lowB
