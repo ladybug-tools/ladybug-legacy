@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.60
         passiveStrategy_: An optional text input of passive strategies to be laid over the psychrometric chart as polygons.  It is recommended that you use the "Ladybug_Passive Strategy List" to select which polygons you would like to display.  Otherwise, acceptable text inputs include "Evaporative Cooling", "Thermal Mass + Night Vent", "Occupant Use of Fans", "Internal Heat Gain", and "Dessicant Dehumidification".
         strategyPar_: Optional passive strategy parameters from the "Ladybug_Passive Strategy Parameters" component.  Use this to adjust the maximum comfortable wind speed, the building balance temperature, and the temperature limits for thermal mass and night flushing.
         mollierHX_: Set to "True" to visualize the psychrometric chart as a mollier-hx diagram.  This is essentially a psychrometric chart where the axes have been switched, which is popular in Europe.
-        enthalpyOrWetBulb: Set to "True" to have the psychrometric chart plot lines of constant enthalpy and set to "False" to have the chart plot linest of constant wet bulb temperature.  The default is set to "True" for enthalpy.
+        enthalpyOrWetBulb_: Set to "True" to have the psychrometric chart plot lines of constant enthalpy and set to "False" to have the chart plot linest of constant wet bulb temperature.  The default is set to "True" for enthalpy.
         analysisPeriod_: An optional analysis period from the Ladybug_Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
         annualHourlyData_: An optional list of hourly data from the Import epw component, which will be used to create hourPointColors that correspond to the hours of the data (e.g. windSpeed).  You can connect up several different annualHourly data here.
         conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the psychrometric chart. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
@@ -86,10 +86,10 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.60\nSEP_12_2015'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_15_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nSEP_15_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
