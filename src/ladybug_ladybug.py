@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nSEP_13_2015'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_15_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -3859,6 +3859,11 @@ class ComfortModels(object):
         airTemp =(enthalpy - 2.5*(absHumid*1000))/(1.01 + (0.00189*absHumid*1000))
         return airTemp
     
+    def calcTempFromWetBulb(self, wetBulb, relHumid, avgBarPress):
+        humidityRatio, enthalpy, partialPressure, saturationPressure = self.calcHumidRatio([wetBulb], [relHumid], [avgBarPress])
+        absHumid, enthalpy, partialPressure, saturationPressure = self.calcHumidRatio([wetBulb], [100], [avgBarPress])
+        airTemp = wetBulb + (((absHumid[0]-humidityRatio[0])*2260000)/(1005)) 
+        return airTemp, humidityRatio[0]
     
     def outlineCurve(self, curve):
         solidBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
