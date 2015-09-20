@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_19_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -253,7 +253,7 @@ def exportToFile(component, targetFolder, lb_preparation):
             
             return False
             
-    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0:
+    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 or component.Name.find("Dragonfly")>=0:
         
         fileName = component.Name + ".py"
         
