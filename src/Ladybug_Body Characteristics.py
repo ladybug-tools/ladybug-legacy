@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.59
     input:
         age_: An age of the person in years.
               -
-              If not supplied, default value of 30 will be used.
+              If not supplied, default value of 35 will be used.
         gender_: Person's gender.
                  -
                  1 or "male"
@@ -178,7 +178,7 @@ import scriptcontext as sc
 def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimated, metabolicRate, activityDuration):
     try:
         if (age == None) or (age <= 0):
-            age = 30  # in years
+            age = 35  # in years
         
         if (gender == None):
             gender = "male"  # default
