@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_09_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_04_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.60\nFEB_01_2015
@@ -91,14 +91,12 @@ try:
 except: pass
 
 if outdoorConditions == True:
-    message1 = "Because the adaptive comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the values out of this component only indicate how much the outdoor condtions should be changed in order to make indoor conditions comfortable."
-    message2 = "They do not idicate whether someone will actually be comfortable outdoors."
-    message3 = "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
-    print message1, message2, message3
+    message1 = "Because the adaptive comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the values out of this component only indicate how much\n" + \
+    "the outdoor condtions should be changed in order to make indoor conditions comfortable. They do not idicate whether someone will actually be comfortable outdoors.\n" + \
+    "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
+    print message1
     m = gh.GH_RuntimeMessageLevel.Remark
     ghenv.Component.AddRuntimeMessage(m, message1)
-    ghenv.Component.AddRuntimeMessage(m, message2)
-    ghenv.Component.AddRuntimeMessage(m, message3)
 
 ghenv.Component.Attributes.Owner.OnPingDocument()
 

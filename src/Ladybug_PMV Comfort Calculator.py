@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_04_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -112,14 +112,12 @@ try:
 except: pass
 
 if outSet == True:
-    message1 = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the values out of this component only indicate how much the outdoor condtions should be changed in order to make indoor conditions comfortable."
-    message2 = "They do not idicate whether someone will actually be comfortable outdoors."
-    message3 = "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
-    print message1, message2, message3
+    message1 = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the PMV and PPD values that usually\n" + \
+    "come out of this component do not idicate whether someone will actually be comfortable outdoors. Only SET is considered a valid metric in this outdoor context\n" + \
+    "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
+    print message1
     m = gh.GH_RuntimeMessageLevel.Remark
     ghenv.Component.AddRuntimeMessage(m, message1)
-    ghenv.Component.AddRuntimeMessage(m, message2)
-    ghenv.Component.AddRuntimeMessage(m, message3)
 
 if outSet == True:
     for output in range(numOutputs):
@@ -448,7 +446,9 @@ def main():
         if checkData == True:
             #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
             if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-                HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+                HOYSInit, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+                HOYS = []
+                for hour in HOYSInit: HOYS.append(hour-1)
                 runPeriod = analysisPeriod_
                 calcLength = len(HOYS)
             elif len(analysisPeriod_)==0 and epwData == True:

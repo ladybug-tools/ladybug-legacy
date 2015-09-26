@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_16_2015'
+ghenv.Component.Message = 'VER 0.0.60\nAUG_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_10_2015
@@ -391,6 +391,8 @@ def main(_epw_file):
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
+        # Create an instance of the lb_preparation class 
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
@@ -403,7 +405,8 @@ def main(_epw_file):
         locationData = lb_preparation.epwLocation(_epw_file)
         groundtemp = lb_preparation.groundTempData(_epw_file,locationData[0])
         
-        
+        lb_preparation.printgroundTempData(lb_preparation.groundtemp)
+
         return locationData, groundtemp, lb_visualization, lb_preparation
     
     else:
