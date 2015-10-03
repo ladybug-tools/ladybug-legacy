@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.60\nOCT_02_2015'
+ghenv.Component.Message = 'VER 0.0.60\nOCT_03_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -88,6 +88,8 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         
         mtv = inputMesh.TopologyVertices
         inputMesh.Normals.ComputeNormals()
+        inputMesh.FaceNormals.ComputeFaceNormals()
+        inputMesh.FaceNormals.UnitizeFaceNormals()
         values = []
         
         
@@ -113,12 +115,18 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
             else: count = 4
             
             for j in range(count):
-                t = mtv.MeshVertexIndices(tv[j])[0]
+                ti = mtv.MeshVertexIndices(tv[j])
                 
-                n = inputMesh.Normals[t]
+                #average normals
+                n = inputMesh.Normals[ti[0]]
+                for t in ti[1:]:
+                    n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
+                
+                n.Unitize()
+                
                 v = values[tv[j]]
                 n = rc.Geometry.Vector3d(v * n.X, v * n.Y, v * n.Z)
-                vo.append(rc.Geometry.Point3d.Add(inputMesh.Vertices[t], n))
+                vo.append(rc.Geometry.Point3d.Add(inputMesh.Vertices[ti[0]], n))
                 vc.append(colors[i])
             
             if count == 3:
