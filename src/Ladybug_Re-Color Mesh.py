@@ -81,8 +81,9 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
             omax = max(analysisResult)
             
             for v in analysisResult:
-                mappedValues.append( v * (tmax-tmin) /(omax-omin) + tmin)
-            
+                try: mappedValues.append( (v-omin) * (tmax-tmin) /(omax-omin) + tmin)
+                except: mappedValues.append(tmin)
+
         remapValues()
         
         mtv = inputMesh.TopologyVertices
