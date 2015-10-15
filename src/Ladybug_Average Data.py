@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_01_2015'
+ghenv.Component.Message = 'VER 0.0.60\nOCT_15_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -103,6 +103,7 @@ def main(annualHourlyData, analysisPeriod):
         try:
             hourlyData = annualHourlyData
             if hourlyData[4] == 'Hourly': checkData = True
+            elif len(hourlyData) == 8760: checkData = True
             else: checkData = False
         except: 
             checkData = False
