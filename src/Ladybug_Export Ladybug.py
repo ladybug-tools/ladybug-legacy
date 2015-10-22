@@ -253,7 +253,7 @@ def exportToFile(component, targetFolder, lb_preparation):
             
             return False
             
-    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 or component.Name.find("Dragonfly")>=0:
+    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 or component.Name.find("Dragonfly")>=0 or component.Name.find("Hydra")>=0:
         
         fileName = component.Name + ".py"
         

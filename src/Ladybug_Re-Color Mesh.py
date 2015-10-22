@@ -31,6 +31,7 @@ Provided by Ladybug 0.0.60
     Args:
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to re-color the _inputMesh.
         _inputMesh: An already-colored mesh from one of the Ladybug components which you would like to re-color based on data in the _analysisResult.
+        heightDomain_: Optional height domain to create a 3D mesh result. Use Construct Domain component to create a domain
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.  Legend Parameters can be used to change the colors, numerical range, and/or number of divisions of any Ladybug legend along with the corresponding colored mesh.
         analysisTitle_: Text representing a new title for the re-colored mesh.  If no title is input here, the default will read "unnamed."
         legendTitle_: Text representing a new legend title for re-colored mesh. Legends are usually titled with the units of the _analysisResult.  If no text is provided here, the default title will read "unkown units."
@@ -46,7 +47,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Re-Color Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_16_2015'
+ghenv.Component.Message = 'VER 0.0.60\nOCT_03_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -64,7 +65,85 @@ AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
 
-def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeIt, layerName):
+def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, legendTitle, bakeIt, layerName):
+    
+    def create3DColoredMesh(inputMesh, analysisResult, domain, colors):
+        """
+        Creates a new 3D mesh based on input values
+        Thanks to David Mans for providing the VB example of the code
+        """
+        
+        mappedValues = []
+        def remapValues():
+            tmin = domain.T0
+            tmax = domain.T1
+            omin = min(analysisResult)
+            omax = max(analysisResult)
+            
+            for v in analysisResult:
+                try: mappedValues.append( (v-omin) * (tmax-tmin) /(omax-omin) + tmin)
+                except: mappedValues.append(tmin)
+
+        remapValues()
+        
+        mtv = inputMesh.TopologyVertices
+        inputMesh.Normals.ComputeNormals()
+        inputMesh.FaceNormals.ComputeFaceNormals()
+        inputMesh.FaceNormals.UnitizeFaceNormals()
+        values = []
+        
+        
+        # collect the values and average  them for each vertices
+        for i in range(mtv.Count):
+            faceIds = mtv.ConnectedFaces(i) #always an array of 4
+            
+            v = 0
+            for j in range(faceIds.Count):
+                v += mappedValues[faceIds[j]]
+            v/=(faceIds.Count) #average the value
+            values.append(v)
+        
+        vo = []
+        fo = []
+        vc = []
+        
+        k = 0
+        for i in range(inputMesh.Faces.Count):
+            tv = inputMesh.Faces.GetTopologicalVertices(i)
+            
+            if tv[2] == tv[3]: count=3
+            else: count = 4
+            
+            for j in range(count):
+                ti = mtv.MeshVertexIndices(tv[j])
+                
+                #average normals
+                n = inputMesh.Normals[ti[0]]
+                for t in ti[1:]:
+                    n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
+                
+                n.Unitize()
+                
+                v = values[tv[j]]
+                n = rc.Geometry.Vector3d(v * n.X, v * n.Y, v * n.Z)
+                vo.append(rc.Geometry.Point3d.Add(inputMesh.Vertices[ti[0]], n))
+                vc.append(colors[i])
+            
+            if count == 3:
+                fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2))    
+            else:
+                fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2, k + 3))
+            k += count
+        
+        # construct mesh using vertices and faces
+        mo = rc.Geometry.Mesh()
+        for ver in vo: mo.Vertices.Add(ver)
+        for c in vc: mo.VertexColors.Add(c)
+        mo.Faces.AddFaces(fo)
+        
+        return mo
+
+    
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -96,6 +175,9 @@ def main(analysisResult, inputMesh, legendPar, analysisTitle, legendTitle, bakeI
             
             colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors)
             coloredChart = lb_visualization.colorMesh(colors, inputMesh)
+            
+            if heightDomain!=None:
+                coloredChart = create3DColoredMesh(inputMesh, analysisResult, heightDomain, colors)
                 
             lb_visualization.calculateBB([coloredChart], True)
                 
@@ -156,7 +238,7 @@ if _inputMesh and len(_analysisResult)!=0:
             return meshAndCrv
         else: return
     
-    result = main(_analysisResult, _inputMesh, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_)
+    result = main(_analysisResult, _inputMesh, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_)
     if result!= -1:
         newLegend= []
         newMesh = result[0]
