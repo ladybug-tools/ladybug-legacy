@@ -1303,8 +1303,8 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
                     geo.Transform(reOrientTrans)
                 legendBasePoint = legendBasePointNew
         
-        if legendBasePoint == None:
-            legendBasePoint = lb_visualization.BoundingBoxPar[0]
+        if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
+        elif windDir == []: keepLegendStatic = True
         
         # Create the axes text lables
         axesText = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
