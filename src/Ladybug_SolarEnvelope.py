@@ -32,11 +32,12 @@ Use this component to generate a solar envelope for a given test surface, set of
 -
 Provided by Ladybug 0.0.60
 """
-ghenv.Component.Name = 'Ladybug_SolarEnvelopeAdvanced'
-ghenv.Component.NickName = 'SolarEnvelopeAdvanced'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_18_2015'
+
+ghenv.Component.Name = 'Ladybug_SolarEnvelope'
+ghenv.Component.NickName = 'SolarEnvelope'
+ghenv.Component.Message = 'VER 0.0.60\nOCT_31_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
