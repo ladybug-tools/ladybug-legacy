@@ -71,7 +71,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.60\nOCT_12_2015'
+ghenv.Component.Message = 'VER 0.0.60\nOCT_26_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nJUL_16_2015
@@ -306,7 +306,8 @@ def checkTheInputs():
     
     #Check the north direction and, if none is given, set a default to the Y-Axis.
     if north_ == None: north = 0
-    else: north = north_
+    else:
+        north, northVec = lb_preparation.angle2north(north_)
     
     #Check if all of the above Checks are True
     if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True and checkData9 == True and checkData10 == True:

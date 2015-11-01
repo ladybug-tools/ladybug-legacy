@@ -49,7 +49,7 @@ Provided by Ladybug 0.0.59
         _totalRadiationPerHour: Import "totalRadiationPerHour" output data from "Photovoltaics surface" component.
                                 In kWh/m2.
         _cellTemperaturePerHour: Import "cellTemperaturePerHour" output data from "Photovoltaics surface" component.
-                                 In °C.
+                                 In C.
         ACenergyDemandPerHour_: Required electrical energy used for any kind of load: heating, cooling, electric lights, solar water heating circulation pump etc.
                                 For example, any of the Honeybee's "Read EP Result" outputs can be inputted in here. Either separately or summed.
                                 -
@@ -485,6 +485,7 @@ if sc.sticky.has_key("ladybug_release"):
             "If you have already updated userObjects drag the Ladybug_Ladybug component " + \
             "into the canvas and try again."
         print printMsg
+        ghenv.Component.AddRuntimeMessage(level, printMsg)
 else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg

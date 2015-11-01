@@ -1,10 +1,11 @@
 # Photovoltaics surface
-#
+# By Djordje Spasic and Jason Sensibaugh
+# djordjedspasic@gmail.com and sensij@yahoo.com
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic and Jason Sensibaugh <djordjedspasic@gmail.com and sensij@yahoo.com> 
+# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -19,7 +20,6 @@
 # along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 # 
 # @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
-
 
 """
 Use this component to calculate amount of electrical energy that can be produced by a surface
@@ -108,7 +108,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
 ghenv.Component.NickName = "PhotovoltaicsSurface"
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = "VER 0.0.60\nOCT_22_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
