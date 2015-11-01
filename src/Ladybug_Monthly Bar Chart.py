@@ -140,7 +140,7 @@ def checkTheInputs():
             checkData1 = True
             methodsList = []
             for list in listInfo:
-                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged' or list[4] == 'Monthly-> total': methodsList.append(0)
+                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged' or list[4] == 'Monthly-> total' or list[4] == 'Monthly-> averaged for each day': methodsList.append(0)
                 elif list[4] == 'Monthly-> averaged for each hour' or list[4] == 'Monthly-> total for each hour': methodsList.append(1)
                 elif list[4] == 'Hourly': methodsList.append(2)
                 elif list[4] == 'Daily' or list[4] == 'Daily-> averaged' or list[4] == 'Daily-> total': methodsList.append(3)
