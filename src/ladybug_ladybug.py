@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nSEP_21_2015'
+ghenv.Component.Message = 'VER 0.0.60\nNOV_03_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -56,6 +56,7 @@ except: pass
 import rhinoscriptsyntax as rs
 import Rhino as rc
 import scriptcontext as sc
+import Grasshopper
 import Grasshopper.Kernel as gh
 import math
 import shutil
@@ -131,6 +132,26 @@ class CheckIn():
                     return
                 
                 sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
+        
+        self.updateCategoryIcon()
+    
+    @staticmethod
+    def updateCategoryIcon():
+        try:
+            url = "https://raw.githubusercontent.com/mostaphaRoudsari/ladybug/master/resources/icon_16_16.png"
+            icon = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "LB_icon_16_16.png")
+            if not os.path.isfile(icon):
+                client = System.Net.WebClient()
+                client.DownloadFile(url, icon)
+            
+            iconBitmap = System.Drawing.Bitmap(icon)
+            Grasshopper.Instances.ComponentServer.AddCategoryIcon("Ladybug", iconBitmap)
+        except:
+            pass
+            
+        Grasshopper.Instances.ComponentServer.AddCategoryShortName("Ladybug", "LB")
+        Grasshopper.Instances.ComponentServer.AddCategorySymbolName("Ladybug", "L")
+        Grasshopper.Kernel.GH_ComponentServer.UpdateRibbonUI() #Reload the Ribbon
     
     def getComponentVersion(self):
         monthDict = {'JAN':'01', 'FEB':'02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06',
