@@ -30,7 +30,7 @@ Sources:
 http://www.nrel.gov/docs/fy14osti/60272.pdf
 https://pvpmc.sandia.gov
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
