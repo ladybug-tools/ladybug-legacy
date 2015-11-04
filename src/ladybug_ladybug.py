@@ -4699,7 +4699,7 @@ class WindSpeed(object):
 
 
 class Photovoltaics(object):
-    """ Set of methods for Photovoltaics and Solar hot water analysis """
+    """ Set of methods for Photovoltaics and Solar Water Heating analysis """
     def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
         # sunZenith, sunAzimuth, sunAltitude angles
         # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
@@ -4831,14 +4831,51 @@ class Photovoltaics(object):
         
         return sunZenithD, sunAzimuthD, sunAltitudeD
     
-    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo):
-        # pvwatts Plane-of-Array Irradiance by Perez 1990 algorithm
+    def calculateAlbedo(self, dryBulbTemperature):
+        # correcting albedo values for the presence of snow
+        # based on: Metenorm 6 Handbook part II: Theory, Meteotest
+        
+        startingDayHOY = 0
+        endingDayHOY = 24
+        dailyTaAverage = []
+        for i in range(365):
+            HOYsPerDay = dryBulbTemperature[startingDayHOY:endingDayHOY]
+            dailyTaAverage.append(sum(HOYsPerDay)/24)
+            startingDayHOY += 24
+            endingDayHOY += 24
+        
+        dailyTaAverageShifted = dailyTaAverage[-14:] + dailyTaAverage[:-14]
+        
+        startingWeekHOY = 0
+        endingWeekHOY = 14
+        albedoL = []
+        lastTwoWeeksTaAverageL = []
+        for i in range(len(dailyTaAverageShifted)):
+            lastTwoWeeksTaAverage = sum(dailyTaAverageShifted[startingWeekHOY+i:endingWeekHOY+i])/14
+            lastTwoWeeksTaAverageL.append(lastTwoWeeksTaAverage)
+            if lastTwoWeeksTaAverage > 10:
+                albedo = 0.2
+            elif lastTwoWeeksTaAverage < -10:
+                albedo = 0.8
+            else:
+                albedo = 0.423 - 0.042*lastTwoWeeksTaAverage
+                if albedo < 0.2:
+                    albedo = 0.2
+                elif albedo > 0.8:
+                    albedo = 0.8
+            for i in range(24):
+                albedoL.append(albedo)
+        
+        return albedoL
+    
+    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo, beamTransIndex=1, SVF=1):
         
         if sunZenithD > 90:
             sunZenithD = 90
             sunAzimuthD = 0
         
-        GHI = DHI + DNI * math.cos(math.radians(sunZenithD))
+        DNIshaded = DNI * beamTransIndex
+        GHI = DHI + DNIshaded * math.cos(math.radians(sunZenithD))
         
         # convert degree angles to radians:
         srfTiltR = math.radians(srfTiltD)
@@ -4858,9 +4895,9 @@ class Photovoltaics(object):
         AOI_D = math.degrees(AOI_R)  # in degrees
         
         # Eb beam irradiance
-        Eb = DNI * math.cos(AOI_R)
+        Eb = DNIshaded * math.cos(AOI_R)
         
-        # Ed_sky (Perez 1990 Model modified model) diffuse sky irradiance
+        # Ed_sky (Perez 1990 modified model diffuse sky irradiance)
         a = max(0, math.cos(AOI_R))
         b = max(math.cos(math.radians(85)), math.cos(sunZenithR))
         
@@ -4869,7 +4906,7 @@ class Photovoltaics(object):
         if DHI == 0:
             divison = 0
         elif DHI > 0:
-            divison = ((DHI+DNI)/DHI)
+            divison = ((DHI+DNIshaded)/DHI)
         epsilon = ( divison + k*(sunZenithD**3)) / (1 + k*(sunZenithD**3))
         
         # Perez model coefficients for irradiance based on epsilon bins
@@ -4941,28 +4978,35 @@ class Photovoltaics(object):
         
         # isotropic, circumsolar, and horizon brightening components of the sky diffuse irradiance:
         if (sunZenithD <= 87.5):
-            Di = DHI*(1-F1)*((1+math.cos(srfTiltR))/2)
-            Dc = DHI*F1*(a/b)
-            Dh = DHI*F2*math.sin(srfTiltR)
+            Di = (DHI*(1-F1)*((1+math.cos(srfTiltR))/2)) * SVF
+            Dc = (DHI*F1*(a/b)) * beamTransIndex  # based on assumption that all circumsolar component brightening is concentrated at the position of the sun, and therefor completely blocked in case of shading
+            if SVF >= 0.05:  # based on area of the sky dome intersected with sunZenithD when: 87.5 < sunZenithD <= 90
+                Dh = 0
+            else:
+                Dh = DHI*F2*math.sin(srfTiltR)
         # only isotropic brightening component of the sky diffuse irradiance:
         elif (sunZenithD > 87.5):
-            Di = (1+math.cos(srfTiltR))/2
+            Di = ((1+math.cos(srfTiltR))/2) * SVF
             Dc = 0
             Dh = 0
         
         Ed_sky = Di + Dc + Dh
         
-        # Eg ground reflected irradiance
-        Eground = ((DNI * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
+        # Eg ground reflected irradiance by Liu, Jordan, (1963).
+        Eground = ((DNIshaded * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
         
         Epoa = Eb + Eground + Ed_sky  # in Wh/m2
         
-        if Epoa < 0 or ((DNI<=0) and (DHI<=0)):
+        if Eb < 0: Eb = 0
+        if Eground < 0: Eground = 0
+        if Ed_sky < 0: Ed_sky = 0
+        
+        if Epoa < 0 or ((DNIshaded<=0) and (DHI<=0)):
             Epoa = Eb = Ed_sky = Eground = 0
         
         return Epoa, Eb, Ed_sky, Eground, AOI_R
     
-    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws, DNI, DHI):
+    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws10, DNI, DHI):
         # PVWatts v1 Thermal, Module Temperature, Cell Temperature Module and Inverter models
         
         # Sandia PV Array Performance Module Cover
@@ -4996,18 +5040,18 @@ class Photovoltaics(object):
             deltaT = 3
         
         # Sandia Module Temperature Model
-        Tm = Epoa * (math.exp(a+(b*ws))) + Ta  # in C degrees
+        Tm = Epoa * (math.exp(a+(b*ws10))) + Ta  # in C degrees
         
         # Sandia Cell Temperature Model
         Tcell = Tm + (Epoa/1000)*deltaT  # in C degrees
         
         if ((DNI<=0) and (DHI<=0)):
-            Pac = 0
-            return Tm, Tcell, Pac
+            Pdc_ = Pac = 0
+            return Tm, Tcell, Pdc_, Pac
         
         # PVFORM version 3.3 adapted Module Model
         Pdc0 = nameplateDCpowerRating   # in kWatts
-        gamma = -0.005   # default value for crystalline silicon PV modules
+        gamma = -0.005   # default temperature coefficient for crystalline silicon PV modules
         
         if Etr > 125:
             Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))
@@ -5035,9 +5079,9 @@ class Photovoltaics(object):
         
         if Pac < 0: Pac = 0
         
-        return Tm, Tcell, Pac
+        return Tm, Tcell, Pdc_, Pac
     
-    def srfAzimuthAngle(self, PVsurface):
+    def calculateSrfAzimuthAngle(self, PVsurface):
         # calculate PVsurface azimuth angle
         obj = rs.coercegeometry(PVsurface)
         objSrf = obj.Faces[0]
@@ -5076,7 +5120,37 @@ class Photovoltaics(object):
         
         return srfAzimuthD, surfaceTiltD
     
-    def srfTiltAngle(self, PVsurface):
+    def srfAzimuthAngle(self, PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceAzimuthAngle != None):
+            if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+            else:
+                srfAzimuthD = PVsurfaceAzimuthAngle
+            surfaceTiltDCalculated = "needs to be calculated"
+        
+        # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceAzimuthAngle == None):
+            if PVsurfaceInputType == "brep":
+                srfAzimuthD, surfaceTiltDCalculated = self.calculateSrfAzimuthAngle(PVsurface)
+                if surfaceTiltDCalculated == None:
+                    surfaceTiltDCalculated = "needs to be calculated"
+            
+            # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
+            elif PVsurfaceInputType == "number":
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+                surfaceTiltDCalculated = "needs to be calculated"
+        
+        return srfAzimuthD, surfaceTiltDCalculated
+    
+    def calculateSrfTiltAngle(self, PVsurface):
         # calculate PVsurface tilt angle
         obj = rs.coercegeometry(PVsurface)
         zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
@@ -5113,8 +5187,78 @@ class Photovoltaics(object):
         srfTiltD = math.degrees(srfTitlR)
         
         return srfTiltD
-
-    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, depth_m=2, soilThermalDiffusivity_m2_s=2.5, minimalTemperature_C=1):
+    
+    def srfTiltAngle(self, PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceTiltAngle != None):
+            
+            if (PVsurfaceTiltAngle < 0):
+                srfTiltD = 0
+            elif (PVsurfaceTiltAngle > 180):
+                srfTiltD = 0
+            else:
+                srfTiltD = PVsurfaceTiltAngle
+        
+        # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceTiltAngle == None):
+            
+            # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
+            if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
+                srfTiltD = surfaceTiltDCalculated
+            elif surfaceTiltDCalculated == "needs to be calculated":
+                if PVsurfaceInputType == "brep":
+                    srfTiltD = self.calculateSrfTiltAngle(PVsurface)
+                # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
+                elif PVsurfaceInputType == "number":
+                    srfTiltD = abs(latitude)
+        
+        return srfTiltD
+    
+    def angle2northClockwise(self, north):
+        # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
+        try:
+            northVec = rc.Geometry.Vector3d.YAxis
+            northVec.Rotate(-math.radians(float(north)),rc.Geometry.Vector3d.ZAxis)
+            northVec.Unitize()
+            return 2*math.pi-math.radians(float(north)), northVec
+        except Exception, e:
+            try:
+                northVec =rc.Geometry.Vector3d(north)
+                northVec.Unitize()
+                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVec, rc.Geometry.Plane.WorldXY), northVec
+            except Exception, e:
+                return 0, rc.Geometry.Vector3d.YAxis
+    
+    def correctSrfAzimuthDforNorth(self, north, srfAzimuthD):
+        # nothing inputted in "north_" - use default value: 0
+        if north == None:
+            northDeg = 0  # default
+            correctedSrfAzimuthD = srfAzimuthD
+            validNorth = True
+            printMsg = "ok"
+        else:
+            try:  # check if it's a number
+                north = float(north)
+                if north < 0 or north > 360:
+                    correctedSrfAzimuthD = northDeg = None
+                    validNorth = False
+                    printMsg = "Please input north angle value from 0 to 360."
+                    return correctedSrfAzimuthD, validNorth, printMsg
+            except Exception, e:  # check if it's a vector
+                north.Unitize()
+            
+            northRad, northVec = self.angle2northClockwise(north)
+            northDeg = 360-math.degrees(northRad)
+            correctedSrfAzimuthD = northDeg + srfAzimuthD
+            if correctedSrfAzimuthD > 360:
+                correctedSrfAzimuthD = correctedSrfAzimuthD - 360
+            validNorth = True
+            printMsg = "ok"
+        
+        return correctedSrfAzimuthD, northDeg, validNorth, printMsg
+    
+    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, minimalTemperature_C=1, depth_m=2, soilThermalDiffusivity_m2_s=2.5):
         # calculate cold (inlet) water temperature
         # soilThermalDiffusivity (m2/s) per material (valid for method "0" only):
         # 0.00000024 - dry sand
