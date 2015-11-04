@@ -87,7 +87,7 @@ ghenv.Component.Name = "Ladybug_DC to AC derate factor"
 ghenv.Component.NickName = "DCtoACderateFactor"
 ghenv.Component.Message = 'VER 0.0.61\nNOV_03_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
