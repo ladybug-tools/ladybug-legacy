@@ -1,11 +1,11 @@
-LADYBUG GRAPHIC STANDARDS
+#LADYBUG GRAPHIC STANDARDS
 
 Below are a list of component characterists that has been drafted to help ensure that the components have a consistent means of communicating with users.
 This communication is important for helping users understand how to use the components and how to solve issues when something has gone wrong.
 Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless given permission therwise and should generally strive to follow the Guidelines.
 
 
-HARD AND FAST RULES
+#HARD AND FAST RULES
 
 1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.
 
@@ -36,7 +36,7 @@ HARD AND FAST RULES
 
 
 
-GUIDELINES
+#GUIDELINES
 
 1) Please be mindful of the color schemes and fonts that other developers have implemented on the existing component icons.  Deviating too much from these colors/fonts can compromise the graphic identiy of the project.
 
