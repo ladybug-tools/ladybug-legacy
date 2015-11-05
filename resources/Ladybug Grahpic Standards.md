@@ -17,9 +17,9 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 3) All inputs of components will use the following convention of '_' placement for communicating with the user about their importantance:
 
-* _ input: An input that the user is required to provide in order to run the component.  Generally, the number of these inputs should be minimized if there are possible good defaults. (example of this type of input: _location on the sunpath)
-* _ input _: An input that is important/required for the primary function of the component but for which the component includes a good default value. (example of this type of input: _hour_ on the sunpath)
-* input _: A completely optional input or an input that is mostly there to help users customize the output. (example of this type of input: legendPar_ on the sunpath)
+* _input : An input that the user is required to provide in order to run the component.  Generally, the number of these inputs should be minimized if there are possible good defaults. (example of this type of input: _location on the sunpath)
+* _ input _ : An input that is important/required for the primary function of the component but for which the component includes a good default value. (example of this type of input: _hour_ on the sunpath)
+* input_ : A completely optional input or an input that is mostly there to help users customize the output. (example of this type of input: legendPar_ on the sunpath)
 	
 4) All components should include a check of the current Ladybug and/or Honeybee version unless the component is so short in code length as to be entirely independent of Ladybug+Honyebee.
 
