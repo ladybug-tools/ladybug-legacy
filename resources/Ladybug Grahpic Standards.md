@@ -2,7 +2,7 @@
 
 Below are a list of component characterists and standards that have been drafted to help ensure that the components have a consistent means of communicating with users.
 This communication is important for helping users understand how to use the components and how to solve issues when something has gone wrong.
-These standards help developers communicate with one another in a consistent.  Adherece to these standards will ultimatelty save all of us time.
+These standards also help developers communicate with one another in a consistent manner.  Adherece to these standards will ultimatelty save all of us time.
 Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless given permission otherwise and should generally strive to follow the Guidelines.
 
 
