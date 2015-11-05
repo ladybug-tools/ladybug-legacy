@@ -29,7 +29,7 @@ Formulas from: "Comparison of predictive equations for resting Metabolic rate in
 Frankenfield, Roth-Yousey, Compher, American Dietetic Association, 2005.:
 https://www.andeal.org/files/Docs/Frankenfield_et_al_2005%5B1%5D.pdf
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.61
     
     input:
         age_: An age of the person in years.
@@ -164,7 +164,7 @@ Provided by Ladybug 0.0.59
 
 ghenv.Component.Name = "Ladybug_Body Characteristics"
 ghenv.Component.NickName = "BodyCharacteristics"
-ghenv.Component.Message = "VER 0.0.59\nAUG_31_2015"
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nJUL_14_2015

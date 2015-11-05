@@ -175,7 +175,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = "VER 0.0.61\nNOV_03_2015"
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.61\nNOV_03_2015
@@ -323,7 +323,7 @@ def checkInputData(analysisGeometry, ACenergyPerHour, context, coniferousTrees, 
     validContextCategories = [index for index in [validContext1, validContext2, validContext3] if index > 0]
     
     # default transmission indices based on: Planning and Installing Photovoltaic Systems: A Guide for Installers, Architects and Engineers,
-    # Deutsche Gesellschaft Für Sonnenenergie (Dgs), Dec 2007.
+    # Deutsche Gesellschaft Fr Sonnenenergie (Dgs), Dec 2007.
     if (coniferousAllyearIndex == None) or (coniferousAllyearIndex < 0) or (coniferousAllyearIndex > 1):
         coniferousAllyearIndex = 0.30
     if (deciduousInleafIndex == None) or (deciduousInleafIndex < 0) or (deciduousInleafIndex > 1):

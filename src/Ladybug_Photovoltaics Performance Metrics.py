@@ -49,7 +49,7 @@ Provided by Ladybug 0.0.61
         _totalRadiationPerHour: Import "totalRadiationPerHour" output data from "Photovoltaics surface" component.
                                 In kWh/m2.
         _cellTemperaturePerHour: Import "cellTemperaturePerHour" output data from "Photovoltaics surface" component.
-                                 In °C.
+                                 In C.
         ACenergyDemandPerHour_: Required electrical energy used for any kind of load: heating, cooling, electric lights, solar water heating circulation pump etc.
                                 For example, any of the Honeybee's "Read EP Result" outputs can be inputted in here. Either separately or summed.
                                 -
@@ -145,7 +145,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = "VER 0.0.61\nNOV_03_2015"
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015

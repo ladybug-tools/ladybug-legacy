@@ -36,7 +36,7 @@ along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nNOV_03_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

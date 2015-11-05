@@ -49,17 +49,17 @@ Provided by Ladybug 0.0.61
     output:
         readMe!: ...
         trueNorth: Geographic north (direction towards the North Pole) - magnetic north corrected for the value of magnetic declination. Ranges from 0-360.
-                       In decimal degrees (°).
+                       In decimal degrees ().
         trueNorthVec: Vector representation of the upper "trueNorth".
         magneticDeclination: An angle between magnetic north and true north. It is positive east of true north and negative west of true north.
-                             In decimal degrees (°).
+                             In decimal degrees ().
         magneticFieldVec: Earth's magnetic field vector at chosen location.
                           Vector's intensity represents the strength in nanoTeslas (nT).
 """
 
 ghenv.Component.Name = "Ladybug_True North"
 ghenv.Component.NickName = "TrueNorth"
-ghenv.Component.Message = 'VER 0.0.61\nNOV_03_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015

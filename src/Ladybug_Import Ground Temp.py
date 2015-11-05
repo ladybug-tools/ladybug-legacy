@@ -25,7 +25,7 @@
 Use this component to visualise ground temperatures throughout the year at specific depths. Please note that epw files usually only provide ground temperature data at depths 0.5 meters, 2 meters and 4 meters thus data has been interpolated for all other depths. In particular this interpolation assumes that ground temperatures do not vary over the seasons once the depth has reach 9 meters below the ground surface.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _groundTemperatureData: ...
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_24_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_10_2015
