@@ -1,6 +1,6 @@
 #Instructions for Installing Ladybug + Honeybee:
 
-####Follow steps 0-5 for Ladybug functionality and 0-9 for full functionality
+#####Follow initial steps 0-5 for Ladybug functionality and additional 1-4 for full functionality.
 
 
 ###LADYBUG
