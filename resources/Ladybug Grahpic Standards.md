@@ -1,32 +1,33 @@
 #LADYBUG GRAPHIC STANDARDS
 
-Below are a list of component characterists that has been drafted to help ensure that the components have a consistent means of communicating with users.
+Below are a list of component characterists and standards that have been drafted to help ensure that the components have a consistent means of communicating with users.
 This communication is important for helping users understand how to use the components and how to solve issues when something has gone wrong.
-Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless given permission therwise and should generally strive to follow the Guidelines.
+These standards help developers communicate with one another in a consistent.  Adherece to these standards will ultimatelty save all of us time.
+Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless given permission otherwise and should generally strive to follow the Guidelines.
 
 
 #HARD AND FAST RULES
 
-1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found here[https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug%20Header%20Template.txt].
+1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found here[https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Header_Template.py].
 
-2) Descriptions of component inputs should include the following information:
+2) All components should follow a format for their body that includes a check of the current Ladybug and/or Honeybee version as well as separate functions for input-checking and for running the main function of the component.  A template for this body can be found here[https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Body_Template.py].
+
+3) Descriptions of component inputs should include the following information:
 
 * What data type users should input (ie. number, point, brep).
 * What the input represents for the component.
 * If the input is meant to take the output of another Ladybug component, this other component should be referenced in the description.
 * If the input has a default value when nothing is connected, this must be included in the description.
 
-3) All inputs of components will use the following convention of '_' placement for communicating with the user about their importantance:
+4) All inputs of components will use the following convention of '_' placement for communicating the importance of the input to the user:
 
-* _input : An input that the user is required to provide in order to run the component.  Generally, the number of these inputs should be minimized if there are possible good defaults. (example of this type of input: _location on the sunpath)
-* _ input _ : An input that is important/required for the primary function of the component but for which the component includes a good default value. (example of this type of input: _ hour _ on the sunpath)
-* input_ : A completely optional input or an input that is mostly there to help users customize the output. (example of this type of input: legendPar_ on the sunpath)
-	
-4) All components should follow a format for their body that includes a check of the current Ladybug and/or Honeybee version as well as separate functions for input-checking and for running the main function of the component.  An example of this check can be found here[].
+* _input : An input that the user is required to provide in order to run the component.  Generally, the number of these inputs should be minimized if there are possible good defaults. (Example of this type of input: _location on the sunpath)
+* _ input _ : An input that is important/required for the primary function of the component but for which the component includes a good default value. (Example of this type of input: _ hour _ on the sunpath)
+* input_ : A completely optional input or an input that is mostly there to help users customize the output. (Example of this type of input: legendPar_ on the sunpath)
 
 5) Any time that a component relies on a change made in Ladybug_Ladybug or Honeybee_Honeybee, the "#compatibleLBVersion" and/or the "#compatibleHBVersion" in the header must be updated to this version of Ladybug_Ladybug or Honeybee_Honeybee.
 
-6) Components should only use Grasshopper's "Warning" capability (orange component) if the user has input something incorrect that would cause the component to crash or produce an incorrect result.  If you only want to tell the user to input a certain required input or give the user information about how the component is running, please use either the "readMe!" output (the GHPython "print" output) or use Grasshopper's "Remark" capability instead of the "Warning" capability.
+6) Components should only use Grasshopper's "Warning" capability (orange component) if the user has input something incorrect that would cause the component to crash or produce an incorrect result.  If you only want to tell the user to input a certain required input or give the user information about how the component is running, please use either the "readMe!" output (by printing the message) or use Grasshopper's "Remark" capability instead of the "Warning" capability.
 
 7) Components should not purposefully use Grasshopper's "Error" capability.  This shall be reserved for either identifying bugs in our code or for telling the user that they have not put in the right data type to a certain input (ie. a point into a boolean input).
 
@@ -34,7 +35,7 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 9) Components that produce a graphic ouput in the Rhino scene will have their preview turned on by default while those that do not produce a graphic output will have their preview turned off.
 
-10) All components will be placed first in WIP and beta tested by the community before being moved to the other tabs.  This will communicate to users that the components are still being vetted and they use them at their own risk.
+10) All components will be placed first in WIP and beta tested by the community before being moved to the other tabs.  This will communicate to users that the components are still being vetted and they should use them at their own risk.
 
 
 
