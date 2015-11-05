@@ -11,9 +11,10 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 2) Descriptions of component inputs should include the folling information:
 
-* What data type users should input (ie. number, point, brep)
-* What the input represents for the component
-* If the input is meant to take the output of another Ladybug component, this other component should be referenced in the descrition.
+* What data type users should input (ie. number, point, brep).
+* What the input represents for the component.
+* If the input is meant to take the output of another Ladybug component, this other component should be referenced in the description.
+* If the input has a default value when nothing is connected, this must be included in the description.
 
 3) All inputs of components will use the following convention of '_' placement for communicating with the user about their importantance:
 
