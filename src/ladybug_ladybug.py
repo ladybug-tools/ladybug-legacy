@@ -474,11 +474,11 @@ class Preparation(object):
             return day, month, time
             
         return (`day` + ' ' + month + ' ' + time)
-
+    
     def tupleStr2Tuple(self, str):
         strSplit = str[1:-1].split(',')
         return (int(strSplit[0]), int(strSplit[1]), int(strSplit[2]))
-
+    
     def date2Hour(self, month, day, hour):
         # fix the end day
         numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
@@ -857,7 +857,7 @@ class Preparation(object):
         groundtemp1st = [self.strToBeFoundgt, location, 'Depth', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
-
+        
         lnum = 1 # Line number
         
         with epwfile as i:
@@ -2896,8 +2896,95 @@ class ResultVisualization(object):
                 plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
                 if type(legendText[text]) is not str: legendText[text] = ("%.2f" % legendText[text])
                 rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
+    
+    def mesh2Hatch(self, meshes, parentLayerIndex):
+        #Go through each of the meshes and make a group of hatches.
+        for mesh in meshes:
+            
+            #Make some lists to hold key parameters
+            hatches = []
+            colors = []
+            guids = []
+            runningVertexCount = 0
+            meshColors = mesh.VertexColors
+            
+            for faceCount, face in enumerate(mesh.Faces):
+                faceColorList = []
+                facePointList = []
                 
-                # end of the script
+                #Extract the points and colors.
+                if face.IsQuad:
+                    faceColorList.append(meshColors[face.A])
+                    faceColorList.append(meshColors[face.B])
+                    faceColorList.append(meshColors[face.C])
+                    faceColorList.append(meshColors[face.D])
+                    
+                    facePointList.append(mesh.PointAt(faceCount, 1,0,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,1,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,1,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,0,1))
+                else:
+                    faceColorList.append(meshColors[face.A])
+                    faceColorList.append(meshColors[face.B])
+                    faceColorList.append(meshColors[face.C])
+                    
+                    facePointList.append(mesh.PointAt(faceCount, 1,0,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,1,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,1,0))
+                
+                #Calculate the average color of the face.
+                if face.IsQuad:
+                    hatchColorR = (faceColorList[0].R + faceColorList[1].R + faceColorList[2].R + faceColorList[3].R) / 4
+                    hatchColorG = (faceColorList[0].G + faceColorList[1].G + faceColorList[2].G + faceColorList[3].G) / 4
+                    hatchColorB = (faceColorList[0].B + faceColorList[1].B + faceColorList[2].B + faceColorList[3].B) / 4
+                else:
+                    hatchColorR = (faceColorList[0].R + faceColorList[1].R + faceColorList[2].R) / 3
+                    hatchColorG = (faceColorList[0].G + faceColorList[1].G + faceColorList[2].G) / 3
+                    hatchColorB = (faceColorList[0].B + faceColorList[1].B + faceColorList[2].B) / 3
+                hatchColor = System.Drawing.Color.FromArgb(255, hatchColorR, hatchColorG, hatchColorB)
+                
+                #Create the outline of a new hatch.
+                hatchCurveInit = rc.Geometry.PolylineCurve(facePointList)
+                if face.IsQuad: hatchExtra = rc.Geometry.LineCurve(facePointList[0], facePointList[3])
+                else: hatchExtra = rc.Geometry.LineCurve(facePointList[0], facePointList[2])
+                hatchCurve = rc.Geometry.Curve.JoinCurves([hatchCurveInit, hatchExtra], sc.doc.ModelAbsoluteTolerance)[0]
+                
+                #Create the hatch.
+                try:
+                    if hatchCurve.IsPlanar():
+                        meshFaceHatch = rc.Geometry.Hatch.Create(hatchCurve, 0, 0, 0)[0]
+                        hatches.append(meshFaceHatch)
+                        colors.append(hatchColor)
+                    else:
+                        #We have to split the quad face into two triangles.
+                        hatchCurveInit1 = rc.Geometry.PolylineCurve([facePointList[0], facePointList[1], facePointList[2]])
+                        hatchExtra1 = rc.Geometry.LineCurve(facePointList[0], facePointList[2])
+                        hatchCurve1 = rc.Geometry.Curve.JoinCurves([hatchCurveInit1, hatchExtra1], sc.doc.ModelAbsoluteTolerance)[0]
+                        meshFaceHatch1 = rc.Geometry.Hatch.Create(hatchCurve1, 0, 0, 0)[0]
+                        hatchCurveInit2 = rc.Geometry.PolylineCurve([facePointList[2], facePointList[3], facePointList[0]])
+                        hatchExtra2 = rc.Geometry.LineCurve(facePointList[2], facePointList[0])
+                        hatchCurve2 = rc.Geometry.Curve.JoinCurves([hatchCurveInit2, hatchExtra2], sc.doc.ModelAbsoluteTolerance)[0]
+                        meshFaceHatch2 = rc.Geometry.Hatch.Create(hatchCurve2, 0, 0, 0)[0]
+                        
+                        hatches.extend([meshFaceHatch1, meshFaceHatch2])
+                        colors.extend([hatchColor, hatchColor])
+                except:pass
+            
+            
+            #Bake the hatch into the scene.
+            for count, hatch in enumerate(hatches):
+                attr = rc.DocObjects.ObjectAttributes()
+                attr.LayerIndex = parentLayerIndex
+                attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+                attr.ObjectColor = colors[count]
+                
+                rc.DocObjects.HatchObject
+                
+                guids.append(rc.RhinoDoc.ActiveDoc.Objects.AddHatch(hatch, attr))
+            
+            #Group the hatches into one object so that they are easy to handle in the Rhino scene.
+            groupT = rc.RhinoDoc.ActiveDoc.Groups
+            rc.DocObjects.Tables.GroupTable.Add(groupT, guids)
 
 
 class ComfortModels(object):
