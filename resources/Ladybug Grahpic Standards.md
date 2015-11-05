@@ -8,9 +8,9 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 #HARD AND FAST RULES
 
-1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found here[https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Header_Template.py].
+1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found [here][https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Header_Template.py].
 
-2) All components should follow a format for their body that includes a check of the current Ladybug and/or Honeybee version as well as separate functions for input-checking and for running the main function of the component.  A template for this body can be found here[https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Body_Template.py].
+2) All components should follow a format for their body that includes a check of the current Ladybug and/or Honeybee version as well as separate functions for input-checking and for running the main function of the component.  A template for this body can be found [here][https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Body_Template.py].
 
 3) Descriptions of component inputs should include the following information:
 
