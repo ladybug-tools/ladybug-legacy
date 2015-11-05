@@ -7,9 +7,9 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 #HARD AND FAST RULES
 
-1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.
+1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found here[https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug%20Header%20Template.txt].
 
-2) Descriptions of component inputs should include the folling information:
+2) Descriptions of component inputs should include the following information:
 
 * What data type users should input (ie. number, point, brep).
 * What the input represents for the component.
@@ -19,12 +19,12 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 3) All inputs of components will use the following convention of '_' placement for communicating with the user about their importantance:
 
 * _input : An input that the user is required to provide in order to run the component.  Generally, the number of these inputs should be minimized if there are possible good defaults. (example of this type of input: _location on the sunpath)
-* _ input _ : An input that is important/required for the primary function of the component but for which the component includes a good default value. (example of this type of input: _hour_ on the sunpath)
+* _ input _ : An input that is important/required for the primary function of the component but for which the component includes a good default value. (example of this type of input: _ hour _ on the sunpath)
 * input_ : A completely optional input or an input that is mostly there to help users customize the output. (example of this type of input: legendPar_ on the sunpath)
 	
-4) All components should include a check of the current Ladybug and/or Honeybee version unless the component is so short in code length as to be entirely independent of Ladybug+Honyebee.
+4) All components should follow a format for their body that includes a check of the current Ladybug and/or Honeybee version as well as separate functions for input-checking and for running the main function of the component.  An example of this check can be found here[].
 
-5) Any time that a component relies on a change made in Ladybug_Ladybug or Honeybee_Honeybee, the "#compatibleLBVersion" in the header must be updated to this version of Ladybug_Ladybug or Honeybee_Honeybee.
+5) Any time that a component relies on a change made in Ladybug_Ladybug or Honeybee_Honeybee, the "#compatibleLBVersion" and/or the "#compatibleHBVersion" in the header must be updated to this version of Ladybug_Ladybug or Honeybee_Honeybee.
 
 6) Components should only use Grasshopper's "Warning" capability (orange component) if the user has input something incorrect that would cause the component to crash or produce an incorrect result.  If you only want to tell the user to input a certain required input or give the user information about how the component is running, please use either the "readMe!" output (the GHPython "print" output) or use Grasshopper's "Remark" capability instead of the "Warning" capability.
 
