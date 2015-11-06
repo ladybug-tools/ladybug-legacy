@@ -1,6 +1,6 @@
 #LADYBUG GRAPHIC STANDARDS
 
-Below are a list of component characterists and standards that have been drafted to help ensure that the components have a consistent means of communicating with users.
+Below are a list of component characteristics and standards that have been drafted to help ensure that the components have a consistent means of communicating with users.
 This communication is important for helping users understand how to use the components and how to solve issues when something has gone wrong.
 These standards also help developers communicate with one another in a consistent manner.  Adherece to these standards will ultimatelty save all of us time.
 Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless given permission otherwise and should generally strive to follow the Guidelines.
@@ -31,9 +31,9 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 7) Components should not purposefully use Grasshopper's "Error" capability.  This shall be reserved for either identifying bugs in our code or for telling the user that they have not put in the right data type to a certain input (ie. a point into a boolean input).
 
-8) All components will use the "Always draw icon" feature of GHPython.  To ensure that this is implemented, right-click on the center of your component, go to the upper-right corner of the menu, and hit the icon there unitl you see a black hexagon.
+8) All components will use the "Always draw icon" feature of GHPython.  To ensure that this is implemented, right-click on the center of your component, go to the upper-right corner of the menu, and hit the icon there until you see a black hexagon.
 
-9) Components that produce a graphic ouput in the Rhino scene will have their preview turned on by default while those that do not produce a graphic output will have their preview turned off.
+9) Components that produce a graphic output in the Rhino scene will have their preview turned on by default while those that do not produce a graphic output will have their preview turned off.
 
 10) All components will be placed first in WIP and beta tested by the community before being moved to the other tabs.  This will communicate to users that the components are still being vetted and they should use them at their own risk.
 
@@ -42,6 +42,10 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 #GUIDELINES
 
-1) Please be mindful of the color schemes and fonts that other developers have implemented on the existing component icons.  Deviating too much from these colors/fonts can compromise the graphic identiy of the project.
+1) Please be mindful of the color schemes and fonts that other developers have implemented on the existing component icons.  Deviating too much from these colors/fonts can compromise the graphic identity of the project.
 
-2) If a given input to a component is one that merits some expert knowledge (like a certain coefficient), it is usually a good idea to incude some examples of this.
+2) If a given input to a component is one that merits some expert knowledge (like a certain coefficient), it is usually a good idea to include some examples of this in the input description.
+
+3) You should aim to limit the size of your component and the number of outputs.  Remember that users can probably derive redundant outputs with a few native GH components and so you often only need to include one.  Also, if you have similar inputs, it may be useful to add an integer input for "calculation type" that switches between different modes of running the component.  The number of inputs/outputs should always aim to be less than 15.  However, if you have so much that the component does and good reasons for needing more outputs, the largest component in the whole suite currently has 22 outputs. If you are exceeding 15, be prepared with these reasons.
+
+4) If you have one operation that applies to a number of components, you should write this operation into Ladybug_Ladybug or Honeybee_Honeybee.  You should never be copy/pasting a function from another component unless you are going to be modifying that function substantially to be specific for that component's needs.
