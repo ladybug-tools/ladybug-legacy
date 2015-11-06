@@ -52,7 +52,7 @@ Provided by Ladybug 0.0.61
             18 - CFD Colors 2
             19 - Energy Balance
             20 - THERM
-            21 - Blue to Yellow
+            21 - Cloud Cover
     Returns:
         customColors: A series of colors to be plugged into the "Ladybug_Legend Parameters" component.
 """
