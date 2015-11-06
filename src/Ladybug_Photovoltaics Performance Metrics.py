@@ -145,11 +145,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = "VER 0.0.61\nNOV_06_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
 import Grasshopper.Kernel as gh
