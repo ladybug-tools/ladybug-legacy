@@ -33,11 +33,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_L2G"
 ghenv.Component.NickName = "L2G"
-ghenv.Component.Message = "VER 0.0.61\nNOV_06_2015"
+ghenv.Component.Message = "VER 0.0.61\nNOV_05_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nMAR_26_2014
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 # component, and component icon is based on "C2F" Ladybug component by Mostapha Sadeghipour Roudsari.
