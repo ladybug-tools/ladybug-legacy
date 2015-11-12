@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_11_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -3575,10 +3575,10 @@ class ComfortModels(object):
         
         #Do a series of checks to be sure that the input values are within the bounds accepted by the model.
         check = True
-        if Ta < -50.0 or Ta > 50.0: check = False
-        else: pass
-        if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
-        else: pass
+        #if Ta < -50.0 or Ta > 50.0: check = False
+        #else: pass
+        #if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
+        #else: pass
         if va < 0.5: va = 0.5
         elif va > 17: va = 17
         else: pass
