@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_18_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nJUL_06_2015
@@ -88,8 +88,6 @@ import System
 import rhinoscriptsyntax as rs
 import Rhino as rc
 import scriptcontext as sc
-from clr import AddReference
-AddReference ('Grasshopper')
 import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
@@ -228,13 +226,13 @@ def getHOYs(hours, days, months, timeStep, lb_preparation, method = 0):
             #based on analysis period
             if monthCount == 0:
                 # first month
-                days = range(stDay, numberOfDaysEachMonth[monthCount] + 1)
+                days = range(stDay, numberOfDaysEachMonth[m-1] + 1)
             elif monthCount == len(months) - 1:
                 # last month
                 days = range(1, lb_preparation.checkDay(endDay, m) + 1)
             else:
                 #rest of the months
-                days = range(1, numberOfDaysEachMonth[monthCount] + 1)
+                days = range(1, numberOfDaysEachMonth[m-1] + 1)
         
         for d in days:
             for h in hours:
