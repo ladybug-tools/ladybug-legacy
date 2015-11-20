@@ -110,10 +110,10 @@ else:
 
 #Check if there are missing required inputs.
 missingParams = []
-totalRequired = []
+dataConnected = False
 for param in ghenv.Component.Params.Input:
+    if str(param.VolatileData) != 'empty structure': dataConnected = True
     if param.NickName.startswith("_") and not param.NickName.endswith("_"):
-        totalRequired.append(1)
         if str(param.VolatileData) == 'empty structure': missingParams.append(param.NickName)
 
 
@@ -124,7 +124,7 @@ if initCheck and len(missingParams) == 0:
         result = main()
         if result != -1:
             output = result
-elif len(missingParams) < sum(totalRequired):
+elif dataConnected == True:
     for param in missingParams:
         warning = 'Input ' + param + ' is required in order to run this component.'
         ghenv.Component.AddRuntimeMessage(w, warning)
