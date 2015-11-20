@@ -75,10 +75,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_18_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nJUL_06_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -479,11 +479,11 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     #Read the legendParameters.
                     overwriteScale = False
                     try:
-                        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[i], False)
+                        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[i], False)
                         if legendPs[i] == []: overwriteScale = True
                         elif legendPs[i][5] == None: overwriteScale = True
                     except:
-                        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
+                        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
                         if legendPs[0] == []: overwriteScale = True
                         elif legendPs[0][5] == None: overwriteScale = True
                     if overwriteScale: legendScale = 0.9
@@ -513,7 +513,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         
                         customHeading = '\n\n\n\nSun-Path Diagram - Latitude: ' + `latitude` + '\n'
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(values
-                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+                                , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
                         
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -628,7 +628,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 for i in range(legendPar.BranchCount):
                     legendPs.append(legendPar.Branch(i))
                 if len(legendPs) == 0: legendPs.append([])
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
                 
                 textSize = legendScale * 0.5 * lb_visualization.BoundingBoxPar[2]/20
                 titlebasePt = lb_visualization.BoundingBoxPar[-2]

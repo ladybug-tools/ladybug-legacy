@@ -71,10 +71,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nJUL_16_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -730,7 +730,10 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
         #Get the colors for the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
         legendFont = 'Verdana'
         if legendPar:
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
+            if legendPar[3] == []:
+                customColors = lb_visualization.gradientLibrary[12]
+                customColors.reverse()
         else:
             lowB = -1 * legendVal
             highB = legendVal
@@ -741,6 +744,8 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
             legendFontSize = None
             legendBold = False
             legendScale = 1
+            decimalPlaces = 2
+            removeLessThan = False
         
         #If the user has not input custom boundaries, automatically choose the boundaries for them.
         if lowB == "min": lowB = -1 * legendVal
@@ -789,7 +794,7 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
         analysisTitle = '\nShade Benefit Analysis'
         if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
         
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(shadeNetEffect, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(shadeNetEffect, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         

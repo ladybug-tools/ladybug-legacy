@@ -45,10 +45,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Create Legend"
 ghenv.Component.NickName = 'createLegend'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
@@ -70,7 +70,7 @@ def main(results, legendPar, legendTitle, legendWidth):
     if not legendTitle:  legendTitle = 'unknown units  '
     
     # read the legend parameters legend
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     
     if legendBasePoint == None and legendBasePt_ != None: legendBasePoint = legendBasePt_
     else: legendBasePoint = rc.Geometry.Point3d(0,0,0)
@@ -79,7 +79,7 @@ def main(results, legendPar, legendTitle, legendWidth):
     
     # generate the legend
     legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(results
-    , lowB, highB, numSeg, legendTitle, boundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+    , lowB, highB, numSeg, legendTitle, boundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     
     #
     legendTextSrfsFlattened = []

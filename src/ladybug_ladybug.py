@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_11_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -606,7 +606,7 @@ class Preparation(object):
     
     
     def readLegendParameters(self, legendPar, getCenter = True):
-        if legendPar == []: legendPar = [None] * 8
+        if legendPar == []: legendPar = [None] * 11
         if legendPar[0] == None: lowB = 'min'
         elif legendPar[0] == 'min': lowB = 'min'
         else: lowB = float(legendPar[0])
@@ -627,7 +627,6 @@ class Preparation(object):
         if legendPar[4] or getCenter: legendBasePoint = self.getCenPt(legendPar[4])
         else: legendBasePoint = None
         
-        # print len(legendPar)
         if legendPar[5] == None or float(legendPar[5])==0: legendScale = 1
         else: legendScale = legendPar[5]
         
@@ -637,12 +636,16 @@ class Preparation(object):
         if legendPar[7] == None: legendFontSize = None
         else: legendFontSize = legendPar[7]
         
-        try:
-            if legendPar[8] == None: legendBold = False
-            else: legendBold = legendPar[8]
-        except: legendBold = False
-
-        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold
+        if legendPar[8] == None: legendBold = False
+        else: legendBold = legendPar[8]
+        
+        if legendPar[9] == None: decimalPlaces = 2
+        else: decimalPlaces = legendPar[9]
+        
+        if legendPar[10] == None: removeLessThan = False
+        else: removeLessThan = legendPar[10]
+        
+        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan
     
     def readOrientationParameters(self, orientationStudyP):
         try:
@@ -2548,7 +2551,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -2565,7 +2568,7 @@ class ResultVisualization(object):
             for pt in range(numPt):
                 point = rc.Geometry.Point3d(basePt[0] + (pt%2) * legendWidth, basePt[1] + int(pt/2) * legendHeight, basePt[2])
                 ptList.append(point)
-    
+            
             meshVertices = ptList; textPt = []
             legendSrf = rc.Geometry.Mesh()
             for segNum in  range(numOfSeg):
@@ -2592,8 +2595,6 @@ class ResultVisualization(object):
         if  textSize == None:
             textSize = (legendHeight/3) * legendScale
         
-        # numbers
-        # rs.frange(0, 1, round(1/(numofColors-1),6))
         try:
             numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
         except:
@@ -2601,12 +2602,17 @@ class ResultVisualization(object):
                 numbers = [lowB]; numOfSeg = 1
             else:
                 numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
-        ###
+        if decimalPlaces == None: decimalPlaces = 2
+        
+        ### Create the numbers in the legend.
         if len(numbers) < numOfSeg: numbers.append(highB)
         elif len(numbers) > numOfSeg: numbers = numbers[:-1]
-        numbersStr = [("%.2f" % x) for x in numbers]
-        numbersStr[0] = "<=" + numbersStr[0]
-        numbersStr[-1] = numbersStr[-1] + "<="
+        formatString = "%."+str(decimalPlaces)+"f"
+        numbersStr = [(formatString % x) for x in numbers]
+        if greaterLessThan: pass
+        else:
+            numbersStr[0] = "<=" + numbersStr[0]
+            numbersStr[-1] = numbersStr[-1] + "<="
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
         
@@ -2873,17 +2879,22 @@ class ResultVisualization(object):
                 
             return newLayerIndex, l
     
-    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None):
+    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2):
+            #Set up basic object attributes
             attr = rc.DocObjects.ObjectAttributes()
             attr.LayerIndex = newLayerIndex
             attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
             attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
-            try:
-                for mesh in testGeomety: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
-            except:
-                rc.RhinoDoc.ActiveDoc.Objects.AddMesh(testGeomety, attr)
             
-            rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
+            #Write colored meshes into the document
+            try:
+                for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
+            except:
+                self.mesh2Hatch([testGeomety], newLayerIndex, attr)
+            self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
+            
+            #Write the curves into the document.
+            attr.ObjectColor = System.Drawing.Color.Black
             if crvs != None:
                 for crv in crvs:
                     try:
@@ -2892,12 +2903,15 @@ class ResultVisualization(object):
                         # This is for breps surfaces as I changed curves to surfaces now
                         try: rc.RhinoDoc.ActiveDoc.Objects.AddBrep(crv, attr)
                         except: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(crv, attr)
+            
+            #Write the text into the document
+            formatString = "%." + str(decimalPlaces) + "f"
             for text in range(len(legendText)):
                 plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
-                if type(legendText[text]) is not str: legendText[text] = ("%.2f" % legendText[text])
+                if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
                 rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
     
-    def mesh2Hatch(self, meshes, parentLayerIndex):
+    def mesh2Hatch(self, meshes, parentLayerIndex, attr = None):
         #Go through each of the meshes and make a group of hatches.
         for mesh in meshes:
             
@@ -2973,8 +2987,9 @@ class ResultVisualization(object):
             
             #Bake the hatch into the scene.
             for count, hatch in enumerate(hatches):
-                attr = rc.DocObjects.ObjectAttributes()
-                attr.LayerIndex = parentLayerIndex
+                if attr == None:
+                    attr = rc.DocObjects.ObjectAttributes()
+                    attr.LayerIndex = parentLayerIndex
                 attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
                 attr.ObjectColor = colors[count]
                 

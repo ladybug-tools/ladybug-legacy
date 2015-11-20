@@ -39,16 +39,18 @@ Provided by Ladybug 0.0.61
         font_: An optional text string that sets the font of the text. Examples include "Arial", "Times New Roman" or "Courier" (all without quotations).  The text input here can be any font that is on your computer but the font must be of an Editable file type (as seen in the font folder off of your control panel).  Font files that are Print and Preview will not work.
         fontSize_: An optional number to set the size of the text in Rhino model units.
         bold_:  Set to 'True' to have the text be bolded and set to 'False' to have it displayed in medium type face.  The default is set to 'False.'
+        decimalPlaces_: An interger representing the number of decimal places to make the legend values.  The default is set to 2 decimal places.
+        removeLessThan_: Set to 'True' to have the "<=" and ">=" symbols removed from the legend.  The default is set to 'False' to have these symbols included.
     Returns:
         legendPar: A list of legend parameters to be plugged into any of the Ladybug components with a legend.
 """
 
 ghenv.Component.Name = "Ladybug_Legend Parameters"
 ghenv.Component.NickName = 'legendPar'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -72,7 +74,7 @@ def getFontsList():
     fonts.sort()
     return fonts
 
-def main(lowBound, highBound, numSegments, customColors, legendLocation, legendScale, font, fontSize, bold):
+def main(lowBound, highBound, numSegments, customColors, legendLocation, legendScale, font, fontSize, bold, decimalPlaces, removeLessThan):
     if len(customColors) != 1:
         if lowBound: lowBound = float(lowBound)
         if highBound: highBound = float(highBound)
@@ -90,12 +92,12 @@ def main(lowBound, highBound, numSegments, customColors, legendLocation, legendS
         else:
             legendPar = [lowBound, highBound, numSegments, customColors, legendLocation, legendScale]
         
-        legendPar.extend([font, fontSize, bold])
+        legendPar.extend([font, fontSize, bold, decimalPlaces, removeLessThan])
         return legendPar
     else:
         return -1
 
-legendPar = main(lowBound_, highBound_, numSegments_, customColors_, legendLocation_, legendScale_, font_, fontSize_, bold_)
+legendPar = main(lowBound_, highBound_, numSegments_, customColors_, legendLocation_, legendScale_, font_, fontSize_, bold_, decimalPlaces_, removeLessThan_)
 ghenv.Component.Params.Output[0].Hidden = True
 if legendPar == -1:
     warning = "You should connect at least two colors to customColors input."
