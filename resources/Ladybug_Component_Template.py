@@ -81,7 +81,8 @@ if not sc.sticky.has_key('ladybug_release') == True:
     ghenv.Component.AddRuntimeMessage(w, "You should first let Ladybug fly...")
 else:
     try:
-        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): pass
+        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = False
+        if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): initCheck = False
     except:
         initCheck = False
         warning = "You need a newer version of Ladybug to use this compoent." + \
@@ -98,7 +99,8 @@ if not sc.sticky.has_key('honeybee_release') == True:
     ghenv.Component.AddRuntimeMessage(w, "You should first let Honeybee fly...")
 else:
     try:
-        if not sc.sticky['honeybee_release'].isCompatible(ghenv.Component): pass
+        if not sc.sticky['honeybee_release'].isCompatible(ghenv.Component): initCheck = False
+        if sc.sticky['honeybee_release'].isInputMissing(ghenv.Component): initCheck = False
     except:
         initCheck = False
         warning = "You need a newer version of Honeybee to use this compoent." + \
@@ -108,23 +110,10 @@ else:
         ghenv.Component.AddRuntimeMessage(w, warning)
 
 
-#Check if there are missing required inputs.
-missingParams = []
-dataConnected = False
-for param in ghenv.Component.Params.Input:
-    if str(param.VolatileData) != 'empty structure': dataConnected = True
-    if param.NickName.startswith("_") and not param.NickName.endswith("_"):
-        if str(param.VolatileData) == 'empty structure': missingParams.append(param.NickName)
-
-
 #If the intital check is good, run the component.
-if initCheck and len(missingParams) == 0:
+if initCheck:
     checkData = checkTheInputs()
     if checkData:
         result = main()
         if result != -1:
             output = result
-elif dataConnected == True:
-    for param in missingParams:
-        warning = 'Input ' + param + ' is required in order to run this component.'
-        ghenv.Component.AddRuntimeMessage(w, warning)

@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_23_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -280,6 +280,28 @@ class versionCheck(object):
                      "into canvas and try again."
         w = gh.GH_RuntimeMessageLevel.Warning
         GHComponent.AddRuntimeMessage(w, warningMsg)
+    
+    def isInputMissing(self, GHComponent):
+        isInputMissing = False
+        isAnyConnected = False
+        for param in GHComponent.Params.Input:
+            if param.NickName.startswith("_") and \
+                not param.NickName.endswith("_") and \
+                param.VolatileDataCount:
+                    isAnyConnected = True
+                    break
+        
+        if not isAnyConnected: return True
+        
+        for param in GHComponent.Params.Input:
+            if param.NickName.startswith("_") and \
+                not param.NickName.endswith("_") and \
+                not param.VolatileDataCount:
+                    warning = "Input parameter %s failed to collect data!"%param.NickName
+                    GHComponent.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    isInputMissing = True
+        
+        return isInputMissing
 
 
 class Preparation(object):
