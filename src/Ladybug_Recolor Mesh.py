@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Recolor Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -203,6 +203,11 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
             if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
             
             if bakeIt:
+                formatString = "%."+str(decimalPlaces)+"f"
+                for count, item in enumerate(legendText):
+                    try:
+                        legendText[count] = formatString % item
+                    except:pass
                 legendText.append(analysisTitle)
                 textPt.append(titlebasePt)
                 studyLayerName = 'CUSTOM_PRESENTATION'
