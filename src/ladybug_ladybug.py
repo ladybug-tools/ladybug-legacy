@@ -36,7 +36,7 @@ along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_15_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -56,6 +56,7 @@ except: pass
 import rhinoscriptsyntax as rs
 import Rhino as rc
 import scriptcontext as sc
+import Grasshopper
 import Grasshopper.Kernel as gh
 import math
 import shutil
@@ -131,6 +132,26 @@ class CheckIn():
                     return
                 
                 sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
+        
+        self.updateCategoryIcon()
+    
+    @staticmethod
+    def updateCategoryIcon():
+        try:
+            url = "https://raw.githubusercontent.com/mostaphaRoudsari/ladybug/master/resources/icon_16_16.png"
+            icon = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "LB_icon_16_16.png")
+            if not os.path.isfile(icon):
+                client = System.Net.WebClient()
+                client.DownloadFile(url, icon)
+            
+            iconBitmap = System.Drawing.Bitmap(icon)
+            Grasshopper.Instances.ComponentServer.AddCategoryIcon("Ladybug", iconBitmap)
+        except:
+            pass
+            
+        Grasshopper.Instances.ComponentServer.AddCategoryShortName("Ladybug", "LB")
+        Grasshopper.Instances.ComponentServer.AddCategorySymbolName("Ladybug", "L")
+        Grasshopper.Kernel.GH_ComponentServer.UpdateRibbonUI() #Reload the Ribbon
     
     def getComponentVersion(self):
         monthDict = {'JAN':'01', 'FEB':'02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06',
@@ -259,6 +280,28 @@ class versionCheck(object):
                      "into canvas and try again."
         w = gh.GH_RuntimeMessageLevel.Warning
         GHComponent.AddRuntimeMessage(w, warningMsg)
+    
+    def isInputMissing(self, GHComponent):
+        isInputMissing = False
+        isAnyConnected = False
+        for param in GHComponent.Params.Input:
+            if param.NickName.startswith("_") and \
+                not param.NickName.endswith("_") and \
+                param.VolatileDataCount:
+                    isAnyConnected = True
+                    break
+        
+        if not isAnyConnected: return True
+        
+        for param in GHComponent.Params.Input:
+            if param.NickName.startswith("_") and \
+                not param.NickName.endswith("_") and \
+                not param.VolatileDataCount:
+                    warning = "Input parameter %s failed to collect data!"%param.NickName
+                    GHComponent.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    isInputMissing = True
+        
+        return isInputMissing
 
 
 class Preparation(object):
@@ -453,11 +496,11 @@ class Preparation(object):
             return day, month, time
             
         return (`day` + ' ' + month + ' ' + time)
-
+    
     def tupleStr2Tuple(self, str):
         strSplit = str[1:-1].split(',')
         return (int(strSplit[0]), int(strSplit[1]), int(strSplit[2]))
-
+    
     def date2Hour(self, month, day, hour):
         # fix the end day
         numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
@@ -585,7 +628,7 @@ class Preparation(object):
     
     
     def readLegendParameters(self, legendPar, getCenter = True):
-        if legendPar == []: legendPar = [None] * 8
+        if legendPar == []: legendPar = [None] * 11
         if legendPar[0] == None: lowB = 'min'
         elif legendPar[0] == 'min': lowB = 'min'
         else: lowB = float(legendPar[0])
@@ -606,7 +649,6 @@ class Preparation(object):
         if legendPar[4] or getCenter: legendBasePoint = self.getCenPt(legendPar[4])
         else: legendBasePoint = None
         
-        # print len(legendPar)
         if legendPar[5] == None or float(legendPar[5])==0: legendScale = 1
         else: legendScale = legendPar[5]
         
@@ -616,12 +658,16 @@ class Preparation(object):
         if legendPar[7] == None: legendFontSize = None
         else: legendFontSize = legendPar[7]
         
-        try:
-            if legendPar[8] == None: legendBold = False
-            else: legendBold = legendPar[8]
-        except: legendBold = False
-
-        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold
+        if legendPar[8] == None: legendBold = False
+        else: legendBold = legendPar[8]
+        
+        if legendPar[9] == None: decimalPlaces = 2
+        else: decimalPlaces = legendPar[9]
+        
+        if legendPar[10] == None: removeLessThan = False
+        else: removeLessThan = legendPar[10]
+        
+        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan
     
     def readOrientationParameters(self, orientationStudyP):
         try:
@@ -836,7 +882,7 @@ class Preparation(object):
         groundtemp1st = [self.strToBeFoundgt, location, 'Depth', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
-
+        
         lnum = 1 # Line number
         
         with epwfile as i:
@@ -845,12 +891,7 @@ class Preparation(object):
                     noData = False
                     groundtemp = epwfile.readline().split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
                     
-                    try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st)' + groundtemp[18]+ ' meters (2nd)'+ groundtemp[34]+'meters (3rd)respectively'
-                    except:
-                        if groundtemp[1] == '':
-                            print 'No ground temperatures found in weather file.'
-                            noData = True
-                        else: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters'
+                    self.groundtemp = groundtemp
                     
                     def stringtoFloat(sequence): # stringtoFloattion that converts strings to floats, if not possible it passes
                     	strings = []
@@ -884,6 +925,15 @@ class Preparation(object):
                 
         return groundtemp1st,groundtemp2nd,groundtemp3rd
     
+    def printgroundTempData(self,groundtemp):
+                    
+        try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st) ' + groundtemp[18]+ ' meters (2nd) '+ groundtemp[34]+' meters (3rd) respectively'
+        except:
+            if groundtemp[1] == '':
+                print 'No ground temperatures found in weather file.'
+                noData = True
+            else: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters'
+        
     
     strToBeFound = 'key:location/dataType/units/frequency/startsAt/endsAt'
     
@@ -2387,7 +2437,9 @@ class ResultVisualization(object):
         16: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(255,255,255)],
         17: [System.Drawing.Color.FromArgb(0,16,120), System.Drawing.Color.FromArgb(38,70,160), System.Drawing.Color.FromArgb(5,180,222), System.Drawing.Color.FromArgb(16,180,109), System.Drawing.Color.FromArgb(59,183,35), System.Drawing.Color.FromArgb(143,209,19), System.Drawing.Color.FromArgb(228,215,29), System.Drawing.Color.FromArgb(246,147,17), System.Drawing.Color.FromArgb(243,74,0), System.Drawing.Color.FromArgb(255,0,0)],
         18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
-        19: [System.Drawing.Color.FromArgb(153,153,153), System.Drawing.Color.FromArgb(100,149,237), System.Drawing.Color.FromArgb(104,152,231), System.Drawing.Color.FromArgb(115,159,214), System.Drawing.Color.FromArgb(132,171,188), System.Drawing.Color.FromArgb(154,186,155), System.Drawing.Color.FromArgb(178,202,119), System.Drawing.Color.FromArgb(201,218,82), System.Drawing.Color.FromArgb(223,233,49), System.Drawing.Color.FromArgb(240,245,23), System.Drawing.Color.FromArgb(251,252,6), System.Drawing.Color.FromArgb(255,255,0)]
+        19: [System.Drawing.Color.FromArgb(138,17,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(128,102,64)],
+        20: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(137,0,139), System.Drawing.Color.FromArgb(218,0,218), System.Drawing.Color.FromArgb(196,0,255), System.Drawing.Color.FromArgb(0,92,255), System.Drawing.Color.FromArgb(0,198,252), System.Drawing.Color.FromArgb(0,244,215), System.Drawing.Color.FromArgb(0,220,101), System.Drawing.Color.FromArgb(7,193,0), System.Drawing.Color.FromArgb(115,220,0), System.Drawing.Color.FromArgb(249,251,0), System.Drawing.Color.FromArgb(254,178,0), System.Drawing.Color.FromArgb(253,77,0), System.Drawing.Color.FromArgb(255,15,15), System.Drawing.Color.FromArgb(255,135,135), System.Drawing.Color.FromArgb(255,255,255)],
+        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)]
         }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
@@ -2521,7 +2573,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -2538,7 +2590,7 @@ class ResultVisualization(object):
             for pt in range(numPt):
                 point = rc.Geometry.Point3d(basePt[0] + (pt%2) * legendWidth, basePt[1] + int(pt/2) * legendHeight, basePt[2])
                 ptList.append(point)
-    
+            
             meshVertices = ptList; textPt = []
             legendSrf = rc.Geometry.Mesh()
             for segNum in  range(numOfSeg):
@@ -2565,8 +2617,6 @@ class ResultVisualization(object):
         if  textSize == None:
             textSize = (legendHeight/3) * legendScale
         
-        # numbers
-        # rs.frange(0, 1, round(1/(numofColors-1),6))
         try:
             numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
         except:
@@ -2574,12 +2624,17 @@ class ResultVisualization(object):
                 numbers = [lowB]; numOfSeg = 1
             else:
                 numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
-        ###
+        if decimalPlaces == None: decimalPlaces = 2
+        
+        ### Create the numbers in the legend.
         if len(numbers) < numOfSeg: numbers.append(highB)
         elif len(numbers) > numOfSeg: numbers = numbers[:-1]
-        numbersStr = [("%.2f" % x) for x in numbers]
-        numbersStr[0] = "<=" + numbersStr[0]
-        numbersStr[-1] = numbersStr[-1] + "<="
+        formatString = "%."+str(decimalPlaces)+"f"
+        numbersStr = [(formatString % x) for x in numbers]
+        if greaterLessThan: pass
+        else:
+            numbersStr[0] = "<=" + numbersStr[0]
+            numbersStr[-1] = numbersStr[-1] + "<="
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
         
@@ -2846,17 +2901,22 @@ class ResultVisualization(object):
                 
             return newLayerIndex, l
     
-    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None):
+    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2):
+            #Set up basic object attributes
             attr = rc.DocObjects.ObjectAttributes()
             attr.LayerIndex = newLayerIndex
             attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
             attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
-            try:
-                for mesh in testGeomety: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
-            except:
-                rc.RhinoDoc.ActiveDoc.Objects.AddMesh(testGeomety, attr)
             
-            rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
+            #Write colored meshes into the document
+            try:
+                for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
+            except:
+                self.mesh2Hatch([testGeomety], newLayerIndex, attr)
+            self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
+            
+            #Write the curves into the document.
+            attr.ObjectColor = System.Drawing.Color.Black
             if crvs != None:
                 for crv in crvs:
                     try:
@@ -2865,12 +2925,103 @@ class ResultVisualization(object):
                         # This is for breps surfaces as I changed curves to surfaces now
                         try: rc.RhinoDoc.ActiveDoc.Objects.AddBrep(crv, attr)
                         except: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(crv, attr)
+            
+            #Write the text into the document
+            formatString = "%." + str(decimalPlaces) + "f"
             for text in range(len(legendText)):
                 plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
-                if type(legendText[text]) is not str: legendText[text] = ("%.2f" % legendText[text])
+                if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
                 rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
+    
+    def mesh2Hatch(self, meshes, parentLayerIndex, attr = None):
+        #Go through each of the meshes and make a group of hatches.
+        for mesh in meshes:
+            
+            #Make some lists to hold key parameters
+            hatches = []
+            colors = []
+            guids = []
+            runningVertexCount = 0
+            meshColors = mesh.VertexColors
+            
+            for faceCount, face in enumerate(mesh.Faces):
+                faceColorList = []
+                facePointList = []
                 
-                # end of the script
+                #Extract the points and colors.
+                if face.IsQuad:
+                    faceColorList.append(meshColors[face.A])
+                    faceColorList.append(meshColors[face.B])
+                    faceColorList.append(meshColors[face.C])
+                    faceColorList.append(meshColors[face.D])
+                    
+                    facePointList.append(mesh.PointAt(faceCount, 1,0,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,1,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,1,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,0,1))
+                else:
+                    faceColorList.append(meshColors[face.A])
+                    faceColorList.append(meshColors[face.B])
+                    faceColorList.append(meshColors[face.C])
+                    
+                    facePointList.append(mesh.PointAt(faceCount, 1,0,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,1,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,1,0))
+                
+                #Calculate the average color of the face.
+                if face.IsQuad:
+                    hatchColorR = (faceColorList[0].R + faceColorList[1].R + faceColorList[2].R + faceColorList[3].R) / 4
+                    hatchColorG = (faceColorList[0].G + faceColorList[1].G + faceColorList[2].G + faceColorList[3].G) / 4
+                    hatchColorB = (faceColorList[0].B + faceColorList[1].B + faceColorList[2].B + faceColorList[3].B) / 4
+                else:
+                    hatchColorR = (faceColorList[0].R + faceColorList[1].R + faceColorList[2].R) / 3
+                    hatchColorG = (faceColorList[0].G + faceColorList[1].G + faceColorList[2].G) / 3
+                    hatchColorB = (faceColorList[0].B + faceColorList[1].B + faceColorList[2].B) / 3
+                hatchColor = System.Drawing.Color.FromArgb(255, hatchColorR, hatchColorG, hatchColorB)
+                
+                #Create the outline of a new hatch.
+                hatchCurveInit = rc.Geometry.PolylineCurve(facePointList)
+                if face.IsQuad: hatchExtra = rc.Geometry.LineCurve(facePointList[0], facePointList[3])
+                else: hatchExtra = rc.Geometry.LineCurve(facePointList[0], facePointList[2])
+                hatchCurve = rc.Geometry.Curve.JoinCurves([hatchCurveInit, hatchExtra], sc.doc.ModelAbsoluteTolerance)[0]
+                
+                #Create the hatch.
+                try:
+                    if hatchCurve.IsPlanar():
+                        meshFaceHatch = rc.Geometry.Hatch.Create(hatchCurve, 0, 0, 0)[0]
+                        hatches.append(meshFaceHatch)
+                        colors.append(hatchColor)
+                    else:
+                        #We have to split the quad face into two triangles.
+                        hatchCurveInit1 = rc.Geometry.PolylineCurve([facePointList[0], facePointList[1], facePointList[2]])
+                        hatchExtra1 = rc.Geometry.LineCurve(facePointList[0], facePointList[2])
+                        hatchCurve1 = rc.Geometry.Curve.JoinCurves([hatchCurveInit1, hatchExtra1], sc.doc.ModelAbsoluteTolerance)[0]
+                        meshFaceHatch1 = rc.Geometry.Hatch.Create(hatchCurve1, 0, 0, 0)[0]
+                        hatchCurveInit2 = rc.Geometry.PolylineCurve([facePointList[2], facePointList[3], facePointList[0]])
+                        hatchExtra2 = rc.Geometry.LineCurve(facePointList[2], facePointList[0])
+                        hatchCurve2 = rc.Geometry.Curve.JoinCurves([hatchCurveInit2, hatchExtra2], sc.doc.ModelAbsoluteTolerance)[0]
+                        meshFaceHatch2 = rc.Geometry.Hatch.Create(hatchCurve2, 0, 0, 0)[0]
+                        
+                        hatches.extend([meshFaceHatch1, meshFaceHatch2])
+                        colors.extend([hatchColor, hatchColor])
+                except:pass
+            
+            
+            #Bake the hatch into the scene.
+            for count, hatch in enumerate(hatches):
+                if attr == None:
+                    attr = rc.DocObjects.ObjectAttributes()
+                    attr.LayerIndex = parentLayerIndex
+                attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+                attr.ObjectColor = colors[count]
+                
+                rc.DocObjects.HatchObject
+                
+                guids.append(rc.RhinoDoc.ActiveDoc.Objects.AddHatch(hatch, attr))
+            
+            #Group the hatches into one object so that they are easy to handle in the Rhino scene.
+            groupT = rc.RhinoDoc.ActiveDoc.Groups
+            rc.DocObjects.Tables.GroupTable.Add(groupT, guids)
 
 
 class ComfortModels(object):
@@ -3269,6 +3420,35 @@ class ComfortModels(object):
         
         return upTemper, downTemper
     
+    def calcMRTThreshold(self, initialGuessDown, airTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD):
+        if targetPPD == 10.0: targetPMV = 0.5
+        elif targetPPD == 6.0: targetPMV = 0.220
+        elif targetPPD == 15.0: targetPMV = 0.690
+        elif targetPPD == 20.0: targetPMV = 0.84373
+        elif targetPPD < 5.0: targetPMV = 0.0001
+        else:
+            #Use Rhino's geometry functions to compute a target pmv
+            def pmvCrv(pmv):
+                return 100.0 - 95.0 * math.exp(-0.03353 * pow(pmv, 4.0) - 0.2179 * pow(pmv, 2.0))
+            
+            distribPts = []
+            startPMV = 0
+            for pmvCount in range(20):
+                distribPts.append(rc.Geometry.Point3d(startPMV, pmvCrv(startPMV), 0))
+                startPMV += 0.25
+            distribCrv = rc.Geometry.Curve.CreateInterpolatedCurve(distribPts, 3)
+            testLine = rc.Geometry.LineCurve(rc.Geometry.Point3d(0, targetPPD, 0), rc.Geometry.Point3d(5, targetPPD, 0))
+            intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
+            targetPMV = intersectPts[0].PointA.X
+        
+        downTemper = initialGuessDown
+        downDelta = 3
+        while abs(downDelta) > 0.01:
+            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(airTemp, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+            downDelta = -targetPMV - pmv
+            downTemper = downTemper + downDelta
+        
+        return downTemper, pmv, set
     
     def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety, levelOfConditioning = 0):
         # Define the variables that will be used throughout the calculation.
@@ -3461,10 +3641,10 @@ class ComfortModels(object):
         
         #Do a series of checks to be sure that the input values are within the bounds accepted by the model.
         check = True
-        if Ta < -50.0 or Ta > 50.0: check = False
-        else: pass
-        if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
-        else: pass
+        #if Ta < -50.0 or Ta > 50.0: check = False
+        #else: pass
+        #if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
+        #else: pass
         if va < 0.5: va = 0.5
         elif va > 17: va = 17
         else: pass
@@ -3853,6 +4033,11 @@ class ComfortModels(object):
         airTemp =(enthalpy - 2.5*(absHumid*1000))/(1.01 + (0.00189*absHumid*1000))
         return airTemp
     
+    def calcTempFromWetBulb(self, wetBulb, relHumid, avgBarPress):
+        humidityRatio, enthalpy, partialPressure, saturationPressure = self.calcHumidRatio([wetBulb], [relHumid], [avgBarPress])
+        absHumid, enthalpy, partialPressure, saturationPressure = self.calcHumidRatio([wetBulb], [100], [avgBarPress])
+        airTemp = wetBulb + (((absHumid[0]-humidityRatio[0])*2260000)/(1005)) 
+        return airTemp, humidityRatio[0]
     
     def outlineCurve(self, curve):
         solidBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
@@ -4667,7 +4852,7 @@ class WindSpeed(object):
 
 
 class Photovoltaics(object):
-    """ Set of methods for Photovoltaics and Solar hot water analysis """
+    """ Set of methods for Photovoltaics and Solar Water Heating analysis """
     def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
         # sunZenith, sunAzimuth, sunAltitude angles
         # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
@@ -4799,14 +4984,51 @@ class Photovoltaics(object):
         
         return sunZenithD, sunAzimuthD, sunAltitudeD
     
-    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo):
-        # pvwatts Plane-of-Array Irradiance by Perez 1990 algorithm
+    def calculateAlbedo(self, dryBulbTemperature):
+        # correcting albedo values for the presence of snow
+        # based on: Metenorm 6 Handbook part II: Theory, Meteotest
+        
+        startingDayHOY = 0
+        endingDayHOY = 24
+        dailyTaAverage = []
+        for i in range(365):
+            HOYsPerDay = dryBulbTemperature[startingDayHOY:endingDayHOY]
+            dailyTaAverage.append(sum(HOYsPerDay)/24)
+            startingDayHOY += 24
+            endingDayHOY += 24
+        
+        dailyTaAverageShifted = dailyTaAverage[-14:] + dailyTaAverage[:-14]
+        
+        startingWeekHOY = 0
+        endingWeekHOY = 14
+        albedoL = []
+        lastTwoWeeksTaAverageL = []
+        for i in range(len(dailyTaAverageShifted)):
+            lastTwoWeeksTaAverage = sum(dailyTaAverageShifted[startingWeekHOY+i:endingWeekHOY+i])/14
+            lastTwoWeeksTaAverageL.append(lastTwoWeeksTaAverage)
+            if lastTwoWeeksTaAverage > 10:
+                albedo = 0.2
+            elif lastTwoWeeksTaAverage < -10:
+                albedo = 0.8
+            else:
+                albedo = 0.423 - 0.042*lastTwoWeeksTaAverage
+                if albedo < 0.2:
+                    albedo = 0.2
+                elif albedo > 0.8:
+                    albedo = 0.8
+            for i in range(24):
+                albedoL.append(albedo)
+        
+        return albedoL
+    
+    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo, beamTransIndex=1, SVF=1):
         
         if sunZenithD > 90:
             sunZenithD = 90
             sunAzimuthD = 0
         
-        GHI = DHI + DNI * math.cos(math.radians(sunZenithD))
+        DNIshaded = DNI * beamTransIndex
+        GHI = DHI + DNIshaded * math.cos(math.radians(sunZenithD))
         
         # convert degree angles to radians:
         srfTiltR = math.radians(srfTiltD)
@@ -4826,9 +5048,9 @@ class Photovoltaics(object):
         AOI_D = math.degrees(AOI_R)  # in degrees
         
         # Eb beam irradiance
-        Eb = DNI * math.cos(AOI_R)
+        Eb = DNIshaded * math.cos(AOI_R)
         
-        # Ed_sky (Perez 1990 Model modified model) diffuse sky irradiance
+        # Ed_sky (Perez 1990 modified model diffuse sky irradiance)
         a = max(0, math.cos(AOI_R))
         b = max(math.cos(math.radians(85)), math.cos(sunZenithR))
         
@@ -4837,7 +5059,7 @@ class Photovoltaics(object):
         if DHI == 0:
             divison = 0
         elif DHI > 0:
-            divison = ((DHI+DNI)/DHI)
+            divison = ((DHI+DNIshaded)/DHI)
         epsilon = ( divison + k*(sunZenithD**3)) / (1 + k*(sunZenithD**3))
         
         # Perez model coefficients for irradiance based on epsilon bins
@@ -4909,28 +5131,35 @@ class Photovoltaics(object):
         
         # isotropic, circumsolar, and horizon brightening components of the sky diffuse irradiance:
         if (sunZenithD <= 87.5):
-            Di = DHI*(1-F1)*((1+math.cos(srfTiltR))/2)
-            Dc = DHI*F1*(a/b)
-            Dh = DHI*F2*math.sin(srfTiltR)
+            Di = (DHI*(1-F1)*((1+math.cos(srfTiltR))/2)) * SVF
+            Dc = (DHI*F1*(a/b)) * beamTransIndex  # based on assumption that all circumsolar component brightening is concentrated at the position of the sun, and therefor completely blocked in case of shading
+            if SVF >= 0.05:  # based on area of the sky dome intersected with sunZenithD when: 87.5 < sunZenithD <= 90
+                Dh = 0
+            else:
+                Dh = DHI*F2*math.sin(srfTiltR)
         # only isotropic brightening component of the sky diffuse irradiance:
         elif (sunZenithD > 87.5):
-            Di = (1+math.cos(srfTiltR))/2
+            Di = ((1+math.cos(srfTiltR))/2) * SVF
             Dc = 0
             Dh = 0
         
         Ed_sky = Di + Dc + Dh
         
-        # Eg ground reflected irradiance
-        Eground = ((DNI * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
+        # Eg ground reflected irradiance by Liu, Jordan, (1963).
+        Eground = ((DNIshaded * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
         
         Epoa = Eb + Eground + Ed_sky  # in Wh/m2
         
-        if Epoa < 0 or ((DNI<=0) and (DHI<=0)):
+        if Eb < 0: Eb = 0
+        if Eground < 0: Eground = 0
+        if Ed_sky < 0: Ed_sky = 0
+        
+        if Epoa < 0 or ((DNIshaded<=0) and (DHI<=0)):
             Epoa = Eb = Ed_sky = Eground = 0
         
         return Epoa, Eb, Ed_sky, Eground, AOI_R
     
-    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws, DNI, DHI):
+    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws10, DNI, DHI):
         # PVWatts v1 Thermal, Module Temperature, Cell Temperature Module and Inverter models
         
         # Sandia PV Array Performance Module Cover
@@ -4964,18 +5193,18 @@ class Photovoltaics(object):
             deltaT = 3
         
         # Sandia Module Temperature Model
-        Tm = Epoa * (math.exp(a+(b*ws))) + Ta  # in C degrees
+        Tm = Epoa * (math.exp(a+(b*ws10))) + Ta  # in C degrees
         
         # Sandia Cell Temperature Model
         Tcell = Tm + (Epoa/1000)*deltaT  # in C degrees
         
         if ((DNI<=0) and (DHI<=0)):
-            Pac = 0
-            return Tm, Tcell, Pac
+            Pdc_ = Pac = 0
+            return Tm, Tcell, Pdc_, Pac
         
         # PVFORM version 3.3 adapted Module Model
         Pdc0 = nameplateDCpowerRating   # in kWatts
-        gamma = -0.005   # default value for crystalline silicon PV modules
+        gamma = -0.005   # default temperature coefficient for crystalline silicon PV modules
         
         if Etr > 125:
             Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))
@@ -5003,9 +5232,9 @@ class Photovoltaics(object):
         
         if Pac < 0: Pac = 0
         
-        return Tm, Tcell, Pac
+        return Tm, Tcell, Pdc_, Pac
     
-    def srfAzimuthAngle(self, PVsurface):
+    def calculateSrfAzimuthAngle(self, PVsurface):
         # calculate PVsurface azimuth angle
         obj = rs.coercegeometry(PVsurface)
         objSrf = obj.Faces[0]
@@ -5044,7 +5273,37 @@ class Photovoltaics(object):
         
         return srfAzimuthD, surfaceTiltD
     
-    def srfTiltAngle(self, PVsurface):
+    def srfAzimuthAngle(self, PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceAzimuthAngle != None):
+            if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+            else:
+                srfAzimuthD = PVsurfaceAzimuthAngle
+            surfaceTiltDCalculated = "needs to be calculated"
+        
+        # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceAzimuthAngle == None):
+            if PVsurfaceInputType == "brep":
+                srfAzimuthD, surfaceTiltDCalculated = self.calculateSrfAzimuthAngle(PVsurface)
+                if surfaceTiltDCalculated == None:
+                    surfaceTiltDCalculated = "needs to be calculated"
+            
+            # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
+            elif PVsurfaceInputType == "number":
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+                surfaceTiltDCalculated = "needs to be calculated"
+        
+        return srfAzimuthD, surfaceTiltDCalculated
+    
+    def calculateSrfTiltAngle(self, PVsurface):
         # calculate PVsurface tilt angle
         obj = rs.coercegeometry(PVsurface)
         zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
@@ -5081,8 +5340,78 @@ class Photovoltaics(object):
         srfTiltD = math.degrees(srfTitlR)
         
         return srfTiltD
-
-    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, depth_m=2, soilThermalDiffusivity_m2_s=2.5, minimalTemperature_C=1):
+    
+    def srfTiltAngle(self, PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceTiltAngle != None):
+            
+            if (PVsurfaceTiltAngle < 0):
+                srfTiltD = 0
+            elif (PVsurfaceTiltAngle > 180):
+                srfTiltD = 0
+            else:
+                srfTiltD = PVsurfaceTiltAngle
+        
+        # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceTiltAngle == None):
+            
+            # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
+            if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
+                srfTiltD = surfaceTiltDCalculated
+            elif surfaceTiltDCalculated == "needs to be calculated":
+                if PVsurfaceInputType == "brep":
+                    srfTiltD = self.calculateSrfTiltAngle(PVsurface)
+                # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
+                elif PVsurfaceInputType == "number":
+                    srfTiltD = abs(latitude)
+        
+        return srfTiltD
+    
+    def angle2northClockwise(self, north):
+        # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
+        try:
+            northVec = rc.Geometry.Vector3d.YAxis
+            northVec.Rotate(-math.radians(float(north)),rc.Geometry.Vector3d.ZAxis)
+            northVec.Unitize()
+            return 2*math.pi-math.radians(float(north)), northVec
+        except Exception, e:
+            try:
+                northVec =rc.Geometry.Vector3d(north)
+                northVec.Unitize()
+                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVec, rc.Geometry.Plane.WorldXY), northVec
+            except Exception, e:
+                return 0, rc.Geometry.Vector3d.YAxis
+    
+    def correctSrfAzimuthDforNorth(self, north, srfAzimuthD):
+        # nothing inputted in "north_" - use default value: 0
+        if north == None:
+            northDeg = 0  # default
+            correctedSrfAzimuthD = srfAzimuthD
+            validNorth = True
+            printMsg = "ok"
+        else:
+            try:  # check if it's a number
+                north = float(north)
+                if north < 0 or north > 360:
+                    correctedSrfAzimuthD = northDeg = None
+                    validNorth = False
+                    printMsg = "Please input north angle value from 0 to 360."
+                    return correctedSrfAzimuthD, validNorth, printMsg
+            except Exception, e:  # check if it's a vector
+                north.Unitize()
+            
+            northRad, northVec = self.angle2northClockwise(north)
+            northDeg = 360-math.degrees(northRad)
+            correctedSrfAzimuthD = northDeg + srfAzimuthD
+            if correctedSrfAzimuthD > 360:
+                correctedSrfAzimuthD = correctedSrfAzimuthD - 360
+            validNorth = True
+            printMsg = "ok"
+        
+        return correctedSrfAzimuthD, northDeg, validNorth, printMsg
+    
+    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, minimalTemperature_C=1, depth_m=2, soilThermalDiffusivity_m2_s=2.5):
         # calculate cold (inlet) water temperature
         # soilThermalDiffusivity (m2/s) per material (valid for method "0" only):
         # 0.00000024 - dry sand

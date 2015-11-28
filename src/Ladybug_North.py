@@ -25,7 +25,7 @@
 Use this component to create a compass sign that indicates the direction of North in the Rhino scene.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _north_: Input a vector to be used as a North direction or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_North"
 ghenv.Component.NickName = 'northArrow'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

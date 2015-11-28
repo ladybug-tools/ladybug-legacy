@@ -25,12 +25,12 @@
 This component calculates the Tilt and Orientation Factor (TOF) for PV modules/Solar hot watter collectors.
 TOF is a solar radiation at the actual tilt and orientation divided by the solar radiation at the optimum tilt and orientation, expressed in percent. 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     input:
+        _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
         _PVsurface: - Input planar Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
                     - Or input surface Area, in square meters (example: "100").
-        _epwFile: Input .epw file path by using grasshopper's "File Path" component.
         PVsurfaceTiltAngle_: The angle from horizontal of the inclination of the PVsurface. Example: 0 = horizontal, 90 = vertical. (range 0-180)
                              -
                              If not supplied, but surface inputted into "_PVsurface", PVsurfaceTiltAngle will be calculated from an angle PVsurface closes with XY plane.
@@ -46,21 +46,15 @@ Provided by Ladybug 0.0.60
         north_: Input a vector to be used as a true North direction, or a number between 0 and 360 that represents the clockwise degrees off from the Y-axis.
                 -
                 If not supplied, default North direction will be set to the Y-axis (0 degrees).
-        albedo_: Average reflection coefficient of the area surrounding the PV surface. It ranges from 0 for very dark to 1 for bright white or metallic surface. Here are some specific values:
+        albedo_: or Reflection coefficient - the average ratio of the global incident solar radiation reflected from the area surrounding the PV surface.
+                 It ranges from 0 for very dark (theoretically reflects no solar radiation) to 1 (theoretically reflects all of the incident solar radiation) for white surfaces.
                  -
-                 Dry asphalt  0.12
-                 Wet Asphalt  0.18
-                 Bare soil  0.17
-                 Grass  0.20
-                 Concrete  0.30
-                 Granite  0.32
-                 Dry sand  0.35
-                 Copper  0.74
-                 Wet snow  0.65
-                 Fresh snow  0.82
-                 Aluminum  0.85
+                 It depends on the time of the year/day, surface type, temperature, vegetation, presence of water, ice and snow etc.
+                 Most PV calculation softwares use annual average value of 0.2 for cities, suburbs and countryside locations.
                  -
-                 If not supplied default value of 0.20 (Grass) will be used.
+                 If not supplied, default value of 0.20 will be used, corrected for the presence of snow.
+                 -
+                 Unitless.
         precision_: Represents the square root number of analysis field for the output "geometry" mesh. Ranges from 1-100.
                     Example - precision of 4, would mean that 4 fields in X direction (Azimuth) and 4 fields in Y direction (Tilt) = 16 fields, will be used to calculate the final "geometry" mesh.
                     For lower precision numbers (say < 20) even precision numbers are more accurate.
@@ -113,11 +107,11 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
-#compatibleLBVersion = VER 0.0.59\nMAY_26_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+#compatibleLBVersion = VER 0.0.61\nNOV_20_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
 import Grasshopper.Kernel as gh
@@ -424,7 +418,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
             meshPts.append(meshPt)
             meshLiftedPts.append(liftedMeshPt)
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     colors = lb_visualization.gradientColor(totalRadiationPerYearL, lowB, highB, customColors)
     
     mesh = lb_meshpreparation.meshFromPoints(precision+1, precision+1, meshPts, colors)
@@ -625,7 +619,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
         y2AxisNotchValuesOrigins.append(y2AxisNotchValuesOrigin)
         oddRoofPitchAnglesLabels.append(label)
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     if not legendFontSize: legendFontSize = 2
     
     # xAxis, yAxis, y2Axis LabelMeshes
@@ -693,7 +687,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
 
 def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     if legendBasePoint == None:
         legendBasePoint = Rhino.Geometry.Point3d(meshPts[precision].X+25, meshPts[precision].Y, meshPts[precision].Z)
     
@@ -706,7 +700,7 @@ def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
     # generate the legend
     totalRadiationPerYearLint = [int(annualEpoa/1000) for annualEpoa in totalRadiationPerYearL]
     lb_visualization.calculateBB([mesh])
-    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Annual radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Annual radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces
@@ -804,7 +798,6 @@ if sc.sticky.has_key("ladybug_release"):
             "If you have already updated userObjects drag the Ladybug_Ladybug component " + \
             "into the canvas and try again."
         print printMsg
-        ghenv.Component.AddRuntimeMessage(level, printMsg)
 else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg

@@ -29,7 +29,7 @@ http://www.ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
 All credit goes to Christopher Weiss (cmweiss@gmail.com), the author of the World Magnetic Model python code.
 source: https://pypi.python.org/pypi/geomag
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     input:
         _location: Input data from Ladybug's "Import epw" "location" output, or create your own location data with Ladybug's "Construct Location" component.
@@ -59,7 +59,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_True North"
 ghenv.Component.NickName = "TrueNorth"
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
@@ -222,7 +222,6 @@ if sc.sticky.has_key("ladybug_release"):
             "If you have already updated userObjects drag the Ladybug_Ladybug component " + \
             "into the canvas and try again."
         print printMsg
-        ghenv.Component.AddRuntimeMessage(level, printMsg)
 else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg

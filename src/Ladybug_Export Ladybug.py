@@ -25,7 +25,7 @@ Code Developers of Ladybug and Honeybee can use this component to export Ladybug
 This eases and automates the steps before commiting new components to the Github.
 This component was written thanks to Giulio Piacentino a really helpful example.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
 
     Args:
         _components: Any output from a new Ladybug (or Honeybee) component that you wish to export. Right now, only one component can be connected at a time but you can input a "*" (without quotation marsk) to search all changed Ladybug components on a grasshopper canvas.
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -253,7 +253,7 @@ def exportToFile(component, targetFolder, lb_preparation):
             
             return False
             
-    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0:
+    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 or component.Name.find("Dragonfly")>=0 or component.Name.find("Hydra")>=0:
         
         fileName = component.Name + ".py"
         

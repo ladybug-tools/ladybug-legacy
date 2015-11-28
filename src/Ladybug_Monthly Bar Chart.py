@@ -26,7 +26,7 @@ Use this component to make a bar chart in the Rhino scene of any monhtly or avrM
 _
 This component can also plot daily or hourly data but, for visualizing this type of data, it is recommended that you use the "Ladybug_3D Chart" component.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _inputData: A list of input data to plot.  This should usually be data out of the "Ladybug_Average Data" component or monthly data from an energy simulation but can also be hourly or daily data from the "Ladybug_Import EPW."  However, it is recommended that you use the "Ladybug_3D Chart" component for daily or hourly data as this is usually a bit clearer.
@@ -39,6 +39,7 @@ Provided by Ladybug 0.0.60
         bldgBalancePt_: An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions.
         _______________: ...
         stackValues_: Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other.
+        plotFromZero_: Set to 'True' to have the component plot all bar values starting from zero (as opposed from the bottom of the chart, which might be a negative number).  This is useful when you are plotting the terms of an energy balance where you want gains to be above zero and losses to be below.  It can be detrimental if you are plotting temperatures in degrees celcius and do not want negative values to go below zero.  As such, the default is set to 'False' to not plot from zero.
         altTitle_: An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'
         altYAxisTitle_: An optional text string to replace the default Y-Axis label of the chart.  This can also be a list of 2 y-axis titles if there are two different types of data connected to _inputData.  The default is set to pick out the names of the first (and possibly the second) list connected to the 'inputData.'
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
@@ -62,10 +63,10 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_07_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -91,12 +92,13 @@ inputsDict = {
 2: ["bldgBalancePt_", "An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions."],
 3: ["_______________", "..."],
 4: ["stackValues_", "Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other."],
-5: ["altTitle_", "An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'"],
-6: ["altYAxisTitle_", "An optional text string to replace the default Y-Axis label of the chart.  This can also be a list of 2 y-axis titles if there are two different types of data connected to _inputData.  The default is set to pick out the names of the first (and possibly the second) list connected to the 'inputData.'"],
-7: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
-8: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
-9: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
-10: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."]
+5: ["plotFromZero_", "Set to 'True' to have the component plot all bar values starting from zero (as opposed from the bottom of the chart, which might be a negative number).  This is useful when you are plotting the terms of an energy balance where you want gains to be above zero and losses to be below.  It can be detrimental if you are plotting temperatures in degrees celcius and do not want negative values to go below zero.  As such, the default is set to 'False' to not plot from zero."],
+6: ["altTitle_", "An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'"],
+7: ["altYAxisTitle_", "An optional text string to replace the default Y-Axis label of the chart.  This can also be a list of 2 y-axis titles if there are two different types of data connected to _inputData.  The default is set to pick out the names of the first (and possibly the second) list connected to the 'inputData.'"],
+8: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
+9: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
+10: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
+11: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."]
 }
 
 
@@ -138,7 +140,7 @@ def checkTheInputs():
             checkData1 = True
             methodsList = []
             for list in listInfo:
-                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged' or list[4] == 'Monthly-> total': methodsList.append(0)
+                if list[4] == 'Monthly' or list[4] == 'Monthly-> averaged' or list[4] == 'Monthly-> total' or list[4] == 'Monthly-> averaged for each day': methodsList.append(0)
                 elif list[4] == 'Monthly-> averaged for each hour' or list[4] == 'Monthly-> total for each hour': methodsList.append(1)
                 elif list[4] == 'Hourly': methodsList.append(2)
                 elif list[4] == 'Daily' or list[4] == 'Daily-> averaged' or list[4] == 'Daily-> total': methodsList.append(3)
@@ -233,7 +235,7 @@ def checkTheInputs():
 
 def manageInput():
     #If some of the component inputs and outputs are not right, blot them out or change them.
-    for input in range(11):
+    for input in range(12):
         if input == 1:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
@@ -248,7 +250,7 @@ def manageInput():
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def restoreInput():
-    for input in range(11):
+    for input in range(12):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
@@ -256,7 +258,7 @@ def restoreInput():
 
 def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization):
     #Read legend parameters
-    lowBNotImp, highBNotImp, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
+    lowBNotImp, highBNotImp, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
     numSeg = int(numSeg)
     
     #Set some defaults.
@@ -317,7 +319,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     for listCount, lst in enumerate(separatedLists):
         #Read the legendPar for the data set.
         try:
-            lowBInit, highBInit, numSegNotImportant, customColorsNotImportant, legendBasePointNotImportant, legendScaleNotImportant, legendFontNotImportant, legendFontSizeNotImportant, legendBoldNotImportant = lb_preparation.readLegendParameters(legendPs[listCount], False)
+            lowBInit, highBInit, numSegNotImportant, customColorsNotImportant, legendBasePointNotImportant, legendScaleNotImportant, legendFontNotImportant, legendFontSizeNotImportant, legendBoldNotImportant, decimalPlacesNotImportant, removeLessThanNotImportant = lb_preparation.readLegendParameters(legendPs[listCount], False)
             lowBList.append(lowBInit)
             highBList.append(highBInit)
         except:
@@ -424,14 +426,29 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             newDataMethodsList.append(methodsList[listCount])
             futureColorsList.append([0])
     
+    #Have a value that tracks whether we have a stacked value graph with negative values.
+    if plotFromZero_: negativeTrigger = True
+    else: negativeTrigger = False
+    
     #Make a function that checks the range of the data and comes up with a scaling factor for the data.
     def makeNumberLabels(valueList, leftOrRight, lowB, highB, method):
+        newNegativeTrigger = negativeTrigger
         cumulative = False
         if method == 0:
             valList = []
+            negValList= []
             for item in valueList:
-                if len(item) > 1: cumulative = True
-                valList.append(sum(item))
+                if len(item) > 1:
+                    cumulative = True
+                    posVals = []
+                    negVals = []
+                    for val in item:
+                        if val > 0: posVals.append(val)
+                        else: negVals.append(val)
+                    valList.append(sum(posVals))
+                    negValList.append(sum(negVals))
+                else:
+                    valList.append(sum(item))
         elif method == 1:
             valList = []
             for monthList in valueList:
@@ -445,15 +462,33 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
                         valList.append(item)
         elif method == 3:
             valList = []
+            negValList= []
             for monthList in valueList:
                 for item in monthList:
-                    if len(item) > 1: cumulative = True
+                    if len(item) > 1:
+                        cumulative = True
+                        posVals = []
+                        negVals = []
+                        for val in item:
+                            if val > 0: posVals.append(val)
+                            else: negVals.append(val)
+                        valList.append(sum(posVals))
+                        negValList.append(sum(negVals))
+                    else:
+                        valList.append(sum(item))
                     valList.append(sum(item))
         
         valList.sort()
         if lowB == 'min': lowB = valList[0]
         if highB == 'max': highB = valList[-1]
-        if cumulative == True: lowB = 0
+        if cumulative == True:
+            if sum(negValList) < 0:
+                lowB = negValList[0]
+                newNegativeTrigger = True
+                if -lowB < highB: lowB = -highB
+                else:
+                    highB = -lowB
+            else: lowB = 0
         
         valRange = highB - lowB
         valStep = valRange/(numSeg-1)
@@ -462,7 +497,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
         for num in range(numSeg):
             finalValues.append(str(round(lowB + num*valStep, 2)))
         
-        return lowB, valRange, finalValues
+        return lowB, valRange, finalValues, newNegativeTrigger
     
     #Make lists of start values and scale factors for each of the data types.
     startVals = []
@@ -479,7 +514,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     for srf in yAxisSrf[0]:
         srf.Transform(rotation)
     textSrfs.extend(yAxisSrf[0])
-    lowVal1, valRange1, finalValues = makeNumberLabels(dataList[0], True, lowBList[0], highBList[0], newDataMethodsList[0])
+    lowVal1, valRange1, finalValues, negativeTrigger = makeNumberLabels(dataList[0], True, lowBList[0], highBList[0], newDataMethodsList[0])
     startVals.append(lowVal1)
     scaleFacs.append(valRange1/height)
     #Move the text based on how long it is.
@@ -626,10 +661,10 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             newColors[listCount].append(colors[colorCount])
             colorCount += 1
     
-    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp
+    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp, negativeTrigger
 
 
-def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac):
+def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger):
     #Perform an analysis of the number of each data type so that I know how to space out the bars.
     numOfMethod = [0,0,0,0]
     for dataMethod in dataMethodsList:
@@ -673,16 +708,24 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
             
             for monthCount, month in enumerate(dataList[dataCount]):
                 stackBottom = 0
+                negativeStackBotom = 0
                 
                 for stackCount, stack in enumerate(month):
                     #Calculate the height of the bar
-                    barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                    if negativeTrigger: barHeight = (stack)/scaleFacs[dataCount]
+                    else: barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
                     
                     #Generate the points that make the face of the mesh
-                    facePt1 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom, 0)
-                    facePt2 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom, 0)
-                    facePt3 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom+barHeight, 0)
-                    facePt4 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom+barHeight, 0)
+                    if barHeight > 0:
+                        facePt1 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom, 0)
+                        facePt2 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom, 0)
+                        facePt3 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, stackBottom+barHeight, 0)
+                        facePt4 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, stackBottom+barHeight, 0)
+                    else:
+                        facePt1 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, negativeStackBotom, 0)
+                        facePt2 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, negativeStackBotom, 0)
+                        facePt3 = rc.Geometry.Point3d((monthWidth*monthCt+monthWidth)+xWidth*monthCount, negativeStackBotom+barHeight, 0)
+                        facePt4 = rc.Geometry.Point3d((monthWidth*monthCt)+xWidth*monthCount, negativeStackBotom+barHeight, 0)
                     
                     #Create the mesh
                     barMesh = rc.Geometry.Mesh()
@@ -699,7 +742,14 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                     
                     #Add the mesh to the list and increase the bar height for the next item in the stack.
                     stackList[stackCount].append(barMesh)
-                    stackBottom += barHeight
+                    if barHeight > 0: stackBottom += barHeight
+                    else: negativeStackBotom += barHeight
+            
+            #If the negative trigger is true, move the values to the zero position.
+            if negativeTrigger:
+                zeroingTransform = rc.Geometry.Transform.Translation(0,-startVals[dataCount]/scaleFacs[dataCount], 0)
+                for monthMeshList in stackList:
+                    for monthMesh in monthMeshList: monthMesh.Transform(zeroingTransform)
             
             dataLabelPts.append(dataLabelPtsInit)
             monthCt += 1
@@ -766,16 +816,24 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                 dayCt = 0
                 for dayCount, day in enumerate(month):
                     stackBottom = 0
+                    negativeStackBotom = 0
                     
                     for stackCount, stack in enumerate(day):
                         #Calculate the height of the bar
-                        barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                        if negativeTrigger: barHeight = (stack)/scaleFacs[dataCount]
+                        else: barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
                         
                         #Generate the points that make the face of the mesh
-                        facePt1 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
-                        facePt2 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
-                        facePt3 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
-                        facePt4 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
+                        if barHeight > 0:
+                            facePt1 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
+                            facePt2 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom, 0)
+                            facePt3 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
+                            facePt4 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight, 0)
+                        else:
+                            facePt1 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom, 0)
+                            facePt2 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom, 0)
+                            facePt3 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+dayWidth[monthCount])+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom+barHeight, 0)
+                            facePt4 = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt)+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, negativeStackBotom+barHeight, 0)
                         
                         #Create the mesh
                         barMesh = rc.Geometry.Mesh()
@@ -793,8 +851,15 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                         
                         #Add the mesh to the list and increase the bar height for the next item in the stack.
                         stackList[stackCount].append(barMesh)
-                        stackBottom += barHeight
+                        if barHeight > 0: stackBottom += barHeight
+                        else: negativeStackBotom += barHeight
                     dayCt +=1
+            
+            #If the negative trigger is true, move the values to the zero position.
+            if negativeTrigger:
+                zeroingTransform = rc.Geometry.Transform.Translation(0,-startVals[dataCount]/scaleFacs[dataCount], 0)
+                for monthMeshList in stackList:
+                    for monthMesh in monthMeshList: monthMesh.Transform(zeroingTransform)
             
             dataLabelPts.append(dataLabelPtsInit)
             dataMeshes.extend(stackList)
@@ -918,10 +983,10 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
 
 def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels):
     #Make the chart curves.
-    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
+    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
-    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac)
+    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger)
     
     #If the user has requested a comfort range, then draw it.
     comfortBand = None

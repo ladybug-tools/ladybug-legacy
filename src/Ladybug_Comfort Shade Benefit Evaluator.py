@@ -38,7 +38,7 @@ http://www.gsd.harvard.edu/research/gsdsquare/Publications/Shaderade_BS2011.pdf
 The heating/temperture degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the temperture-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or temperture degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive temperture degree-days to give a net effect for the cell.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _location: The location output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -71,10 +71,10 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_17_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nJUL_16_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -110,14 +110,7 @@ def checkTheInputs():
         if not allDataDict.has_key(path):
             allDataDict[path] = {}
         
-        if len(_testRegion.Branch(i)) == 1:
-            allDataDict[path]["regionSrf"] = _testRegion.Branch(i)[0]
-        else:
-            checkData1 = False
-            warning = "This component can only accept one test region brep per branch.  Separate test regions into different branches if you have multiple test regions."
-            print warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-        
+        allDataDict[path]["regionSrf"] = _testRegion.Branch(i)
         allDataDict[path]["shadeSrfs"] = _testShades.Branch(i)
         allDataDict[path]["temperatures"] = _temperatures.Branch(i)
     
@@ -126,21 +119,22 @@ def checkTheInputs():
     checkData2 = True
     if _testShades.BranchCount != 0 and _testRegion.BranchCount != 0:
         for path in allDataDict:
-            if allDataDict[path]["regionSrf"].Faces.Count == 1:
-                shadeCheck = True
-                for srf in allDataDict[path]["shadeSrfs"]:
-                    if srf.Faces.Count == 1: pass
-                    else: shadeCheck = False
-                if shadeCheck == False:
-                    checkData2 = False
-                    warning ='The _testShades must each be a brep with a single surface.  Polysurface or volumetric Breps are not supported at this time. Try breaking your Brep up into single surfaces.'
-                    print warning
-                    ghenv.Component.AddRuntimeMessage(w, warning)
-            else:
-                checkData2 = False
-                warning ='The _testRegions must each be a brep with a single surface.  Polysurface or volumetric Breps are not supported at this time. Try breaking your Brep up into single surfaces.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(w, warning)
+            newRegionList = []
+            for srf in allDataDict[path]["regionSrf"]:
+                if srf.Faces.Count == 1: newRegionList.append(srf)
+                else:
+                    for subSrf in srf.Faces:
+                        srfBrep = subSrf.ToBrep()
+                        newRegionList.append(srfBrep)
+            allDataDict[path]["regionSrf"] = newRegionList
+            
+            newShadesList = []
+            for srf in allDataDict[path]["shadeSrfs"]:
+                if srf.Faces.Count == 1: newShadesList.append(srf)
+                else:
+                    for subSrf in srf.Faces:
+                        srfBrep = subSrf.ToBrep()
+                        newShadesList.append(srfBrep)
     else:
         checkData2 = False
         print 'Connect a brep for both the _testRegion and the _testShade.'
@@ -312,7 +306,8 @@ def checkTheInputs():
     
     #Check the north direction and, if none is given, set a default to the Y-Axis.
     if north_ == None: north = 0
-    else: north = north_
+    else:
+        north, northVec = lb_preparation.angle2north(north_)
     
     #Check if all of the above Checks are True
     if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True and checkData9 == True and checkData10 == True:
@@ -359,12 +354,12 @@ def meshTheShade(gridSize, testShades):
 
 
 def generateTestPoints(gridSize, testRegion):
-    def getPts(gridSiz):
+    def getPts(gridSiz, region):
         #Generate a Grid of Points Along the Window
         regionMeshPar = rc.Geometry.MeshingParameters.Default
         regionMeshPar.MinimumEdgeLength = (gridSiz/1.75)
         regionMeshPar.MaximumEdgeLength = (gridSiz/1.75)
-        regionMesh = rc.Geometry.Mesh.CreateFromBrep(testRegion, regionMeshPar)[0]
+        regionMesh = rc.Geometry.Mesh.CreateFromBrep(region, regionMeshPar)[0]
         
         vertices = regionMesh.Vertices
         
@@ -373,40 +368,23 @@ def generateTestPoints(gridSize, testRegion):
         for item in vertices:
             regionTestPtsInit.append(rc.Geometry.Point3d(item))
         
-        #Get rid of the points that lie along the boundary of the shape.
-        regionTestPts = []
-        edges = testRegion.DuplicateEdgeCurves()
-        boundary = rc.Geometry.Curve.JoinCurves(edges)
-        for point in regionTestPtsInit:
-            closestPtInit =  rc.Geometry.Curve.ClosestPoint(boundary[0], point)
-            closestPt = boundary[0].PointAt(closestPtInit[1])
-            if point.DistanceTo(closestPt) < sc.doc.ModelAbsoluteTolerance: pass
-            else: regionTestPts.append(point)
-        
-        #If there is a dense collection of points that are too close to each other, get rid of it.
-        regionTestPtsFinal = []
-        for pointCount, point in enumerate(regionTestPts):
-            pointOK = True
-            testPtsWihtout = list(regionTestPts)
-            del testPtsWihtout[pointCount]
-            for othPt in testPtsWihtout:
-                if point.DistanceTo(othPt) < (gridSiz/4):
-                    pointOK = False
-                else:pass
-            if pointOK == True:
-                regionTestPtsFinal.append(point)
-        return regionTestPtsFinal
+        return regionTestPtsInit
     
-    regionTestPtsFin = getPts(gridSize)
+    regionTestPtsFin = []
+    for brep in testRegion:
+        regionTestPtsFin.extend(getPts(gridSize, brep))
     
     if len(regionTestPtsFin) < 10:
-        bbox = rc.Geometry.Box(testRegion.GetBoundingBox(False))
+        regionVertices = []
+        for regbrep in testRegion: regionVertices.extend(regbrep.DuplicateVertices())
+        bbox = rc.Geometry.Box(rc.Geometry.BoundingBox())
         bboxDim = [(bbox.X[1] - bbox.X[0]), (bbox.Y[1] - bbox.Y[0]), (bbox.Z[1] - bbox.Z[0])]
         bboxDim.sort()
         if bboxDim[0] < sc.doc.ModelAbsoluteTolerance: smallestDim = bboxDim[1]
         else: smallestDim = bboxDim[0]
         newGridSize = smallestDim/10
-        regionTestPtsFin = getPts(newGridSize)
+        regionTestPtsFin = []
+        for brep in testRegion: regionTestPtsFin.extend(getPts(newGridSize, brep))
     
     return regionTestPtsFin
 
@@ -724,7 +702,9 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
             temperatures = allDataDict[path]["tempertureFinal"]
             numHrs = allDataDict[path]["divisor"]
             
-            regionMesh = rc.Geometry.Mesh.CreateFromBrep(allDataDict[path]["regionSrf"])[0]
+            regionMesh = rc.Geometry.Mesh()
+            for brep in allDataDict[path]["regionSrf"]:
+                regionMesh.Append(rc.Geometry.Mesh.CreateFromBrep(brep)[0])
             regionPoints = allDataDict[path]["regionPts"]
             
             for shadeCount, shadeMesh in enumerate(allDataDict[path]["shadeMesh"]):
@@ -750,7 +730,10 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
         #Get the colors for the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
         legendFont = 'Verdana'
         if legendPar:
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
+            if legendPar[3] == []:
+                customColors = lb_visualization.gradientLibrary[12]
+                customColors.reverse()
         else:
             lowB = -1 * legendVal
             highB = legendVal
@@ -761,6 +744,8 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
             legendFontSize = None
             legendBold = False
             legendScale = 1
+            decimalPlaces = 2
+            removeLessThan = False
         
         #If the user has not input custom boundaries, automatically choose the boundaries for them.
         if lowB == "min": lowB = -1 * legendVal
@@ -809,7 +794,7 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
         analysisTitle = '\nShade Benefit Analysis'
         if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
         
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(shadeNetEffect, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(shadeNetEffect, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         

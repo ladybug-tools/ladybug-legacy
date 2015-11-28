@@ -21,9 +21,9 @@
 
 
 """
-Use this component to generate a Solar Envelope for a closed boundary curve and a required minimum hours of solar access to the area surrounding this boundary.  
+Use this component to generate a solar envelope for a closed boundary curve with minimum inputs. This component predefines monthly and hourly ranges in order to simplify the creation of useful envelope geometry.  
 The solar envelope is used to ensure that its adjacent neighbors (defined as anything outside of the chosen boundary curve) will receive a specified minimum hours of direct solar access for each day in a specified month range of the year.
-Any geometry built within the Solar Envelope boundaries will therefore not cast any shadow on adjacent property for the given hour and month range.
+Any geometry built within the solar envelope boundaries will therefore not cast any shadow on adjacent property for the given hour and month range.
  
 The start and end dates that determine the month range for solar access can be chosen from the following options:
 0) Mar 21 - Jun 21
@@ -38,15 +38,15 @@ Reference: Niemasz, J., Sargent, J., Reinhart D.F., "Solar Zoning and Energy in
 Detached Residential Dwellings," Proceedings of SIMAUD 2011, Boston, April 2011.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _boundary: A closed boundary curve representing a piece of land (such as a property to be developed) for which solar access of the surrounding land is desired.
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
-        _requiredHours: The number of hours of direct solar access that the property surrounding the boundary curve should receive during the _monthRange.
+        _requiredHours: The number of hours of direct solar access that the property surrounding the boundary curve should receive during the _monthRange. For example an input of 4 will define the hour range roughly between 10AM and 2PM. The component will compute the hour range that will maximize the envelope volume.        
         north_: Input a vector to be used as a true North direction or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _monthRange: An optional interger value to change the month range for which solar access is being considered. The default month range is Jun 21 - Dec 21.
-            Intergers input here must be between 0 - 5 and correspond to the following :
+            Integers input here must be between 0 - 5 and correspond to the following :
             ---
             0 = Mar 21 - Jun 21
             1 = Mar 21 - Sep 21
@@ -65,9 +65,9 @@ Provided by Ladybug 0.0.60
         solarEnvelope: A Brep representing a solar envelope.  This volume should be built within in order to ensure that the surrounding property is not shaded for the given number of hours.
 """
 
-ghenv.Component.Name = "Ladybug_SolarEnvelope_alt"
-ghenv.Component.NickName = 'SolarEnvelope Alternative'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Name = "Ladybug_SolarEnvelopeBasic"
+ghenv.Component.NickName = 'SolarEnvelopeBasic'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -78,10 +78,10 @@ except: pass
 import math
 import rhinoscriptsyntax as rs
 import Rhino
+import Rhino.Geometry as rc
 import scriptcontext as sc
 import datetime
 import Grasshopper.Kernel as gh
-
 
 class SunCalculation:
     """ 
@@ -229,8 +229,9 @@ def extrude_solid(pt,cp,b):
     srf = rs.AddPlanarSrf(rs.AddCurve(ptlst,1))
     # make curve and extrude
     line = rs.AddCurve([cp,pt],1)
+
     max = get_max_side(b)
-    curve = rs.ExtendCurveLength(line,0,1,max*40)
+    curve = rs.ExtendCurveLength(line,0,1,max*2)
     #extrude surface
     brep = rs.coercebrep(srf, True)
     curve = rs.coercecurve(curve, -1, True)
@@ -253,10 +254,12 @@ def make_zone(pts, bound):
     # get centroid from boundary curve
     center_pt = rs.CurveAreaCentroid(bound)[0]
     # extrude solids from sun path
-    for sp in pts:
-        extruded = extrude_solid(sp,center_pt,bound)
+    for p in pts:
+        line = rs.AddCurve([center_pt,p],1)
+        extruded = extrude_solid(p,center_pt,bound)
         los.append(extruded)
     # boolean interesect all
+    los_ = map(lambda g: rs.coercegeometry(g),los)
     return bool_solids(los)
 
 def get_solar_noon(month,year,tz,d,lat,lon):
@@ -264,6 +267,7 @@ def get_solar_noon(month,year,tz,d,lat,lon):
     date = datetime.datetime(year,month,d)
     SC = SunCalculation(lat,lon)
     snoon = SC.solarnoon(date)
+    #print 'solar noon', snoon.hour + tz + snoon.minute/60.0
     return snoon.hour + tz + snoon.minute/60.0
 
 def readLocation(location):
@@ -300,7 +304,7 @@ def main(north,boundary,timeperiod,monthRange,location):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
         except:
-            warning = "You need a newer version of Ladybug to use this compoent." + \
+            warning = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \
             "If you have already updated userObjects drag Ladybug_Ladybug component " + \
             "into canvas and try again."
@@ -314,35 +318,56 @@ def main(north,boundary,timeperiod,monthRange,location):
         latitude,longitude,timeZone,elevation = readLocation(_location)
         year = datetime.datetime.now().year
         day = 21
-        """
-        MONTH_DICT = {0:(3,6), 1:(3,9), 2:(3,12),\
-              3:(6,9), 4:(6,12),\
-              5:(9,12)}
-        """
-        s_mth,e_mth = MONTH_DICT[monthRange][0],MONTH_DICT[monthRange][1] 
-        s_snoon = get_solar_noon(s_mth,year,timeZone,day,latitude,longitude)
-        e_snoon = get_solar_noon(e_mth,year,timeZone,day,latitude,longitude)
-        t = timeperiod/2.0
-        shourlst = [s_snoon-t,s_snoon+t]
-        ehourlst = [e_snoon-t,e_snoon+t]
-        centerPt = rs.CurveAreaCentroid(boundary)[0]
         
+        """
+        MONTH_DICT = {0:range(3,7), 1:range(3,10), 2:range(3,13),\
+              3:range(6,10), 4:range(6,13),\
+              5:range(9,13)}
+        """
+        
+        mth_lst = MONTH_DICT[monthRange]
+        
+        t = timeperiod/2.0
+        centerPt = rs.CurveAreaCentroid(boundary)[0]
         # do geometry operations
         boundary = clean_curve(boundary)
-        s_sun_pts = get_sunpt(lb_sp,lb_prep,latitude,centerPt,s_mth,day,shourlst,north_=north,lon=longitude,tZ=timeZone,scale_=100)
-        e_sun_pts = get_sunpt(lb_sp,lb_prep,latitude,centerPt,e_mth,day,ehourlst,north_=north,lon=longitude,tZ=timeZone,scale_=100)
-        szone = make_zone(s_sun_pts,boundary)
-        ezone = make_zone(e_sun_pts,boundary)
-        return rs.BooleanIntersection(szone,ezone)
+        brep_lst = []
+        for mth in mth_lst:
+            solar_noon = get_solar_noon(mth,year,timeZone,day,latitude,longitude)
+            hourlst = [solar_noon-t,solar_noon+t]
+            #print mth
+            #print 'month: ',mth,'th;', 'hours: ', hourlst
+            sun_pts = get_sunpt(lb_sp,lb_prep,latitude,centerPt,mth,day,hourlst,north_=north,lon=longitude,tZ=timeZone,scale_=100)
+            brep = rs.coercebrep(make_zone(sun_pts,boundary))
+            brep_lst.append(brep)
+        
+        SE = None
+        TOL = sc.doc.ModelAbsoluteTolerance
+        for i in range(len(brep_lst)-1):
+            brep = brep_lst[i]
+            brep_ = brep_lst[i+1]
+            if not SE and rs.IsBrep(brep):
+                SE_ = brep
+            else:
+                SE_ = SE
+            if rs.IsBrep(brep_):
+                SE = rc.Brep.CreateBooleanIntersection(SE_,brep_,TOL)[0]
+            else:
+                SE = SE_
+        return SE
+        
     else:
         print "You should first let the Ladybug fly..."
         ghenv.Component.AddRuntimeMessage(ERROR_W, "You should first let the Ladybug fly...")
 
 
-MONTH_DICT = {0:(3,6), 1:(3,9), 2:(3,12),\
-              3:(6,9), 4:(6,12),\
-              5:(9,12)}
+MONTH_DICT = {0:range(3,7), 1:range(3,10), 2:range(3,13),\
+              3:range(6,10), 4:range(6,13),\
+              5:range(9,13)}
+              
 ERROR_W = gh.GH_RuntimeMessageLevel.Warning
+debug = []
+
 
 """
 Get monthrange based on month references.

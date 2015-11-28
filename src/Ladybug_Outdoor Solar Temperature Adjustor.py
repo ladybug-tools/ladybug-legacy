@@ -32,7 +32,7 @@ Lastly, the formulas to translate this radiation into an effective radiant field
 Arens, Edward; Huang, Li; Hoyt, Tyler; Zhou, Xin; Shiavon, Stefano. (2014). Modeling the comfort effects of short-wave solar radiation indoors.  Indoor Environmental Quality (IEQ).
 http://escholarship.org/uc/item/89m1h2dg#page-4
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _location: The location output from the "Ladybug_Import epw" component.
@@ -72,10 +72,10 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_28_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -738,7 +738,7 @@ def prepareLBList(skyMtxLists, analysisPeriodOrHOY, locName, unit, removeDiffuse
 
 def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, checkTheName, l, listInfo, lb_preparation, lb_visualization):
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     
     colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
     
@@ -769,7 +769,7 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
         lb_visualization.calculateBB([finBBox])
     
     # legend geometry
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     
     # legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
@@ -1200,7 +1200,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                         #Calculate the diffuse, direct, and global horizontal components of the solar radiation.
                         diffRad = diffSolarRad[hour-1]
                         dirNormRad = directSolarRad[hour-1]
-                        globHorizRad = dirNormRad*(math.sin(altitudes[count])) + diffRad
+                        globHorizRad = float(dirNormRad)*(math.sin(altitudes[count])) + diffRad
                         
                         #Define the Azimuth as the SolarCal function understands it.
                         azInit = math.degrees(azimuths[count])
@@ -1232,7 +1232,7 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                             ProjAreaFac = lb_comfortModels.splineStand(azFinal, 90-altFinal)
                         
                         # Calculate the ERF of the occupant
-                        hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*dirNormRad))*winTrans[hour-1])*(cloA/0.95)
+                        hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*float(dirNormRad)))*winTrans[hour-1])*(cloA/0.95)
                         
                         ERF.append(hourERF)
                         #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.

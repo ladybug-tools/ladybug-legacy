@@ -27,7 +27,7 @@ _
 For an image of each of the gardients in the library, check here:
 https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/gradients.jpg
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _gradIndex: An index refering to one of the following possible gradients:
@@ -50,17 +50,19 @@ Provided by Ladybug 0.0.60
             16 - Black to White
             17 - CFD Colors 1
             18 - CFD Colors 2
-            19 - Blue to Yellow
+            19 - Energy Balance
+            20 - THERM
+            21 - Cloud Cover
     Returns:
         customColors: A series of colors to be plugged into the "Ladybug_Legend Parameters" component.
 """
 
 ghenv.Component.Name = "Ladybug_Gradient Library"
 ghenv.Component.NickName = 'GradientLibrary'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_17_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nSEP_13_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -89,6 +91,6 @@ def main(gradIndex):
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
 
-if _gradIndex >=0 and _gradIndex <=19:
+if _gradIndex >=0 and _gradIndex <=21:
     result = main(_gradIndex)
     if result != -1: customColors = result
