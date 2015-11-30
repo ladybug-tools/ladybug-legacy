@@ -4030,11 +4030,11 @@ class ComfortModels(object):
     
     def calcRelHumidFromDryBulbDewPt(self, temperature, dewPt):
         #Calculate the partial pressure of water in the atmosphere.
-        A = 611.657
+        A = 6.11657
         m = 7.591386
         Tn = 240.7263
         Td = dewPt + 273
-        Pw = (math.pow(10, (m/((Tn/Td)-1)))) * A
+        Pw = ((math.pow(10, (m/((Tn/Td)+1)))) * A) / 100
         
         #Convert Temperature to Kelvin
         TKelvin = temperature + 273
