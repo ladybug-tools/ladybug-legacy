@@ -27,9 +27,8 @@ Use this component to calculate various Photovoltaics performance metrics
 Provided by Ladybug 0.0.61
     
     input:
-        _PVsurface: - Input planar Surface (not polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
-                    - Or input surface Area, in square meters (example: "100").
-                    - Or input PV system size (nameplate DC power rating), in kiloWatts at standard test conditions (example: "4 kw").
+        _PVsurface: - Input planar Grasshopper/Rhino Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
+                    - Or create the Surface based on initial PV system size by using "PV SWH system size" component.
         PVsurfacePercent_: The percentage of surface which will be used for PV modules (range 0-100).
                            -
                            Some countries and states, have local codes which limit the portion of the roof, which can be covered by crystalline silicon modules. For example, this may include having setbacks(distances) of approximatelly 90cm from side and top edges of a roof, as a fire safety regulation.
@@ -49,7 +48,7 @@ Provided by Ladybug 0.0.61
         _totalRadiationPerHour: Import "totalRadiationPerHour" output data from "Photovoltaics surface" component.
                                 In kWh/m2.
         _cellTemperaturePerHour: Import "cellTemperaturePerHour" output data from "Photovoltaics surface" component.
-                                 In C.
+                                 In °C.
         ACenergyDemandPerHour_: Required electrical energy used for any kind of load: heating, cooling, electric lights, solar water heating circulation pump etc.
                                 For example, any of the Honeybee's "Read EP Result" outputs can be inputted in here. Either separately or summed.
                                 -
@@ -69,12 +68,20 @@ Provided by Ladybug 0.0.61
         gridEfficiency_: An average primary energy to electricity conversion efficiency.
                         -
                         If not supplied default value of 29 (%) will be used.
+        optimal_: Set to "True" to calculate optimal PVsurface area.
+                  An optimal PVsurface area will cover 100% of the of the annual electricity load ("ACenergyDemandPerHour_").
         _runIt: ...
         
     output:
         readMe!: ...
-        CUFperYear: Capacity Utilization Factor (sometimes called Plant Load Factor (PLF)) - ratio of the annual AC power output and maximum possible output under ideal conditions if the sun shone throughout the day and throughout the year.
-                    It is sometimes used by investors or developers for Financial and Maintenance analysis of the PV systems, instead of "basicPRperYear" (e.g. in India).
+        optimalSystemSize: Optimal PV system size (optimal total size of the PV array). Minimum system size is 0.01 kW.
+                           Input it to "systemSize_" input of "PV SWH system size" component to see how much area it would require.
+                           -
+                           To calculate it, set the "optimal_" input to "True".
+                           -
+                           In thermal kiloWatts (kWt).
+        CUFperYear: Capacity Utilization Factor (or Capacity Factor or sometimes evan called Plant Load Factor (PLF)) - ratio of the annual AC power output and maximum possible output under ideal conditions if the sun shone throughout the day and throughout the year.
+                    It is sometimes used by investors or developers for Financial and Maintenance analysis of the PV systems, instead of "basicPRperYear".
                     -
                     In percent (%).
         basicPRperYear: Basic Performance Ratio - ratio of the actual and theoretically possible annual energy output.
@@ -84,17 +91,18 @@ Provided by Ladybug 0.0.61
                         basicPR is more precise than upper "CUF" and should be used instead of it, unless "CUF" is specifically required.
                         -
                         In percent(%).
-        temperatureCorrectedPRperMonth: Temperature corrected Performance Ratio - ratio of the actual and theoretically possible energy output per month, corrected for PV module's Cell temperature. Mid-day hours (solarRadiation > 0.6 kWh/m2) only taken into account.
-                                        -
-                                        It is more precise than upper "basicPR" and should be used instead of it, unless "basicPR" is specifically required.
+        temperatureCorrectedPRperMonth: Temperature corrected Performance Ratio - ratio of the actual and theoretically possible energy output for each month during a year, corrected for PV module's Cell temperature.
+                                        Mid-day hours (solarRadiation > 0.6 kWh/m2) only taken into account.
+                                        Used for Maintenance analysis of PV systems.
                                         -
                                         In percent(%).
         temperatureCorrectedPRperYear: Temperature corrected Performance Ratio - ratio of the actual and theoretically possible annual energy output, corrected for PV module's Cell temperature. Mid-day hours (solarRadiation > 0.6 kWh/m2) only taken into account.
+                                       Used for Maintenance analysis of PV systems.
                                        -
                                        It is more precise than upper "basicPR" and should be used instead of it, unless "basicPR" is specifically required.
                                        -
                                        In percent(%).
-        energyOffsetPerMonth: Percentage of the electricity demand covered by Photovoltaics system for each month.
+        energyOffsetPerMonth: Percentage of the electricity demand covered by Photovoltaics system for each month during a year.
                               -
                               It is used for Financial and Maintenance analysis of the PV system.
                               -
@@ -104,12 +112,9 @@ Provided by Ladybug 0.0.61
                              It is used for Financial and Maintenance analysis of the PV system.
                              -
                              In percent(%).
-        energyValuePerMonth: Total Energy value for each month in currency unit (dollars, euros, yuans...)
-                             -
-                             It is used for Financial analysis of the PV system.
-        energyValuePerYear: Total Energy value for whole year in currency unit (dollars, euros, yuans...)
-                            -
-                            It is used for Financial analysis of the PV system.
+        energyValue: Total Energy value for the whole year in currency unit (dollars, euros, yuans...)
+                     -
+                     It is used for Financial analysis of the PV system.
         Yield: Ratio of annual AC power output and nameplate DC power rating.
                It is used for Financial analysis of the PV systems.
                -
@@ -145,10 +150,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = "VER 0.0.61\nNOV_29_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nMAY_26_2015
+#compatibleLBVersion = VER 0.0.61\nNOV_29_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -156,16 +161,18 @@ import Grasshopper.Kernel as gh
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
 import Rhino
+import math
 
 
-def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHour, totalRadiationPerHour, cellTemperaturePerHour, ACenergyDemandPerHour, energyCostPerKWh, embodiedEnergyPerMJ_M2, embodiedCO2PerKg_M2, gridEfficiency):
+def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, PVmoduleSettings, ACenergyPerHour, totalRadiationPerHour, cellTemperaturePerHour, ACenergyDemandPerHour, energyCostPerKWh, embodiedEnergyPerMJ_M2, embodiedCO2PerKg_M2, lifetime, gridEfficiency):
     
     if (PVsurface == None):
-        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleActiveAreaPercent = moduleEfficiency = lifetime = ACenergyPerHourData = totalRadiationPerHourData = cellTemperaturePerHourData = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = gridEfficiency = locationName = None
+        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
         validInputData = False
-        printMsg = "Please input Surface (not polysurface) to \"_PVsurface\".\nOr input surface Area in square meters (example: \"100\").\nOr input Nameplate DC power rating in kiloWatts (example: \"4 kw\")."
+        printMsg = "Please input planar Surface (not a polysurface) on which the PV modules will be applied.\n" + \
+                   "Or create a Surface based on initial PV system size by using \"PV SWH system size\" component."
         
-        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
     
     if (len(ACenergyPerHour) == 8767):
         ACenergyPerHourData = ACenergyPerHour[7:]
@@ -174,33 +181,33 @@ def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, moduleActiveA
         ACenergyPerHourData = ACenergyPerHour
         locationName = "unknown location"
     elif (len(ACenergyPerHour) == 0) or (ACenergyPerHour[0] is "") or (ACenergyPerHour[0] is None) or ((len(ACenergyPerHour) != 8767) and (len(ACenergyPerHour) != 8760)):
-        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleActiveAreaPercent = moduleEfficiency = lifetime = ACenergyPerHourData = totalRadiationPerHourData = cellTemperaturePerHourData = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = gridEfficiency = locationName = None
+        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
         validInputData = False
         printMsg = "Please input \"_ACenergyPerHour\" from Ladybug \"Photovoltaics surface\" component."
         
-        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
     
     if (len(totalRadiationPerHour) == 8767):
         totalRadiationPerHourData = totalRadiationPerHour[7:]
     elif (len(totalRadiationPerHour) == 8760):
         totalRadiationPerHourData = totalRadiationPerHour
     elif (len(totalRadiationPerHour) == 0) or (totalRadiationPerHour[0] is "") or (totalRadiationPerHour[0] is None) or ((len(totalRadiationPerHour) != 8767) and (len(totalRadiationPerHour) != 8760)):
-        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleActiveAreaPercent = moduleEfficiency = lifetime = ACenergyPerHourData = totalRadiationPerHourData = cellTemperaturePerHourData = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = gridEfficiency = locationName = None
+        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
         validInputData = False
         printMsg = "Please input \"_totalRadiationPerHour\" from Ladybug \"Photovoltaics surface\" component."
         
-        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
     
     if (len(cellTemperaturePerHour) == 8767):
         cellTemperaturePerHourData = cellTemperaturePerHour[7:]
     elif (len(cellTemperaturePerHour) == 8760):
         cellTemperaturePerHourData = cellTemperaturePerHour
     elif (len(cellTemperaturePerHour) == 0) or (cellTemperaturePerHour[0] is "") or (cellTemperaturePerHour[0] is None) or ((len(cellTemperaturePerHour) != 8767) and (len(cellTemperaturePerHour) != 8760)):
-        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleActiveAreaPercent = moduleEfficiency = lifetime = ACenergyPerHourData = totalRadiationPerHourData = cellTemperaturePerHourData = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = gridEfficiency = locationName = None
+        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
         validInputData = False
         printMsg = "Please input \"_cellTemperaturePerHour\" from Ladybug \"Photovoltaics surface\" component."
         
-        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
     
     if (len(ACenergyDemandPerHour) == 0) or (ACenergyDemandPerHour[0] is "") or (ACenergyDemandPerHour[0] is None):
         ACenergyDemandPerHourData = [0 for i in range(8760)]
@@ -209,25 +216,56 @@ def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, moduleActiveA
     elif (len(ACenergyDemandPerHour) == 8760):
         ACenergyDemandPerHourData = ACenergyDemandPerHour
     elif ((len(ACenergyDemandPerHour) != 8767) and (len(ACenergyDemandPerHour) != 8760)):
-        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleActiveAreaPercent = moduleEfficiency = lifetime = ACenergyPerHourData = totalRadiationPerHourData = cellTemperaturePerHourData = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = gridEfficiency = locationName = None
+        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
         validInputData = False
         printMsg = "Your \"ACenergyDemandPerHour_\" input needs to contain 8760 values or 8767 items (8760 values + 7 heading strings)."
         
-        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
+    
+    ACenergyPerHourDataFiltered = []
+    totalRadiationPerHourDataFiltered = []
+    cellTemperaturePerHourDataFiltered = []
+    for i,Epoa in enumerate(totalRadiationPerHourData):
+        Pac = ACenergyPerHourData[i]
+        Epoa = totalRadiationPerHourData[i]
+        Tcell = cellTemperaturePerHourData[i]
+        if totalRadiationPerHourData[i] > 0.6:  # mid-day hours (Epoa > 0.6 kWh/m2) filter. Required for temperatureCorrectedPRperMonth and temperatureCorrectedPRperYear outputs
+            pass
+        else:
+            Pac = Epoa = Tcell = 0
+        ACenergyPerHourDataFiltered.append(Pac)
+        totalRadiationPerHourDataFiltered.append(Epoa)
+        cellTemperaturePerHourDataFiltered.append(Tcell)
+    
     
     if (PVsurfacePercent == None) or (PVsurfacePercent < 0) or (PVsurfacePercent > 100):
         PVsurfacePercent = 100  # default value 100%
     
-    if (moduleActiveAreaPercent == None) or (moduleActiveAreaPercent < 0) or (moduleActiveAreaPercent > 100):
+    # PV module settings inputs
+    if (len(PVmoduleSettings) != 4) and (len(PVmoduleSettings) != 0):
+        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
+        validInputData = False
+        printMsg = "Your \"PVmoduleSettings_\" input is incorrect. Please use \"PVmoduleSettings\" output from \"Photovoltaics module\" component."
+        
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
+    
+    elif (len(PVmoduleSettings) == 0) or (PVmoduleSettings[0] is ""):
+        # nothing inputted into "PVmoduleSettings_", use default PVmoduleSettings values
+        moduleType = 1  # Glass/cell/glass, Close (flush) roof mount
+        moduleEfficiency = 15  # for crystalline silicon
+        temperatureCoefficientPercent = -0.5  # in %, for crystalline silicon
         moduleActiveAreaPercent = 90  # default value in %
     
-    if (moduleEfficiency == None) or (moduleEfficiency <= 0) or (moduleEfficiency > 100):
-        moduleEfficiency = 15  # default for crystalline silicon, in %
+    elif (len(PVmoduleSettings) == 4):
+        # 4 items inputted into "PVmoduleSettings_"
+        moduleType = PVmoduleSettings[0]
+        moduleEfficiency = PVmoduleSettings[1]
+        temperatureCoefficientPercent = PVmoduleSettings[2]
+        moduleActiveAreaPercent = PVmoduleSettings[3]
+    temperatureCoefficientFraction = temperatureCoefficientPercent/100  # unitless
     
-    if (lifetime == None) or (lifetime <= 0):
-        lifetime = 30  # default, in years
     
-    if (energyCostPerKWh == None) or (energyCostPerKWh < 0):
+    if (energyCostPerKWh == None) or (energyCostPerKWh <= 0):
         energyCostPerKWh = 0.15  # dollars per kWh
     
     if (embodiedEnergyPerMJ_M2 == None) or (embodiedEnergyPerMJ_M2 <= 0):
@@ -240,69 +278,96 @@ def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, moduleActiveA
     else:
         embodiedCO2PerT_M2 = embodiedCO2PerKg_M2/1000  # in t CO2/m2
     
-    if (gridEfficiency == None) or (gridEfficiency < 0) or (gridEfficiency > 100):
+    if (lifetime == None) or (lifetime <= 0):
+        lifetime = 30  # default, in years
+    
+    if (gridEfficiency == None) or (gridEfficiency <= 0) or (gridEfficiency > 100):
         gridEfficiency = 29  # default, in %
     
     # check PVsurface input
-    obj = rs.coercegeometry(PVsurface)
-    
-    # input is surface
-    if isinstance(obj,Rhino.Geometry.Brep):
-        PVsurfaceInputType = "brep"
-        facesCount = obj.Faces.Count
-        if facesCount > 1:
-            # inputted polysurface
-            nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleActiveAreaPercent = moduleEfficiency = lifetime = ACenergyPerHour = totalRadiationPerHour = cellTemperaturePerHour = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = None
-            validInputData = False
-            printMsg = "The brep you supplied to \"_PVsurface\" is a polysurface. Please supply a surface"
-            
-            return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
-        else:
-            # inputted brep with a single surface
-            srfArea = Rhino.Geometry.AreaMassProperties.Compute(obj).Area * (PVsurfacePercent/100)  # in m2
-            srfArea = srfArea * unitConversionFactor  # in m2
-            activeArea = srfArea * (moduleActiveAreaPercent/100)  # in m2
-            nameplateDCpowerRating = activeArea * (1 * (moduleEfficiency/100))  # in kW
-            validInputData = True
-            printMsg = "ok"
-            
-            return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
+    PVsurfaceInputType = "brep"
+    facesCount = PVsurface.Faces.Count
+    if facesCount > 1:
+        # inputted polysurface
+        nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
+        validInputData = False
+        printMsg = "The brep you supplied to \"_PVsurface\" is a polysurface. Please supply a surface"
+        
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
     else:
-        PVsurfaceInputType = "number"
-        try:
-            # input is number (pv surface area in m2)
-            srfArea = float(PVsurface) * (PVsurfacePercent/100)  # in m2
-            srfArea = srfArea * unitConversionFactor  # in m2
-            activeArea = srfArea * (moduleActiveAreaPercent/100)  # in m2
-            nameplateDCpowerRating = activeArea * (1 * (moduleEfficiency/100))  # in kW
-            validInputData = True
-            printMsg = "ok"
-            
-            return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
-        except Exception, e:
-            pass
+        # inputted brep with a single surface
+        srfArea = Rhino.Geometry.AreaMassProperties.Compute(PVsurface).Area * (PVsurfacePercent/100)  # in m2
+        srfArea = srfArea * unitConversionFactor  # in m2
+        activeArea = srfArea * (moduleActiveAreaPercent/100)  # in m2
+        nameplateDCpowerRating = activeArea * (1 * (moduleEfficiency/100))  # in kW
+        validInputData = True
+        printMsg = "ok"
         
-        # input is string (nameplateDCpowerRating in kW)
-        lowerString = PVsurface.lower()
-        
-        if "kw" in lowerString:
-            nameplateDCpowerRating = float(lowerString.replace("kw","")) * (PVsurfacePercent/100)  # in kW
-            activeArea = nameplateDCpowerRating / (1 * (moduleEfficiency/100))  # in m2
-            srfArea = activeArea * (100/moduleActiveAreaPercent)  # in m2
-            validInputData = True
-            printMsg = "ok"
-            
-            return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
-        else:
-            nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleActiveAreaPercent = moduleEfficiency = lifetime = ACenergyPerHour = totalRadiationPerHour = cellTemperaturePerHour = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = None
-            validInputData = False
-            printMsg = "Something is wrong with your \"PVsurface\" input data"
-            
-            return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg
+        return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
 
 
-def monthlyYearlyPacEpoaTmTcell(ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHour, energyCostPerKWh):
+def optimizePVsurfaceArea(DCtoACderateFactor, moduleType, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, ACenergyDemandPerYear):
     
+    # initialOptimalNameplateDCpowerRating
+    averageDailyACenergyDemandPerYear = ACenergyDemandPerYear/365
+    averageDailyTotalRadiation = (sum(totalRadiationPerHour)/1000)/365  # converted from Watts to kiloWatts
+    initialOptimalNameplateDCpowerRating = (averageDailyACenergyDemandPerYear/averageDailyTotalRadiation)/DCtoACderateFactor
+    
+    # stepNameplateDCpowerRating
+    if (initialOptimalNameplateDCpowerRating < 4):
+        stepNameplateDCpowerRating = 0.005  # 5 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 4) and (initialOptimalNameplateDCpowerRating < 10):
+        stepNameplateDCpowerRating = 0.01  # 10 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 10) and (initialOptimalNameplateDCpowerRating < 20):
+        stepNameplateDCpowerRating = 0.02  # 20 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 20) and (initialOptimalNameplateDCpowerRating < 35):
+        stepNameplateDCpowerRating = 0.025  # 25 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 35) and (initialOptimalNameplateDCpowerRating < 50):
+        stepNameplateDCpowerRating = 0.05  # 50 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 50) and (initialOptimalNameplateDCpowerRating < 75):
+        stepNameplateDCpowerRating = 0.075  # 75 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 75) and (initialOptimalNameplateDCpowerRating < 100):
+        stepNameplateDCpowerRating = 0.1  # 100 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 100) and (initialOptimalNameplateDCpowerRating < 200):
+        stepNameplateDCpowerRating = 0.25  # 250 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 200) and (initialOptimalNameplateDCpowerRating < 300):
+        stepNameplateDCpowerRating = 0.5  # 500 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 300) and (initialOptimalNameplateDCpowerRating < 750):
+        stepNameplateDCpowerRating = 1  # 1000 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 750) and (initialOptimalNameplateDCpowerRating < 1000):
+        stepNameplateDCpowerRating = 2.5  # 2500 Watts step
+    elif (initialOptimalNameplateDCpowerRating >= 1000):
+        stepNameplateDCpowerRating = 5 # 1000 Watts step
+    optimalNameplateDCpowerRatingL = [initialOptimalNameplateDCpowerRating]
+    for k in range(1,1000,1):
+        ACenergyPerHour = []
+        for i in range(8760):
+            Tm, Tcell, Pdc_, Pac = lb_photovoltaics.pvwatts(optimalNameplateDCpowerRatingL[-1], DCtoACderateFactor, AOI_RL[i], totalRadiationPerHour[i], beamRadiationPerHour[i], diffuseRadiationPerHour[i], groundRadiationPerHour[i], moduleType, temperatureCoefficientFraction, dryBulbTemperature[i], windSpeed[i], directNormalRadiation[i], diffuseHorizontalRadiation[i])
+            ACenergyPerHour.append(Pac)
+        energyOffsetPerYear = sum(ACenergyPerHour)/ACenergyDemandPerYear*100
+        nameplateDCpowerRatingStep = initialOptimalNameplateDCpowerRating + k * stepNameplateDCpowerRating  #0.5  # minimal step: 10 watts
+        optimalNameplateDCpowerRatingL.append(nameplateDCpowerRatingStep)
+        if energyOffsetPerYear > 100:
+            optimalNameplateDCpowerRating = round(optimalNameplateDCpowerRatingL[-1],2)
+            optimalNameplateDCpowerRating = math.ceil(optimalNameplateDCpowerRating/0.01)*0.01  # round to 10 Watts
+            if optimalNameplateDCpowerRating < 0.01:
+                optimalNameplateDCpowerRating = 0.01  # in kW (10 Watts)
+            #optimalActiveArea = optimalNameplateDCpowerRating / (1 * (moduleEfficiency/100))  # in m2
+            #optimalSrfArea = optimalActiveArea * (100/moduleActiveAreaPercent)  # in m2
+            #if optimalSrfArea < 0.075:
+                #optimalSrfArea = 0.075  # in m2, corresponds to 0.01 kW (10 Watts) systemSize, moduleEfficiency 15%, moduleActiveArea 90%
+                #print "Minimal PVsurface area will be used as optimal one."
+            
+            return optimalNameplateDCpowerRating
+    
+    # no optimal pv surface area was found
+    print "Optimal PV system size is larger than component's security boundaries. Increase the step of \"1\" in line 410 of the component's code. Example: Line 410 changed to: \"for k in range(1,1000,10):\", means step \"1\" increased to \"10\"."
+    return None  # in m2, corresponds to 0.01 kW (10 Watts) systemSize, moduleEfficiency 15%, moduleActiveArea 90%,
+
+
+def main(ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, nameplateDCpowerRating, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, moduleEfficiency, gamma, lifetime, gridEfficiency, locationName):
+    
+    # montly cellTemperature, totalRadiation, ACenergy, ACenergyDemand
     HOYs = range(1,8761)
     hoyForMonths = [0, 744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016, 8760, 9000]
     numberOfDaysInThatMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
@@ -314,7 +379,7 @@ def monthlyYearlyPacEpoaTmTcell(ACenergyPerHourData, totalRadiationPerHourData, 
     monthsOfYearHoyPacDemand = [[],[],[],[],[],[],[],[],[],[],[],[]]
     for i,hoy in enumerate(HOYs):
         Pac = ACenergyPerHourData[i]
-        PacDemand = ACenergyDemandPerHour[i]
+        PacDemand = ACenergyDemandPerHourData[i]
         Epoa = totalRadiationPerHourData[i]
         Tcell = cellTemperaturePerHourData[i]
         for k,item in enumerate(hoyForMonths):
@@ -329,21 +394,19 @@ def monthlyYearlyPacEpoaTmTcell(ACenergyPerHourData, totalRadiationPerHourData, 
                 monthsOfYearHoyPac[k].append(Pac)
     # correction for if Epoa per some month = 0 (if conditionalStatement_ from "Photovoltaics surface" component has been used, too high (positive or negative) latitude):
     for i,monthSumTcellFiltered in enumerate(monthsOfYearHoyTcellFiltered):
-        if len(monthSumTcellFiltered) == 0:
+        if len(monthsOfYearHoyTcellFiltered[i]) == 0:
             monthsOfYearHoyTcellFiltered[i] = [0]
-    for i,monthSumEpoaFiltered in enumerate(monthsOfYearHoyEpoaFiltered):
-        if len(monthSumEpoaFiltered) == 0:
+        if len(monthsOfYearHoyEpoaFiltered[i]) == 0:
             monthsOfYearHoyEpoaFiltered[i] = [0]
-    for i,monthSumPacFiltered in enumerate(monthsOfYearHoyPacFiltered):
-        if len(monthSumPacFiltered) == 0:
+        if len(monthsOfYearHoyPacFiltered[i]) == 0:
             monthsOfYearHoyPacFiltered[i] = [0]
     
     cellTemperaturePerMonthAverageFiltered = [sum(monthTcell)/len(monthTcell) for monthTcell in monthsOfYearHoyTcellFiltered]  # in C
     cellTemperaturePerYearAverageFiltered = sum(cellTemperaturePerMonthAverageFiltered)/len(cellTemperaturePerMonthAverageFiltered)  # in C
     
-    solarRadiationPerMonth = [sum(monthEpoa) for monthEpoa in monthsOfYearHoyEpoa]  # in kWh/m2
-    solarRadiationPerYear = sum(solarRadiationPerMonth)  # in kWh/m2
-    solarRadiationPerMonthAverageFiltered = [sum(monthEpoa2) for monthEpoa2 in monthsOfYearHoyEpoaFiltered]  # in kWh/m2
+    totalRadiationPerMonth = [sum(monthEpoa) for monthEpoa in monthsOfYearHoyEpoa]  # in kWh/m2
+    totalRadiationPerYear = sum(totalRadiationPerMonth)  # in kWh/m2
+    totalRadiationPerMonthAverageFiltered = [sum(monthEpoa2) for monthEpoa2 in monthsOfYearHoyEpoaFiltered]  # in kWh/m2
     
     ACenergyPerMonth = [sum(monthPac) for monthPac in monthsOfYearHoyPac]  # in kWh
     ACenergyPerYear = sum(ACenergyPerMonth)  # in kWh
@@ -352,23 +415,9 @@ def monthlyYearlyPacEpoaTmTcell(ACenergyPerHourData, totalRadiationPerHourData, 
     ACenergyDemandPerMonth = [sum(monthPacDemand) for monthPacDemand in monthsOfYearHoyPacDemand]  # in kWh
     ACenergyDemandPerYear = sum(ACenergyDemandPerMonth)  # in kWh
     
-    energyValuePerMonth = [month*energyCostPerKWh for month in ACenergyPerMonth]
-    energyValuePerYear = sum(energyValuePerMonth)
     
-    return ACenergyPerMonth, ACenergyPerYear, ACenergyPerMonthAverageFiltered, energyValuePerMonth, energyValuePerYear, solarRadiationPerMonth, solarRadiationPerYear, solarRadiationPerMonthAverageFiltered, cellTemperaturePerMonthAverageFiltered, cellTemperaturePerYearAverageFiltered, ACenergyDemandPerMonth, ACenergyDemandPerYear
-
-
-def main(ACenergyPerMonth, ACenergyPerYear, ACenergyPerMonthAverageFiltered, solarRadiationPerMonth, solarRadiationPerYear, solarRadiationPerMonthAverageFiltered, cellTemperaturePerMonthAverageFiltered, cellTemperaturePerYearAverageFiltered, ACenergyDemandPerMonth, ACenergyDemandPerYear, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency):
-    
-    Yield = ACenergyPerYear/nameplateDCpowerRating  # in hours
-    
-    CUFperYear = ACenergyPerYear/(nameplateDCpowerRating * 8760) * 100  # in %
-    
-    basicPRperYear = (ACenergyPerYear / (srfArea*(moduleEfficiency/100)*solarRadiationPerYear)) * 100  # in %
-    
-    gamma = -0.005   # default temperature coefficient for crystalline silicon PV modules
     temperatureCorrectedPRperMonth = []
-    for i,Epoa in enumerate(solarRadiationPerMonthAverageFiltered):
+    for i,Epoa in enumerate(totalRadiationPerMonthAverageFiltered):
         Ktemp = 1+gamma*(cellTemperaturePerMonthAverageFiltered[i]-cellTemperaturePerYearAverageFiltered)
         if Epoa == 0:  # correction for if Epoa per some month = 0 (if conditionalStatement_ from "Photovoltaics surface" component has been used, too high (positive or negative) latitude):
             TaCorrectedPR = 0
@@ -376,33 +425,74 @@ def main(ACenergyPerMonth, ACenergyPerYear, ACenergyPerMonthAverageFiltered, sol
             TaCorrectedPR = (ACenergyPerMonthAverageFiltered[i]/nameplateDCpowerRating*Ktemp) / ((Epoa)/1)*100
         temperatureCorrectedPRperMonth.append(TaCorrectedPR)  # in %
     temperatureCorrectedPRperYear = sum(temperatureCorrectedPRperMonth)/len(temperatureCorrectedPRperMonth)  # in %
+    temperatureCorrectedPRperMonth = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "PV system's Temperature corrected Performance Ratio", "%", "Monthly-> total", (1, 1, 1), (12, 31, 24)] + temperatureCorrectedPRperMonth
+    
     
     energyOffsetPerMonth = []
     for i,monthPacDemand in enumerate(ACenergyDemandPerMonth):
         if monthPacDemand == 0:  # correction if PacDemand per some month = 0
-            energyOffsetPM = 100
+            energyOffsetPM = 0
         else:
             energyOffsetPM = (ACenergyPerMonth[i]/ACenergyDemandPerMonth[i])*100
         energyOffsetPerMonth.append(energyOffsetPM)
+    energyOffsetPerMonth = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "PV system's Energy offset", "%", "Monthly-> total", (1, 1, 1), (12, 31, 24)] + energyOffsetPerMonth
+    
     if ACenergyDemandPerYear == 0:  # correction if PacDemand for all months = 0
-        energyOffsetPerYear = 100
+        energyOffsetPerYear = 0
     else:
         energyOffsetPerYear = ACenergyPerYear/ACenergyDemandPerYear*100
     #averageEnergyOffsetPerMonth = sum(energyOffsetPerMonth)/12
+    
+    Yield = ACenergyPerYear/nameplateDCpowerRating  # in hours
+    
+    CUFperYear = ACenergyPerYear/(nameplateDCpowerRating * 8760) * 100  # in %
+    
+    basicPRperYear = (ACenergyPerYear / (srfArea*(moduleEfficiency/100)*totalRadiationPerYear)) * 100  # in %
+    
+    energyValue = energyCostPerKWh * ACenergyPerYear  # in chosen currency
     
     embodiedEnergy = embodiedEnergyPerGJ_M2 * srfArea  # in GigaJoules
     embodiedCO2 = embodiedCO2PerT_M2 * srfArea   # in tCO2
     
     CO2emissionRate = (embodiedCO2*1000000)/(ACenergyPerYear*lifetime)  # in gCO2/kWh
-    CO2emissionRate2 = (embodiedCO2*1000000)/(solarRadiationPerYear*(moduleEfficiency/100)*basicPRperYear*lifetime*srfArea)  # in gCO2/kWh
+    CO2emissionRate2 = (embodiedCO2*1000000)/(totalRadiationPerYear*(moduleEfficiency/100)*basicPRperYear*lifetime*srfArea)  # in gCO2/kWh
     
     embodiedEnergy_kWh_m2 = embodiedEnergyPerGJ_M2 * (1000/3.6) * (gridEfficiency/100)  # to kWh/m2
     
-    EPBT = (embodiedEnergy_kWh_m2) / (solarRadiationPerYear*(moduleEfficiency/100)*(basicPRperYear/100))  # in years
+    EPBT = (embodiedEnergy_kWh_m2) / (totalRadiationPerYear*(moduleEfficiency/100)*(basicPRperYear/100))  # in years
     
     EROI = lifetime / EPBT  # formula by Hall, 2008; Heinberg, 2009; Lloyd and Forest, 2010
     
-    return Yield, CUFperYear, basicPRperYear, temperatureCorrectedPRperMonth, temperatureCorrectedPRperYear, energyOffsetPerMonth, energyOffsetPerYear, embodiedEnergy, embodiedCO2, CO2emissionRate, EPBT, EROI
+    
+    if optimal_:
+        # optimal_ set to True
+        if (ACenergyDemandPerYear != 0):
+            # ACenergyDemandPerYear_ inputted
+            pv_inputData = sc.sticky["pv_inputData"]
+            conditionalStatementForFinalPrint, DCtoACderateFactor, moduleType, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation = pv_inputData
+            if (conditionalStatementForFinalPrint == "No condition"):
+                # nothing inputted into "Photovoltaics surface component"'s "annualHourlyData_" and "conditionalStatement_" inputs.
+                optimalSystemSize = optimizePVsurfaceArea(DCtoACderateFactor, moduleType, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, ACenergyDemandPerYear)
+            else:
+                # something inputted into "Photovoltaics surface component"'s "annualHourlyData_" and "conditionalStatement_" inputs.
+                optimalSystemSize = Yield = CUFperYear = basicPRperYear = temperatureCorrectedPRperMonth = temperatureCorrectedPRperYear = energyOffsetPerMonth = energyOffsetPerYear = energyValue = embodiedEnergy = embodiedCO2 = CO2emissionRate = EPBT = EROI = None
+                ACenergyDemandAndConditionalInputs = False
+                printMsg = "Optimal optimalSystemSize can not be calculated from conditioned weather data.\nPlease disconnect the \"annualHourlyData_\" and \"conditionalStatement_\" inputs of \"Photovoltaics surface\" component."
+                return optimalSystemSize, Yield, CUFperYear, basicPRperYear, temperatureCorrectedPRperMonth, temperatureCorrectedPRperYear, energyOffsetPerMonth, energyOffsetPerYear, energyValue, embodiedEnergy, embodiedCO2, CO2emissionRate, EPBT, EROI, ACenergyDemandAndConditionalInputs, printMsg
+        else:
+            # ACenergyDemandPerYear_ not inputted
+            optimalSystemSize = Yield = CUFperYear = basicPRperYear = temperatureCorrectedPRperMonth = temperatureCorrectedPRperYear = energyOffsetPerMonth = energyOffsetPerYear = energyValue = embodiedEnergy = embodiedCO2 = CO2emissionRate = EPBT = EROI = None
+            ACenergyDemandAndConditionalInputs = False
+            printMsg = "Data needs to be inputted into ACenergyDemandPerHour_ in order to calculate the optimalSystemSize.\n\n" + \
+                       "If you did input data to ACenergyDemandPerHour_, then its sum is 0 kWh. optimalSystemSize can not be calculated unless ACenergyDemandPerHour_ sum > 0 kWh."
+            return optimalSystemSize, Yield, CUFperYear, basicPRperYear, temperatureCorrectedPRperMonth, temperatureCorrectedPRperYear, energyOffsetPerMonth, energyOffsetPerYear, energyValue, embodiedEnergy, embodiedCO2, CO2emissionRate, EPBT, EROI, ACenergyDemandAndConditionalInputs, printMsg
+    else:
+        # optimal_ set to False
+        optimalSystemSize = None
+    
+    ACenergyDemandAndConditionalInputs = True
+    printMsg = "ok"
+    return optimalSystemSize, Yield, CUFperYear, basicPRperYear, temperatureCorrectedPRperMonth, temperatureCorrectedPRperYear, energyOffsetPerMonth, energyOffsetPerYear, energyValue, embodiedEnergy, embodiedCO2, CO2emissionRate, EPBT, EROI, ACenergyDemandAndConditionalInputs, printMsg
 
 
 def printOutput(locationName, PVsurfacePercent, moduleActiveAreaPercent, srfArea, activeArea, nameplateDCpowerRating, moduleEfficiency, lifetime, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency):
@@ -423,32 +513,37 @@ Surface area (m2): %0.2f
 Surface active area (m2): %0.2f
 Nameplate DC power rating (kW): %0.2f
 Module efficiency: %s
-Lifetime: %s
 
 Energy cost per KWh: %s
 Embodied energy/m2 (MJ/m2): %0.2f
 Embodied CO2/m2 (kg CO2/m2): %0.2f
+Lifetime: %s
 gridEfficiency: %s
-    """ % (locationName, PVsurfacePercent, moduleActiveAreaPercent, srfArea, activeArea, nameplateDCpowerRating, moduleEfficiency, lifetime, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerKg_M2, gridEfficiency)
+    """ % (locationName, PVsurfacePercent, moduleActiveAreaPercent, srfArea, activeArea, nameplateDCpowerRating, moduleEfficiency, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerKg_M2, lifetime, gridEfficiency)
     print resultsCompletedMsg
     print printOutputMsg
 
 
 level = gh.GH_RuntimeMessageLevel.Warning
+levelBlank = gh.GH_RuntimeMessageLevel.Blank
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
+        lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
-        if _PVsurface:
+        if _PVsurface or _ACenergyPerHour or _totalRadiationPerHour or _cellTemperaturePerHour:
             unitConversionFactor = lb_preparation.checkUnits()
             unitAreaConversionFactor = unitConversionFactor**2
-            nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleActiveAreaPercent, moduleEfficiency, lifetime, ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency, locationName, validInputData, printMsg = PVinputData(_PVsurface, PVsurfacePercent_, unitConversionFactor, moduleActiveAreaPercent_, moduleEfficiency_, lifetime_, _ACenergyPerHour, _totalRadiationPerHour, _cellTemperaturePerHour, ACenergyDemandPerHour_, energyCostPerKWh_, embodiedEnergyPerM2_, embodiedCO2PerM2_, gridEfficiency_)
+            nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg = PVinputData(_PVsurface, PVsurfacePercent_, unitConversionFactor, PVmoduleSettings_, _ACenergyPerHour, _totalRadiationPerHour, _cellTemperaturePerHour, ACenergyDemandPerHour_, energyCostPerKWh_, embodiedEnergyPerM2_, embodiedCO2PerM2_, lifetime_, gridEfficiency_)
             if validInputData:
                 # all inputs ok
                 if _runIt:
-                    ACenergyPerMonth, ACenergyPerYear, ACenergyPerMonthAverageFiltered, energyValuePerMonth, energyValuePerYear, solarRadiationPerMonth, solarRadiationPerYear, solarRadiationPerMonthAverageFiltered, cellTemperaturePerMonthAverageFiltered, cellTemperaturePerYearAverageFiltered, ACenergyDemandPerMonth, ACenergyDemandPerYear = monthlyYearlyPacEpoaTmTcell(ACenergyPerHourData, totalRadiationPerHourData, cellTemperaturePerHourData, ACenergyDemandPerHourData, energyCostPerKWh)
-                    Yield, CUFperYear, basicPRperYear, temperatureCorrectedPRperMonth, temperatureCorrectedPRperYear, energyOffsetPerMonth, energyOffsetPerYear, embodiedEnergy, embodiedCO2, CO2emissionRate, EPBT, EROI = main(ACenergyPerMonth, ACenergyPerYear, ACenergyPerMonthAverageFiltered, solarRadiationPerMonth, solarRadiationPerYear, solarRadiationPerMonthAverageFiltered, cellTemperaturePerMonthAverageFiltered, cellTemperaturePerYearAverageFiltered, ACenergyDemandPerMonth, ACenergyDemandPerYear, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency)
-                    printOutput(locationName, PVsurfacePercent, moduleActiveAreaPercent, srfArea, activeArea, nameplateDCpowerRating, moduleEfficiency, lifetime, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency)
+                    optimalSystemSize, Yield, CUFperYear, basicPRperYear, temperatureCorrectedPRperMonth, temperatureCorrectedPRperYear, energyOffsetPerMonth, energyOffsetPerYear, energyValue, embodiedEnergy, embodiedCO2, CO2emissionRate, EPBT, EROI, ACenergyDemandAndConditionalInputs, printMsg = main(ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, nameplateDCpowerRating, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, moduleEfficiency, temperatureCoefficientFraction, lifetime, gridEfficiency, locationName)
+                    if ACenergyDemandAndConditionalInputs:
+                        printOutput(locationName, PVsurfacePercent, moduleActiveAreaPercent, srfArea, activeArea, nameplateDCpowerRating, moduleEfficiency, lifetime, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, gridEfficiency)
+                    else:
+                        print printMsg
+                        ghenv.Component.AddRuntimeMessage(level, printMsg)
                 else:
                     print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Photovoltaics performance metrics"
             else:
@@ -457,7 +552,7 @@ if sc.sticky.has_key("ladybug_release"):
         else:
             printMsg = "Please input Surface (not polysurface) to \"_PVsurface\".\nOr input surface Area in square meters (example: \"100\").\nOr input Nameplate DC power rating in kiloWatts (example: \"4 kw\")."
             print printMsg
-            ghenv.Component.AddRuntimeMessage(level, printMsg)
+            ghenv.Component.AddRuntimeMessage(levelBlank, printMsg)
     else:
         printMsg = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \
