@@ -175,10 +175,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = 'VER 0.0.61\nNOV_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nNOV_03_2015
+#compatibleLBVersion = VER 0.0.61\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -605,12 +605,12 @@ def legendGeometry(legendPar, scale, testPt, eachQuadrantACpercent, validContext
     outerBaseCrv = Rhino.Geometry.Circle(testPt, 1.08*scale).ToNurbsCurve()
     
     # legend 1
-    lowB, highB, numSeg, customColors, legend1BasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legend1BasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     lb_visualization.calculateBB([outerBaseCrv])
     if legend1BasePoint == None:
         legend1BasePoint = lb_visualization.BoundingBoxPar[0]
     # generate the legend
-    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(eachQuadrantACpercent, lowB, highB, numSeg, "Annual AC energy percentage", lb_visualization.BoundingBoxPar, legend1BasePoint, legendScale, legendFont, legendFontSize, legendBold)
+    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(eachQuadrantACpercent, lowB, highB, numSeg, "Annual AC energy percentage", lb_visualization.BoundingBoxPar, legend1BasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces

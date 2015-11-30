@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_24_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -280,6 +280,28 @@ class versionCheck(object):
                      "into canvas and try again."
         w = gh.GH_RuntimeMessageLevel.Warning
         GHComponent.AddRuntimeMessage(w, warningMsg)
+    
+    def isInputMissing(self, GHComponent):
+        isInputMissing = False
+        isAnyConnected = False
+        for param in GHComponent.Params.Input:
+            if param.NickName.startswith("_") and \
+                not param.NickName.endswith("_") and \
+                param.VolatileDataCount:
+                    isAnyConnected = True
+                    break
+        
+        if not isAnyConnected: return True
+        
+        for param in GHComponent.Params.Input:
+            if param.NickName.startswith("_") and \
+                not param.NickName.endswith("_") and \
+                not param.VolatileDataCount:
+                    warning = "Input parameter %s failed to collect data!"%param.NickName
+                    GHComponent.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    isInputMissing = True
+        
+        return isInputMissing
 
 
 class Preparation(object):
@@ -606,7 +628,7 @@ class Preparation(object):
     
     
     def readLegendParameters(self, legendPar, getCenter = True):
-        if legendPar == []: legendPar = [None] * 8
+        if legendPar == []: legendPar = [None] * 11
         if legendPar[0] == None: lowB = 'min'
         elif legendPar[0] == 'min': lowB = 'min'
         else: lowB = float(legendPar[0])
@@ -627,7 +649,6 @@ class Preparation(object):
         if legendPar[4] or getCenter: legendBasePoint = self.getCenPt(legendPar[4])
         else: legendBasePoint = None
         
-        # print len(legendPar)
         if legendPar[5] == None or float(legendPar[5])==0: legendScale = 1
         else: legendScale = legendPar[5]
         
@@ -637,12 +658,16 @@ class Preparation(object):
         if legendPar[7] == None: legendFontSize = None
         else: legendFontSize = legendPar[7]
         
-        try:
-            if legendPar[8] == None: legendBold = False
-            else: legendBold = legendPar[8]
-        except: legendBold = False
-
-        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold
+        if legendPar[8] == None: legendBold = False
+        else: legendBold = legendPar[8]
+        
+        if legendPar[9] == None: decimalPlaces = 2
+        else: decimalPlaces = legendPar[9]
+        
+        if legendPar[10] == None: removeLessThan = False
+        else: removeLessThan = legendPar[10]
+        
+        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan
     
     def readOrientationParameters(self, orientationStudyP):
         try:
@@ -2548,7 +2573,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -2565,7 +2590,7 @@ class ResultVisualization(object):
             for pt in range(numPt):
                 point = rc.Geometry.Point3d(basePt[0] + (pt%2) * legendWidth, basePt[1] + int(pt/2) * legendHeight, basePt[2])
                 ptList.append(point)
-    
+            
             meshVertices = ptList; textPt = []
             legendSrf = rc.Geometry.Mesh()
             for segNum in  range(numOfSeg):
@@ -2592,8 +2617,6 @@ class ResultVisualization(object):
         if  textSize == None:
             textSize = (legendHeight/3) * legendScale
         
-        # numbers
-        # rs.frange(0, 1, round(1/(numofColors-1),6))
         try:
             numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
         except:
@@ -2601,12 +2624,17 @@ class ResultVisualization(object):
                 numbers = [lowB]; numOfSeg = 1
             else:
                 numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
-        ###
+        if decimalPlaces == None: decimalPlaces = 2
+        
+        ### Create the numbers in the legend.
         if len(numbers) < numOfSeg: numbers.append(highB)
         elif len(numbers) > numOfSeg: numbers = numbers[:-1]
-        numbersStr = [("%.2f" % x) for x in numbers]
-        numbersStr[0] = "<=" + numbersStr[0]
-        numbersStr[-1] = numbersStr[-1] + "<="
+        formatString = "%."+str(decimalPlaces)+"f"
+        numbersStr = [(formatString % x) for x in numbers]
+        if greaterLessThan: pass
+        else:
+            numbersStr[0] = "<=" + numbersStr[0]
+            numbersStr[-1] = numbersStr[-1] + "<="
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
         
@@ -2873,17 +2901,22 @@ class ResultVisualization(object):
                 
             return newLayerIndex, l
     
-    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None):
+    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2):
+            #Set up basic object attributes
             attr = rc.DocObjects.ObjectAttributes()
             attr.LayerIndex = newLayerIndex
             attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
             attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
-            try:
-                for mesh in testGeomety: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
-            except:
-                rc.RhinoDoc.ActiveDoc.Objects.AddMesh(testGeomety, attr)
             
-            rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
+            #Write colored meshes into the document
+            try:
+                for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
+            except:
+                self.mesh2Hatch([testGeomety], newLayerIndex, attr)
+            self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
+            
+            #Write the curves into the document.
+            attr.ObjectColor = System.Drawing.Color.Black
             if crvs != None:
                 for crv in crvs:
                     try:
@@ -2892,12 +2925,15 @@ class ResultVisualization(object):
                         # This is for breps surfaces as I changed curves to surfaces now
                         try: rc.RhinoDoc.ActiveDoc.Objects.AddBrep(crv, attr)
                         except: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(crv, attr)
+            
+            #Write the text into the document
+            formatString = "%." + str(decimalPlaces) + "f"
             for text in range(len(legendText)):
                 plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
-                if type(legendText[text]) is not str: legendText[text] = ("%.2f" % legendText[text])
+                if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
                 rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
     
-    def mesh2Hatch(self, meshes, parentLayerIndex):
+    def mesh2Hatch(self, meshes, parentLayerIndex, attr = None):
         #Go through each of the meshes and make a group of hatches.
         for mesh in meshes:
             
@@ -2973,8 +3009,9 @@ class ResultVisualization(object):
             
             #Bake the hatch into the scene.
             for count, hatch in enumerate(hatches):
-                attr = rc.DocObjects.ObjectAttributes()
-                attr.LayerIndex = parentLayerIndex
+                if attr == None:
+                    attr = rc.DocObjects.ObjectAttributes()
+                    attr.LayerIndex = parentLayerIndex
                 attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
                 attr.ObjectColor = colors[count]
                 
@@ -3383,6 +3420,35 @@ class ComfortModels(object):
         
         return upTemper, downTemper
     
+    def calcMRTThreshold(self, initialGuessDown, airTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD):
+        if targetPPD == 10.0: targetPMV = 0.5
+        elif targetPPD == 6.0: targetPMV = 0.220
+        elif targetPPD == 15.0: targetPMV = 0.690
+        elif targetPPD == 20.0: targetPMV = 0.84373
+        elif targetPPD < 5.0: targetPMV = 0.0001
+        else:
+            #Use Rhino's geometry functions to compute a target pmv
+            def pmvCrv(pmv):
+                return 100.0 - 95.0 * math.exp(-0.03353 * pow(pmv, 4.0) - 0.2179 * pow(pmv, 2.0))
+            
+            distribPts = []
+            startPMV = 0
+            for pmvCount in range(20):
+                distribPts.append(rc.Geometry.Point3d(startPMV, pmvCrv(startPMV), 0))
+                startPMV += 0.25
+            distribCrv = rc.Geometry.Curve.CreateInterpolatedCurve(distribPts, 3)
+            testLine = rc.Geometry.LineCurve(rc.Geometry.Point3d(0, targetPPD, 0), rc.Geometry.Point3d(5, targetPPD, 0))
+            intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
+            targetPMV = intersectPts[0].PointA.X
+        
+        downTemper = initialGuessDown
+        downDelta = 3
+        while abs(downDelta) > 0.01:
+            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(airTemp, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+            downDelta = -targetPMV - pmv
+            downTemper = downTemper + downDelta
+        
+        return downTemper, pmv, set
     
     def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety, levelOfConditioning = 0):
         # Define the variables that will be used throughout the calculation.
@@ -3575,10 +3641,10 @@ class ComfortModels(object):
         
         #Do a series of checks to be sure that the input values are within the bounds accepted by the model.
         check = True
-        if Ta < -50.0 or Ta > 50.0: check = False
-        else: pass
-        if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
-        else: pass
+        #if Ta < -50.0 or Ta > 50.0: check = False
+        #else: pass
+        #if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
+        #else: pass
         if va < 0.5: va = 0.5
         elif va > 17: va = 17
         else: pass

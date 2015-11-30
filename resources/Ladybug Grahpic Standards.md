@@ -2,15 +2,15 @@
 
 Below are a list of component characteristics and standards that have been drafted to help ensure that the components have a consistent means of communicating with users.
 This communication is important for helping users understand how to use the components and how to solve issues when something has gone wrong.
-These standards also help developers communicate with one another in a consistent manner.  Adherece to these standards will ultimatelty save all of us time.
+These standards also help developers communicate with one another in a consistent manner and adherence to these standards will ultimately save all of us time.
 Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless given permission otherwise and should generally strive to follow the Guidelines.
 
 
 #HARD AND FAST RULES
 
-1) All components should include the ladybug header at the top of the code.  This includes information on the GPL licence, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found [here](https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Header_Template.py).
+1) All components should include the ladybug header at the top of the code.  This includes information on the GPL license, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found [here](https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Component_Template.py).
 
-2) All components should follow a format for their body that includes a check of the current Ladybug and/or Honeybee version as well as separate functions for input-checking and for running the main function of the component.  A template for this body can be found [here](https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Body_Template.py).
+2) All components should follow a format for their body that includes a check of the current Ladybug and/or Honeybee version as well as separate functions for input-checking and for running the main function of the component.  A template for this body can be found [here](https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Component_Template.py).
 
 3) Descriptions of component inputs should include the following information:
 
@@ -27,15 +27,15 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 5) Any time that a component relies on a change made in Ladybug_Ladybug or Honeybee_Honeybee, the "#compatibleLBVersion" and/or the "#compatibleHBVersion" in the header must be updated to this version of Ladybug_Ladybug or Honeybee_Honeybee.
 
-6) Components should only use Grasshopper's "Warning" capability (orange component) if the user has input something incorrect that would cause the component to crash or produce an incorrect result.  If you only want to tell the user to input a certain required input or give the user information about how the component is running, please use either the "readMe!" output (by printing the message) or use Grasshopper's "Remark" capability instead of the "Warning" capability.
+6) Components will remain grey when dropped on the canvas but, once any input is connected, the component should use Grasshopper's "Warning" capability (orange component) any time that there is a missing required input or incorrect type of input.  Ideally, all of these warnings are given either before or within the input-checking function of the component (so all warnings are given before getting to the main function).
 
-7) Components should not purposefully use Grasshopper's "Error" capability.  This shall be reserved for either identifying bugs in our code or for telling the user that they have not put in the right data type to a certain input (ie. a point into a boolean input).
+7) If a component gets to its main function but fails to run to completion, Grasshopper's "Error" capability should be used (ie. an energy simulation was started but failed because of incorrect inputs).  If the component is running to completion and you you only want to give the user information about how the process has run, please use the "readMe!" output (by printing the message) and not any warnings, errors, or remarks.  Grasshopper's "Remark" capability should never be used because it over-rides the color of the component in the case of warnings or errors.
 
-8) All components will use the "Always draw icon" feature of GHPython.  To ensure that this is implemented, right-click on the center of your component, go to the upper-right corner of the menu, and hit the icon there until you see a black hexagon.
+8) Components that produce a graphic output in the Rhino scene will have their preview turned on by default while those that do not produce a graphic output will have their preview turned off.
 
-9) Components that produce a graphic output in the Rhino scene will have their preview turned on by default while those that do not produce a graphic output will have their preview turned off.
+9) All components will be placed first in WIP and beta tested by the community before being moved to the other tabs.  This will communicate to users that the components are still being vetted and they should use them at their own risk.
 
-10) All components will be placed first in WIP and beta tested by the community before being moved to the other tabs.  This will communicate to users that the components are still being vetted and they should use them at their own risk.
+10) No one understands best what a specific component should be telling its user better than the developer and those trying to apply it.  Therefore, these standards should be seen as a minimum of what is required and any additional warnings, errors, or information that you realize should be given to the user is desirable and encouraged as long as you are not violating the general structure outlined in this document.
 
 
 
@@ -46,6 +46,6 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 2) If a given input to a component is one that merits some expert knowledge (like a certain coefficient), it is usually a good idea to include some examples of this in the input description.
 
-3) You should aim to limit the size of your component and the number of outputs.  Remember that users can probably derive redundant outputs with a few native GH components and so you often only need to include one.  Also, if you have similar inputs, it may be useful to add an integer input for "calculation type" that switches between different modes of running the component.  The number of inputs/outputs should always aim to be less than 15.  However, if you have so much that the component does and good reasons for needing more outputs, the largest component in the whole suite currently has 22 outputs. If you are exceeding 15, be prepared with these reasons.
+3) You should aim to limit the size of your component and the number of outputs.  Remember that users can probably derive similar/redundant outputs with a few native GH components and so you often only need to include one.  Also, if you have similar inputs, it may be useful to add an integer input for "calculation type" that switches between different modes of running the component.  The number of inputs/outputs should always aim to be less than 15.  However, if you have so much that the component does and good reasons for needing more outputs, the largest component in the whole suite currently has 22 outputs. If you are exceeding 15, be prepared with these reasons.
 
 4) If you have one operation that applies to a number of components, you should write this operation into Ladybug_Ladybug or Honeybee_Honeybee.  You should never be copy/pasting a function from another component unless you are going to be modifying that function substantially to be specific for that component's needs.

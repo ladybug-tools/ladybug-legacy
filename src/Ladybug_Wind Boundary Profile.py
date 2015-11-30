@@ -78,10 +78,10 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -981,7 +981,7 @@ def setupAddLayers(layParentName, laySubName, projectName, newLayer, category):
 
 def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
     #Read the legend parameters.
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
     #Set a default windDirHieghts.
     windDirHieghts = []
@@ -1268,7 +1268,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
         #Create a color legend if wind arrow meshes have been generated.
         if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
             #Get the legend base point.
-            legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values, lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+            legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values, lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
             # color legend surfaces

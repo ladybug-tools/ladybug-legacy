@@ -22,7 +22,7 @@
 
 
 """
-This component calculates the Tilt and Orientation Factor (TOF) for PV modules/Solar water hearing collectors.
+This component calculates the Tilt and Orientation Factor (TOF) for PV modules/Solar hot watter collectors.
 TOF is a solar radiation at the actual tilt and orientation divided by the solar radiation at the optimum tilt and orientation, expressed in percent. 
 -
 Provided by Ladybug 0.0.61
@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.61
         PVsurfaceAzimuthAngle_: The orientation angle (clockwise from the true north) of the PVsurface normal vector. (range 0-360)
                                 -
                                 If not supplied, but surface inputted into "_PVsurface", PVsurfaceAzimuthAngle will be calculated from an angle PVsurface closes with its north.
-                                If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area inputed), default value of 180° (south-facing) for locations in the northern hemisphere or 0° (north-facing) for locations in the southern hemisphere, will be used.
+                                If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area inputed), default value of 180 (south-facing) for locations in the northern hemisphere or 0 (north-facing) for locations in the southern hemisphere, will be used.
         annualShading_: Losses due to buildings, structures, trees, mountains or other objects that prevent solar radiation from reaching the PV module/Solar hot water collector.
                   Input range: 0 to 100(%), 0 being unshaded, and 100 being totally shaded PV module/SHW collector.
                   -
@@ -85,13 +85,13 @@ Provided by Ladybug 0.0.61
               -
               In percent(%).
         PVsurfaceTilt: Tilt angle of the inputted PVsurface.
-                       In degrees (°).
+                       In degrees ().
         PVsurfaceAzimuth: Orientation angle of the inputted PVsurface.
-                          In degrees (°).
+                          In degrees ().
         optimalTilt: Optimal tilt of the PVsurface for a given location. Optimal tilt being the one that receives the most annual solar radiation.
-                     In degrees (°).
+                     In degrees ().
         optimalAzimuth: Optimal orientation of the PVsurface for a given location. Optimal azimuth being the one that receives the most annual solar radiation.
-                        In degrees (°).
+                        In degrees ().
         optimalRoofPitch: Optimal steepness of the PVsurface for a given location. Optimal steepness being the one that receives the most annual solar radiation.
                           In inches/inches
         optimalRadiation: Total solar radiation per square meter for a whole year received on a PVsurface of optimal tilt and azimuth, at given location.
@@ -107,10 +107,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = "VER 0.0.61\nNOV_06_2015"
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nNOV_03_2015
+#compatibleLBVersion = VER 0.0.61\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -418,7 +418,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
             meshPts.append(meshPt)
             meshLiftedPts.append(liftedMeshPt)
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     colors = lb_visualization.gradientColor(totalRadiationPerYearL, lowB, highB, customColors)
     
     mesh = lb_meshpreparation.meshFromPoints(precision+1, precision+1, meshPts, colors)
@@ -619,7 +619,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
         y2AxisNotchValuesOrigins.append(y2AxisNotchValuesOrigin)
         oddRoofPitchAnglesLabels.append(label)
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     if not legendFontSize: legendFontSize = 2
     
     # xAxis, yAxis, y2Axis LabelMeshes
@@ -687,7 +687,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
 
 def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     if legendBasePoint == None:
         legendBasePoint = Rhino.Geometry.Point3d(meshPts[precision].X+25, meshPts[precision].Y, meshPts[precision].Z)
     
@@ -700,7 +700,7 @@ def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
     # generate the legend
     totalRadiationPerYearLint = [int(annualEpoa/1000) for annualEpoa in totalRadiationPerYearL]
     lb_visualization.calculateBB([mesh])
-    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Annual radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Annual radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces

@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.SubCategory = "6 | WIP"
@@ -424,8 +424,8 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
     ##pointColors.append(lb_visualization.gradientColor(totalComfortOrNot, 0, 1, customColors))
     
     legend = []
-    #legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legComfBasePts, legendScale, legendFont, legendFontSize)
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort or Not", lb_visualization.BoundingBoxPar, legComfBasePts, .45, legendFont, 1.5)
+    #legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legComfBasePts, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort or Not", lb_visualization.BoundingBoxPar, legComfBasePts, .45, legendFont, 1.5, decimalPlaces, removeLessThan)
     legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend.append(legendSrfs)
@@ -1143,7 +1143,7 @@ def createFrequencyMesh(orgY, dryBulbTemperature, relativeHumidity, cullMesh, lb
     else: legendPar = legendPar_
     
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale,\
-    legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     
     hourPts = []
     for count, ratio in enumerate(relativeHumidity):
@@ -1525,7 +1525,7 @@ def main(epwData, epwStr):
         #legendFontSize = 2
         #lb_visualization.calculateBB(chartText, True)
         lb_visualization.calculateBB(chartLayout[0:90], True) 
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
         ##legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)

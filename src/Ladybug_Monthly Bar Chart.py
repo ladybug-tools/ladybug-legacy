@@ -63,10 +63,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -258,7 +258,7 @@ def restoreInput():
 
 def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization):
     #Read legend parameters
-    lowBNotImp, highBNotImp, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
+    lowBNotImp, highBNotImp, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
     numSeg = int(numSeg)
     
     #Set some defaults.
@@ -319,7 +319,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     for listCount, lst in enumerate(separatedLists):
         #Read the legendPar for the data set.
         try:
-            lowBInit, highBInit, numSegNotImportant, customColorsNotImportant, legendBasePointNotImportant, legendScaleNotImportant, legendFontNotImportant, legendFontSizeNotImportant, legendBoldNotImportant = lb_preparation.readLegendParameters(legendPs[listCount], False)
+            lowBInit, highBInit, numSegNotImportant, customColorsNotImportant, legendBasePointNotImportant, legendScaleNotImportant, legendFontNotImportant, legendFontSizeNotImportant, legendBoldNotImportant, decimalPlacesNotImportant, removeLessThanNotImportant = lb_preparation.readLegendParameters(legendPs[listCount], False)
             lowBList.append(lowBInit)
             highBList.append(highBInit)
         except:

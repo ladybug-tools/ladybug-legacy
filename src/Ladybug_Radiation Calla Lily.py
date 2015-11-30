@@ -63,10 +63,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Lily"
 ghenv.Component.NickName = 'radiationCallaLily'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -305,7 +305,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, north,
             elif legendPar[-1] == None: overwriteScale = True
             
             # generate the colors
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
             
             if overwriteScale: legendScale = 0.85
             
@@ -359,7 +359,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, north,
             
             # get the legend done
             legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(resultsFlatten
-                    , lowB, highB, numSeg, listInfo[0][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+                    , lowB, highB, numSeg, listInfo[0][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)

@@ -52,10 +52,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -160,11 +160,11 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                 if legendPar == []: overwriteScale = True
                 elif legendPar[5] == None: overwriteScale = True
                 
-                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+                lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
                 if overwriteScale: legendScale = 0.9
                 
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
                 
                 titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading[i], False, legendFont, legendFontSize, legendBold)
                 
@@ -307,7 +307,7 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                         normLegend = True
                 except:
                     # make an initial legend parameter to replace the max
-                    legendPar = [None,None,None,[],None, None, None, None]
+                    legendPar = [None,None,None,[],None, None, None, None, None, None, None]
                     legendPar[1] = legendMax[i]
                     legendPar[0] = legendMin[i]
                     normLegend = True

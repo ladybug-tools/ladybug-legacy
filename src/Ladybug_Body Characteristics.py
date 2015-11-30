@@ -164,12 +164,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Body Characteristics"
 ghenv.Component.NickName = "BodyCharacteristics"
-ghenv.Component.Message = "VER 0.0.61\nNOV_06_2015"
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
-#ghenv.Component.SubCategory = "4 | Extra"
-ghenv.Component.SubCategory = "7 | WIP"
-#compatibleLBVersion = VER 0.0.61\nNOV_06_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+ghenv.Component.SubCategory = "6 | WIP"
+#compatibleLBVersion = VER 0.0.59\nNOV_05_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
 import Grasshopper.Kernel as gh
