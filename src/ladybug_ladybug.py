@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_24_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_30_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -4028,6 +4028,23 @@ class ComfortModels(object):
         
         return relHumid
     
+    def calcRelHumidFromDryBulbDewPt(self, temperature, dewPt):
+        #Calculate the partial pressure of water in the atmosphere.
+        A = 611.657
+        m = 7.591386
+        Tn = 240.7263
+        Td = dewPt + 273
+        Pw = (math.pow(10, (m/((Tn/Td)-1)))) * A
+        
+        #Convert Temperature to Kelvin
+        TKelvin = temperature + 273
+        #Calculate saturation pressure.
+        Pws = self.calcVapPressHighAccuracy([TKelvin])[0]
+        
+        #Calculate the relative humidity.
+        relHumid = (Pw/Pws)*100
+        
+        return relHumid
     
     def calcTempFromEnthalpy(self, enthalpy, absHumid):
         airTemp =(enthalpy - 2.5*(absHumid*1000))/(1.01 + (0.00189*absHumid*1000))
