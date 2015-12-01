@@ -1,4 +1,4 @@
-﻿# This is the heart of the Ladybug
+# This is the heart of the Ladybug
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
@@ -5636,8 +5636,8 @@ class Photovoltaics(object):
         
         Qloss = tankLoss*tankArea*(Tw-TmechRoom)/1000  # kWh (negative value represents gain instead of loss)
         dQ = Qsolar - Qloss - Qsupply - Qdis  # kWh
-        dt = dQ*3600/(waterSpecificHeat*tankSize*waterDensity)  # °C
-        Tw = Tw + dt  # °C
+        dt = dQ*3600/(waterSpecificHeat*tankSize*waterDensity)  # C
+        Tw = Tw + dt  # C
         
         return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, Qpump, dQ, dt, Tw
     
