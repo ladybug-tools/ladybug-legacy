@@ -1,4 +1,4 @@
-# This is the heart of the Ladybug
+﻿# This is the heart of the Ladybug
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
@@ -5176,7 +5176,7 @@ class Photovoltaics(object):
         
         return Epoa, Eb, Ed_sky, Eground, AOI_R
     
-    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws10, DNI, DHI):
+    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, gamma, Ta, ws10, DNI, DHI):
         # PVWatts v1 Thermal, Module Temperature, Cell Temperature Module and Inverter models
         
         # Sandia PV Array Performance Module Cover
@@ -5192,14 +5192,14 @@ class Photovoltaics(object):
         Etr = Epoa - (1-f)*Eb*math.cos(AOI_R)
         
         # Thermal Model by Fuentes (1987)
-        if moduleType == 0:   # glass/cell/glass   close roof mount
-            a = -2.98
-            b = -0.0471
-            deltaT = 1
-        elif moduleType == 1:   # glass/cell/polymer sheet   insulated back
+        if moduleType == 0:   # glass/cell/polymer sheet   insulated back
             a = -2.81
             b = -0.0455
             deltaT = 0
+        elif moduleType == 1:   # glass/cell/glass   close roof mount
+            a = -2.98
+            b = -0.0471
+            deltaT = 1
         elif moduleType == 2:   # glass/cell/polymer sheet   open rack
             a = -3.56
             b = -0.0750
@@ -5221,7 +5221,6 @@ class Photovoltaics(object):
         
         # PVFORM version 3.3 adapted Module Model
         Pdc0 = nameplateDCpowerRating   # in kWatts
-        gamma = -0.005   # default temperature coefficient for crystalline silicon PV modules
         
         if Etr > 125:
             Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))
@@ -5253,7 +5252,7 @@ class Photovoltaics(object):
     
     def calculateSrfAzimuthAngle(self, PVsurface):
         # calculate PVsurface azimuth angle
-        obj = rs.coercegeometry(PVsurface)
+        obj = PVsurface.DuplicateBrep()
         objSrf = obj.Faces[0]
         reparematizedDomain = rc.Geometry.Interval(0,1)
         objSrf.SetDomain(0, reparematizedDomain)
@@ -5322,7 +5321,7 @@ class Photovoltaics(object):
     
     def calculateSrfTiltAngle(self, PVsurface):
         # calculate PVsurface tilt angle
-        obj = rs.coercegeometry(PVsurface)
+        obj = PVsurface.DuplicateBrep()
         zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
         zAxis = rc.Geometry.Vector3d(0,0,1)
         worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
@@ -5531,52 +5530,116 @@ class Photovoltaics(object):
         
         return TinletPerHOY_C, TinletAverageAnnual_C, TinletHOYminimal_C, TinletHOYmaximal_C
     
-    def shwdesign(self, activeArea, Ta, Tw, SR, Qload, Fr, FrUL, tankLoss, tankSize, tankArea, TdeliveryW, TmaxW, TdischargeW, pipingLosses, minSR=None):
-        # based on "A simplified method for optimal design of solar water heating systems based on life-cycle energy analysis",
-        # Renewable Energy journal, Yan, Wang, Ma, Shi, Vol 74, Feb 2015
+    def swhdesign(self, activeArea, srfTiltD, AOI_R, bo, FavTa, FavUL, Eb_shaded, Ed_shaded, Eg, Qload, Cp, mDot, Ta, Tcold, Tw, TdeliveryW, TmaxW, TdischargeW, TmechRoom, L, Di, insulT, k, pumpPower, pumpEfficiency, tankSize, tankArea, tankLoss, epsilon, minSR=None):
+    
+        # based on:
+        # "Solar Engineering of Thermal Processes", John Wiley and Sons, J. Duffie, W. Beckman, 3rd ed., 2006.
+        # "Technical Manual for the SAM Solar Water Heating Model", NREL, N. DiOrio, C. Christensen, J. Burch, A. Dobos, 2014.
+        # "A simplified method for optimal design of solar water heating systems based on life-cycle energy analysis", Renewable Energy journal, Yan, Wang, Ma, Shi, Vol 74, Feb 2015
         
-        if SR > 0:
-            collectorHeatLoss = FrUL*((Tw-Ta)/SR)
+        waterSpecificHeat = 4.18  # kJ/(kg*C)
+        waterDensity = 1000  # kg/m3
+        eta_aux = 1  # auxiliaryHeaterEnergyFactor. equals 1 for electric water heater
+        
+        # convert test results
+        mDotCp = activeArea * mDot * Cp  # W/C
+        FrTau = FavTa / (1 + (activeArea*FavUL)/(2*mDotCp))
+        FrUL = FavUL / (1 + (activeArea*FavUL)/(2*mDotCp))
+        
+        # capacitance rate corrections
+        F_UL = -(mDotCp / activeArea) * math.log(1 - ((FrUL * activeArea) / mDotCp))
+        r = (mDotCp / activeArea * (1 - math.exp(-activeArea * F_UL / mDotCp))) / FavUL #FrUL  # or FavUL instead of FrUL??
+        FrTa_capacitanceRate = r * FrTau
+        FrUL_capacitanceRate = r * FrUL
+        
+        # pipe losses
+        if insulT == 0: insulT = 0.0001  # fix for math.log(Do / Di)
+        Do = Di + (2*insulT)
+        Uout = (2 * k) / (Do * math.log(Do / Di))
+        A_pipe = math.pi * Do * L
+        UA_pipe = Uout * A_pipe
+        Fr_pipeloss = FrTa_capacitanceRate / (1 + (UA_pipe / mDotCp))
+        FrUL_pipeloss = FrUL_capacitanceRate * (((1 - (UA_pipe / mDotCp)) + (Uout * (A_pipe + A_pipe)) / (activeArea * FrUL_capacitanceRate)) / (1 + (UA_pipe / mDotCp)))
+        
+        # effect of the heat exchanger
+        if (Cp >= 4100):
+            # water used as a working fluid
+            epsilon = 1
+            # or if epsilon = 1: Cp = 4100
+        Fr_ = Fr_pipeloss / (1 + ((activeArea*FrUL_pipeloss)/mDotCp) * ((mDotCp/(epsilon*mDotCp))-1))
+        FrUL_ = FrUL_pipeloss / (1 + ((activeArea*FrUL_pipeloss)/mDotCp) * ((mDotCp/(epsilon*mDotCp))-1))
+        
+        # incidence angle modifiers (IAM) for Flat plate collectors and longitudinal direction of Evacuated tube collectors (for top-bottom direction of tubes optical axis)
+        AOI_D_b = math.degrees(AOI_R)
+        AOI_D_d = 59.7 - 0.1388*srfTiltD + 0.001497*(srfTiltD**2)
+        AOI_D_g = 90 - 0.5788*srfTiltD + 0.002693*(srfTiltD**2)
+        
+        if (AOI_D_b <= 60):
+            Ktau_b = 1-(bo*((1/math.cos( math.radians(AOI_D_b)))- 1))
+            Ktau_d = 1-(bo*((1/math.cos( math.radians(AOI_D_d)))- 1))
+            Ktau_g = 1-(bo*((1/math.cos( math.radians(AOI_D_g)))- 1))
+        else:
+            Ktau_b = (1-bo)*(1-((AOI_D_b-60)/30))
+            Ktau_d = (1-bo)*(1-((AOI_D_d-60)/30))
+            Ktau_g = (1-bo)*(1-((AOI_D_g-60)/30))
+        # incidence angle modifier cannot be negative
+        if Ktau_b < 0: Ktau_b = 0
+        if Ktau_d < 0: Ktau_d = 0
+        if Ktau_g < 0: Ktau_g = 0
+        
+        SR_IAM = Eb_shaded*Ktau_b + Ed_shaded*Ktau_d + Eg*Ktau_g  # Wh/m2
+        
+        
+        if SR_IAM > 0:
+            collectorHeatLoss = FrUL_*((Tw-Ta)/SR_IAM)  # unitless
         else:
             collectorHeatLoss = 0
         
-        if SR <= 0:
-            collectorEfficiency = Fr
+        if SR_IAM <= 0:
+            collectorEfficiency = Fr_  # unitless
         else:
-            collectorEfficiency = Fr-collectorHeatLoss
+            collectorEfficiency = Fr_-collectorHeatLoss  # unitless
         if collectorEfficiency < 0:
-            collectorEfficiency = Fr
+            collectorEfficiency = Fr_  # unitless
         
         if minSR == None:
-            minSR = (FrUL*(Tw-Ta))/Fr
+            minSR = (FrUL_*(Tw-Ta))/Fr_  # Wh/m2
         
-        if SR > minSR:
-            Qsolar = pipingLosses*(collectorEfficiency*SR*activeArea/1000)
+        if SR_IAM > minSR:
+            # absorbed radiation larger than losses
+            Qsolar = collectorEfficiency * SR_IAM * activeArea/1000  # kWh
+            Qpump = (pumpPower * pumpEfficiency)/1000  # kWh, day, regardless of whether there is, or there isn't heating load
         else:
             Qsolar = 0
+            Qpump = 0  # day or night
         
-        Qloss = tankLoss*tankArea*(Tw-Ta)/1000
-        
-        if Tw > TdeliveryW:
-            Qsupply = pipingLosses*Qload
-        else:
+        if Qload != 0:
+            # day or night, when there is heating load
+            if Tw >= TdeliveryW:
+                Qsupply = Qload - Qpump/eta_aux  # kWh
+                Qaux = 0
+            elif Tw < TdeliveryW:
+                HWC = (Qload/0.000277778)/(0.001 * 1000 * 4.2 * (TdeliveryW-Tcold))  # liters
+                Qsupply = (HWC * 0.001 * 1000 * 4.2 * (Tw-Tcold)* 0.000277778)/eta_aux  # kWh
+                Qaux = (HWC * 0.001 * 1000 * 4.2 * (TdeliveryW-Tw)* 0.000277778)/eta_aux  # kWh, heating up the water with auxiliary heater
+            if Qsupply < 0: Qsupply = 0
+        elif Qload == 0:
+            # day or night, when there is no heating load
             Qsupply = 0
-        
-        if Tw > TdeliveryW:
             Qaux = 0
-        else:
-            Qaux = Qload
         
-        if Tw > TmaxW:
-            Qdis = (Tw-TdischargeW)*4.2*tankSize*1000/3600
+        if Tw >= TmaxW:
+            Qdis = (Tw-TdischargeW)*waterSpecificHeat*tankSize*waterDensity/3600  # kWh
+            Qpump = 0  # swh system stagnate until excess heat is discharged
         else:
             Qdis = 0
         
-        dQ = Qsolar - Qloss - Qsupply - Qdis
-        dt = dQ*3600/(4.2*tankSize*1000)
-        Tw = Tw + dt
+        Qloss = tankLoss*tankArea*(Tw-TmechRoom)/1000  # kWh (negative value represents gain instead of loss)
+        dQ = Qsolar - Qloss - Qsupply - Qdis  # kWh
+        dt = dQ*3600/(waterSpecificHeat*tankSize*waterDensity)  # °C
+        Tw = Tw + dt  # °C
         
-        return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, dQ, dt, Tw
+        return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, Qpump, dQ, dt, Tw
     
     def WMMcoefficients(self, COFfilePath=None):
         # WMM coefficients extractor and WMM 2015-2020 coefficients
