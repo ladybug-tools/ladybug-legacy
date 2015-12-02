@@ -27,9 +27,11 @@ The thermal energy can then be used for domestic hot water, space heating or spa
 -
 Component based on:
 "Solar Engineering of Thermal Processes", John Wiley and Sons, J. Duffie, W. Beckman, 4th ed., 2013.
+"Technical Manual for the SAM Solar Water Heating Model", NREL, N. DiOrio, C. Christensen, J. Burch, A. Dobos, 2014.
 "A simplified method for optimal design of solar water heating systems based on life-cycle energy analysis", Renewable Energy journal, Yan, Wang, Ma, Shi, Vol 74, Feb 2015
 -
 http://www.wiley.com/WileyCDA/WileyTitle/productCd-0470873663.html
+https://sam.nrel.gov/system/tdf/SimpleSolarWaterHeatingModel_SAM_0.pdf?file=1&type=node&id=69521
 http://www.sciencedirect.com/science/article/pii/S0960148114004807
 -
 Provided by Ladybug 0.0.61
