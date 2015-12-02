@@ -339,7 +339,6 @@ def weekdayConsumptionCoefficients(hour, dishWasherCoeff2, clothsWasherCoeff2, l
         else:
             seasonCoeff = [-3.6855, 0, 3.656, 0]
     elif (hour > 19) and (hour <= 21):
-        #coefficients = [4.4577, 0, 2.7456, 4.4092, 3.3455, -0.1015, 0.0187, 0, 0.3523, 0, dishWasherCoeff2/4, clothsWasherCoeff2/2]  # treba ovaj
         coefficients = [4.4577, 0, 2.7456, 4.4092, 3.3455, -0.1015, 0.0187, 0, 0.3523, 0, dishWasherCoeff2/4, clothsWasherCoeff2/3]
         if latitude >= 0:
             seasonCoeff = [0, 0, -8.0527, -3.2509]
@@ -467,28 +466,36 @@ def main(totalNumberOfPersons, numberOfPreSchoolChildren, numberOfSchoolChildren
     hotWaterPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Domestic hot water load", "L/h", "Hourly", (1, 1, 1), (12, 31, 24)]
     heatingLoadPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Domestic hot water heating load", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)]
     hotWaterPerDays = [[] for i in range(365)]
-    firstWeekLength = 8 - firstWeekStartDay
+    firstWeekLength = (8 - firstWeekSubtractWeekends) - firstWeekStartDay
     
     for i,day in enumerate(daysHOY):
         hour = hoursHOY[i]
-        if ((day-firstWeekLength+1)%7 == 0) or ((day-firstWeekLength)%7 == 0):
-            coefficients, seasonCoeff = weekendConsumptionCoefficients(hour, dishWasherCoeff2, clothsWasherCoeff2, latitude)
-        else:
-            coefficients, seasonCoeff = weekdayConsumptionCoefficients(hour, dishWasherCoeff2, clothsWasherCoeff2, latitude)
-        constantCoeff, numOfPersonsCoeff, age1Coeff, age2Coeff, age3Coeff, ThotCoeff, tankSizeCoeff, TinletCoeff, TaCoeff, atHomeCoeff, dishWasherCoeff, clothsWasherCoeff = coefficients
-        winterCoeff, springCoeff, summerCoeff, autumnCoeff = seasonCoeff
-        winter, spring, summer, autumn = seasonIndices(day)
-        
-        #hot water consumption per hour
-        HWC = (constantCoeff + numOfPersonsCoeff*totalNumberOfPersons + age1Coeff*numberOfPreSchoolChildren + age2Coeff*numberOfSchoolChildren + age3Coeff*numberOfAdults + ThotCoeff*deliveryWaterTemperature + tankSizeCoeff*tankSize + TinletCoeff*coldWaterTemperature[i] + TaCoeff*dryBulbTemperatureData[i] + atHomeCoeff*numberOfAdultsAtHome + winterCoeff*winter + springCoeff*spring + summerCoeff*summer + autumnCoeff*autumn - dishWasherCoeff - clothsWasherCoeff) * seniorCoeff * payUtilityBillCoeff  # in liters/hour
-        if HWC < 0:
+        if day in holidayDays:
+            # it's holiday day
             HWC = 0
-        # thermal energy (or electric energy) per hour
-        HWC_m3 = HWC/1000  # m3(per hour)
-        waterSpecificHeat = 4.18  # kJ/(kg*C)
-        waterDensity = 1000  # kg/m3
-        Qload_kJ = HWC_m3 * waterDensity * waterSpecificHeat * (deliveryWaterTemperature-coldWaterTemperature[i])  #kJ
-        Qload_kWh = Qload_kJ/3600  # kWh
+            Qload_kWh = 0
+        else:
+            # not a holiday day
+            if ((day-firstWeekLength+1)%7 == 0) or ((day-firstWeekLength)%7 == 0):
+                # it's weekend day
+                coefficients, seasonCoeff = weekendConsumptionCoefficients(hour, dishWasherCoeff2, clothsWasherCoeff2, latitude)
+            else:
+                # it's week day
+                coefficients, seasonCoeff = weekdayConsumptionCoefficients(hour, dishWasherCoeff2, clothsWasherCoeff2, latitude)
+            constantCoeff, numOfPersonsCoeff, age1Coeff, age2Coeff, age3Coeff, ThotCoeff, tankSizeCoeff, TinletCoeff, TaCoeff, atHomeCoeff, dishWasherCoeff, clothsWasherCoeff = coefficients
+            winterCoeff, springCoeff, summerCoeff, autumnCoeff = seasonCoeff
+            winter, spring, summer, autumn = seasonIndices(day)
+            
+            #hot water consumption per hour
+            HWC = (constantCoeff + numOfPersonsCoeff*totalNumberOfPersons + age1Coeff*numberOfPreSchoolChildren + age2Coeff*numberOfSchoolChildren + age3Coeff*numberOfAdults + ThotCoeff*deliveryWaterTemperature + tankSizeCoeff*tankSize + TinletCoeff*coldWaterTemperature[i] + TaCoeff*dryBulbTemperatureData[i] + atHomeCoeff*numberOfAdultsAtHome + winterCoeff*winter + springCoeff*spring + summerCoeff*summer + autumnCoeff*autumn - dishWasherCoeff - clothsWasherCoeff) * seniorCoeff * payUtilityBillCoeff  # in liters/hour
+            if HWC < 0:
+                HWC = 0
+            # thermal energy (or electric energy) per hour
+            HWC_m3 = HWC/1000  # m3(per hour)
+            waterSpecificHeat = 4.18  # kJ/(kg*C)
+            waterDensity = 1000  # kg/m3
+            Qload_kJ = HWC_m3 * waterDensity * waterSpecificHeat * (deliveryWaterTemperature-coldWaterTemperature[i])  #kJ
+            Qload_kWh = Qload_kJ/3600  # kWh
         
         hotWaterPerHour.append(HWC)  # in liters/hour
         heatingLoadPerHour.append(Qload_kWh)  # in kWh
