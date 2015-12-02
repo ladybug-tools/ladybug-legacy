@@ -104,8 +104,7 @@ import scriptcontext as sc
 
 def main(dryBulbTemperature, method, pipesDepth, soilThermalDiffusivity, minimalTemperature):
     
-    #if (len(dryBulbTemperature) == 0) or (dryBulbTemperature[0] is ""): or ((len(dryBulbTemperature) != 8767) and (len(dryBulbTemperature) != 8760)):
-    if (len(dryBulbTemperature) == 0) or (dryBulbTemperature[0] is ""):# or ((len(dryBulbTemperature) != 8767) and (len(dryBulbTemperature) != 8760)):
+    if (len(dryBulbTemperature) == 0) or (dryBulbTemperature[0] is ""):
         coldWaterTemperaturePerHour = coldWaterTemperaturePerMonth = coldWaterTemperaturePerYear = None
         printMsg = "Please input data to _dryBulbTemperature input, from Ladybug \"Import EPW\" component."
         validInputData = False
