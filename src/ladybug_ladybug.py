@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_30_2015'
+ghenv.Component.Message = 'VER 0.0.61\nDEC_02_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -283,15 +283,6 @@ class versionCheck(object):
     
     def isInputMissing(self, GHComponent):
         isInputMissing = False
-        isAnyConnected = False
-        for param in GHComponent.Params.Input:
-            if param.NickName.startswith("_") and \
-                not param.NickName.endswith("_") and \
-                param.VolatileDataCount:
-                    isAnyConnected = True
-                    break
-        
-        if not isAnyConnected: return True
         
         for param in GHComponent.Params.Input:
             if param.NickName.startswith("_") and \
