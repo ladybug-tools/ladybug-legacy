@@ -385,7 +385,7 @@ def checkInputData(buildingType, numberOfUnits, litersPerUnitPerDay, occupancySt
     elif (holidayDays[0] < 1) or (holidayDays[1] < 1) or (holidayDays[0] > 365) or (holidayDays[1] > 365):
         buildingType = numberOfUnits = litersPerUnitPerDay = occupancyStartingHour = occupancyDuration = firstWeekStartDay = weekendDays = firstWeekSubtractWeekends =  holidayDays = deliveryWaterTemperature = coldWaterTemperature = None
         validInputData = False
-        printMsg = "\"holidayDays_\" input can not be less than 1 or larger than 7. Please input a holidayDays_ number from 1 to 7."
+        printMsg = "\"holidayDays_\" input can not be less than 1 or larger than 365. Please input a holidayDays_ number from 1 to 365."
         
         return buildingType, numberOfUnits, litersPerUnitPerDay, occupancyStartingHour, occupancyDuration, firstWeekStartDay, weekendDays, firstWeekSubtractWeekends, holidayDays, deliveryWaterTemperature, coldWaterTemperature, validInputData, printMsg
     
@@ -446,18 +446,6 @@ def main(buildingType, numberOfUnits, litersPerUnitPerDay, occupancyStartingHour
         hotWaterPerHour.append(HWC)  # in liters/hour
         heatingLoadPerHour.append(Qload_kWh)  # in kWh
         hotWaterPerDays[day-1].append(HWC)
-        #for k,item in enumerate(dayForMonths):
-            #if day >= dayForMonths[k]+1 and day <= dayForMonths[k+1]:
-                #hoyHWCPerMonths[k].append(HWC)
-                #break
-    
-    #hotWaterPerMonth = []
-    #averageDailyHotWaterPerMonth = []
-    #numberOfDaysMonth = [31,28,31,30,31,30,31,31,30,31,30,31]
-    #for i,hoyMonthHWC in enumerate(hoyHWCPerMonths):
-       #monthSumHWC = sum(hoyMonthHWC)
-       #hotWaterPerMonth.append(monthSumHWC)
-       #averageDailyHotWaterPerMonth.append(monthSumHWC/numberOfDaysMonth[i])
     
     hotWaterPerYear = sum(hotWaterPerHour[7:])
     averageDailyHotWaterPerYear = sum(hotWaterPerHour[7:])/365
