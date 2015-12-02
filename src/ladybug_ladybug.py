@@ -1,4 +1,4 @@
-﻿# This is the heart of the Ladybug
+# This is the heart of the Ladybug
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_30_2015'
+ghenv.Component.Message = 'VER 0.0.61\nDEC_02_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -283,15 +283,6 @@ class versionCheck(object):
     
     def isInputMissing(self, GHComponent):
         isInputMissing = False
-        isAnyConnected = False
-        for param in GHComponent.Params.Input:
-            if param.NickName.startswith("_") and \
-                not param.NickName.endswith("_") and \
-                param.VolatileDataCount:
-                    isAnyConnected = True
-                    break
-        
-        if not isAnyConnected: return True
         
         for param in GHComponent.Params.Input:
             if param.NickName.startswith("_") and \
@@ -5636,8 +5627,8 @@ class Photovoltaics(object):
         
         Qloss = tankLoss*tankArea*(Tw-TmechRoom)/1000  # kWh (negative value represents gain instead of loss)
         dQ = Qsolar - Qloss - Qsupply - Qdis  # kWh
-        dt = dQ*3600/(waterSpecificHeat*tankSize*waterDensity)  # °C
-        Tw = Tw + dt  # °C
+        dt = dQ*3600/(waterSpecificHeat*tankSize*waterDensity)  # C
+        Tw = Tw + dt  # C
         
         return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, Qpump, dQ, dt, Tw
     
