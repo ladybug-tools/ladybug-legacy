@@ -26,7 +26,7 @@ Use this component to visualize a wind profile curve for a given terrain type.  
 -
 More information on the power law of the wind profile can be found here: http://en.wikipedia.org/wiki/Wind_profile_power_law
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -78,10 +78,10 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -981,7 +981,7 @@ def setupAddLayers(layParentName, laySubName, projectName, newLayer, category):
 
 def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
     #Read the legend parameters.
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
     #Set a default windDirHieghts.
     windDirHieghts = []
@@ -1267,8 +1267,8 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
         
         #Create a color legend if wind arrow meshes have been generated.
         if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
-            legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values
-                            , lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+            #Get the legend base point.
+            legendSrfs, legendText, legendTextSrf, textPt, textSize = lb_visualization.createLegend(values, lowB, highB, numSeg, "m/s", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
             # color legend surfaces
@@ -1276,29 +1276,35 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
             #Flaten the text list
             legend = lb_preparation.flattenList(legendTextSrf)
             legend.append(legendSrfs)
-            #Get the legend base point.
-            if legendBasePoint == None:
-                legendBasePoint = lb_visualization.BoundingBoxPar[0]
         else:
             BBYlength = lb_visualization.BoundingBoxPar[2]
             legendHeight = (BBYlength/10) * legendScale
             if  legendFontSize == None: textSize = (legendHeight/3) * legendScale
             else: textSize = legendFontSize
             legend = []
-            legendBasePoint = []
+            legendBasePoint = None
         
         # If a wind direction is connected and a legend was produced, re-orient the legend to align with the previaling direction of the wind.
+        keepLegendStatic = False
         if windDir != []:
             if windArrowStyle == 1 or windArrowStyle == 2 or windArrowStyle ==3:
                 if windVec[-1].X == 0 and windVec[-1].Y == 0 and windVec[-1].Z == 0: rotatedWindVec = rc.Geometry.Vector3d(1,0,0)
                 else: rotatedWindVec = rc.Geometry.Vector3d(windVec[-1])
-                legendBasePointNew = axesLines[0].PointAtEnd
+                if legendBasePoint == None:
+                    legendBasePoint = lb_visualization.BoundingBoxPar[0]
+                    legendBasePointNew = axesLines[0].PointAtEnd
+                else:
+                    legendBasePointNew = legendBasePoint
+                    keepLegendStatic = True
                 originalPlane = rc.Geometry.Plane(legendBasePoint, rc.Geometry.Vector3d.ZAxis)
                 newPlane = rc.Geometry.Plane(legendBasePointNew, rotatedWindVec, rc.Geometry.Vector3d.ZAxis)
                 reOrientTrans = rc.Geometry.Transform.PlaneToPlane(originalPlane, newPlane)
                 for geo in legend:
                     geo.Transform(reOrientTrans)
                 legendBasePoint = legendBasePointNew
+        
+        if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
+        elif windDir == []: keepLegendStatic = True
         
         # Create the axes text lables
         axesText = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
@@ -1315,10 +1321,11 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
             if windVecMesh != None and windVecMesh != []:
                 for geo in windVecMesh:
                     geo.Transform(transformMtx)
-            if legendBasePoint != None and legendBasePoint != []: legendBasePoint.Transform(transformMtx)
-            if legend != []:
-                for geo in legend:
-                    if geo != -1: geo.Transform(transformMtx)
+            if keepLegendStatic == False:
+                if legendBasePoint != None: legendBasePoint.Transform(transformMtx)
+                if legend != []:
+                    for geo in legend:
+                        if geo != -1: geo.Transform(transformMtx)
             for geo in anchorPts:
                 geo.Transform(transformMtx)
             for geo in profileAxes:

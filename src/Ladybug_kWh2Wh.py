@@ -24,7 +24,7 @@
 """
 Use this component to convert energy values in kW to W, kW/m2 to W/m2, kWh to Wh, kWh/m2 to Wh/m2, kBTU to BTU, or kBTU/ft2 to BTU/ft2.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _Wh: An energy value or list of energy values in kW, kW/m2, kWh, kWh/m2, kBTU, or kBTU/ft2.
@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_kWh2Wh"
 ghenv.Component.NickName = 'kWh2Wh'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -44,18 +44,22 @@ except: pass
 
 Wh = []
 for num in _kWh:
-    if num == 'kW':
-        Wh.append('W')
-    elif num == 'kW/m2':
-        Wh.append('W/m2')
-    elif num == 'kWh':
-        Wh.append('Wh')
-    elif num == 'kWh/m2':
-        Wh.append('Wh/m2')
-    elif num == 'kBTU':
-        Wh.append('BTU')
-    elif num == 'kBTU/ft2':
-        Wh.append('BTU/ft2')
-    else:
+    try:
+        if 'KWH/M2' in num.upper():
+            Wh.append('Wh/m2')
+        elif 'KW/M2' in num.upper():
+            Wh.append('W/m2')
+        elif 'KWH' in num.upper():
+            Wh.append('Wh')
+        elif 'KW' in num.upper():
+            Wh.append('W')
+        elif 'KBTU/FT2' in num.upper():
+            Wh.append('BTU/ft2')
+        elif 'KBTU' in num.upper():
+            Wh.append('BTU')
+        else:
+            try: Wh.append(float(num)*1000)
+            except: Wh.append(num)
+    except:
         try: Wh.append(float(num)*1000)
         except: Wh.append(num)

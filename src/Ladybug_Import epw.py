@@ -29,7 +29,7 @@ All descriptions of importaed data are borrowed from this document.
 The document is available online at this address:
 "http://apps1.eere.energy.gov/buildings/energyplus/pdfs/auxiliaryprograms.pdf"
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _epwFile: An .epw file path on your system as a string.
@@ -56,7 +56,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nDEC_02_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nMAR_15_2015
@@ -75,6 +75,7 @@ def main(_epw_file):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -105,16 +106,8 @@ def main(_epw_file):
         return -1
     
 
-
-# Collecting Data
-if _epwFile and _epwFile.endswith('.epw') and  _epwFile != 'C:\Example.epw':
-    result = main(_epwFile)
-    if result!= -1:
-        location, locName, latitude = result[0][-1], result[0][0], result[0][1]
-        dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, liquidPrecipitationDepth, barometricPressure, modelYear = result[1][:]
-        print 'Hourly weather data for ' + locName + ' is imported successfully!'
-elif _epwFile == 'C:\Example.epw': pass
-else:
-    print "Please connect a valid epw file address to _epw_file input..."
-    w = gh.GH_RuntimeMessageLevel.Warning
-    ghenv.Component.AddRuntimeMessage(w, "Please connect a valid epw file address to _epw_file input...")
+result = main(_epwFile)
+if result!= -1:
+    location, locName, latitude = result[0][-1], result[0][0], result[0][1]
+    dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, liquidPrecipitationDepth, barometricPressure, modelYear = result[1][:]
+    print 'Hourly weather data for ' + locName + ' is imported successfully!'

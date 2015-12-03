@@ -25,7 +25,7 @@
 Use this component to select the data out of an annual hourly data stream (from the importEPW component) using the "Analysis Period" component.
 This componenent also averages or totals the connected hourly data for each day, month, and average hour of each month in the analysis period.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _annualHourlyData: An hourly data stream from the "Import epw" component.
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_18_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -103,9 +103,11 @@ def main(annualHourlyData, analysisPeriod):
         try:
             hourlyData = annualHourlyData
             if hourlyData[4] == 'Hourly': checkData = True
+            elif len(hourlyData) == 8760: checkData = True
             else: checkData = False
         except: 
             checkData = False
+            return -1
         
         if checkData:
             # separate data

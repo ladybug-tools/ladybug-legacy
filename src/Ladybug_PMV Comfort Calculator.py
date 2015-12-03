@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The PMV model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript comfort models: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -112,14 +112,12 @@ try:
 except: pass
 
 if outSet == True:
-    message1 = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the values out of this component only indicate how much the outdoor condtions should be changed in order to make indoor conditions comfortable."
-    message2 = "They do not idicate whether someone will actually be comfortable outdoors."
-    message3 = "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
-    print message1, message2, message3
+    message1 = "Because the PMV comfort model is derived from indoor comfort studies and you have hooked up outdoor data, the PMV and PPD values that usually\n" + \
+    "come out of this component do not idicate whether someone will actually be comfortable outdoors. Only SET is considered a valid metric in this outdoor context\n" + \
+    "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
+    print message1
     m = gh.GH_RuntimeMessageLevel.Remark
     ghenv.Component.AddRuntimeMessage(m, message1)
-    ghenv.Component.AddRuntimeMessage(m, message2)
-    ghenv.Component.AddRuntimeMessage(m, message3)
 
 if outSet == True:
     for output in range(numOutputs):
@@ -448,7 +446,9 @@ def main():
         if checkData == True:
             #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
             if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-                HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+                HOYSInit, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+                HOYS = []
+                for hour in HOYSInit: HOYS.append(hour-1)
                 runPeriod = analysisPeriod_
                 calcLength = len(HOYS)
             elif len(analysisPeriod_)==0 and epwData == True:

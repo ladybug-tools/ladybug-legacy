@@ -32,7 +32,7 @@ References:
     5. Brown G.Z. and DeKay M., 2001. Sun, WInd & Light. Architectural Design Strategies (2nd edition). John WIley  & Sons, Inc.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius. This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.SubCategory = "6 | WIP"
@@ -424,8 +424,8 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
     ##pointColors.append(lb_visualization.gradientColor(totalComfortOrNot, 0, 1, customColors))
     
     legend = []
-    #legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legComfBasePts, legendScale, legendFont, legendFontSize)
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort or Not", lb_visualization.BoundingBoxPar, legComfBasePts, .45, legendFont, 1.5)
+    #legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legComfBasePts, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort or Not", lb_visualization.BoundingBoxPar, legComfBasePts, .45, legendFont, 1.5, decimalPlaces, removeLessThan)
     legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend.append(legendSrfs)
@@ -444,8 +444,8 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
     circCenter = []
     circPolyline = []
     for m in range(0, 2):   # 0 to 2 for Comfort or NoComfort possibilities
-        if m == 0: text = "Comfort"
-        else     : text = "No Comfort"
+        if m == 0: text = "No Comfort"
+        else     : text = "Comfort"
         circCenter.append(rc.Geometry.Point3d(orgX + 55, leg + radius/2, 0)) # Base point for each month circle
         legComfLabelBasePts.append(rc.Geometry.Point3d(orgX + 57, leg + 0.0, 0)) # Base point for each month name
         leg += -3
@@ -1143,7 +1143,7 @@ def createFrequencyMesh(orgY, dryBulbTemperature, relativeHumidity, cullMesh, lb
     else: legendPar = legendPar_
     
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale,\
-    legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     
     hourPts = []
     for count, ratio in enumerate(relativeHumidity):
@@ -1525,7 +1525,7 @@ def main(epwData, epwStr):
         #legendFontSize = 2
         #lb_visualization.calculateBB(chartText, True)
         lb_visualization.calculateBB(chartLayout[0:90], True) 
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
         ##legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)

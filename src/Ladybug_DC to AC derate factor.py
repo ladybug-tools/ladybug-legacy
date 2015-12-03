@@ -31,7 +31,7 @@ Based on PVWatts v5 Manual: http://www.nrel.gov/docs/fy14osti/62641.pdf
 If nothing supplied to the inputs, default value of 0.85 will be used.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     input:
         annualShading_: Losses due to buildings, structures, trees, mountains or other objects that prevent solar radiation from reaching the cells.
@@ -85,11 +85,11 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_DC to AC derate factor"
 ghenv.Component.NickName = "DCtoACderateFactor"
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = "VER 0.0.61\nNOV_29_2015"
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
 import Grasshopper.Kernel as gh
@@ -181,7 +181,6 @@ if sc.sticky.has_key("ladybug_release"):
             "If you have already updated userObjects drag the Ladybug_Ladybug component " + \
             "into the canvas and try again."
         print printMsg
-        ghenv.Component.AddRuntimeMessage(level, printMsg)
 else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg

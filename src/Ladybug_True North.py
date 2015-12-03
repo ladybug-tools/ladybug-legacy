@@ -29,7 +29,7 @@ http://www.ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
 All credit goes to Christopher Weiss (cmweiss@gmail.com), the author of the World Magnetic Model python code.
 source: https://pypi.python.org/pypi/geomag
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     input:
         _location: Input data from Ladybug's "Import epw" "location" output, or create your own location data with Ladybug's "Construct Location" component.
@@ -49,17 +49,17 @@ Provided by Ladybug 0.0.60
     output:
         readMe!: ...
         trueNorth: Geographic north (direction towards the North Pole) - magnetic north corrected for the value of magnetic declination. Ranges from 0-360.
-                       In decimal degrees ().
+                       In decimal degrees (°).
         trueNorthVec: Vector representation of the upper "trueNorth".
         magneticDeclination: An angle between magnetic north and true north. It is positive east of true north and negative west of true north.
-                             In decimal degrees ().
+                             In decimal degrees (°).
         magneticFieldVec: Earth's magnetic field vector at chosen location.
                           Vector's intensity represents the strength in nanoTeslas (nT).
 """
 
 ghenv.Component.Name = "Ladybug_True North"
 ghenv.Component.NickName = "TrueNorth"
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = "VER 0.0.61\nNOV_29_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nMAY_26_2015
@@ -194,6 +194,7 @@ COF file: %s
 
 
 level = gh.GH_RuntimeMessageLevel.Warning
+levelBlank = gh.GH_RuntimeMessageLevel.Blank
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -215,14 +216,13 @@ if sc.sticky.has_key("ladybug_release"):
         else:
             printMsg = "Please input \"location\" output from Ladybug's \"Import epw\" component.\nOr create your own location with Ladybug's \"Construct Location\" component."
             print printMsg
-            ghenv.Component.AddRuntimeMessage(level, printMsg)
+            ghenv.Component.AddRuntimeMessage(levelBlank, printMsg)
     else:
         printMsg = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \
             "If you have already updated userObjects drag the Ladybug_Ladybug component " + \
             "into the canvas and try again."
         print printMsg
-        ghenv.Component.AddRuntimeMessage(level, printMsg)
 else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg

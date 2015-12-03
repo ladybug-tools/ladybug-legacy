@@ -28,7 +28,7 @@ This component can be used to evaluate the number of hours of sunlight received 
 It can also be used for coarsely-gridded shadow studies in the Rhino scene .  For finer and more detailed shadow studies with simple input geometry, the Ladybug ShadowStudy component can be used.  For detailed shadow studies with complex geometry, the Honeybee daylight tools are recommended.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -64,10 +64,10 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_20_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -217,7 +217,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         return results, totalResults, listInfo, sunVisibility
     
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
         if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[5]
         elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[5]
         
@@ -231,7 +231,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         if not (runOrientation and legendBasePoint==None):
             lb_visualization.calculateBB([analysisSrfs, contextSrfs])
         # legend geometry
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
         
         # legend colors
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)

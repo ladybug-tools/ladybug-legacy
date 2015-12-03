@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The Adaptive model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.61
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the 'Read EP Result' or 'Import EPW' component.
@@ -75,10 +75,10 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_09_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nJUL_08_2015
+#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -96,6 +96,17 @@ w = gh.GH_RuntimeMessageLevel.Warning
 tol = sc.doc.ModelAbsoluteTolerance
 
 
+def C2F(temper):
+    newTemper = []
+    for num in temper: newTemper.append(num*9/5 + 32)
+    return newTemper
+
+def F2C(temper):
+    newTemper = []
+    for num in temper: newTemper.append((num-32) * 5 / 9)
+    return newTemper
+
+
 def checkTheInputs():
     #Define a value that will indicate whether someone has hooked up epw data.
     epwData = False
@@ -103,6 +114,10 @@ def checkTheInputs():
     epwPrevailTemp = False
     epwPrevailStr = []
     coldTimes = []
+    IPTrigger = False
+    farenheitAirVals = []
+    farenheitRadVals = []
+    farenheitPrevailVals = []
     
     #Check to see if there are any comfortPar connected and, if not, set the defaults to ASHRAE.
     checkData6 = True
@@ -140,13 +155,20 @@ def checkTheInputs():
                 checkData1 = True
                 epwData = True
                 epwStr = _dryBulbTemperature[0:7]
+                if epwStr[3] == 'F' or epwStr[3] == 'F':
+                    IPTrigger = True
         except: pass
         if checkData1 == False:
             for item in _dryBulbTemperature:
                 try:
                     airTemp.append(float(item))
                     checkData1 = True
-                except: checkData1 = False
+                except:
+                    if item == 'F' or item == 'F': IPTrigger = True
+                    else: checkData1 = False
+        if IPTrigger == True:
+            farenheitAirVals = airTemp[:]
+            airTemp = F2C(airTemp)
         if len(airTemp) > 1: airMultVal = True
         if checkData1 == False:
             warning = '_dryBulbTemperature input does not contain valid temperature values in degrees Celcius.'
@@ -166,6 +188,16 @@ def checkTheInputs():
                 checkData2 = True
                 epwData = True
                 epwStr = meanRadiantTemperature_[0:7]
+                if epwStr[3] == 'F' or epwStr[3] == 'F' and IPTrigger == True:
+                    farenheitRadVals = radTemp[:]
+                    radTemp = F2C(radTemp)
+                elif IPTrigger == False and epwStr[3] == 'C' or epwStr[3] == 'C': pass
+                elif IPTrigger == True:
+                    farenheitRadVals = C2F(radTemp)
+                    print  "Radiant Temperature has been aoutmatically converted to Farenheit because your connected dry bulb temperature is in Farenheit."
+                else:
+                    radTemp = F2C(radTemp)
+                    print  "Radiant Temperature has been aoutmatically converted to Celcius because your connected dry bulb temperature is in Celcius."
         except: pass
         if checkData2 == False:
             for item in meanRadiantTemperature_:
@@ -173,14 +205,19 @@ def checkTheInputs():
                     radTemp.append(float(item))
                     checkData2 = True
                 except: checkData2 = False
+            if checkData2 == True and IPTrigger == True:
+                farenheitRadVals = radTemp[:]
+                radTemp = F2C(radTemp)
+                print  "Radiant Temperature has been assumed to be in Farenheit because your connected dry bulb temperature is in Farenheit."
         if len(radTemp) > 1: radMultVal = True
         if checkData2 == False:
-            warning = 'meanRadiantTemperature_ input does not contain valid temperature values in degrees Celcius.'
+            warning = 'meanRadiantTemperature_ input does not contain valid temperature values.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         checkData2 = True
         radTemp = airTemp
+        farenheitRadVals = farenheitAirVals
         if len (radTemp) > 1: radMultVal = True
         print 'No value connected for meanRadiantTemperature_.  It will be assumed that the radiant temperature is the same as the air temperature.'
     
@@ -190,7 +227,7 @@ def checkTheInputs():
     prevailMultVal = False
     if len(_prevailingOutdoorTemp) != 0:
         try:
-            if 'Temperature' in _prevailingOutdoorTemp[2] and _prevailingOutdoorTemp[3] == 'C' and _prevailingOutdoorTemp[4] == 'Hourly' and _prevailingOutdoorTemp[5] == (1, 1, 1) and _prevailingOutdoorTemp[6] == (12, 31, 24):
+            if 'Temperature' in _prevailingOutdoorTemp[2] and _prevailingOutdoorTemp[4] == 'Hourly' and _prevailingOutdoorTemp[5] == (1, 1, 1) and _prevailingOutdoorTemp[6] == (12, 31, 24):
                 if avgMonthOrRunMean == True:
                     #Calculate the monthly average temperatures.
                     monthPrevailList = [float(sum(_prevailingOutdoorTemp[7:751])/744), float(sum(_prevailingOutdoorTemp[751:1423])/672), float(sum(_prevailingOutdoorTemp[1423:2167])/744), float(sum(_prevailingOutdoorTemp[2167:2887])/720), float(sum(_prevailingOutdoorTemp[2887:3631])/744), float(sum(_prevailingOutdoorTemp[3631:4351])/720), float(sum(_prevailingOutdoorTemp[4351:5095])/744), float(sum(_prevailingOutdoorTemp[5095:5839])/744), float(sum(_prevailingOutdoorTemp[5839:6559])/720), float(sum(_prevailingOutdoorTemp[6559:7303])/744), float(sum(_prevailingOutdoorTemp[7303:8023])/720), float(sum(_prevailingOutdoorTemp[8023:])/744)]
@@ -203,7 +240,7 @@ def checkTheInputs():
                     alpha = 0.8
                     divisor = 1 + alpha + math.pow(alpha,2) + math.pow(alpha,3) + math.pow(alpha,4) + math.pow(alpha,5)
                     dividend = (sum(_prevailingOutdoorTemp[-24:-1] + [_prevailingOutdoorTemp[-1]])/24) + (alpha*(sum(_prevailingOutdoorTemp[-48:-24])/24)) + (math.pow(alpha,2)*(sum(_prevailingOutdoorTemp[-72:-48])/24)) + (math.pow(alpha,3)*(sum(_prevailingOutdoorTemp[-96:-72])/24)) + (math.pow(alpha,4)*(sum(_prevailingOutdoorTemp[-120:-96])/24)) + (math.pow(alpha,5)*(sum(_prevailingOutdoorTemp[-144:-120])/24))
-                    startingTemp = divisor/dividend
+                    startingTemp = dividend/divisor
                     if startingTemp < 10: coldTimes.append(0)
                     outdoorTemp = _prevailingOutdoorTemp[7:]
                     startingMean = sum(outdoorTemp[:24])/24
@@ -221,8 +258,17 @@ def checkTheInputs():
                         startHour +=24
                 checkData3 = True
                 epwData = True
-                if epwStr == []:
-                    epwStr = _prevailingOutdoorTemp[0:7]
+                epwStr = _prevailingOutdoorTemp[0:7]
+                if epwStr[3] == 'F' or epwStr[3] == 'F' and IPTrigger == True:
+                    farenheitPrevailVals = prevailTemp[:]
+                    prevailTemp = F2C(prevailTemp)
+                elif IPTrigger == False and epwStr[3] == 'C' or epwStr[3] == 'C': pass
+                elif IPTrigger == True:
+                    farenheitPrevailVals = C2F(prevailTemp)
+                    print  "Prevailing Outdoor Temperature has been aoutmatically converted to Farenheit because your connected dry bulb temperature is in Farenheit."
+                else:
+                    prevailTemp = F2C(prevailTemp)
+                    print  "Prevailing Outdoor Temperature has been aoutmatically converted to Celcius because your connected dry bulb temperature is in Celcius."
         except: pass
         if checkData3 == False:
             checkData3 = True
@@ -230,9 +276,13 @@ def checkTheInputs():
                 try:
                     prevailTemp.append(float(item))
                 except: checkData3 = False
+            if checkData3 == True and IPTrigger == True:
+                farenheitPrevailVals = prevailTemp[:]
+                prevailTemp = F2C(prevailTemp)
+                print  "Prevailing Outdoor Temperature has been assumed to be in Farenheit because your connected dry bulb temperature is in Farenheit."
         if len(prevailTemp) > 1: prevailMultVal = True
         if checkData3 == False:
-            warning = '_prevailingOutdoorTemp input does not contain valid temperature values in degrees Celcius.'
+            warning = '_prevailingOutdoorTemp input does not contain valid temperature values.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
@@ -324,7 +374,7 @@ def checkTheInputs():
         checkData = False
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList
+    return checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals
 
 
 def outlineCurve(curve):
@@ -414,14 +464,15 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         return titleStatement, patternList
 
 
-def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, lb_visualization, lb_comfortModels):
+def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels):
     #Define lists to be filled.
     chartCrvAndText = []
     finalComfortPolygons = []
     
     #Set a default text height if the user has not provided one.
     if legendFontSize == None:
-        legendFontSize = 0.6
+        if IPTrigger == False: legendFontSize = 0.6
+        else: legendFontSize = 0.8
     
     #Check to see if any of the prevailing outdoor temperatures are below 10 C.
     belowTen = False
@@ -430,13 +481,23 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     
     #Generate a list of temperatures that will be used to make the chart lines.
     if belowTen == False or includeColdTimes == False:
-        tempNum = range(10, 40, 2)
-        prevailTempNum = range(10, 33, 2)
-        boundRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(rc.Geometry.Point3d(10, 10, 0), rc.Geometry.Vector3d.ZAxis), 23, 30)
+        if IPTrigger == False:
+            tempNum = range(10, 40, 2)
+            prevailTempNum = range(10, 33, 2)
+            boundRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(rc.Geometry.Point3d(10, 10, 0), rc.Geometry.Vector3d.ZAxis), 23, 30)
+        else:
+            tempNum = range(50, 104, 2)
+            prevailTempNum = range(50, 92, 2)
+            boundRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(rc.Geometry.Point3d(50, 50, 0), rc.Geometry.Vector3d.ZAxis), 42, 54)
     else:
-        tempNum = range(0, 40, 2)
-        prevailTempNum = range(-20, 33, 2)
-        boundRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(rc.Geometry.Point3d(-20, 0, 0), rc.Geometry.Vector3d.ZAxis), 53, 40)
+        if IPTrigger == False:
+            tempNum = range(0, 40, 2)
+            prevailTempNum = range(-20, 33, 2)
+            boundRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(rc.Geometry.Point3d(-20, 0, 0), rc.Geometry.Vector3d.ZAxis), 53, 40)
+        else:
+            tempNum = range(32, 104, 2)
+            prevailTempNum = range(-4, 92, 2)
+            boundRect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(rc.Geometry.Point3d(-4, 32, 0), rc.Geometry.Vector3d.ZAxis), 96, 72)
     boundRect = boundRect.ToPolyline()
     chartCrvAndText.append(boundRect)
     
@@ -446,28 +507,47 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     tempText = []
     for count in tempNum:
         if belowTen == False or includeColdTimes == False:
-            point1 = rc.Geometry.Point3d(10, count, 0)
-            tempLabelBasePts.append(rc.Geometry.Point3d(8.5, count-0.25, 0))
+            if IPTrigger == False:
+                point1 = rc.Geometry.Point3d(10, count, 0)
+                tempLabelBasePts.append(rc.Geometry.Point3d(8.5, count-0.25, 0))
+            else:
+                point1 = rc.Geometry.Point3d(50, count, 0)
+                tempLabelBasePts.append(rc.Geometry.Point3d(47, count-0.25, 0))
         else:
-            point1 = rc.Geometry.Point3d(-20, count, 0)
-            tempLabelBasePts.append(rc.Geometry.Point3d(-21.5, count-0.25, 0))
-        point2 = rc.Geometry.Point3d(33, count, 0)
+            if IPTrigger == False:
+                point1 = rc.Geometry.Point3d(-20, count, 0)
+                tempLabelBasePts.append(rc.Geometry.Point3d(-21.5, count-0.25, 0))
+            else:
+                point1 = rc.Geometry.Point3d(-4, count, 0)
+                tempLabelBasePts.append(rc.Geometry.Point3d(-6.5, count-0.25, 0))
+        if IPTrigger == False: point2 = rc.Geometry.Point3d(33, count, 0)
+        else: point2 = rc.Geometry.Point3d(92, count, 0)
         
         tempLine = rc.Geometry.LineCurve(point1, point2)
         tempNumLines.append(tempLine)
         tempText.append(str(count))
-    if belowTen == False or includeColdTimes == False: tempLabelBasePts.append(rc.Geometry.Point3d(8.5, 40, 0))
-    else: tempLabelBasePts.append(rc.Geometry.Point3d(-21.5, 40, 0))
-    tempText.append("40")
+    if belowTen == False or includeColdTimes == False:
+        if IPTrigger == False: tempLabelBasePts.append(rc.Geometry.Point3d(8.5, 40, 0))
+        else: tempLabelBasePts.append(rc.Geometry.Point3d(47, 104, 0))
+    else:
+        if IPTrigger == False: tempLabelBasePts.append(rc.Geometry.Point3d(-21.5, 40, 0))
+        else: tempLabelBasePts.append(rc.Geometry.Point3d(-6.5, 104, 0))
+    if IPTrigger == False: tempText.append("40")
+    else: tempText.append("104")
     
     #Use the dry bulb temperatures to create coordinates for the operative temp lines.
     prevailTempNumLines = []
     prevailLabelBasePts = []
     prevailText = []
     for count in prevailTempNum:
-        if belowTen == False or includeColdTimes == False: point1 = rc.Geometry.Point3d(count, 10, 0)
-        else: point1 = rc.Geometry.Point3d(count, 0, 0)
-        point2 = rc.Geometry.Point3d(count, 40, 0)
+        if belowTen == False or includeColdTimes == False:
+            if IPTrigger == False: point1 = rc.Geometry.Point3d(count, 10, 0)
+            else: point1 = rc.Geometry.Point3d(count, 50, 0)
+        else:
+            if IPTrigger == False: point1 = rc.Geometry.Point3d(count, 0, 0)
+            else: point1 = rc.Geometry.Point3d(count, 32, 0)
+        if IPTrigger == False: point2 = rc.Geometry.Point3d(count, 40, 0)
+        else: point2 = rc.Geometry.Point3d(count, 104, 0)
         
         tempLine = rc.Geometry.LineCurve(point1, point2)
         prevailTempNumLines.append(tempLine)
@@ -504,6 +584,13 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
             opTempMax.append(upTemp)
             opTempMin.append(lowTemp)
         
+        #If the chart is in IP, convert the values to Farenheit.
+        if IPTrigger == True:
+            prevailOutBases = C2F(prevailOutBases)
+            opTempBases = C2F(opTempBases)
+            opTempMax = C2F(opTempMax)
+            opTempMin = C2F(opTempMin)
+        
         #Draw the middle line of the comfort polygon.
         point1 = rc.Geometry.Point3d(prevailOutBases[0], opTempBases[0], 0)
         point2 = rc.Geometry.Point3d(prevailOutBases[-1], opTempBases[-1], 0)
@@ -519,6 +606,7 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
             if winSpd >= 0.6:
                 point5 = rc.Geometry.Point3d(prevailOutBases[1], opTempMax[1], 0)
                 point6 = rc.Geometry.Point3d(prevailOutBases[1], lb_comfortModels.comfAdaptiveComfortASH55(20, 20, 12, 0.0, comfClass, levelOfConditioning)[3], 0)
+                if IPTrigger == True: point6 = rc.Geometry.Point3d(point6.X, C2F([point6.Y])[0], 0)
                 polygon = rc.Geometry.PolylineCurve([point1, point2, point6, point5, point3, point4, point1])
             else: polygon = rc.Geometry.PolylineCurve([point1, point2, point3, point4, point1])
         else:
@@ -526,6 +614,7 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
             if winSpd >= 0.2 and comfClass == 1:
                 point5 = rc.Geometry.Point3d(prevailOutBases[1], opTempMax[1], 0)
                 point6 = rc.Geometry.Point3d(prevailOutBases[1], lb_comfortModels.comfAdaptiveComfortEN15251(20, 20, 12.74, 0.0, comfClass, levelOfConditioning)[3], 0)
+                if IPTrigger == True: point6 = rc.Geometry.Point3d(point6.X, C2F([point6.Y])[0], 0)
                 polygon = rc.Geometry.PolylineCurve([point1, point2, point6, point5, point3, point4, point7, point1])
             else:
                 polygon = rc.Geometry.PolylineCurve([point1, point2, point3, point4, point7, point1])
@@ -543,9 +632,14 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
             for val in coldPrevailTempVals:
                 if ASHRAEorEN == True: Tn, distFromTarget, TnLow, TnUp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(20, 20, val, winSpd, comfClass, levelOfConditioning)
                 else: Tn, distFromTarget, TnLow, TnUp, comf, condition = lb_comfortModels.comfAdaptiveComfortEN15251(20, 20, val, winSpd, comfClass, levelOfConditioning)
-                coldNeutralTempPts.append(rc.Geometry.Point3d(val, Tn, 0))
-                coldUpTempPts.append(rc.Geometry.Point3d(val, TnUp, 0))
-                coldLowTempPts.append(rc.Geometry.Point3d(val, TnLow, 0))
+                if IPTrigger == False:
+                    coldNeutralTempPts.append(rc.Geometry.Point3d(val, Tn, 0))
+                    coldUpTempPts.append(rc.Geometry.Point3d(val, TnUp, 0))
+                    coldLowTempPts.append(rc.Geometry.Point3d(val, TnLow, 0))
+                else:
+                    coldNeutralTempPts.append(rc.Geometry.Point3d(C2F([val])[0], C2F([Tn])[0], 0))
+                    coldUpTempPts.append(rc.Geometry.Point3d(C2F([val])[0], C2F([TnUp])[0], 0))
+                    coldLowTempPts.append(rc.Geometry.Point3d(C2F([val])[0], C2F([TnLow])[0], 0))
             
             neurtalCold = rc.Geometry.Curve.CreateInterpolatedCurve(coldNeutralTempPts, 3)
             comfortPolygons.append(neurtalCold)
@@ -570,6 +664,14 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
                 hotTempBases.append(comfTemp)
                 hotTempMax.append(upTemp)
                 hotTempMin.append(lowTemp)
+            
+            #If the chart is in IP, convert the values to Farenheit.
+            if IPTrigger == True:
+                prevailHotBases = C2F(prevailHotBases)
+                hotTempBases = C2F(hotTempBases)
+                hotTempMax = C2F(hotTempMax)
+                hotTempMin = C2F(hotTempMin)
+            
             #Draw the middle line of the comfort polygon.
             point1 = rc.Geometry.Point3d(prevailHotBases[0], hotTempBases[0], 0)
             point2 = rc.Geometry.Point3d(prevailHotBases[-1], hotTempBases[-1], 0)
@@ -596,17 +698,30 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     for count, text in enumerate(prevailText):
         tempLabels.extend(lb_visualization.text2srf([text], [prevailLabelBasePts[count]], legendFont, legendFontSize, legendBold)[0])
     
+    #Bump up the text size for Farenheit.
+    if IPTrigger == True: legendFontSize = 1
+    
     #Make axis labels for the chart.
     xAxisLabels = []
-    xAxisTxt = ["Prevailing Outdoor Temperature (C)"]
-    if belowTen == False or includeColdTimes == False: xAxisPt = [rc.Geometry.Point3d(12, 10 -(5*legendFontSize), 0)]
-    else: xAxisPt = [rc.Geometry.Point3d(-3, -(5*legendFontSize), 0)]
+    if IPTrigger == False: xAxisTxt = ["Prevailing Outdoor Temperature (C)"]
+    else: xAxisTxt = ["Prevailing Outdoor Temperature (F)"]
+    if IPTrigger == False:
+        if belowTen == False or includeColdTimes == False: xAxisPt = [rc.Geometry.Point3d(12, 10 -(5*legendFontSize), 0)]
+        else: xAxisPt = [rc.Geometry.Point3d(-3, -(5*legendFontSize), 0)]
+    else:
+        if belowTen == False or includeColdTimes == False: xAxisPt = [rc.Geometry.Point3d(55, 50 -(5*legendFontSize), 0)]
+        else: xAxisPt = [rc.Geometry.Point3d(30, 32-(5*legendFontSize), 0)]
     tempLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     
     yAxisLabels = []
-    yAxisTxt = ["Desired Indoor Operative Temperature (C)"]
-    if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(7, 14, 0)]
-    else: yAxisPt = [rc.Geometry.Point3d(-23, 9, 0)]
+    if IPTrigger == False: yAxisTxt = ["Desired Indoor Operative Temperature (C)"]
+    else: yAxisTxt = ["Desired Indoor Operative Temperature (F)"]
+    if IPTrigger == False:
+        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(7, 14, 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(-23, 9, 0)]
+    else:
+        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(45, 60, 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(-8, 50, 0)]
     yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, yAxisPt[0])
     for geo in yAxisLabels:
@@ -628,8 +743,12 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
         else:
             titleTxt.append(getDateStr(analysisPeriod_[0], analysisPeriod_[1]))
     else: titleTxt = ["Adaptive Chart", "Unkown Location", "Unknown Time Period"]
-    if belowTen == False or includeColdTimes == False: titlePt = [rc.Geometry.Point3d(10, 4, 0), rc.Geometry.Point3d(10, (4)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(10, (4)-(legendFontSize*5), 0)]
-    else: titlePt = [rc.Geometry.Point3d(-20, -6, 0), rc.Geometry.Point3d(-20, (-6)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-20, (-6)-(legendFontSize*5), 0)]
+    if IPTrigger == False:
+        if belowTen == False or includeColdTimes == False: titlePt = [rc.Geometry.Point3d(10, 4, 0), rc.Geometry.Point3d(10, (4)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(10, (4)-(legendFontSize*5), 0)]
+        else: titlePt = [rc.Geometry.Point3d(-20, -6, 0), rc.Geometry.Point3d(-20, (-6)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-20, (-6)-(legendFontSize*5), 0)]
+    else:
+        if belowTen == False or includeColdTimes == False: titlePt = [rc.Geometry.Point3d(45, 42, 0), rc.Geometry.Point3d(45, (42)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(45, (42)-(legendFontSize*5), 0)]
+        else: titlePt = [rc.Geometry.Point3d(-7, 22, 0), rc.Geometry.Point3d(-7, (22)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-7, (22)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
         titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
     
@@ -645,19 +764,29 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     for item in titleLabels:
         chartCrvAndText.append(item)
     
+    if IPTrigger == False: bound = tempNumLines[0:8]
+    else: bound = tempNumLines[0:15]
     
-    return chartCrvAndText, finalComfortPolygons, belowTen, tempNumLines[0:8]
+    return chartCrvAndText, finalComfortPolygons, belowTen, bound
 
 
-def colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, lb_visualization, lowB, highB, customColors, belowTen, includeColdTimes):
+def colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, lb_visualization, lowB, highB, customColors, belowTen, includeColdTimes, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals):
     # Make the full chart mesh
     #Generate a list of temperatures that will be used to make the mesh.
     if belowTen == False or includeColdTimes == False:
-        tempNumMesh = range(10, 41, 1)
-        prevailNumMesh = range(10, 34, 1)
+        if IPTrigger == False:
+            tempNumMesh = range(10, 41, 1)
+            prevailNumMesh = range(10, 34, 1)
+        else:
+            tempNumMesh = range(50, 106, 2)
+            prevailNumMesh = range(50, 94, 2)
     else:
-        tempNumMesh = range(0, 41, 1)
-        prevailNumMesh = range(-20, 34, 1)
+        if IPTrigger == False:
+            tempNumMesh = range(0, 41, 1)
+            prevailNumMesh = range(-20, 34, 1)
+        else:
+            tempNumMesh = range(32, 106, 2)
+            prevailNumMesh = range(-4, 94, 2)
     
     #Make a matrix
     tempNumMeshFinal =[]
@@ -692,10 +821,16 @@ def colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, l
     #Calculate the opTemper for each of the hours of the year and use this to make points for the chart.
     hourPts = []
     operativeTemps = []
-    for count, temp in enumerate(prevailTemp):
-        operTemp = (airTemp[count]+radTemp[count])/2
-        hourPts.append(rc.Geometry.Point3d(temp, operTemp, 0))
-        operativeTemps.append(operTemp)
+    if IPTrigger == False:
+        for count, temp in enumerate(prevailTemp):
+            operTemp = (airTemp[count]+radTemp[count])/2
+            hourPts.append(rc.Geometry.Point3d(temp, operTemp, 0))
+            operativeTemps.append(operTemp)
+    else:
+        for count, temp in enumerate(farenheitPrevailVals):
+            operTemp = (farenheitAirVals[count]+farenheitRadVals[count])/2
+            hourPts.append(rc.Geometry.Point3d(temp, operTemp, 0))
+            operativeTemps.append(operTemp)
     
     #Make a list to hold values for all of the mesh faces.
     meshFrequency = []
@@ -716,93 +851,180 @@ def colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, l
                 index  = int(round(prevailTemp[hour]+19.5))
             elif prevailTemp[hour] > 33.0: index = -1
             else: index = -2
-        
         return index
+    
+    def getTempIndexFaren(hour):
+        if belowTen == False or includeColdTimes == False:
+            if farenheitPrevailVals[hour] > 50 and farenheitPrevailVals[hour] < 92:
+                index  = int(round((farenheitPrevailVals[hour]-51)/2))
+            elif farenheitPrevailVals[hour] > 92: index = -1
+            else: index = -2
+        else:
+            if farenheitPrevailVals[hour] > -4 and farenheitPrevailVals[hour] < 92:
+                index  = int(round((farenheitPrevailVals[hour]+3)/2))
+            elif farenheitPrevailVals[hour] > 92: index = -1
+            else: index = -2
+        return index
+    
     
     #Make a list to keep track of how many values are too hot for the chart.
     tooHotVals = []
     tooColdVals = []
     
-    for hour, opTemper in enumerate(operativeTemps):
-        tempIndex = getTempIndex(hour)
-        
-        if tempIndex != -1 and tempIndex != -2:
-            if belowTen == False or includeColdTimes == False:
-                if opTemper < 10: pass
-                elif opTemper < 11: meshFrequency[0][tempIndex].append(1)
-                elif opTemper < 12: meshFrequency[1][tempIndex].append(1)
-                elif opTemper < 13:meshFrequency[2][tempIndex].append(1)
-                elif opTemper < 14:meshFrequency[3][tempIndex].append(1)
-                elif opTemper < 15:meshFrequency[4][tempIndex].append(1)
-                elif opTemper < 16:meshFrequency[5][tempIndex].append(1)
-                elif opTemper < 17:meshFrequency[6][tempIndex].append(1)
-                elif opTemper < 18:meshFrequency[7][tempIndex].append(1)
-                elif opTemper < 19:meshFrequency[8][tempIndex].append(1)
-                elif opTemper < 20:meshFrequency[9][tempIndex].append(1)
-                elif opTemper < 21:meshFrequency[10][tempIndex].append(1)
-                elif opTemper < 22:meshFrequency[11][tempIndex].append(1)
-                elif opTemper < 23:meshFrequency[12][tempIndex].append(1)
-                elif opTemper < 24:meshFrequency[13][tempIndex].append(1)
-                elif opTemper < 25:meshFrequency[14][tempIndex].append(1)
-                elif opTemper < 26:meshFrequency[15][tempIndex].append(1)
-                elif opTemper < 27:meshFrequency[16][tempIndex].append(1)
-                elif opTemper < 28:meshFrequency[17][tempIndex].append(1)
-                elif opTemper < 29:meshFrequency[18][tempIndex].append(1)
-                elif opTemper < 30:meshFrequency[19][tempIndex].append(1)
-                elif opTemper < 31:meshFrequency[20][tempIndex].append(1)
-                elif opTemper < 32:meshFrequency[21][tempIndex].append(1)
-                elif opTemper < 33:meshFrequency[22][tempIndex].append(1)
-                elif opTemper < 34:meshFrequency[23][tempIndex].append(1)
-                elif opTemper < 35:meshFrequency[24][tempIndex].append(1)
-                elif opTemper < 36:meshFrequency[25][tempIndex].append(1)
-                elif opTemper < 37:meshFrequency[26][tempIndex].append(1)
-                elif opTemper < 38:meshFrequency[27][tempIndex].append(1)
-                elif opTemper < 39:meshFrequency[28][tempIndex].append(1)
-                else: meshFrequency[29][tempIndex].append(1)
-            else:
-                if opTemper < 0: pass
-                elif opTemper < 1: meshFrequency[0][tempIndex].append(1)
-                elif opTemper < 2: meshFrequency[1][tempIndex].append(1)
-                elif opTemper < 3:meshFrequency[2][tempIndex].append(1)
-                elif opTemper < 4:meshFrequency[3][tempIndex].append(1)
-                elif opTemper < 5:meshFrequency[4][tempIndex].append(1)
-                elif opTemper < 6:meshFrequency[5][tempIndex].append(1)
-                elif opTemper < 7:meshFrequency[6][tempIndex].append(1)
-                elif opTemper < 8:meshFrequency[7][tempIndex].append(1)
-                elif opTemper < 9:meshFrequency[8][tempIndex].append(1)
-                elif opTemper < 10:meshFrequency[9][tempIndex].append(1)
-                elif opTemper < 11:meshFrequency[10][tempIndex].append(1)
-                elif opTemper < 12:meshFrequency[11][tempIndex].append(1)
-                elif opTemper < 13:meshFrequency[12][tempIndex].append(1)
-                elif opTemper < 14:meshFrequency[13][tempIndex].append(1)
-                elif opTemper < 15:meshFrequency[14][tempIndex].append(1)
-                elif opTemper < 16:meshFrequency[15][tempIndex].append(1)
-                elif opTemper < 17:meshFrequency[16][tempIndex].append(1)
-                elif opTemper < 18:meshFrequency[17][tempIndex].append(1)
-                elif opTemper < 19:meshFrequency[18][tempIndex].append(1)
-                elif opTemper < 20:meshFrequency[19][tempIndex].append(1)
-                elif opTemper < 21:meshFrequency[20][tempIndex].append(1)
-                elif opTemper < 22:meshFrequency[21][tempIndex].append(1)
-                elif opTemper < 23:meshFrequency[22][tempIndex].append(1)
-                elif opTemper < 24:meshFrequency[23][tempIndex].append(1)
-                elif opTemper < 25:meshFrequency[24][tempIndex].append(1)
-                elif opTemper < 26:meshFrequency[25][tempIndex].append(1)
-                elif opTemper < 27:meshFrequency[26][tempIndex].append(1)
-                elif opTemper < 28:meshFrequency[27][tempIndex].append(1)
-                elif opTemper < 29:meshFrequency[28][tempIndex].append(1)
-                elif opTemper < 30:meshFrequency[29][tempIndex].append(1)
-                elif opTemper < 31:meshFrequency[30][tempIndex].append(1)
-                elif opTemper < 32:meshFrequency[31][tempIndex].append(1)
-                elif opTemper < 33:meshFrequency[32][tempIndex].append(1)
-                elif opTemper < 34:meshFrequency[33][tempIndex].append(1)
-                elif opTemper < 35:meshFrequency[34][tempIndex].append(1)
-                elif opTemper < 36:meshFrequency[35][tempIndex].append(1)
-                elif opTemper < 37:meshFrequency[36][tempIndex].append(1)
-                elif opTemper < 38:meshFrequency[37][tempIndex].append(1)
-                elif opTemper < 39:meshFrequency[38][tempIndex].append(1)
-                else: meshFrequency[39][tempIndex].append(1)
-        elif tempIndex == -1: tooHotVals.append(1)
-        else: tooColdVals.append(1)
+    if IPTrigger == False:
+        for hour, opTemper in enumerate(operativeTemps):
+            tempIndex = getTempIndex(hour)
+            if tempIndex != -1 and tempIndex != -2:
+                if belowTen == False or includeColdTimes == False:
+                    if opTemper < 10: pass
+                    elif opTemper < 11: meshFrequency[0][tempIndex].append(1)
+                    elif opTemper < 12: meshFrequency[1][tempIndex].append(1)
+                    elif opTemper < 13:meshFrequency[2][tempIndex].append(1)
+                    elif opTemper < 14:meshFrequency[3][tempIndex].append(1)
+                    elif opTemper < 15:meshFrequency[4][tempIndex].append(1)
+                    elif opTemper < 16:meshFrequency[5][tempIndex].append(1)
+                    elif opTemper < 17:meshFrequency[6][tempIndex].append(1)
+                    elif opTemper < 18:meshFrequency[7][tempIndex].append(1)
+                    elif opTemper < 19:meshFrequency[8][tempIndex].append(1)
+                    elif opTemper < 20:meshFrequency[9][tempIndex].append(1)
+                    elif opTemper < 21:meshFrequency[10][tempIndex].append(1)
+                    elif opTemper < 22:meshFrequency[11][tempIndex].append(1)
+                    elif opTemper < 23:meshFrequency[12][tempIndex].append(1)
+                    elif opTemper < 24:meshFrequency[13][tempIndex].append(1)
+                    elif opTemper < 25:meshFrequency[14][tempIndex].append(1)
+                    elif opTemper < 26:meshFrequency[15][tempIndex].append(1)
+                    elif opTemper < 27:meshFrequency[16][tempIndex].append(1)
+                    elif opTemper < 28:meshFrequency[17][tempIndex].append(1)
+                    elif opTemper < 29:meshFrequency[18][tempIndex].append(1)
+                    elif opTemper < 30:meshFrequency[19][tempIndex].append(1)
+                    elif opTemper < 31:meshFrequency[20][tempIndex].append(1)
+                    elif opTemper < 32:meshFrequency[21][tempIndex].append(1)
+                    elif opTemper < 33:meshFrequency[22][tempIndex].append(1)
+                    elif opTemper < 34:meshFrequency[23][tempIndex].append(1)
+                    elif opTemper < 35:meshFrequency[24][tempIndex].append(1)
+                    elif opTemper < 36:meshFrequency[25][tempIndex].append(1)
+                    elif opTemper < 37:meshFrequency[26][tempIndex].append(1)
+                    elif opTemper < 38:meshFrequency[27][tempIndex].append(1)
+                    elif opTemper < 39:meshFrequency[28][tempIndex].append(1)
+                    else: meshFrequency[29][tempIndex].append(1)
+                else:
+                    if opTemper < 0: pass
+                    elif opTemper < 1: meshFrequency[0][tempIndex].append(1)
+                    elif opTemper < 2: meshFrequency[1][tempIndex].append(1)
+                    elif opTemper < 3:meshFrequency[2][tempIndex].append(1)
+                    elif opTemper < 4:meshFrequency[3][tempIndex].append(1)
+                    elif opTemper < 5:meshFrequency[4][tempIndex].append(1)
+                    elif opTemper < 6:meshFrequency[5][tempIndex].append(1)
+                    elif opTemper < 7:meshFrequency[6][tempIndex].append(1)
+                    elif opTemper < 8:meshFrequency[7][tempIndex].append(1)
+                    elif opTemper < 9:meshFrequency[8][tempIndex].append(1)
+                    elif opTemper < 10:meshFrequency[9][tempIndex].append(1)
+                    elif opTemper < 11:meshFrequency[10][tempIndex].append(1)
+                    elif opTemper < 12:meshFrequency[11][tempIndex].append(1)
+                    elif opTemper < 13:meshFrequency[12][tempIndex].append(1)
+                    elif opTemper < 14:meshFrequency[13][tempIndex].append(1)
+                    elif opTemper < 15:meshFrequency[14][tempIndex].append(1)
+                    elif opTemper < 16:meshFrequency[15][tempIndex].append(1)
+                    elif opTemper < 17:meshFrequency[16][tempIndex].append(1)
+                    elif opTemper < 18:meshFrequency[17][tempIndex].append(1)
+                    elif opTemper < 19:meshFrequency[18][tempIndex].append(1)
+                    elif opTemper < 20:meshFrequency[19][tempIndex].append(1)
+                    elif opTemper < 21:meshFrequency[20][tempIndex].append(1)
+                    elif opTemper < 22:meshFrequency[21][tempIndex].append(1)
+                    elif opTemper < 23:meshFrequency[22][tempIndex].append(1)
+                    elif opTemper < 24:meshFrequency[23][tempIndex].append(1)
+                    elif opTemper < 25:meshFrequency[24][tempIndex].append(1)
+                    elif opTemper < 26:meshFrequency[25][tempIndex].append(1)
+                    elif opTemper < 27:meshFrequency[26][tempIndex].append(1)
+                    elif opTemper < 28:meshFrequency[27][tempIndex].append(1)
+                    elif opTemper < 29:meshFrequency[28][tempIndex].append(1)
+                    elif opTemper < 30:meshFrequency[29][tempIndex].append(1)
+                    elif opTemper < 31:meshFrequency[30][tempIndex].append(1)
+                    elif opTemper < 32:meshFrequency[31][tempIndex].append(1)
+                    elif opTemper < 33:meshFrequency[32][tempIndex].append(1)
+                    elif opTemper < 34:meshFrequency[33][tempIndex].append(1)
+                    elif opTemper < 35:meshFrequency[34][tempIndex].append(1)
+                    elif opTemper < 36:meshFrequency[35][tempIndex].append(1)
+                    elif opTemper < 37:meshFrequency[36][tempIndex].append(1)
+                    elif opTemper < 38:meshFrequency[37][tempIndex].append(1)
+                    elif opTemper < 39:meshFrequency[38][tempIndex].append(1)
+                    else: meshFrequency[39][tempIndex].append(1)
+            elif tempIndex == -1: tooHotVals.append(1)
+            else: tooColdVals.append(1)
+    else:
+        for hour, opTemper in enumerate(operativeTemps):
+            tempIndex = getTempIndexFaren(hour)
+            if tempIndex != -1 and tempIndex != -2:
+                if belowTen == False or includeColdTimes == False:
+                    if opTemper < 50: pass
+                    elif opTemper < 52: meshFrequency[0][tempIndex].append(1)
+                    elif opTemper < 54: meshFrequency[1][tempIndex].append(1)
+                    elif opTemper < 56:meshFrequency[2][tempIndex].append(1)
+                    elif opTemper < 58:meshFrequency[3][tempIndex].append(1)
+                    elif opTemper < 60:meshFrequency[4][tempIndex].append(1)
+                    elif opTemper < 62:meshFrequency[5][tempIndex].append(1)
+                    elif opTemper < 64:meshFrequency[6][tempIndex].append(1)
+                    elif opTemper < 66:meshFrequency[7][tempIndex].append(1)
+                    elif opTemper < 68:meshFrequency[8][tempIndex].append(1)
+                    elif opTemper < 70:meshFrequency[9][tempIndex].append(1)
+                    elif opTemper < 72:meshFrequency[10][tempIndex].append(1)
+                    elif opTemper < 74:meshFrequency[11][tempIndex].append(1)
+                    elif opTemper < 76:meshFrequency[12][tempIndex].append(1)
+                    elif opTemper < 78:meshFrequency[13][tempIndex].append(1)
+                    elif opTemper < 80:meshFrequency[14][tempIndex].append(1)
+                    elif opTemper < 82:meshFrequency[15][tempIndex].append(1)
+                    elif opTemper < 84:meshFrequency[16][tempIndex].append(1)
+                    elif opTemper < 86:meshFrequency[17][tempIndex].append(1)
+                    elif opTemper < 88:meshFrequency[18][tempIndex].append(1)
+                    elif opTemper < 90:meshFrequency[19][tempIndex].append(1)
+                    elif opTemper < 92:meshFrequency[20][tempIndex].append(1)
+                    elif opTemper < 94:meshFrequency[21][tempIndex].append(1)
+                    elif opTemper < 96:meshFrequency[22][tempIndex].append(1)
+                    elif opTemper < 98:meshFrequency[23][tempIndex].append(1)
+                    elif opTemper < 100:meshFrequency[24][tempIndex].append(1)
+                    elif opTemper < 102:meshFrequency[25][tempIndex].append(1)
+                    else: meshFrequency[26][tempIndex].append(1)
+                else:
+                    if opTemper < 32: pass
+                    elif opTemper < 34: meshFrequency[0][tempIndex].append(1)
+                    elif opTemper < 36: meshFrequency[1][tempIndex].append(1)
+                    elif opTemper < 38:meshFrequency[2][tempIndex].append(1)
+                    elif opTemper < 40:meshFrequency[3][tempIndex].append(1)
+                    elif opTemper < 42:meshFrequency[4][tempIndex].append(1)
+                    elif opTemper < 44:meshFrequency[5][tempIndex].append(1)
+                    elif opTemper < 46:meshFrequency[6][tempIndex].append(1)
+                    elif opTemper < 48:meshFrequency[7][tempIndex].append(1)
+                    elif opTemper < 50:meshFrequency[8][tempIndex].append(1)
+                    elif opTemper < 52:meshFrequency[9][tempIndex].append(1)
+                    elif opTemper < 54:meshFrequency[10][tempIndex].append(1)
+                    elif opTemper < 56:meshFrequency[11][tempIndex].append(1)
+                    elif opTemper < 58:meshFrequency[12][tempIndex].append(1)
+                    elif opTemper < 60:meshFrequency[13][tempIndex].append(1)
+                    elif opTemper < 62:meshFrequency[14][tempIndex].append(1)
+                    elif opTemper < 64:meshFrequency[15][tempIndex].append(1)
+                    elif opTemper < 66:meshFrequency[16][tempIndex].append(1)
+                    elif opTemper < 68:meshFrequency[17][tempIndex].append(1)
+                    elif opTemper < 70:meshFrequency[18][tempIndex].append(1)
+                    elif opTemper < 72:meshFrequency[19][tempIndex].append(1)
+                    elif opTemper < 74:meshFrequency[20][tempIndex].append(1)
+                    elif opTemper < 76:meshFrequency[21][tempIndex].append(1)
+                    elif opTemper < 78:meshFrequency[22][tempIndex].append(1)
+                    elif opTemper < 80:meshFrequency[23][tempIndex].append(1)
+                    elif opTemper < 82:meshFrequency[24][tempIndex].append(1)
+                    elif opTemper < 84:meshFrequency[25][tempIndex].append(1)
+                    elif opTemper < 86:meshFrequency[26][tempIndex].append(1)
+                    elif opTemper < 88:meshFrequency[27][tempIndex].append(1)
+                    elif opTemper < 90:meshFrequency[28][tempIndex].append(1)
+                    elif opTemper < 92:meshFrequency[29][tempIndex].append(1)
+                    elif opTemper < 94:meshFrequency[30][tempIndex].append(1)
+                    elif opTemper < 96:meshFrequency[31][tempIndex].append(1)
+                    elif opTemper < 98:meshFrequency[32][tempIndex].append(1)
+                    elif opTemper < 100:meshFrequency[33][tempIndex].append(1)
+                    elif opTemper < 102:meshFrequency[34][tempIndex].append(1)
+                    else: meshFrequency[35][tempIndex].append(1)
+            elif tempIndex == -1: tooHotVals.append(1)
+            else: tooColdVals.append(1)
+    
     
     #Give a remark if there are values that are not being displayed on the chart.
     if tooHotVals != []:
@@ -847,7 +1069,7 @@ def colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, l
     return hourPts, uncoloredMesh, finalMeshFrequency
 
 
-def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization):
+def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan, lb_visualization):
     #Define the lists.
     pointColors = []
     colorLegends = []
@@ -864,7 +1086,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     
     #Generate a legend for comfort.
     legend = []
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend.append(legendSrfs)
@@ -877,7 +1099,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     for listCount, list in enumerate(annualHourlyDataSplit):
         if len(list) != 0:
             legend = []
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             legendColors = lb_visualization.gradientColor(legendText[:-1], "min", "max", customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)
@@ -890,7 +1112,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     return pointColors, colorLegends
 
 
-def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, lb_preparation, lb_comfortModels, lb_visualization):
+def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals, lb_preparation, lb_comfortModels, lb_visualization):
     #Create lists to be filled.
     comfortableOrNotInit = []
     conditionOfPersonInit = []
@@ -901,7 +1123,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
     legendBasePt = None
     
     # Read the legend parameters.
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
     #If annual data is connected and there is an anlysis period or conditional statement, select out the right data.
     #If there is annual hourly data, split it up.
@@ -920,9 +1142,13 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
     
     # If an analysis period is selected, use that to select out the data.
     if analysisPeriod_ != [] and epwData == True and calcLength == 8760:
-        airTemp = lb_preparation.selectHourlyData(_dryBulbTemperature, analysisPeriod_)[7:]
+        airTemp = lb_preparation.selectHourlyData(airTemp, analysisPeriod_)[7:]
         radTemp = lb_preparation.selectHourlyData(radTemp, analysisPeriod_)[7:]
         prevailTemp = lb_preparation.selectHourlyData(prevailTemp, analysisPeriod_)[7:]
+        if IPTrigger == True:
+            farenheitAirVals = lb_preparation.selectHourlyData(farenheitAirVals, analysisPeriod_)[7:]
+            farenheitRadVals = lb_preparation.selectHourlyData(farenheitRadVals, analysisPeriod_)[7:]
+            farenheitPrevailVals = lb_preparation.selectHourlyData(farenheitPrevailVals, analysisPeriod_)[7:]
         daysForMonths = lb_preparation.numOfDays
         dayNums = []
         if len(patternList) == 8760:
@@ -957,6 +1183,9 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         newAirTemp = []
         newRadTemp = []
         newPrevailTemp = []
+        newfarenheitAirVals = []
+        newfarenheitRadVals = []
+        newfarenheitPrevailVals = []
         newAnnualHourlyDataSplit = []
         for list in annualHourlyDataSplit:
             newAnnualHourlyDataSplit.append([])
@@ -965,12 +1194,20 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 newAirTemp.append(airTemp[count])
                 newRadTemp.append(radTemp[count])
                 newPrevailTemp.append(prevailTemp[count])
+                if IPTrigger == True:
+                    newfarenheitAirVals.append(farenheitAirVals[count])
+                    newfarenheitRadVals.append(farenheitRadVals[count])
+                    newfarenheitPrevailVals.append(farenheitPrevailVals[count])
                 for listCount in range(len(annualHourlyDataSplit)):
                     newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
         airTemp = newAirTemp
         radTemp = newRadTemp
         prevailTemp = newPrevailTemp
         annualHourlyDataSplit = newAnnualHourlyDataSplit
+        if IPTrigger == True:
+            newfarenheitAirVals = farenheitAirVals
+            newfarenheitRadVals = farenheitRadVals
+            newfarenheitPrevailVals = farenheitPrevailVals
     
     #If the user has set incluse cold times to True, remove them from the list and give a comment.
     monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -1011,6 +1248,9 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         newAirTemp = []
         newRadTemp = []
         newPrevailTemp = []
+        newfarenheitAirVals = []
+        newfarenheitRadVals = []
+        newfarenheitPrevailVals = []
         newAnnualHourlyDataSplit = []
         for list in annualHourlyDataSplit:
             newAnnualHourlyDataSplit.append([])
@@ -1019,25 +1259,33 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 newPrevailTemp.append(preTemp)
                 newRadTemp.append(radTemp[count])
                 newAirTemp.append(airTemp[count])
+                if IPTrigger == True:
+                    newfarenheitAirVals.append(farenheitAirVals[count])
+                    newfarenheitRadVals.append(farenheitRadVals[count])
+                    newfarenheitPrevailVals.append(farenheitPrevailVals[count])
                 if patternList != []:
                     for listCount in range(len(annualHourlyDataSplit)):
                         newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
         airTemp = newAirTemp
         radTemp = newRadTemp
         prevailTemp = newPrevailTemp
+        if IPTrigger == True:
+            newfarenheitAirVals = farenheitAirVals
+            newfarenheitRadVals = farenheitRadVals
+            newfarenheitPrevailVals = farenheitPrevailVals
         if patternList != []: annualHourlyDataSplit = newAnnualHourlyDataSplit
     
     # Generate the chart curves.
-    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound = drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, lb_visualization, lb_comfortModels)
+    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound = drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels)
     
     #Generate the colored mesh.
     #As long as the calculation length is more than 1, make a colored mesh and get chart points for the input data.
     legend = []
     if calcLength > 1:
-        chartHourPoints, adaptiveChartMesh, meshFaceValues = colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, lb_visualization, lowB, highB, customColors, belowTen, includeColdTimes)
+        chartHourPoints, adaptiveChartMesh, meshFaceValues = colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, lb_visualization, lowB, highB, customColors, belowTen, includeColdTimes, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals)
         legendTitle = "Hours"
         lb_visualization.calculateBB(bound, True)
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         legend.append(legendSrfs)
@@ -1089,7 +1337,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         percentHotColdInit.append([sum(percHot)*100/len(airTemp), sum(percCol)*100/len(airTemp)])
     
     #Get the point colors and point color legends.
-    pointColors, colorLegends = getPointColors(perComf, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization)
+    pointColors, colorLegends = getPointColors(perComf, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan, lb_visualization)
     
     #If the user has selected to scale or move the geometry, scale it all and/or move it all.
     if basePoint_ != None:
@@ -1155,11 +1403,11 @@ else:
 #Check the inputs and organize the incoming data into streams that can be run throught the comfort model.
 if initCheck == True:
     checkData = False
-    checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList = checkTheInputs()
+    checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals = checkTheInputs()
 
 
 if checkData == True and _runIt == True:
-    results = main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, lb_preparation, lb_comfortModels, lb_visualization)
+    results = main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals, lb_preparation, lb_comfortModels, lb_visualization)
     if results != -1:
         comfortableOrNotInit, conditionOfPersonInit, degreesFromTargetInit, comfPercentOfTime, percentHotColdInit, chartCurvesAndTxt, adaptiveChartMesh, legend, legendBasePt, finalComfortPolygons, chartHourPoints, pointColorsInit, colorLegendsInit = results
         
