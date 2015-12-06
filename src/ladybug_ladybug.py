@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nDEC_02_2015'
+ghenv.Component.Message = 'VER 0.0.61\nDEC_05_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -4762,6 +4762,299 @@ class ComfortModels(object):
         [0.4528350000000001, 0.45463612555555566, 0.45616600444444455, 0.4574278542857145, 0.45842489269841274, 0.4591603373015874, 0.4596374057142858, 0.45985931555555565, 0.45982928444444443, 0.45955052999999996, 0.4590262698412699, 0.45825972158730166, 0.4572541028571428, 0.4560126312698413, 0.4545385244444445, 0.45283500000000004, 0.45090527555555554, 0.4487525687301587, 0.44638009714285715, 0.44379107841269844, 0.44098873015873014, 0.43797627, 0.4347569155555555, 0.43133388444444437, 0.4277103942857143, 0.4238896626984128, 0.4198749073015873, 0.41566934571428577, 0.4112761955555556, 0.4066986744444444, 0.40194, 0.39700635888888886, 0.39191581396825403, 0.38668939714285716, 0.3813481403174603, 0.3759130753968254, 0.3704052342857143, 0.36484564888888893, 0.3592553511111111, 0.3536553728571429, 0.34806674603174603, 0.34251050253968246, 0.3370076742857143, 0.3315792931746032, 0.3262463911111111, 0.32103, 0.3159446888888889, 0.3109791753968254, 0.3061157142857143, 0.30133656031746026, 0.29662396825396825, 0.29196019285714286, 0.2873274888888889, 0.2827081111111111, 0.27808431428571434, 0.2734383531746032, 0.26875248253968254, 0.2640089571428572, 0.25919003174603183, 0.2542779611111111, 0.24925500000000003, 0.24410888555555557, 0.23884928444444448, 0.23349134571428576, 0.22805021841269843, 0.2225410515873016, 0.21697899428571432, 0.2113791955555555, 0.20575680444444444, 0.20012697, 0.19450484126984124, 0.18890556730158728, 0.18334429714285713, 0.17783617984126984, 0.17239636444444442, 0.16704000000000002, 0.16178223555555554, 0.1566382201587302, 0.15162310285714284, 0.1467520326984127, 0.1420401587301587, 0.13750262999999996, 0.1331545955555555, 0.12901120444444442, 0.1250876057142857, 0.12139894841269841, 0.11796038158730159, 0.1147870542857143, 0.11189411555555553, 0.10929671444444444, 0.10701]]
         
         return spline_stand[az][alt]
+    
+    class physiologicalEquivalentTemperature():
+        # based on: Peter Hoeppe PET fortran code, from:
+        # "Urban climatic map and standards for wind environment - Feasibility study, Technical Input Report No.1",
+        # The Chinese University of Hong Kong, Planning Department, Nov 2008
+        
+        def __init__(self, Ta, MRT, rh, ws, age, sex, heightM, weight, bodyPosition, M, Icl):
+            # personal inputs
+            self.ta = Ta  # in Celsius degrees
+            self.tmrt = MRT  # in Celsius degrees
+            self.rh = rh  # in %
+            self.v = ws  # in m/s
+            self.vpa = self.rh / 100.0 * 6.105 * math.exp(17.27 * self.ta / (237.7 + self.ta))
+            self.age = age  # in years
+            if sex == "male": sex = 1
+            elif sex == "female": sex = 2
+            self.sex = sex
+            self.ht = heightM  # in meters
+            self.mbody = weight  # in kg
+            self.work = M  # in W/m2
+            if ((Icl-0.02) < 0.01):
+                Icl = 0.02
+            self.icl = Icl
+            self.eta = 0.0
+            self.fcl = 1 + (0.31*self.icl)
+            if bodyPosition == "sitting":
+                self.feff = 0.696
+            elif bodyPosition == "standing":
+                self.feff = 0.725
+            elif bodyPosition == "crouching":
+                self.feff = 0.67
+            # constants
+            self.po = 1013.25
+            self.p = 1013.25
+            self.rob = 1.06
+            self.cb = 3640.0
+            self.food = 0.0
+            self.emsk = 0.99
+            self.emcl = 0.95
+            self.evap = 2.42 * math.pow(10.0, 6.0)
+            self.sigm = 5.67 * math.pow(10.0, -8.0)
+        
+        def inkoerp(self):
+            # inner body energy
+            eswdif = 3.19 * math.pow(self.mbody, 0.75) * (1.0 + 0.004 * (30.0 - self.age) + 0.018 * (self.ht * 100.0 / math.pow(self.mbody, 1.0 / 3.0) - 42.1))
+            eswphy = 3.45 * math.pow(self.mbody, 0.75) * (1.0 + 0.004 * (30.0 - self.age) + 0.01 * (self.ht * 100.0 / math.pow(self.mbody, 1.0 / 3.0) - 43.4))
+            eswpot = self.work + eswphy
+            fec = self.work + eswdif
+            he = 0.0
+            if self.sex == 1:
+                he = eswpot
+            elif self.sex == 2:
+                he = fec
+            self.h = he * (1.0 - self.eta)
+            # sensible respiratory energy
+            self.cair = 1010.0
+            self.tex = 0.47 * self.ta + 21.0
+            self.rtv = 1.44 * math.pow(10.0, -6.0) * he
+            self.eres = self.cair * (self.ta - self.tex) * self.rtv
+            # deferred respiration energy
+            self.vpex = 6.11 * math.pow(10.0, 7.45 * self.tex / (235.0 + self.tex))
+            self.erel = 0.623 * self.evap / self.p * (self.vpa - self.vpex) * self.rtv
+            self.ere = self.eres + self.erel
+            
+            return self.ere
+        
+        def berech(self):
+            self.wetsk = 0.0
+            c = [None for i in range(11)]
+            tcore = [None for i in range(7)]
+            self.adu = 0.203 * math.pow(self.mbody, 0.425) * math.pow(self.ht, 0.725)
+            self.hc = 2.67 + 6.5 * math.pow(self.v, 0.67)
+            self.hc = self.hc * math.pow(self.p / self.po, 0.55)
+            self.facl = (173.51 * self.icl - 2.36 - 100.76 * self.icl * self.icl + 19.28 * math.pow(self.icl, 3.0)) / 100.0
+            if self.facl > 1.0:
+                self.facl = 1.0
+            rcl = self.icl / 6.45 / self.facl
+            if self.icl >= 2.0:
+                y = 1.0
+            if self.icl > 0.6 and self.icl < 2.0:
+                y = (self.ht - 0.2) / self.ht
+            if self.icl <= 0.6 and self.icl > 0.3:
+                y = 0.5
+            if self.icl <= 0.3 and self.icl > 0.0:
+                y = 0.1
+            r2 = self.adu * (self.fcl - 1.0 + self.facl) / (6.28 * self.ht * y)
+            r1 = self.facl * self.adu / (6.28 * self.ht * y)
+            di = r2 - r1
+            # skin temperatures
+            for j in range(1,7):
+                self.tsk = 34.0
+                self.count1 = 0
+                self.tcl = (self.ta + self.tmrt + self.tsk) / 3.0
+                self.enbal2 = 0.0
+                while True:
+                    for count2 in range(1,100):
+                        self.acl = self.adu * self.facl + self.adu * (self.fcl - 1.0)
+                        rclo2 = self.emcl * self.sigm * (math.pow(self.tcl + 273.2, 4.0) - math.pow(self.tmrt + 273.2, 4.0)) * self.feff
+                        htcl = 6.28 * self.ht * y * di / (rcl * math.log(r2 / r1) * self.acl)
+                        self.tsk = 1.0 / htcl * (self.hc * (self.tcl - self.ta) + rclo2) + self.tcl
+                        # radiation balance
+                        self.aeff = self.adu * self.feff
+                        self.rbare = self.aeff * (1.0 - self.facl) * self.emsk * self.sigm * (math.pow(self.tmrt + 273.2, 4.0) - math.pow(self.tsk + 273.2, 4.0))
+                        self.rclo = self.feff * self.acl * self.emcl * self.sigm * (math.pow(self.tmrt + 273.2, 4.0) - math.pow(self.tcl + 273.2, 4.0))
+                        self.rsum = self.rbare + self.rclo
+                        # convection
+                        self.cbare = self.hc * (self.ta - self.tsk) * self.adu * (1.0 - self.facl)
+                        self.cclo = self.hc * (self.ta - self.tcl) * self.acl
+                        self.csum = self.cbare + self.cclo
+                        # core temperature
+                        c[0] = self.h + self.ere
+                        c[1] = self.adu * self.rob * self.cb
+                        c[2] = 18.0 - 0.5 * self.tsk
+                        c[3] = 5.28 * self.adu * c[2]
+                        c[4] = 13.0 / 625.0 * c[1]
+                        c[5] = 0.76075 * c[1]
+                        c[6] = c[3] - c[5] - self.tsk * c[4]
+                        c[7] = -c[0] * c[2] - self.tsk * c[3] + self.tsk * c[5]
+                        c[8] = c[6] * c[6] - 4.0 * c[4] * c[7]
+                        c[9] = 5.28 * self.adu - c[5] - c[4] * self.tsk
+                        c[10] = c[9] * c[9] - 4.0 * c[4] * (c[5] * self.tsk - c[0] - 5.28 * self.adu * self.tsk)
+                        if self.tsk == 36.0:
+                            self.tsk = 36.01
+                        tcore[6] = c[0] / (5.28 * self.adu + c[1] * 6.3 / 3600.0) + self.tsk
+                        tcore[2] = c[0] / (5.28 * self.adu + c[1] * 6.3 / 3600.0 / (1.0 + 0.5 * (34.0 - self.tsk))) + self.tsk
+                        if c[10] >= 0.0:
+                            tcore[5] = (-c[9] - math.pow(c[10], 0.5)) / (2.0 * c[4])
+                            tcore[0] = (-c[9] + math.pow(c[10], 0.5)) / (2.0 * c[4])
+                        if c[8] >= 0.0:
+                            tcore[1] = (-c[6] + math.pow(abs(c[8]), 0.5)) / (2.0 * c[4])
+                            tcore[4] = (-c[6] - math.pow(abs(c[8]), 0.5)) / (2.0 * c[4])
+                        tcore[3] = c[0] / (5.28 * self.adu + c[1] * 1.0 / 40.0) + self.tsk
+                        # transpiration
+                        tbody = 0.1 * self.tsk + 0.9 * tcore[j - 1]
+                        swm = 304.94 * (tbody - 36.6) * self.adu / 3600000.0
+                        self.vpts = 6.11 * math.pow(10.0, 7.45 * self.tsk / (235.0 + self.tsk))
+                        if tbody <= 36.6:
+                            swm = 0.0
+                        swf = 0.7 * swm
+                        if self.sex == 1:
+                            sw = swm
+                        if self.sex == 2:
+                            sw = swf
+                        eswphy = -sw * self.evap
+                        he = 0.633 * self.hc / (self.p * self.cair)
+                        fec = 1.0 / (1.0 + 0.92 * self.hc * rcl)
+                        eswpot = he * (self.vpa - self.vpts) * self.adu * self.evap * fec
+                        self.wetsk = eswphy / eswpot
+                        if self.wetsk > 1.0:
+                            self.wetsk = 1.0
+                        eswdif = eswphy - eswpot
+                        if eswdif <= 0.0:
+                            self.esw = eswpot
+                        if eswdif > 0.0:
+                            self.esw = eswphy
+                        if self.esw > 0.0:
+                            self.esw = 0.0
+                        # diffusion
+                        self.rdsk = 0.79 * math.pow(10.0, 7.0)
+                        self.rdcl = 0.0
+                        self.ed = self.evap / (self.rdsk + self.rdcl) * self.adu * (1.0 - self.wetsk) * (self.vpa - self.vpts)
+                        # max vb
+                        vb1 = 34.0 - self.tsk
+                        vb2 = tcore[j - 1] - 36.6
+                        if vb2 < 0.0:
+                            vb2 = 0.0
+                        if vb1 < 0.0:
+                            vb1 = 0.0
+                        vb = (6.3 + 75.0 * vb2) / (1.0 + 0.5 * vb1)
+                        # energy balance
+                        self.enbal = self.h + self.ed + self.ere + self.esw + self.csum + self.rsum + self.food
+                        # clothing temperature
+                        if self.count1 == 0:
+                            self.xx = 1.0
+                        if self.count1 == 1:
+                            self.xx = 0.1
+                        if self.count1 == 2:
+                            self.xx = 0.01
+                        if self.count1 == 3:
+                            self.xx = 0.001
+                        if self.enbal > 0.0:
+                            self.tcl = self.tcl + self.xx
+                        if self.enbal < 0.0:
+                            self.tcl = self.tcl - self.xx
+                        if (self.enbal > 0.0 or self.enbal2 <= 0.0) and (self.enbal < 0.0 or self.enbal2 >= 0.0):
+                            self.enbal2 = self.enbal
+                            count2 += 1
+                        else:
+                            break
+                    if self.count1 == 0.0 or self.count1 == 1.0 or self.count1 == 2.0:
+                        self.count1 = self.count1 + 1
+                        self.enbal2 = 0.0
+                    else:
+                        break
+                for k in range(20):
+                    if self.count1 == 3.0 and (j != 2 and j != 5):
+                        if j != 6 and j != 1:
+                            if j != 3:
+                                if j != 7:
+                                    if j == 4:
+                                        g100 = True
+                                        break
+                                else:
+                                    if tcore[j - 1] >= 36.6 or self.tsk <= 34.0:
+                                        g100 = False
+                                        break
+                                    g100 = True
+                                    break
+                            else:
+                                if tcore[j - 1] >= 36.6 or self.tsk > 34.0:
+                                    g100 = False
+                                    break
+                                g100 = True
+                                break
+                        else:
+                            if c[10] < 0.0 or (tcore[j - 1] < 36.6 or self.tsk <= 33.85):
+                                g100 = False
+                                break
+                            g100 = True
+                            break
+                    if c[8] < 0.0 or (tcore[j - 1] < 36.6 or self.tsk > 34.05):
+                        g100 = False
+                        break
+                if g100 == False:
+                    continue
+                else:
+                    if (j == 4 or vb < 91.0) and (j != 4 or vb >= 89.0):
+                        if vb > 90.0:
+                            vb = 90.0
+                        # water loss
+                        ws = sw * 3600.0 * 1000.0
+                        if ws > 2000.0:
+                            ws = 2000.0
+                        wd = self.ed / self.evap * 3600.0 * (-1000.0)
+                        wr = self.erel / self.evap * 3600.0 * (-1000.0)
+                        self.wsum = ws + wr + wd
+                        return tcore[j-1], self.rsum, self.csum, self.ed
+                # water loss
+                ws = sw * 3600.0 * 1000.0
+                wd = self.ed / self.evap * 3600.0 * (-1000.0)
+                wr = self.erel / self.evap * 3600.0 * (-1000.0)
+                self.wsum = ws + wr + wd
+                if j-3 < 0:
+                    index = 3
+                else:
+                    index = j-3
+                
+                return tcore[index], self.rsum, self.csum, self.ed
+        
+        def pet(self):
+            self.tx = self.ta
+            self.enbal2 = 0.0
+            self.count1 = 0
+            while self.count1 != 4:
+                self.hc = 2.67 + 6.5 * math.pow(0.1, 0.67)
+                self.hc = self.hc * math.pow(self.p / self.po, 0.55)
+                # radiation saldo
+                self.aeff = self.adu * self.feff
+                self.rbare = self.aeff * (1.0 - self.facl) * self.emsk * self.sigm * (math.pow(self.tx + 273.2, 4.0) - math.pow(self.tsk + 273.2, 4.0))
+                self.rclo = self.feff * self.acl * self.emcl * self.sigm * (math.pow(self.tx + 273.2, 4.0) - math.pow(self.tcl + 273.2, 4.0))
+                self.rsum = self.rbare + self.rclo
+                # convection
+                self.cbare = self.hc * (self.tx - self.tsk) * self.adu * (1.0 - self.facl)
+                self.cclo = self.hc * (self.tx - self.tcl) * self.acl
+                self.csum = self.cbare + self.cclo
+                # diffusion
+                self.ed = self.evap / (self.rdsk + self.rdcl) * self.adu * (1.0 - self.wetsk) * (12.0 - self.vpts)
+                # breathing
+                self.tex = 0.47 * self.tx + 21.0
+                self.eres = self.cair * (self.tx - self.tex) * self.rtv
+                self.vpex = 6.11 * math.pow(10.0, 7.45 * self.tex / (235.0 + self.tex))
+                self.erel = 0.623 * self.evap / self.p * (12.0 - self.vpex) * self.rtv
+                self.ere = self.eres + self.erel
+                # energy balance
+                self.enbal = self.h + self.ed + self.ere + self.esw + self.csum + self.rsum
+                if self.count1 == 0:
+                    self.xx = 1.0
+                if self.count1 == 1:
+                    self.xx = 0.1
+                if self.count1 == 2:
+                    self.xx = 0.01
+                if self.count1 == 3:
+                    self.xx = 0.001
+                if self.enbal > 0.0:
+                    self.tx = self.tx - self.xx
+                if self.enbal < 0.0:
+                    self.tx = self.tx + self.xx
+                if (self.enbal > 0.0 or self.enbal2 <= 0.0) and (self.enbal < 0.0 or self.enbal2 >= 0.0):
+                    self.enbal2 = self.enbal
+                else:
+                    self.count1 = self.count1 + 1
+            
+            return
 
 
 class WindSpeed(object):
@@ -5005,13 +5298,13 @@ class Photovoltaics(object):
             startingDayHOY += 24
             endingDayHOY += 24
         
-        dailyTaAverageShifted = dailyTaAverage[-14:] + dailyTaAverage[:-14]
+        dailyTaAverageShifted = dailyTaAverage[-14:] + dailyTaAverage[:]
         
         startingWeekHOY = 0
         endingWeekHOY = 14
         albedoL = []
         lastTwoWeeksTaAverageL = []
-        for i in range(len(dailyTaAverageShifted)):
+        for i in range(365):
             lastTwoWeeksTaAverage = sum(dailyTaAverageShifted[startingWeekHOY+i:endingWeekHOY+i])/14
             lastTwoWeeksTaAverageL.append(lastTwoWeeksTaAverage)
             if lastTwoWeeksTaAverage > 10:
@@ -5522,7 +5815,7 @@ class Photovoltaics(object):
         return TinletPerHOY_C, TinletAverageAnnual_C, TinletHOYminimal_C, TinletHOYmaximal_C
     
     def swhdesign(self, activeArea, srfTiltD, AOI_R, bo, FavTa, FavUL, Eb_shaded, Ed_shaded, Eg, Qload, Cp, mDot, Ta, Tcold, Tw, TdeliveryW, TmaxW, TdischargeW, TmechRoom, L, Di, insulT, k, pumpPower, pumpEfficiency, tankSize, tankArea, tankLoss, epsilon, minSR=None):
-    
+        
         # based on:
         # "Solar Engineering of Thermal Processes", John Wiley and Sons, J. Duffie, W. Beckman, 3rd ed., 2006.
         # "Technical Manual for the SAM Solar Water Heating Model", NREL, N. DiOrio, C. Christensen, J. Burch, A. Dobos, 2014.
@@ -5539,7 +5832,7 @@ class Photovoltaics(object):
         
         # capacitance rate corrections
         F_UL = -(mDotCp / activeArea) * math.log(1 - ((FrUL * activeArea) / mDotCp))
-        r = (mDotCp / activeArea * (1 - math.exp(-activeArea * F_UL / mDotCp))) / FavUL #FrUL  # or FavUL instead of FrUL??
+        r = (mDotCp / activeArea * (1 - math.exp(-activeArea * F_UL / mDotCp))) / FavUL
         FrTa_capacitanceRate = r * FrTau
         FrUL_capacitanceRate = r * FrUL
         
@@ -5553,10 +5846,6 @@ class Photovoltaics(object):
         FrUL_pipeloss = FrUL_capacitanceRate * (((1 - (UA_pipe / mDotCp)) + (Uout * (A_pipe + A_pipe)) / (activeArea * FrUL_capacitanceRate)) / (1 + (UA_pipe / mDotCp)))
         
         # effect of the heat exchanger
-        if (Cp >= 4100):
-            # water used as a working fluid
-            epsilon = 1
-            # or if epsilon = 1: Cp = 4100
         Fr_ = Fr_pipeloss / (1 + ((activeArea*FrUL_pipeloss)/mDotCp) * ((mDotCp/(epsilon*mDotCp))-1))
         FrUL_ = FrUL_pipeloss / (1 + ((activeArea*FrUL_pipeloss)/mDotCp) * ((mDotCp/(epsilon*mDotCp))-1))
         
