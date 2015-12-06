@@ -74,7 +74,8 @@ Provided by Ladybug 0.0.61
         
     output:
         readMe!: ...
-        optimalSystemSize: Optimal PV system size (optimal total size of the PV array). Minimum system size is 0.01 kW.
+        optimalSystemSize: Optimal PV system size (optimal total size of the PV array) for a given PVsurface's tilt, array and "ACenergyDemandPerHour_".
+                           Minimum system size is 0.01 kW.
                            Input it to "systemSize_" input of "PV SWH system size" component to see how much area it would require.
                            -
                            To calculate it, set the "optimal_" input to "True".
@@ -150,10 +151,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = "VER 0.0.61\nNOV_29_2015"
+ghenv.Component.Message = "VER 0.0.61\nDEC_05_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nNOV_29_2015
+#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -169,8 +170,7 @@ def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, PVmoduleSetti
     if (PVsurface == None):
         nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
         validInputData = False
-        printMsg = "Please input planar Surface (not a polysurface) on which the PV modules will be applied.\n" + \
-                   "Or create a Surface based on initial PV system size by using \"PV SWH system size\" component."
+        printMsg = "Please input a Surface (not polysurface) to \"_PVsurface\". The same Surface you inputted to \"Photovoltaics Surface\" component."
         
         return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
     
@@ -525,13 +525,12 @@ gridEfficiency: %s
 
 
 level = gh.GH_RuntimeMessageLevel.Warning
-levelBlank = gh.GH_RuntimeMessageLevel.Blank
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
-        if _PVsurface or _ACenergyPerHour or _totalRadiationPerHour or _cellTemperaturePerHour:
+        if _PVsurface:
             unitConversionFactor = lb_preparation.checkUnits()
             unitAreaConversionFactor = unitConversionFactor**2
             nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg = PVinputData(_PVsurface, PVsurfacePercent_, unitConversionFactor, PVmoduleSettings_, _ACenergyPerHour, _totalRadiationPerHour, _cellTemperaturePerHour, ACenergyDemandPerHour_, energyCostPerKWh_, embodiedEnergyPerM2_, embodiedCO2PerM2_, lifetime_, gridEfficiency_)
@@ -550,9 +549,9 @@ if sc.sticky.has_key("ladybug_release"):
                 print printMsg
                 ghenv.Component.AddRuntimeMessage(level, printMsg)
         else:
-            printMsg = "Please input Surface (not polysurface) to \"_PVsurface\".\nOr input surface Area in square meters (example: \"100\").\nOr input Nameplate DC power rating in kiloWatts (example: \"4 kw\")."
+            printMsg = "Please input a Surface (not polysurface) to \"_PVsurface\". The same Surface you inputted to \"Photovoltaics Surface\" component."
             print printMsg
-            ghenv.Component.AddRuntimeMessage(levelBlank, printMsg)
+            ghenv.Component.AddRuntimeMessage(level, printMsg)
     else:
         printMsg = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \

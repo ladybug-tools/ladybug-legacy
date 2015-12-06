@@ -99,10 +99,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = "VER 0.0.61\nNOV_29_2015"
+ghenv.Component.Message = "VER 0.0.61\nDEC_05_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nNOV_29_2015
+#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -208,7 +208,7 @@ def PVsurfaceInputData(PV_SWHsurface):
     if (PV_SWHsurface == None):
         PVsurfaceInputType = srfArea = None
         validPVsurfaceData = False
-        printMsg = "Please input Surface (not polysurface) to \"_PV_SWHsurface\"."
+        printMsg = "Please input a Surface (not polysurface) to \"_PV_SWHsurface\"."
         
         return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
     
@@ -627,7 +627,6 @@ Origin: %0.2f,%0.2f,%0.2f
 
 
 level = gh.GH_RuntimeMessageLevel.Warning
-levelBlank = gh.GH_RuntimeMessageLevel.Blank
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -635,7 +634,7 @@ if sc.sticky.has_key("ladybug_release"):
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
-        if _epwFile or _PV_SWHsurface:
+        if _epwFile:
             locationName, latitude, longitude, timeZone, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg = getEpwData(_epwFile, annualShading_, albedo_, precision_, scale_, origin_, legendPar_)
             if validEpwData:
                 PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg = PVsurfaceInputData(_PV_SWHsurface)
@@ -653,7 +652,7 @@ if sc.sticky.has_key("ladybug_release"):
                         printOutput(northDeg, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin)
                         PVsurfaceTilt = srfTiltD; PVsurfaceAzimuth = srfAzimuthD; optimalTilt = optimalTiltD; optimalAzimuth = optimalAzimuthD; optimalRadiation = maximalTotalRadiationPerYear; originPt = origin
                     else:
-                        print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Tilt and orientation factor component"
+                        print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Tilt and orientation factor component."
                 else:
                     print printMsg
                     ghenv.Component.AddRuntimeMessage(level, printMsg)
@@ -663,7 +662,7 @@ if sc.sticky.has_key("ladybug_release"):
         else:
             printMsg = "Please supply .epw file path to \"_epwFile\" input."
             print printMsg
-            ghenv.Component.AddRuntimeMessage(levelBlank, printMsg)
+            ghenv.Component.AddRuntimeMessage(level, printMsg)
     else:
         printMsg = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \

@@ -111,10 +111,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
 ghenv.Component.NickName = "PhotovoltaicsSurface"
-ghenv.Component.Message = "VER 0.0.61\nNOV_29_2015"
+ghenv.Component.Message = "VER 0.0.61\nDEC_05_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nNOV_29_2015
+#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -445,13 +445,12 @@ Caclulation based on the following condition:
 
 
 level = gh.GH_RuntimeMessageLevel.Warning
-levelBlank = gh.GH_RuntimeMessageLevel.Blank
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
-        if _epwFile or _PVsurface:
+        if _epwFile:
             locationName, latitude, longitude, timeZone, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, albedoL, validEpwData, printMsg = getEpwData(_epwFile, albedo_)
             if validEpwData:
                 moduleActiveAreaPercent_ = moduleType_ = moduleEfficiency_ = None
@@ -490,7 +489,7 @@ if sc.sticky.has_key("ladybug_release"):
         else:
             printMsg = "Please supply .epw file path to \"_epwFile\" input."
             print printMsg
-            ghenv.Component.AddRuntimeMessage(levelBlank, printMsg)
+            ghenv.Component.AddRuntimeMessage(level, printMsg)
     else:
         printMsg = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \
