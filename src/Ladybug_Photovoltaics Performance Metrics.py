@@ -415,15 +415,14 @@ def main(ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHour
     ACenergyDemandPerMonth = [sum(monthPacDemand) for monthPacDemand in monthsOfYearHoyPacDemand]  # in kWh
     ACenergyDemandPerYear = sum(ACenergyDemandPerMonth)  # in kWh
     
-    
     temperatureCorrectedPRperMonth = []
     for i,Epoa in enumerate(totalRadiationPerMonthAverageFiltered):
         Ktemp = 1+gamma*(cellTemperaturePerMonthAverageFiltered[i]-cellTemperaturePerYearAverageFiltered)
         if Epoa == 0:  # correction for if Epoa per some month = 0 (if conditionalStatement_ from "Photovoltaics surface" component has been used, too high (positive or negative) latitude):
-            TaCorrectedPR = 0
+            TcellCorrectedPR = 0
         else:
-            TaCorrectedPR = (ACenergyPerMonthAverageFiltered[i]/nameplateDCpowerRating*Ktemp) / ((Epoa)/1)*100
-        temperatureCorrectedPRperMonth.append(TaCorrectedPR)  # in %
+            TcellCorrectedPR = (ACenergyPerMonthAverageFiltered[i]/(nameplateDCpowerRating*Ktemp)) / (Epoa/1)*100
+        temperatureCorrectedPRperMonth.append(TcellCorrectedPR)  # in %
     temperatureCorrectedPRperYear = sum(temperatureCorrectedPRperMonth)/len(temperatureCorrectedPRperMonth)  # in %
     temperatureCorrectedPRperMonth = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "PV system's Temperature corrected Performance Ratio", "%", "Monthly-> total", (1, 1, 1), (12, 31, 24)] + temperatureCorrectedPRperMonth
     
@@ -447,7 +446,7 @@ def main(ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHour
     
     CUFperYear = ACenergyPerYear/(nameplateDCpowerRating * 8760) * 100  # in %
     
-    basicPRperYear = (ACenergyPerYear / (srfArea*(moduleEfficiency/100)*totalRadiationPerYear)) * 100  # in %
+    basicPRperYear = (ACenergyPerYear / (srfArea*(moduleEfficiency/100)*totalRadiationPerYear)) * 100  # in % (it is not calculated for mid-day hours the way temperatureCorrectedPR is, so its values may fluctuate more)
     
     energyValue = energyCostPerKWh * ACenergyPerYear  # in chosen currency
     
