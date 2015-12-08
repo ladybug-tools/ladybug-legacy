@@ -63,7 +63,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.61\nDEC_07_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nNOV_20_2015
@@ -550,7 +550,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             for srf in yAxisSrf[0]:
                 srf.Transform(rotation)
             textSrfs.extend(yAxisSrf[0])
-            lowVal2, valRange2, finalValues = makeNumberLabels(dataList[uCount+1], False, lowBList[uCount+1], highBList[uCount+1], newDataMethodsList[uCount+1])
+            lowVal2, valRange2, finalValues, negativeTrigger = makeNumberLabels(dataList[uCount+1], False, lowBList[uCount+1], highBList[uCount+1], newDataMethodsList[uCount+1])
             startVals.append(lowVal2)
             scaleFacs.append(valRange2/height)
             if unit2 == 'C' or unit2 == 'C' or unit2 == 'F' or unit2 == 'F':
@@ -572,7 +572,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             startVals.append(lowVal2)
             scaleFacs.append(valRange2/height)
         else:
-            lowVal, valRange, finalValues = makeNumberLabels(dataList[uCount+1], False, lowBList[uCount+1], highBList[uCount+1], newDataMethodsList[uCount+1])
+            lowVal, valRange, finalValues, negativeTrigger = makeNumberLabels(dataList[uCount+1], False, lowBList[uCount+1], highBList[uCount+1], newDataMethodsList[uCount+1])
             startVals.append(lowVal)
             scaleFacs.append(valRange/height)
             if unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'F' or unitsList[uCount+1] == 'F':
