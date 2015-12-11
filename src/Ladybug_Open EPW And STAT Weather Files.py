@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'Open EPW + STAT'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_11_2015'
+ghenv.Component.Message = 'VER 0.0.61\nDEC_11_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
