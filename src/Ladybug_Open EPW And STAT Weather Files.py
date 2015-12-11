@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'Open EPW + STAT'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nNOV_11_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -53,6 +53,7 @@ from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import time
+import System
 
 
 doc = gh.GH_Document()
@@ -73,16 +74,27 @@ def checkTheInputs():
         
         lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
         #Check the inputs to make sure that a valid DOE URL has been connected.
-        if _weatherFileURL and _weatherFileURL.startswith('http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/') and _weatherFileURL.endswith('.zip') and  _weatherFileURL != 'http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/Example.zip':
-            folderName = _weatherFileURL.split('/')[-1].split('.')[0]
+        if _weatherFileURL and _weatherFileURL.startswith('https://energyplus.net/weather-download/') and _weatherFileURL.endswith('all'):
+            folderName = _weatherFileURL.split('/')[-2]
             checkData = True
-        elif _weatherFileURL == 'http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/Example.zip':
+        elif _weatherFileURL.endswith('.zip'):
             checkData = False
+            warning1 = "The US Department of Eenergy no longer keeps epw zip files on their website. \n The current official database lives with EnergyPlus documentation here: \n https://energyplus.net/weather \n To ensure that you have a correct weather file web address, use the links from EPWMap that you get by right-clicking on a location:"
+            warning2 = "http://mostapharoudsari.github.io/epwmap/"
+            print warning1
+            print warning2
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, warning1)
+            ghenv.Component.AddRuntimeMessage(w, warning2)
         else:
             checkData = False
-            warning = "_weatherFileURL is not a valid web address to a DOE weather file. "
+            warning1 = "_weatherFileURL is not a valid URL address to an EnergyPlus weather file. \n To ensure that you have a correct weather file web address, use the links from EPWMap that you get by right-clicking on a location:"
+            warning2 = "http://mostapharoudsari.github.io/epwmap/"
+            print warning1
+            print warning2
             w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
+            ghenv.Component.AddRuntimeMessage(w, warning1)
+            ghenv.Component.AddRuntimeMessage(w, warning2)
         
         #If no working directory is specified, default to C:\ladybug.
         if workingDir_ != None and checkData == True:
@@ -103,16 +115,11 @@ def download(url, workingDir):
     try:
         if not os.path.isdir(workingDir):
             os.mkdir(workingDir)
-        webFile = urllib.urlopen(url)
-        if webFile != None:
-            localFile = open(workingDir + '/' + url.split('/')[-1], 'wb')
-            localFile.write(webFile.read())
-            webFile.close()
-            localFile.close()
-            Address = workingDir + url.split('/')[-1]
-            return Address
-        else:
-            return None
+        client = System.Net.WebClient()
+        webFile = os.path.join(workingDir, url.split('/')[-2] + '.zip')
+        client.DownloadFile(url, webFile)
+        Address = workingDir + url.split('/')[-1]
+        return Address
     except:
         warning = 'You are not connected to the internet and you do not have the weather files already on your computer.  You must be connected to the internet to download the files with this component.'
         print warning
@@ -134,13 +141,13 @@ def unzip(source_filename, dest_dir):
             zf.extract(member, path)
 
 def addresses(filename, directory):
-    filenamewords = filename.split('.zip')[-2]
+    filenamewords = filename.split('all')[0] + filename.split('\\')[-2]
     epw = filenamewords + '.epw'
     stat = filenamewords + '.stat'
     return epw, stat
 
 def checkIfAlreadyDownloaded(workingDir, url):
-    zipFileAddress = Address = workingDir + url.split('/')[-1]
+    zipFileAddress = workingDir + url.split('/')[-1]
     epw, stat = addresses(zipFileAddress, workingDir)
     if os.path.isfile(epw) == True and os.path.isfile(stat) == True:
         return True, epw, stat
