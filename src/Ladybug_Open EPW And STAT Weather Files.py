@@ -49,20 +49,44 @@ import scriptcontext as sc
 import urllib
 import os
 import zipfile,os.path
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import time
 import System
 
 
-doc = gh.GH_Document()
-
-def checkTheInputs():
+def updateUrl(oldurl):
+    """Update old url to new url"""
+    # old: http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/4_north_and_central_america_wmo_region_4/1_usa/USA_PA_Philadelphia.Intl.AP.724080_TMY3.zip
+    # new: https://www.energyplus.net/weather-download/north_and_central_america_wmo_region_4/USA/PA/USA_PA_Philadelphia.Intl.AP.724080_TMY3/all
+    
+    if not oldurl: return
+    
+    oldurl = oldurl.replace("https://energyplus.net", "https://www.energyplus.net")
+    if not _weatherFileURL.endswith('.zip'): return oldurl
+    
+    oldurl = oldurl \
+        .replace("http://apps1.eere.energy.gov/buildings/energyplus/weatherdata", \
+        "https://www.energyplus.net/weather-download")
+    linkdata = oldurl.split("/")
+    # update region name
+    linkdata[4] = ("_").join(linkdata[4].split("_")[1:])
+    city, state = linkdata[-1].split("_")[:2]
+    if oldurl.find("CAN_")==-1 and oldurl.find("USA_")==-1:
+        state = ''
+        linkdata.insert(5, "")
+        
+    linkdata[5] = city + "/" + state
+    linkdata[-1] = linkdata[-1].replace(".zip","/all")
+    
+    updatedLink = "/".join(linkdata)
+    return updatedLink
+    
+def checkTheInputs(_weatherFileURL):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -73,19 +97,16 @@ def checkTheInputs():
             return -1
         
         lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
+
+
+
         #Check the inputs to make sure that a valid DOE URL has been connected.
-        if _weatherFileURL and _weatherFileURL.startswith('https://energyplus.net/weather-download/') and _weatherFileURL.endswith('all'):
+        _weatherFileURL = updateUrl(_weatherFileURL)
+            
+        if _weatherFileURL and \
+            _weatherFileURL.startswith('https://www.energyplus.net/weather-download/') and _weatherFileURL.endswith('all'):
             folderName = _weatherFileURL.split('/')[-2]
             checkData = True
-        elif _weatherFileURL.endswith('.zip'):
-            checkData = False
-            warning1 = "The US Department of Eenergy no longer keeps epw zip files on their website. \n The current official database lives with EnergyPlus documentation here: \n https://energyplus.net/weather \n To ensure that you have a correct weather file web address, use the links from EPWMap that you get by right-clicking on a location:"
-            warning2 = "http://mostapharoudsari.github.io/epwmap/"
-            print warning1
-            print warning2
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning1)
-            ghenv.Component.AddRuntimeMessage(w, warning2)
         else:
             checkData = False
             warning1 = "_weatherFileURL is not a valid URL address to an EnergyPlus weather file. \n To ensure that you have a correct weather file web address, use the links from EPWMap that you get by right-clicking on a location:"
@@ -104,12 +125,12 @@ def checkTheInputs():
         else:
             workingDir = None
         
-        return checkData, workingDir
+        return checkData, workingDir, _weatherFileURL
     else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return False, None
+        return False, None, None
 
 def download(url, workingDir):
     try:
@@ -118,10 +139,11 @@ def download(url, workingDir):
         client = System.Net.WebClient()
         webFile = os.path.join(workingDir, url.split('/')[-2] + '.zip')
         client.DownloadFile(url, webFile)
-        Address = workingDir + url.split('/')[-1]
-        return Address
-    except:
-        warning = 'You are not connected to the internet and you do not have the weather files already on your computer.  You must be connected to the internet to download the files with this component.'
+        return webFile
+        
+    except Exception, e:
+        warning = 'You are not connected to the internet and you do not have the weather files already on your computer. You must be connected to the internet to download the files with this component.'
+        warning += '\n' + `e`
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         return None
@@ -141,13 +163,13 @@ def unzip(source_filename, dest_dir):
             zf.extract(member, path)
 
 def addresses(filename, directory):
-    filenamewords = filename.split('all')[0] + filename.split('\\')[-2]
+    filenamewords = filename.replace(".zip", "")
     epw = filenamewords + '.epw'
     stat = filenamewords + '.stat'
     return epw, stat
 
 def checkIfAlreadyDownloaded(workingDir, url):
-    zipFileAddress = workingDir + url.split('/')[-1]
+    zipFileAddress = workingDir + url.split('/')[-2] + '.zip'
     epw, stat = addresses(zipFileAddress, workingDir)
     if os.path.isfile(epw) == True and os.path.isfile(stat) == True:
         return True, epw, stat
@@ -158,10 +180,10 @@ def checkIfAlreadyDownloaded(workingDir, url):
 
 checkData = False
 #Check the inputs to make sure that they are the correct syntax.
-res = checkTheInputs()
+res = checkTheInputs(_weatherFileURL)
 
 if res!= -1:
-    checkData, workingDir = res
+    checkData, workingDir, _weatherFileURL = res
 
 #Check to see if the file has already been downloaded to the C:\ladybug drive.
 if checkData == True:
