@@ -5,7 +5,7 @@
 # This file is part of Ladybug.
 # 
 # Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com>
-# with assistance of Dr. Krzysztof Blazejczyk <>
+# with assistance of Dr. Krzysztof Blazejczyk <k.blaz@twarda.pan.pl>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -147,10 +147,10 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = "VER 0.0.61\nDEC_05_2015"
+ghenv.Component.Message = "VER 0.0.61\nDEC_29_2015"
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.60\nDEC_05_2015
+#compatibleLBVersion = VER 0.0.60\nDEC_29_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -341,7 +341,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         activityDuration = bodyCharacteristics[9]
     
     # check Icl and M from bodyCharacteristics
-    if (Icl != None) and (Icl < 0):
+    if (Icl != None):
         # use "clothingInsulation" defined in "bodyCharacteristics_"
         IclL = [Icl for i in range(8760)]
     else:
@@ -613,7 +613,6 @@ def effectiveTemperature(Ta, ws, rh, SR, ac):
         TE = 37 - ( (37-Ta)/(0.68-(0.0014*rh)+(1/(1.76+1.4*(ws**0.75)))) ) - (0.29 * Ta * (1-0.01*rh))
     
     # Radiative-effective temperature
-    #ac = 31  # default value
     TRE = TE + ((1 - 0.01*ac)*SR) * ((0.0155 - 0.00025*TE) - (0.0043 - 0.00011*TE))
     
     if TRE < 1:
@@ -777,7 +776,6 @@ def solarRadiationNudeMan(Kglob, hSl, ac):
     # formula from: Bioclimatic principles of recreation and tourism in Poland, 2nd edition, Blazejczyk, Kunert, 2011 (MENEX_2005 model)
     Kt = Kglob / (-0.0015*(hSl**3) + 0.1796*(hSl**2) + 9.6375*hSl - 11.9)
     
-    #ac = 31  # default value
     ac_ = 1 - 0.01*ac
     
     # Rprim - solar radiation absorbed by nude man (W/m2)
@@ -1095,68 +1093,9 @@ def physiologicalEquivalentTemperature(climate, Ta, ws, rh, MRT, age, sex, heigh
     coreTemperature, radiationBalance, convection, waterVaporDiffusion = petObj.berech()
     petObj.pet()
     skinTemperature, totalHeatLoss, skinSweating, internalHeat, sweatEvaporation, PET = petObj.tsk, petObj.wsum, petObj.wetsk, petObj.h, petObj.esw, petObj.tx
+    effectPET, comfortablePET = petObj.thermalCategories(climate)
     
     PETresults = [coreTemperature, skinTemperature, totalHeatLoss, skinSweating, internalHeat, radiationBalance, convection, waterVaporDiffusion, sweatEvaporation, respiration]
-    
-    if climate == "humid":
-        # categories by Lin and Matzarakis (2008) (tropical and subtropical humid climate)
-        if (PET < 14):
-            effectPET = -4
-            comfortablePET = 0
-        elif (PET >= 14) and (PET < 18):
-            effectPET = -3
-            comfortablePET = 0
-        elif (PET >= 18) and (PET < 22):
-            effectPET = -2
-            comfortablePET = 0
-        elif (PET >= 22) and (PET < 26):
-            effectPET = -1
-            comfortablePET = 0
-        elif (PET >= 26) and (PET <= 30):
-            effectPET = 0
-            comfortablePET = 1
-        elif (PET > 30) and (PET <= 34):
-            effectPET = 1
-            comfortablePET = 0
-        elif (PET > 34) and (PET <= 38):
-            effectPET = 2
-            comfortablePET = 0
-        elif (PET > 38) and (PET <= 42):
-            effectPET = 3
-            comfortablePET = 0
-        elif (PET > 42):
-            effectPET = 4
-            comfortablePET = 0
-    
-    elif climate == "temperate":
-        # categories by Matzarakis and Mayer (1996) (temperate climate)
-        if (PET < 4):
-            effectPET = -4
-            comfortablePET = 0
-        elif (PET >= 4) and (PET < 8):
-            effectPET = -3
-            comfortablePET = 0
-        elif (PET >= 8) and (PET < 13):
-            effectPET = -2
-            comfortablePET = 0
-        elif (PET >= 13) and (PET < 18):
-            effectPET = -1
-            comfortablePET = 0
-        elif (PET >= 18) and (PET <= 23):
-            effectPET = 0
-            comfortablePET = 1
-        elif (PET > 23) and (PET <= 29):
-            effectPET = 1
-            comfortablePET = 0
-        elif (PET > 29) and (PET <= 35):
-            effectPET = 2
-            comfortablePET = 0
-        elif (PET > 35) and (PET <= 41):
-            effectPET = 3
-            comfortablePET = 0
-        elif (PET > 41):
-            effectPET = 4
-            comfortablePET = 0
     
     return PET, effectPET, comfortablePET, PETresults
 
@@ -1554,8 +1493,8 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     ["Predicted Insulation Index Of Clothing - values", "Predicted Insulation Index Of Clothing - categories", "Predicted Insulation Index Of Clothing - comfortable(1) or not(0)"],
     ["Heart Rate - values", "Heart Rate - categories", "Heart Rate - comfortable(1) or not(0)"],
     ["Dehydration Risk - values", "Dehydration Risk - categories", "Dehydration Risk - comfortable(1) or not(0)"],
-    ["Physiologically Equivalent Temperature (for temperate climates) - values", "Physiologically Equivalent Temperature - categories", "Physiologically Equivalent Temperature - comfortable(1) or not(0)"],
-    ["Physiologically Equivalent Temperature (for tropical and subtropical humid climates) - values", "Physiologically Equivalent Temperature - categories", "Physiologically Equivalent Temperature - comfortable(1) or not(0)"],
+    ["Physiologically Equivalent Temperature (for temperate climates) - values", "Physiologically Equivalent Temperature (for temperate climates) - categories", "Physiologically Equivalent Temperature (for temperate climates) - comfortable(1) or not(0)"],
+    ["Physiologically Equivalent Temperature (for (sub)tropical humid climates) - values", "Physiologically Equivalent Temperature (for (sub)tropical humid climates) - categories", "Physiologically Equivalent Temperature (for (sub)tropical humid climates) - comfortable(1) or not(0)"],
     ["Temperature Humidity Index - values", "Temperature Humidity Index - categories", "Temperature Humidity Index - comfortable(1) or not(0)"],
     ["Predicted Heat Strain - values", "Predicted Heat Strain - categories", "Predicted Heat Strain - comfortable(1) or not(0)"]
     ]
@@ -1918,7 +1857,7 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     ,
     
-    ["Physiologically Equivalent Temperature (°C) - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
+    ["Physiologically Equivalent Temperature (°C) for temperate climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
     
     "Each number (from -4 to 4) represents a certain PET level/category. With categories being the following:\n" + \
     "--\n" + \
@@ -1942,7 +1881,7 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     ,
     
-    ["Physiologically Equivalent Temperature (°C) - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
+    ["Physiologically Equivalent Temperature (°C) for (sub)tropical climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
     
     "Each number (from -4 to 4) represents a certain PET level/category. With categories being the following:\n" + \
     "--\n" + \
@@ -2030,7 +1969,7 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
 
 
 def printThermalComfortIndexName(comfortIndex, date, HOYs, PETresults):
-    thermalComfortIndexName = ["HI (Heat Index)", "humidex (humidity index)", "DI (Discomfort Index)", "WCI (Wind Chill Index)", "WCT (Wind Chill Temperature)", "WBGT (Wet-Bulb Globe Temperature) indoors", "WBGT (Wet-Bulb Globe Temperature) outdoors", "TE (Effective Temperature)", "AT (Apparent Temperature)", "TS (Thermal Sensation)", "ASV (Actual Sensation Vote)", "MRT (Mean Radiant Temperature)", "Iclp (Predicted Insulation Index Of Clothing)", "HR (Heart Rate)", "DhRa (Dehydration Risk)", "PET (Physiologically Equivalent Temperature) for temperate climates", "PET (Physiologically Equivalent Temperature) for tropical and subtropical humid climates", "THI (Temperature Humidity Index)", "PHS (Predicted Heat Strain)"]
+    thermalComfortIndexName = ["HI (Heat Index)", "humidex (humidity index)", "DI (Discomfort Index)", "WCI (Wind Chill Index)", "WCT (Wind Chill Temperature)", "WBGT (Wet-Bulb Globe Temperature) indoors", "WBGT (Wet-Bulb Globe Temperature) outdoors", "TE (Effective Temperature)", "AT (Apparent Temperature)", "TS (Thermal Sensation)", "ASV (Actual Sensation Vote)", "MRT (Mean Radiant Temperature)", "Iclp (Predicted Insulation Index Of Clothing)", "HR (Heart Rate)", "DhRa (Dehydration Risk)", "PET (Physiologically Equivalent Temperature) for temperate climates", "PET (Physiologically Equivalent Temperature) for (sub)tropical humid climates", "THI (Temperature Humidity Index)", "PHS (Predicted Heat Strain)"]
     print "%s successfully calculated for %s period." % (thermalComfortIndexName[comfortIndex], date)
     
     # print PETresults or PHSresults only for HOY_ inputted:

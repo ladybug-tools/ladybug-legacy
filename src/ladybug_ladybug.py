@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nDEC_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nDEC_29_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -5055,6 +5055,71 @@ class ComfortModels(object):
                     self.count1 = self.count1 + 1
             
             return
+        
+        def thermalCategories(self, climate):
+            
+            PET = self.tx
+            if climate == "humid":
+                # categories by Lin and Matzarakis (2008) (tropical and subtropical humid climate)
+                if (PET < 14):
+                    effectPET = -4
+                    comfortablePET = 0
+                elif (PET >= 14) and (PET < 18):
+                    effectPET = -3
+                    comfortablePET = 0
+                elif (PET >= 18) and (PET < 22):
+                    effectPET = -2
+                    comfortablePET = 0
+                elif (PET >= 22) and (PET < 26):
+                    effectPET = -1
+                    comfortablePET = 0
+                elif (PET >= 26) and (PET <= 30):
+                    effectPET = 0
+                    comfortablePET = 1
+                elif (PET > 30) and (PET <= 34):
+                    effectPET = 1
+                    comfortablePET = 0
+                elif (PET > 34) and (PET <= 38):
+                    effectPET = 2
+                    comfortablePET = 0
+                elif (PET > 38) and (PET <= 42):
+                    effectPET = 3
+                    comfortablePET = 0
+                elif (PET > 42):
+                    effectPET = 4
+                    comfortablePET = 0
+            
+            elif climate == "temperate":
+                # categories by Matzarakis and Mayer (1996) (temperate climate)
+                if (PET < 4):
+                    effectPET = -4
+                    comfortablePET = 0
+                elif (PET >= 4) and (PET < 8):
+                    effectPET = -3
+                    comfortablePET = 0
+                elif (PET >= 8) and (PET < 13):
+                    effectPET = -2
+                    comfortablePET = 0
+                elif (PET >= 13) and (PET < 18):
+                    effectPET = -1
+                    comfortablePET = 0
+                elif (PET >= 18) and (PET <= 23):
+                    effectPET = 0
+                    comfortablePET = 1
+                elif (PET > 23) and (PET <= 29):
+                    effectPET = 1
+                    comfortablePET = 0
+                elif (PET > 29) and (PET <= 35):
+                    effectPET = 2
+                    comfortablePET = 0
+                elif (PET > 35) and (PET <= 41):
+                    effectPET = 3
+                    comfortablePET = 0
+                elif (PET > 41):
+                    effectPET = 4
+                    comfortablePET = 0
+            
+            return effectPET, comfortablePET
 
 
 class WindSpeed(object):
