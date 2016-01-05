@@ -35,20 +35,21 @@ Provided by Ladybug 0.0.61
     
     Args:
         _geometry: Geometry for which visibility analysis will be conducted.  Geometry must be either a Brep, a Mesh, or a list of Breps or Meshes.
-        context_: Context geometry that could block the view from the _viewPoints to the test _geometry.  Conext geometry must be either a Brep, a Mesh, or a list of Breps or Meshes.
+        context_: Context geometry that could block the view from the _viewTypeOrPoints to the test _geometry.  Conext geometry must be either a Brep, a Mesh, or a list of Breps or Meshes.
         _gridSize_: A number in Rhino model units that represents the average size of a grid cell for visibility analysis on the test _geometry.  This value should be smaller than the smallest dimension of the test _geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take.
         _disFromBase: A number in Rhino model units that represents the offset distance of the test point grid from the input test _geometry.  Usually, the test point grid is offset by a small amount from the test _geometry in order to ensure that visibility analysis is done for the correct side of the test _geometry.  If the resulting mesh of this component is offset to the wrong side of test _geometry, you should use the "Flip" Rhino command on the test _geometry before inputting it to this component.
         orientationStudyP_: Optional output from the "Orientation Study Parameter" component.  You can use an Orientation Study input here to answer questions like "What orientation of my building will give me the highest or lowest visibility from the street?"  An Orientation Study will automatically rotate your input _geometry around several times and record the visibility results each time in order to output a list of values for averageView and a grafted data stream for viewStudyResult.
-        _viewPoints: Key viewing points from which the visibility of the test _geometry is important.
-        viewPtsWeights_: Use this input to assign weights of importance to the several _viewPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value.
+        _viewTypeOrPoints: An integer representing the type of view analysis that you would like to conduct or a list of points to which you would like to test the view.  For integer options, choose from the following options:
+            0 - Horizontal Radial - The percentage of the 360 horizontal view band visible from each test point. Use this to study horizontal views from interior spaces to the outdoors.
+            1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors.  Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
+            2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
+            3 - Skyview - The percentage of the sky that is visible from the input _geometry.
+        viewPtsWeights_: A list of numbers that align with the test points to assign weights of importance to the several _viewTypeOrPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value.
         _____________________: ...
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         parallel_: Set to "True" to run the visibility analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
         _runIt: Set to "True" to run the component and perform visibility analysis of the input _geometry.
         bakeIt_: Set to "True" to bake the analysis results into the Rhino scene.
-        workingDir_: Use this input to change the working directory of the visibility analysis on your system. Input here must be a valid file path location on your computer.  The default is set to "C:\Ladybug" and it is from this file location that visibility results are loaded into grasshopper after the analysis is done.
-        projectName_: Use this input to change the project name of the files generated in the working directory.  Input here must be a string without special characters.  If "bakeIt_" is set to "True", the result will be baked into a layer with this project name.
-    
     Returns:
         readMe!: ...
         contextMesh: An uncolored mesh representing the context_ geometry that was input to this component. Connect this output to a "Mesh" grasshopper component to preview this output seperately from the others of this component. Note that this mesh is generated before the analysis is run, allowing you to be sure that the right geometry will be run through the analysis before running this component.
@@ -56,20 +57,20 @@ Provided by Ladybug 0.0.61
         testPts: The grid of test points on the test _geometry that will be used to perform the visibility analysis.  Note that these points are generated before the analysis is run, allowing you to preview the resolution of the result before you run the component.
         testVec: Vectors for each of the test points on the test _geometry, which indicate the direction for which visibility analysis is performed.  Hook this and the test points up to a Grasshopper "Vector Display" component to see how analysis is performed on the test _geometry.
         _____________________: ...
-        viewStudyResult: The percentage of _viewPoints visible from each of the test points of the input test _geometry.
-        viewStudyMesh: A colored mesh of the test _geometry representing the percentage of _viewPoints visible by each part of the input _geometry.
+        viewStudyResult: The percentage of _viewTypeOrPoints visible from each of the test points of the input test _geometry.
+        viewStudyMesh: A colored mesh of the test _geometry representing the percentage of _viewTypeOrPoints visible by each part of the input _geometry.
         viewStudyLegend: A legend for the visibility analysis showing the percentage of visible points that correspond to the colors of the viewStudyMesh. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePt: The legend base point, which can be used to move the legend in relation to the view study mesh with the grasshopper "move" component.
-        averageView: The average percentage of the _viewPoints seen by all of the test _geometry.
+        averageView: The average percentage of the _viewTypeOrPoints seen by all of the test _geometry.
         ptIsVisible: A grafted data stream for each _geometry test point with a "1" for each _viewPoint that is visible by the test point and a "0" for each _viewPoint that is blocked.
 """
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.61\nJAN_05_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_05_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -89,81 +90,222 @@ import time
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 
-northVector = []
-if len(_viewPoints)!=0: viewPoints_viewStudy = _viewPoints
-else: viewPoints_viewStudy = []
+
+w = gh.GH_RuntimeMessageLevel.Warning
+e = gh.GH_RuntimeMessageLevel.Error
+
+inputsDict = {
+0: ["_geometry", "Geometry for which visibility analysis will be conducted.  Geometry must be either a Brep, a Mesh, or a list of Breps or Meshes."],
+1: ["context_", "Context geometry that could block the view from the _viewTypeOrPoints to the test _geometry.  Conext geometry must be either a Brep, a Mesh, or a list of Breps or Meshes."],
+2: ["_gridSize_", "A number in Rhino model units that represents the average size of a grid cell for visibility analysis on the test _geometry.  This value should be smaller than the smallest dimension of the test _geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take."],
+3: ["_disFromBase", "A number in Rhino model units that represents the offset distance of the test point grid from the input test _geometry.  Usually, the test point grid is offset by a small amount from the test _geometry in order to ensure that visibility analysis is done for the correct side of the test _geometry.  If the resulting mesh of this component is offset to the wrong side of test _geometry, you should use the 'Flip' Rhino command on the test _geometry before inputting it to this component."],
+4: ["orientationStudyP_", "Optional output from the 'Orientation Study Parameter' component.  You can use an Orientation Study input here to answer questions like 'What orientation of my building will give me the highest or lowest visibility from the street?'  An Orientation Study will automatically rotate your input _geometry around several times and record the visibility results each time in order to output a list of values for averageView and a grafted data stream for viewStudyResult."],
+5: ["_viewTypeOrPoints", "An integer representing the type of view analysis that you would like to conduct or a list of points to which you would like to test the view.  For integer options, choose from the following options: \n0 - Horizontal Radial - The percentage of the 360 horizontal view band visible from each test point. Use this to study horizontal views from interior spaces to the outdoors. \n 1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n3 - Skyview - The percentage of the sky that is visible from the input _geometry."],
+6: ["viewPtsWeights_", "A list of numbers that align with the test points to assign weights of importance to the several _viewTypeOrPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value."],
+7: ["_____________________", "..."],
+8: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
+9: ["parallel_", "Set to 'True' to run the visibility analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine."],
+10: ["_runIt", "Set to 'True' to run the component and perform visibility analysis of the input _geometry."],
+11: ["bakeIt_", "Set to 'True' to bake the analysis results into the Rhino scene."]
+}
 
 
-def main(geometry, context, gridSize, disFromBase, orientationStudyP,
-            viewPoints_viewStudy, viewPtsWeights, legendPar, parallel,
-            bakeIt, workingDir, projectName):
-    # import the classes
-    if sc.sticky.has_key('ladybug_release'):
-        try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-        except:
-            warning = "You need a newer version of Ladybug to use this compoent." + \
-            "Use updateLadybug component to update userObjects.\n" + \
-            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
-            "into canvas and try again."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
+def setComponentInputs():
+    for input in range(12):
+        if input == 6:
+            ghenv.Component.Params.Input[input].NickName = 'viewResolution_'
+            ghenv.Component.Params.Input[input].Name = 'viewResolution_'
+            ghenv.Component.Params.Input[input].Description = 'An interger between 0 and 4 to set the number of times that the tergenza skyview patches are split.  A higher number will ensure a greater accuracy but will take longer.  The default is set to 0 for a quick calculation.' 
+        else:
+            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+
+def restoreComponentInputs():
+    for input in range(12):
+        ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+
+def checkViewType(lb_preparation):
+    viewVecs, viewType = [], -1
+    try:
+        viewType = int(_viewTypeOrPoints[0])
+        if viewType >= 0 and viewType <= 3: pass
+        else:
+            warning = "_viewTypeOrPoints must be between 0 and 3."
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1
-        lb_preparation = sc.sticky["ladybug_Preparation"]()
-        lb_mesh = sc.sticky["ladybug_Mesh"]()
-        lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()
-        #lb_runStudy_RAD = sc.sticky["ladybug_Export2Radiance"]()
-        lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
+        setComponentInputs()
+        viewRes = 0
+        if viewResolution_ != []:
+            try: viewRes = int(viewResolution_[0])
+            except:
+                warning = "viewResolution_ must be an integer."
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+        viewVecs = checkViewResolution(viewRes, viewType, lb_preparation)
+    except:
+        try:
+            for val in _viewTypeOrPoints:
+                vSplit = val.split(',')
+                vect = rc.Geometry.Point3d(float(vSplit[0]), float(vSplit[1]), float(vSplit[2]))
+                viewVecs.append(vect)
+        except:
+            warning = "Input for _viewTypeOrPoints not recognized."
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    
+    return viewVecs, viewType
+
+def checkViewResolution(viewResolution, viewType, lb_preparation):
+    newVecs = []
+    
+    if viewType != 0:
+        skyPatches = lb_preparation.generateSkyGeo(rc.Geometry.Point3d.Origin, viewResolution, 1)
+        for patch in skyPatches:
+            patchPt = rc.Geometry.AreaMassProperties.Compute(patch).Centroid
+            Vec = None
+            if viewType == 2 or viewType == 3: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
+            elif viewType == 1 and patchPt.Z < 0.707106: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
+            
+            if Vec != None:
+                newVecs.append(Vec)
+                if viewType == 1 or viewType == 2:
+                    revVec = rc.Geometry.Vector3d(-patchPt.X, -patchPt.Y, -patchPt.Z)
+                    newVecs.append(revVec)
     else:
-        print "You should first let the Ladybug fly..."
-        w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return -1
+        numberDivisions = (viewResolution+1) * 20
+        initAngle = 0
+        divisionAngleDeg = 360/numberDivisions
+        divisionAngle = math.radians(divisionAngleDeg)
+        for count in range(numberDivisions):
+            viewVecInit = rc.Geometry.Vector3d.YAxis
+            viewVecInit.Rotate(initAngle, rc.Geometry.Vector3d.ZAxis)
+            newVecs.append(viewVecInit)
+            initAngle += divisionAngle
+    
+    return newVecs
+
+
+def openLegend(legendRes):
+    if len(legendRes)!=0:
+        meshAndCrv = []
+        meshAndCrv.append(legendRes[0])
+        [meshAndCrv.append(c) for c in legendRes[1]]
+        return meshAndCrv
+    else: return
+
+
+def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH):
+    listInfo = ['key:location/dataType/units/frequency/startsAt/endsAt', 'City/Latitude', 'View Analysis', '%', 'NA', (1, 1, 1), (12, 31, 24)]
+    if parallel:
+        try:
+            for geo in analysisSrfs + contextSrfs: geo.EnsurePrivateCopy()
+        except: pass
+    
+    # join the meshes
+    joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
+    if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
+    else: joinedContext = None
+    
+    viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType)
+    
+    return [viewResults], [averageViewResults], listInfo, ptVisibility
+
+
+def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo, runOrientation, lb_visualization, lb_preparation):
+    #Check the analysis Type.
+    projectName = 'ViewToPoints'
+    
+    #Read Legend Parameters.
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
+    if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[3]
+    elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[3]
+    
+    colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
+    
+    # color mesh surfaces
+    analysisSrfs = lb_visualization.colorMesh(colors, analysisSrfs)
+    
+    ## generate legend
+    # calculate the boundingbox to find the legendPosition
+    if not (runOrientation and legendBasePoint==None):
+        lb_visualization.calculateBB([analysisSrfs, contextSrfs])
+    # legend geometry
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
+    
+    # legend colors
+    legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
+    # color legend surfaces
+    legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
+    
+    customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(_viewTypeOrPoints)`
+    if runOrientation:
+        try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
+        except: pass
+    titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
+    
+    if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
+    
+    if bakeIt:
+        legendText.append(titleStr)
+        textPt.append(titlebasePt)
+        # check the study type
+        newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
+                                                        studyLayerName, checkTheName,
+                                                        runOrientation, angle, l)
+        lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont)
+    
+    return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
+
+
+
+def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints_viewStudy, viewPtsWeights, legendPar, parallel, bakeIt):
+    # import the classes
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    lb_mesh = sc.sticky["ladybug_Mesh"]()
+    lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()
+    lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
     
     conversionFac = lb_preparation.checkUnits()
     
-    # north direction
-    # northAngle, northVector = lb_preparation.angle2north(north)
+    #Check the view type.
+    viewType = -1
+    viewCheck = checkViewType(lb_preparation)
+    if viewCheck != -1:
+        viewPoints_viewStudy, viewType = viewCheck
+    else: return -1
     
     # read orientation study parameters
     runOrientation, rotateContext, rotationBasePt, angles = lb_preparation.readOrientationParameters(orientationStudyP)
     
     # mesh the test buildings
-    if (len(geometry)!=0 and disFromBase):
-        ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
-        analysisMesh, analysisBrep = lb_preparation.cleanAndCoerceList(geometry)
-        
-        # if len(analysisBrep)!=0 and gridSize == None: return -1
-        originalTestPoints = []
-        
-        if gridSize == None:
-            gridSize = 4/conversionFac
-            
-        
-        ## mesh Brep
-        analysisMeshedBrep = lb_mesh.parallel_makeSurfaceMesh(analysisBrep, float(gridSize))
-        
-        ## Flatten the list of surfaces
-        analysisMeshedBrep = lb_preparation.flattenList(analysisMeshedBrep)
-        analysisSrfs = analysisMesh + analysisMeshedBrep
-        
-        ## extract test points
-        #if not testPts or testPts[0] == None:
-        testPoints, ptsNormals, meshSrfAreas = lb_mesh.parallel_testPointCalculator(analysisSrfs, float(disFromBase), parallel)
-        originalTestPoints = testPoints
-        testPoints = lb_preparation.flattenList(testPoints)
-        ptsNormals = lb_preparation.flattenList(ptsNormals)
-        meshSrfAreas = lb_preparation.flattenList(meshSrfAreas)
-        #else:
-        #    testPoints = testPts
-        #    if not len(testVec)==0:
-        #        print 'this is a place holder...'
-    else:
-        print "Please connect the geometry and set up both the gridSize and the distance from base surface..."
-        analysisSrfs = testPoints = ptsNormals = meshSrfAreas = []
-        return -1
-        
+    ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
+    analysisMesh, analysisBrep = lb_preparation.cleanAndCoerceList(geometry)
+    
+    originalTestPoints = []
+    if gridSize == None:
+        gridSize = 4/conversionFac
+    
+    ## mesh Brep
+    analysisMeshedBrep = lb_mesh.parallel_makeSurfaceMesh(analysisBrep, float(gridSize))
+    
+    ## Flatten the list of surfaces
+    analysisMeshedBrep = lb_preparation.flattenList(analysisMeshedBrep)
+    analysisSrfs = analysisMesh + analysisMeshedBrep
+    
+    ## extract test points
+    testPoints, ptsNormals, meshSrfAreas = lb_mesh.parallel_testPointCalculator(analysisSrfs, float(disFromBase), parallel)
+    originalTestPoints = testPoints
+    testPoints = lb_preparation.flattenList(testPoints)
+    ptsNormals = lb_preparation.flattenList(ptsNormals)
+    meshSrfAreas = lb_preparation.flattenList(meshSrfAreas)
+    
     ## mesh context
     if len(context)!=0 and gridSize and disFromBase:
         ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
@@ -176,101 +318,14 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
         contextMeshedBrep = lb_preparation.flattenList(contextMeshedBrep)
         contextSrfs = contextMesh + contextMeshedBrep
     else: contextSrfs = []
-
-
-    def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, viewPoints_viewStudy, viewPtsWeights, sunVectors_sunlightHour, conversionFac):
-        RADIANCE_radiationStudy =[]
-        if len(RADIANCE_radiationStudy)!=0:
-            pass
-        elif cumSky_radiationStudy != None and len(cumSky_radiationStudy) == 146:
-            radResults, totalRadResults = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
-                                        parallel, cumSky_radiationStudy, lb_preparation.TregenzaPatchesNormalVectors, conversionFac, 2200000000000000, northVector)
-        else:
-            #print "No radiation study!"
-            radResults = totalRadResults = None
-        
-        if len(viewPoints_viewStudy)!= 0 and viewPoints_viewStudy!=[]:
-            listInfo = ['key:location/dataType/units/frequency/startsAt/endsAt', 'City/Latitude', 'View Analysis', '%', 'NA', (1, 1, 1), (12, 31, 24)]
-            if parallel:
-                try:
-                    for geo in analysisSrfs + contextSrfs: geo.EnsurePrivateCopy()
-                except:
-                    pass
-            
-            # join the meshes
-            joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
-            if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
-            else: joinedContext = None
-            
-            viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac)
-        else:
-            print "View points should be provided... No view study!"
-            viewResults = totalViewResults = None
-            return [contextSrfs, analysisSrfs, testPoints, ptsNormals], -1, -1, -1
-        
-        if len(sunVectors_sunlightHour)!= 0:
-            hoursResults, totalHoursResults = lb_runStudy_GH.parallel_sunlightHoursCalculator(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
-                                            parallel, sunVectors_sunlightHour, conversionFac, northVector)
-        else:
-            #print "No sunlight hours study!"
-            hoursResults = totalHoursResults = None
-            
-        #results = range(len(testPoints))
-        results = radResults, hoursResults, viewResults
-        totalResults = totalRadResults, totalHoursResults, averageViewResults
-        
-        return results, totalResults, listInfo, ptVisibility
     
-    def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
-        #Read Legend Parameters.
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
-        if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[3]
-        elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[3]
-        
-        colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
-        
-        # color mesh surfaces
-        analysisSrfs = lb_visualization.colorMesh(colors, analysisSrfs)
-        
-        ## generate legend
-        # calculate the boundingbox to find the legendPosition
-        if not (runOrientation and legendBasePoint==None):
-            lb_visualization.calculateBB([analysisSrfs, contextSrfs])
-        # legend geometry
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
-        
-        # legend colors
-        legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
-        # color legend surfaces
-        legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-        
-        customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(_viewPoints)`
-        if runOrientation:
-            try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
-            except: pass
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
-        
-        if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
-        
-        if bakeIt:
-            legendText.append(titleStr)
-            textPt.append(titlebasePt)
-            # check the study type
-            newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
-                                                            studyLayerName, checkTheName,
-                                                            runOrientation, angle, l)
-            lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont)
-        
-        return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
-
-
+    
     ## data for visualization
-    legendTitles = ['kWh/m2', 'Hours', '%']
-    studyLayerNames = ['RADIATION_STUDIES', 'SUNLIGHTHOURS_STUDIES', 'VIEW_STUDIES']
     CheckTheName = True
     resV = 0 # Result visualization
-    ## check for orientation Study
     l = [0, 0, 0] # layer name indicator
+    
+    ## check for orientation Study
     if runOrientation and (len(viewPoints_viewStudy)!= 0 and viewPoints_viewStudy!=[]):
         if not isinstance(rotateContext, System.Boolean):
             #inputs are geometries and should be set as the context to be rotated
@@ -329,9 +384,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
             sunVectors_sunlightHour = []
             
             results, eachTotalResult, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                        analysisSrfs, mergedContextSrfs, parallel, cumSky_radiationStudy,
-                                        viewPoints_viewStudy, viewPtsWeights,
-                                        sunVectors_sunlightHour, conversionFac)
+                                        analysisSrfs, mergedContextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH)
             
             #collect surfaces, results, and values
             orirntationStudyRes[angle] = {"angle" : angle,
@@ -400,24 +453,26 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
                         # so confusing!
                         eachTotalResult = [[],[],[]]
                         resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(mergedContextSrfs, analysisSrfs,
-                                          results[i], eachTotalResult[i], legendPar, legendTitles[i],
-                                          studyLayerNames[i], bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo)
+                                          results[i], eachTotalResult[i], legendPar, '%',
+                                          'VIEW_STUDIES', bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo, runOrientation, lb_visualization, lb_preparation)
                         resV += 1
-    
     else:
         # no orientation study
-        angle = 0; l = [0, 0, 0]
-        cumSky_radiationStudy = []
-        sunVectors_sunlightHour = []
+        angle = 0; l = [0]
         results, totalResults, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy,
-                                viewPoints_viewStudy, viewPtsWeights,
-                                sunVectors_sunlightHour, conversionFac)
-                                
-    if results!=-1 and len(results) == 4:
-        contextSrfs, analysisSrfs, testPoints, ptsNormals = results
-        return contextSrfs, analysisSrfs, testPoints, ptsNormals, originalTestPoints
+                                analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH)
+    
+    #Returen view vectors is the vector method is specified.
+    viewVecs = []
+    if viewType != -1: viewVecs = viewPoints_viewStudy
+    
+    #Return the results
+    if results!=-1 and viewPoints_viewStudy == []:
+        #No view type or points have been selected.  We're just showing the gridsize.
+        #contextSrfs, analysisSrfs, testPoints, ptsNormals = results
+        return contextSrfs, analysisSrfs, testPoints, ptsNormals, originalTestPoints, viewVecs
     elif results != -1:
+        #A view study has been run.
         if not runOrientation:
             totalResults = [totalResults] # make a list of the list so the same process can be applied to orientation study and normal run
         else:
@@ -432,102 +487,88 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP,
             if results[i]!= None:
                 # Add an option for orientation study
                 resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(contextSrfs, analysisSrfs,
-                                  results[i], totalResults[0][i], legendPar, legendTitles[i],
-                                  studyLayerNames[i], bakeIt, CheckTheName, 0, angles[-1], listInfo)
+                                  results[i], totalResults[0][i], legendPar, '%',
+                                  'VIEW_STUDIES', bakeIt, CheckTheName, 0, angles[-1], listInfo, runOrientation, lb_visualization, lb_preparation)
                 resV += 1
-    
+        
         # return outputs
         if runOrientation: contextSrfs = mergedContextSrfs
-        if resV != 0: return contextSrfs, analysisSrfs, testPoints, ptsNormals, results, resultColored, legendColored, totalResults, legendBasePoint, originalTestPoints, pointVisiblity
+        if resV != 0: return contextSrfs, analysisSrfs, testPoints, ptsNormals, viewVecs, results, resultColored, legendColored, totalResults, legendBasePoint, originalTestPoints, pointVisiblity
         else: return -1
     else:
         return -1
 
 
-if _runIt:
-    if (len(_geometry)!=0 and _geometry[0] != None and _disFromBase):
-        result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_,
-                        viewPoints_viewStudy, viewPtsWeights_, legendPar_, parallel_,
-                        bakeIt_, workingDir_, projectName_)
-        
-        if result!= -1 and len(result) > 5:
-            def openLegend(legendRes):
-                if len(legendRes)!=0:
-                    meshAndCrv = []
-                    meshAndCrv.append(legendRes[0])
-                    [meshAndCrv.append(c) for c in legendRes[1]]
-                    return meshAndCrv
-                else: return
-            
+
+
+
+initCheck = True
+#Ladybug check.
+if not sc.sticky.has_key('ladybug_release') == True:
+    initCheck = False
+    print "You should first let Ladybug fly..."
+    ghenv.Component.AddRuntimeMessage(w, "You should first let Ladybug fly...")
+else:
+    try:
+        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = False
+        if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): pass
+    except:
+        initCheck = False
+        warning = "You need a newer version of Ladybug to use this compoent." + \
+        "Use updateLadybug component to update userObjects.\n" + \
+        "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+        "into canvas and try again."
+        ghenv.Component.AddRuntimeMessage(w, warning)
+
+
+
+if _runIt and len(_geometry)!=0 and _geometry[0] != None and _disFromBase and initCheck == True:
+    result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_, _viewTypeOrPoints, viewPtsWeights_, legendPar_, parallel_, bakeIt_)
+    
+    if result!= -1:
+        if len(result) == 6:
+            contextMesh, analysisMesh, testPts_flatten, testVec_flatten, originalTestPoints, viewVec = result
+            viewStudyMesh, viewStudyLegend = None, None
+        elif len(result) > 6:
             # Assign the result to GH component outputs
-            contextMesh, analysisMesh, testPts_flatten, testVec_flatten = result[0], result[1], result[2], result[3]
+            contextMesh, analysisMesh, testPts_flatten, testVec_flatten, viewVec = result[0], result[1], result[2], result[3], result[4]
             
-            # radiation
-            radiationResult = result[4][0]
-            radiationMesh = result[5][0]
-            radiationLegend = openLegend(result[6][0])
-            
-            # sunlightHours
-            sunlightHoursResult = result[4][1]
-            sunlightHoursMesh = result[5][1]
-            sunlightHoursLegend = openLegend(result[6][1])
-            
-            # sunlightHours
-            viewStudyResult_flatten = result[4][2]
-            viewStudyMesh = result[5][2]
-            viewStudyLegend = openLegend(result[6][2])
+            viewStudyResult_flatten = result[5][0]
+            viewStudyMesh = result[6][0]
+            viewStudyLegend = openLegend(result[7][0])
             
             # total results
-            totalRadiation = []; totalSunlightHours = []; averageView = []
-            for res in result[7]:
-                totalRadiation.append(res[0])
-                totalSunlightHours.append(res[1])
-                averageView.append(res[2])
+            averageView = []
+            for res in result[8]:
+                averageView.append(res[0])
             
             legendBasePt = result[-3]
             originalTestPoints = result[-2]
             pointsVisibility = result[-1]
-            
-        elif result!= -1 and len(result) == 5:
-            contextMesh, analysisMesh, testPts_flatten, testVec_flatten, originalTestPoints = result
         
         testPts = DataTree[System.Object]()
         testVec = DataTree[System.Object]() 
         ptIsVisible = DataTree[System.Object]()
+        viewStudyResult = DataTree[System.Object]()
         
-        if result!= -1:
-            viewStudyResult = DataTree[System.Object]()
-        
-            # graft test points
-            ptCount = 0
-            for i, ptList in enumerate(originalTestPoints):
-                p = GH_Path(i)
-                for pCount, pt in enumerate(ptList):
-                    testPts.Add(pt, p)
-                    testVec.Add(testVec_flatten[ptCount], p)
-                    if result!= -1 and len(result) != 5:
-                        #try:
-                        q = GH_Path(i, pCount)
-                        viewStudyResult.Add(viewStudyResult_flatten[ptCount], p)
-                        ptIsVisible.AddRange(pointsVisibility[ptCount], q)
-                        #except: pass
-                    ptCount += 1
-                
-        ghenv.Component.Params.Output[1].Hidden = True
-        ghenv.Component.Params.Output[2].Hidden = True
-        ghenv.Component.Params.Output[3].Hidden = True
-        ghenv.Component.Params.Output[9].Hidden = True
-        
-        
-    else:
-        result = -1
-        
-    if result == -1 and not (len(_geometry)!=0 and _geometry[0] != None and _disFromBase):
-        warnM = "Please connect the geometry or the context and set up both the gridSize and the distance from base surface..."
-        print warnM
-        w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, warnM)
-    elif result == -1 and sc.sticky.has_key('ladybug_release'):
-        print "Canceled by user!"
-    
-else: print 'Set runIt to True!'
+        # graft test points
+        ptCount = 0
+        for i, ptList in enumerate(originalTestPoints):
+            p = GH_Path(i)
+            for pCount, pt in enumerate(ptList):
+                testPts.Add(pt, p)
+                testVec.Add(testVec_flatten[ptCount], p)
+                if result!= -1 and len(result) != 5:
+                    #try:
+                    q = GH_Path(i, pCount)
+                    viewStudyResult.Add(viewStudyResult_flatten[ptCount], p)
+                    ptIsVisible.AddRange(pointsVisibility[ptCount], q)
+                    #except: pass
+                ptCount += 1
+    else: print "Canceled by user!"
+
+
+ghenv.Component.Params.Output[1].Hidden = True
+ghenv.Component.Params.Output[2].Hidden = True
+ghenv.Component.Params.Output[3].Hidden = True
+ghenv.Component.Params.Output[10].Hidden = True

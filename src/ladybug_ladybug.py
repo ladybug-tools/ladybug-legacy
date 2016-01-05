@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nDEC_29_2015'
+ghenv.Component.Message = 'VER 0.0.61\nJAN_05_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -2319,43 +2319,38 @@ class RunAnalysisInsideGH(object):
         return sunlightHoursResult, totalSLH, sunVisibility
     
     
-    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac):
-        
-        # preparing bulk lists
+    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType):
+        # preparing bulk lists for parallel process.
         view = [0] * len(testPts)
         viewResult = [0] * len(testPts)
         intersectionStTime = time.time()
-        YAxis = rc.Geometry.Vector3d.YAxis
-        ZAxis = rc.Geometry.Vector3d.ZAxis
         PI = math.pi
         
         targetViewsCount  = len(viewPoints)
         ptImportance = []
         for ptCount in range(targetViewsCount):
             try:
-                
-                if viewPtsWeights[ptCount] == 0:
-                    ptImportance.append(100/targetViewsCount)
-                else:
-                    ptImportance.append(viewPtsWeights[ptCount]*100)
+                if viewPtsWeights[ptCount] == 0: ptImportance.append(100/targetViewsCount)
+                else: ptImportance.append(viewPtsWeights[ptCount]*100)
             except:
                 ptImportance.append(100/targetViewsCount)
-        
-        
-        viewVector = []
         
         ptVisibility = []
         for pt in testPts: ptVisibility.append(range(len(viewPoints)))
         
+        #If the view type is spherical or connical, neglect it from the view analysis.
+        if viewType == 1 or viewType == 2: bldgMesh = None
+        
+        #Function for view by test points.
         try:
-            def viewCalculator(i):
+            def viewCalculatorPoint(i):
                 for ptCount, viewPt in enumerate(viewPoints):
                     
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
                     vector = rc.Geometry.Vector3d(viewPt - testPts[i])
-                    vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and sun vector
+                    vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and the vector
                     check = 0
                     if vecAngle < (PI/2):
                         check = 1; # this is simply here becuse I can't trust the break! Isn't it stupid?
@@ -2374,26 +2369,56 @@ class RunAnalysisInsideGH(object):
                 
                 if viewResult[i] > 100: viewResult[i] = 100
         except Exception, e:
-            # print `e`
-            # print 'Error in View calculation...'
             print "The calculation is terminated by user!"
             assert False
         
-        # calling the function
+        
+        #Function for view by view vectors.
         try:
-            # calling the function
+            def viewCalculatorVec(i):
+                for vecCount, viewVec in enumerate(viewPoints):
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    check = 1
+                    ray = rc.Geometry.Ray3d(testPts[i], viewVec)
+                    
+                    if bldgMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshRay(bldgMesh, ray) != -1: check = 0
+                    if check != 0 and contextMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh, ray) != -1: check = 0
+                    
+                    if check != 0:
+                        view[i] += ptImportance[vecCount]
+                    ptVisibility[i][vecCount] = check
+                
+                viewResult[i] = view[i] # This is stupid but I'm tired to change it now...
+                if viewResult[i] > 100: viewResult[i] = 100
+        except Exception, e:
+            print "The calculation is terminated by user!"
+            assert False
+        
+        
+        # Call the correct function.
+        try:
             if parallel:
-                tasks.Parallel.ForEach(range(len(testPts)), viewCalculator)
+                if viewType == -1:
+                    tasks.Parallel.ForEach(range(len(testPts)), viewCalculatorPoint)
+                else:
+                    tasks.Parallel.ForEach(range(len(testPts)), viewCalculatorVec)
             else:
-                for i in range(len(testPts)):
-                    viewCalculator(i)
+                if viewType == -1:
+                    for i in range(len(testPts)): viewCalculatorPoint(i)
+                else:
+                    for i in range(len(testPts)):
+                        viewCalculatorVec(i)
         except:
             return None, None, None
-            
         intersectionEndTime = time.time()
         print 'View calculation time = ', ("%.3f" % (intersectionEndTime - intersectionStTime)), 'Seconds...'
         
-        # average view
+        
+        # Calculate average view
         averageView = sum(viewResult)/len(viewResult)
             
         return viewResult, averageView, ptVisibility
