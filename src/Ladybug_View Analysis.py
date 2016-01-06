@@ -171,7 +171,7 @@ def checkViewResolution(viewResolution, viewType, lb_preparation):
             patchPt = rc.Geometry.AreaMassProperties.Compute(patch).Centroid
             Vec = None
             if viewType == 2 or viewType == 3: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
-            elif viewType == 1 and patchPt.Z < 0.707106: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
+            elif viewType == 1 and patchPt.Z < 0.5: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
             
             if Vec != None:
                 newVecs.append(Vec)
