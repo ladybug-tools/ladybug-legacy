@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.61\nJAN_05_2016'
+ghenv.Component.Message = 'VER 0.0.61\nJAN_08_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nJAN_05_2016
@@ -138,7 +138,6 @@ def checkViewType(lb_preparation):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1
         
-        setComponentInputs()
         viewRes = 0
         if viewResolution_ != []:
             try: viewRes = int(viewResolution_[0])
@@ -520,8 +519,14 @@ else:
         "into canvas and try again."
         ghenv.Component.AddRuntimeMessage(w, warning)
 
+#Set the Inputs.
+try:
+    viewType = int(_viewTypeOrPoints[0])
+    setComponentInputs()
+except:
+    restoreComponentInputs()
 
-
+#Run the component.
 if _runIt and len(_geometry)!=0 and _geometry[0] != None and _disFromBase and initCheck == True:
     result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_, _viewTypeOrPoints, viewPtsWeights_, legendPar_, parallel_, bakeIt_)
     
