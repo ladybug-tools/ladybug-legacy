@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.61\nJAN_08_2016'
+ghenv.Component.Message = 'VER 0.0.61\nJAN_15_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nJAN_05_2016
@@ -406,8 +406,8 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
             for key in orirntationStudyRes.keys():
                 # results is a nested list because the component used to be all in one
                 # I should re-write this component at some point
-                listMin = min(orirntationStudyRes[key]["results"][2])
-                listMax = max(orirntationStudyRes[key]["results"][2])
+                listMin = min(orirntationStudyRes[key]["results"][0])
+                listMax = max(orirntationStudyRes[key]["results"][0])
                 if  listMin < minValue: minValue = listMin
                 if  listMax > maxValue: maxValue = listMax
                 
@@ -418,17 +418,19 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
             if legendPar== [] or legendPar[4] == None:
                 lb_visualization.calculateBB(allBuildingsAndContext)
             
-            # preset the legen parameters if it is not set by the user
+            # preset the legend parameters if it is not set by the user
             if legendPar== []:
-                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, 1, 'Verdana', None, False]
+                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, 1, 'Verdana', None, False, 2, False]
             else:
-                if legendPar[0] == None: legendPar[0] = [minValue]
-                if legendPar[1] == None: legenPar[1] = maxValue
+                if legendPar[0] == None: legendPar[0] = minValue
+                if legendPar[1] == None: legendPar[1] = maxValue
                 if legendPar[4] == None: legendPar[4] = lb_visualization.BoundingBoxPar
-                if legendPar[5] == None or float(legendPar[5])==0: legendPar[5] = 1           
+                if legendPar[5] == None or float(legendPar[5])==0: legendPar[5] = 1
                 if legendPar[6] == None: legendPar[6] = 'Verdana'
                 if legendPar[7] == None: legendPar[7] = None
                 if legendPar[8] == None: legendPar[8] = False
+                if legendPar[9] == None: legendPar[9] = 2
+                if legendPar[10] == None: legendPar[10] = False
         
         for angleCount, angle in enumerate(range(len(angles) - 1)):
             if (bakeIt or angles[angle + 1] == angles[-1]) and results!=-1:
@@ -450,9 +452,9 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
                         # Add an option for orientation study
                         # The i is a reminder from the time that all the analysis components was a single component
                         # so confusing!
-                        eachTotalResult = [[],[],[]]
+                        #eachTotalResult = [[],[],[]]
                         resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(mergedContextSrfs, analysisSrfs,
-                                          results[i], eachTotalResult[i], legendPar, '%',
+                                          results[0], eachTotalResult[0], legendPar, '%',
                                           'VIEW_STUDIES', bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo, runOrientation, lb_visualization, lb_preparation)
                         resV += 1
     else:

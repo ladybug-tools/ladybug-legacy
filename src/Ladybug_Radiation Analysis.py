@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.61\nDEC_01_2015'
+ghenv.Component.Message = 'VER 0.0.61\nJAN_15_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nNOV_20_2015
@@ -77,8 +77,6 @@ except: pass
 
 
 import rhinoscriptsyntax as rs
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import math
 import Rhino as rc
@@ -373,22 +371,19 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
             if legendPar== [] or legendPar[4] == None:
                 lb_visualization.calculateBB(allBuildingsAndContext)
             
-            # preset the legen parameters if it is not set by the user
+            # preset the legend parameters if it is not set by the user
             if legendPar== []:
-                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, 1, 'Verdana', None, False]
+                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, 1, 'Verdana', None, False, 2, False]
             else:
-                if legendPar[0] == None: legendPar[0] = [minValue]
-                if legendPar[1] == None: legenPar[1] = maxValue
+                if legendPar[0] == None: legendPar[0] = minValue
+                if legendPar[1] == None: legendPar[1] = maxValue
                 if legendPar[4] == None: legendPar[4] = lb_visualization.BoundingBoxPar
-
-            # print len(legendPar)
-            if legendPar[5] == None or float(legendPar[5])==0: legendPar[5] = 1
-            
-            if legendPar[6] == None: legendPar[6] = 'Verdana'
-            
-            if legendPar[7] == None: legendPar[7] = None
-            
-            if legendPar[8] == None: legendPar[8] = False
+                if legendPar[5] == None or float(legendPar[5])==0: legendPar[5] = 1
+                if legendPar[6] == None: legendPar[6] = 'Verdana'
+                if legendPar[7] == None: legendPar[7] = None
+                if legendPar[8] == None: legendPar[8] = False
+                if legendPar[9] == None: legendPar[9] = 2
+                if legendPar[10] == None: legendPar[10] = False
         
         for angleCount, angle in enumerate(range(len(angles) - 1)):
             if (bakeIt or angles[angle + 1] == angles[-1]) and results!=-1:
