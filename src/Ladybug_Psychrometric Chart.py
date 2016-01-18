@@ -1869,8 +1869,8 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             except: finalLegNum.append(num)
         if removeLessThan: pass
         else:
-            numbersStr[0] = "<=" + numbersStr[0]
-            numbersStr[-2] = numbersStr[-1] + "<="
+            finalLegNum[0] = "<=" + finalLegNum[0]
+            finalLegNum[-2] = finalLegNum[-2] + "<="
         chartText.extend(finalLegNum)
         chartTextPt.extend(textPt)
         
