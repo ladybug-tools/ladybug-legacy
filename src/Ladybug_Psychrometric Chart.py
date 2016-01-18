@@ -1861,6 +1861,19 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             pointColors = []
             pointLegends = []
         
+        #Compile all text into one list.
+        finalLegNum = []
+        formatString = "%."+str(decimalPlaces)+"f"
+        for num in legendText:
+            try: finalLegNum.append(formatString % num)
+            except: finalLegNum.append(num)
+        if removeLessThan: pass
+        else:
+            numbersStr[0] = "<=" + numbersStr[0]
+            numbersStr[-2] = numbersStr[-1] + "<="
+        chartText.extend(finalLegNum)
+        chartTextPt.extend(textPt)
+        
         #If the molier transform is selected, apply it to the chart curves.
         if mollierHX_ == True:
             for item in chartCurves:
@@ -1869,6 +1882,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for geo in comfortPolygon: mollierHXTransform(geo)
             for geo in strategyPolygons: mollierHXTransform(geo)
             for geo in hourPts: mollierHXTransform(geo)
+            for geo in chartTextPt: mollierHXTransform(geo)
         
         #If the user has selected to scale or move the geometry, scale it all and/or move it all.
         if basePoint_ != None:
@@ -1884,6 +1898,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 for geo in list:
                     geo.Transform(transformMtx)
             basePoint = basePoint_
+            for geo in chartTextPt: geo.Transform(transformMtx)
         else: basePoint = rc.Geometry.Point3d(0,0,0)
         
         if scale_ != None:
@@ -1895,11 +1910,10 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for geo in comfortPolygon: geo.Transform(transformMtx)
             for geo in strategyPolygons: geo.Transform(transformMtx)
             for geo in hourPts: geo.Transform(transformMtx)
+            for geo in chartTextPt: geo.Transform(transformMtx)
         
         #If the user has set bakeIt to true, bake the geometry.
         if bakeIt_:
-            chartText.extend(legendText)
-            chartTextPt.extend(textPt)
             allCurves = []
             for geo in chartCurves:
                 try:
