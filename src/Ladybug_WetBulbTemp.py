@@ -56,7 +56,7 @@ Provided by Ladybug 0.0.61
         DewPointTemp : The temperature at which the water vapor contained in a volume of air at a given atmospheric pressure reaches saturation and condenses to form dew.
 """
 
-ghenv.Component.Name = "Ladybug_Temperature calc"
+ghenv.Component.Name = "Ladybug_WetBulbTemp"
 ghenv.Component.NickName = 'WetBulbTemp & DewPointTemp'
 ghenv.Component.Message = 'VER 0.0.61\nJAN_22_2016'
 ghenv.Component.Category = "Ladybug"
