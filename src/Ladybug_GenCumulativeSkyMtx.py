@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.61\nJAN_20_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -55,8 +55,6 @@ except: pass
 
 import os
 import scriptcontext as sc
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 from itertools import izip
 import shutil
@@ -160,6 +158,10 @@ def main(epwFile, skyType, workingDir, useOldRes):
         #check if the file is there
         if not os.path.isfile(gendaymtxFile) or  os.path.getsize(gendaymtxFile)< 15000 : return -3
         
+        if not os.access(gendaymtxFile, os.X_OK):
+            raise Exception("%s is blocked by system! Right click on the file,"%gendaymtxFile + \
+                " select properties and unblock it.")
+                
         ## check for epw file to be connected
         if epwFile != None and epwFile[-3:] == 'epw':
             if not os.path.isfile(epwFile):
