@@ -23,7 +23,7 @@
 """
 Use this component to convert R-Values in IP (hft2F/BTU) to R-Values in SI (Km2/W) to plug into any of the Honeybee material components.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _R_IP: A R-Value in IP (hft2F/BTU).
@@ -33,7 +33,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_rIP2rSI"
 ghenv.Component.NickName = 'rIP2rSI'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

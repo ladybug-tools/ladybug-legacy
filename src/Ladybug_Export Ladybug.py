@@ -25,7 +25,7 @@ Code Developers of Ladybug and Honeybee can use this component to export Ladybug
 This eases and automates the steps before commiting new components to the Github.
 This component was written thanks to Giulio Piacentino a really helpful example.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.60
 
     Args:
         _components: Any output from a new Ladybug (or Honeybee) component that you wish to export. Right now, only one component can be connected at a time but you can input a "*" (without quotation marsk) to search all changed Ladybug components on a grasshopper canvas.
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.60\nSEP_19_2015'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -238,20 +238,26 @@ def exportToFile(component, targetFolder, lb_preparation):
                     break
         
         # check if the version of the code is newer
-        if int(ghYear.strip()) > int(pyYear[:-1].strip()):
+        try:
+            if int(ghYear.strip()) > int(pyYear[:-1].strip()):
+                    return True
+            elif ghCompDate > pyFileDate:
                 return True
-        elif ghCompDate > pyFileDate:
+            elif ghCompDate == pyFileDate:
+                for ghVer, pyVer in zip(ghVersion, pyFileVersion):
+                    if ghVer < pyVer: return False
+                return True
+            else:
+                print "\nThere is already a newer version in the folder for: " + fileName + "." + \
+                      "\nCurrent file version is: " +  version + " " + date + \
+                      "\nThe component version is: "  +  ghVersion + " " + ghDate + ".\n"
+                
+                return False
+        except:
+            print "Failed to check version for %s"%fileName
+            with open("c:\\ladybug\\failed.txt", "w") as ff:
+                ff.write(fileName)
             return True
-        elif ghCompDate == pyFileDate:
-            for ghVer, pyVer in zip(ghVersion, pyFileVersion):
-                if ghVer < pyVer: return False
-            return True
-        else:
-            print "\nThere is already a newer version in the folder for: " + fileName + "." + \
-                  "\nCurrent file version is: " +  version + " " + date + \
-                  "\nThe component version is: "  +  ghVersion + " " + ghDate + ".\n"
-            
-            return False
             
     if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 or component.Name.find("Dragonfly")>=0 or component.Name.find("Hydra")>=0:
         

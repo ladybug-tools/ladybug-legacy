@@ -28,7 +28,7 @@ http://www.energy.ca.gov/2013publications/CEC-400-2013-003/CEC-400-2013-003-CMF-
 http://www.nrel.gov/docs/fy04osti/35917.pdf
 http://www.retscreen.net/download.php/ang/120/0/Textbook_SWH.pdf
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         method_: A method by which the cold water temperature will be calculated:
@@ -41,13 +41,13 @@ Provided by Ladybug 0.0.61
         _dryBulbTemperature: Hourly Dry Bulb Temperature (air temperature).
                              Import it from Ladybug "Import EPW" component.
                              -
-                             In °C.
+                             In C.
         minimalTemperature_: The minimum cold temperature value.
-                             For example this input can be used to prevent the water in your pipes from freezing, by limiting it to 1°C (33.8F).
+                             For example this input can be used to prevent the water in your pipes from freezing, by limiting it to 1C (33.8F).
                              -
-                             If not supplied, default value 1 (°C) will be used.
+                             If not supplied, default value 1 (C) will be used.
                              -
-                             In °C.
+                             In C.
         soilThermalDiffusivity_: The ability of a soil to conduct thermal energy relative to its ability to store thermal energy.
                                  -
                                  This input is only important for method "0" !!!
@@ -79,19 +79,20 @@ Provided by Ladybug 0.0.61
         readMe!: ...
         coldWaterTemperaturePerHour: Cold water temperature for picked pipesDepth_ and soilThermalDiffusivity_, for each hour during a year.
                                      -
-                                     In °C.
+                                     In C.
         avrJanuaryColdWaterTemperature: Average January cold water temperature for picked pipesDepth_ and soilThermalDiffusivity_.
                                         Use it for "SWHsystem" component's "avrJanuaryColdWaterTemperature_" input.
                                         -
-                                        In °C.
+                                        In C.
         avrColdWaterTemperaturePerYear: Average annual cold water temperature for picked pipesDepth_ and soilThermalDiffusivity_.
                                         -
-                                        In °C.
+                                        In C.
 """
 
 ghenv.Component.Name = "Ladybug_Cold Water Temperature"
 ghenv.Component.NickName = "ColdWaterTemperature"
-ghenv.Component.Message = "VER 0.0.61\nDEC_01_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
@@ -133,7 +134,7 @@ def main(dryBulbTemperature, method, pipesDepth, soilThermalDiffusivity, minimal
         soilThermalDiffusivity = 2.5  # dummy default, in m2/s * 10^(-7) (dry clay)
     
     if (minimalTemperature == None):
-        minimalTemperature = 1  # default, in °C
+        minimalTemperature = 1  # default, in C
     
     coldWaterTemperaturePerHour, avrColdWaterTemperaturePerYear, coldWaterTemperaturePerYearMin, coldWaterTemperaturePerYearMax = lb_photovoltaics.inletWaterTemperature(dryBulbTemperatureData, method, minimalTemperature, pipesDepth, soilThermalDiffusivity)
     
@@ -141,14 +142,14 @@ def main(dryBulbTemperature, method, pipesDepth, soilThermalDiffusivity, minimal
     coldWater_inputData = [method, minimalTemperature, pipesDepth, soilThermalDiffusivity]
     sc.sticky["swh_coldWater_inputData"] = coldWater_inputData
     
-    avrJanuaryColdWaterTemperature = sum(coldWaterTemperaturePerHour[:(31*24)])/(31*24)  # in average °C per hour/month
+    avrJanuaryColdWaterTemperature = sum(coldWaterTemperaturePerHour[:(31*24)])/(31*24)  # in average C per hour/month
     
     # adding headings to hourly and monthly lists
-    coldWaterTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Mains water temperature at %0.2f m" % pipesDepth, "°C", "Hourly", (1, 1, 1), (12, 31, 24)] + coldWaterTemperaturePerHour
+    coldWaterTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Mains water temperature at %0.2f m" % pipesDepth, "C", "Hourly", (1, 1, 1), (12, 31, 24)] + coldWaterTemperaturePerHour
     
     # printing
     methodName = ["0 - Carslaw and Jaeger", "1 - Christensen and Burch", "2 - RETScreen"]
-    print "Input data:\n\nAverage annual dryBulbTemperature (°C): %0.2f\nMethod: %s\nMinimum temperature (°C): %0.2f\nPipes depth (m): %0.2f\nSoil thermal diffusivity (m2/s * 10^(-7)): %0.2f" % (annualAverageTa, methodName[method], minimalTemperature, pipesDepth, soilThermalDiffusivity)
+    print "Input data:\n\nAverage annual dryBulbTemperature (C): %0.2f\nMethod: %s\nMinimum temperature (C): %0.2f\nPipes depth (m): %0.2f\nSoil thermal diffusivity (m2/s * 10^(-7)): %0.2f" % (annualAverageTa, methodName[method], minimalTemperature, pipesDepth, soilThermalDiffusivity)
     
     validInputData = True
     printMsg = "ok"

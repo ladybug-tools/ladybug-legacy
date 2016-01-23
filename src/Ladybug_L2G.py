@@ -23,7 +23,7 @@
 """
 Use this component to convert the liquid volume from Liters to U.S. Gallons (not Imperial Gallons).
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _L: A value or list of values in Liters.
@@ -33,7 +33,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_L2G"
 ghenv.Component.NickName = "L2G"
-ghenv.Component.Message = "VER 0.0.61\nNOV_05_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nMAR_26_2014
