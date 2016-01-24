@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2016, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -221,6 +221,7 @@ if sc.sticky.has_key('ladybug_release'):
     initCheck = True
     try:
         if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = True
+        if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): initCheck = True
     except:
         initCheck = False
         warning = "You need a newer version of Ladybug to use this compoent." + \
