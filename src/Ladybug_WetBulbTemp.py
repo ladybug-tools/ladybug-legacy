@@ -33,32 +33,18 @@ http://www.srh.noaa.gov/epz/?n=wxcalc_rh
 Provided by Ladybug 0.0.61
     
     Args:
-        _dryBulbTemperature: The dry bulb temperature [C] from the Import epw component/Ladybug_Separate data or personal lists of data.
-        _relativeHumidity: The relative humidity [%] from the Import epw component/Ladybug_Separate data or personal lists of data.
-        _barometricPressure: The barometric pressure [Pa] from the Import epw component/Ladybug_Separate data or personal lists of data.
-        _Mode: Set 'True' to read data from Ladybug_Import epw or Ladybug_Average Data
-        Set 'False' for other wheater data.
-        location_: A text string that represents the name of the location where the data was collected.  If no value is connected here, the default will be "Somewhere."
-        timeStep_: Write a number from 0 to 6.
-        0 = Hourly
-        1 = Daily
-        2 = Monthly
-        3 = for SelHourlyData
-        4 = for averagedDaily
-        5 = for averagedMonthly
-        6 = for avrMonthlyPerHour
-        For other information see Ladybug_Average Data component.
-        analysisPeriod_: An optional analysis period from the Analysis Period component or strings if it is not an annual analysis.  If no analysis period is given, the default will be for the enitre year: (1,1,1)(12,31,24).
-        AddHeader: Set 'True' to add header.
+        _dryBulbTemperature: The dry bulb temperature [C] from Import epw component and Ladybug_Average Data or generic lists of numbers.
+        _relativeHumidity: The relative humidity [%] from Import epw component and Ladybug_Average Data or generic lists of numbers.
+        _barometricPressure: The barometric pressure [Pa] from Import epw component and Ladybug_Average Data or generic lists of numbers.
     Returns:
         readMe!: ...
-        WetBulbTemp : The lowest temperature that can be reached by evaporating water into the air.
-        DewPointTemp : The temperature at which the water vapor contained in a volume of air at a given atmospheric pressure reaches saturation and condenses to form dew.
+        wetBulbTemp : The lowest temperature that can be reached by evaporating water into the air.
+        dewPointTemp : The temperature at which the water vapor contained in a volume of air at a given atmospheric pressure reaches saturation and condenses to form dew.
 """
 
 ghenv.Component.Name = "Ladybug_WetBulbTemp"
 ghenv.Component.NickName = 'WetBulbTemp & DewPointTemp'
-ghenv.Component.Message = 'VER 0.0.61\nJAN_22_2016'
+ghenv.Component.Message = 'VER 0.0.61\nJAN_24_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -72,7 +58,7 @@ import math
 
 
 
-def checkTheData(_dryBulbTemperature, _relativeHumidity, _Mode, _barometricPressure):
+def checkTheData(_dryBulbTemperature, _relativeHumidity, _barometricPressure):
     if _dryBulbTemperature == None \
     and _relativeHumidity == None \
     and _barometricPressure == None:
@@ -84,7 +70,7 @@ def checkTheData(_dryBulbTemperature, _relativeHumidity, _Mode, _barometricPress
 
 
 
-#dbTemp [Celsius], [RH] %, Psta [Pa]
+#dbTemp [Celsius], RH [%], Psta [Pa]
 def WBFUNC(dbTemp, RH, Psta):
     es = 6.112 * math.e**((17.67 * dbTemp) / (dbTemp + 243.5))
     
@@ -137,65 +123,30 @@ def DPTFUNC(dbTemp, RH):
 def main():
     
     w = gh.GH_RuntimeMessageLevel.Warning
-    # check number of element of lists
-    if len(_dryBulbTemperature) != len(_relativeHumidity) or \
-    len(_dryBulbTemperature) != len(_barometricPressure) or \
-    len(_relativeHumidity) != len(_barometricPressure):
-        warning = "All lists must have the same number of elements."
-        print warning
-        ghenv.Component.AddRuntimeMessage(w, warning)
-        return -1
+    # check number of element of lists and data type
+    try:
+        if len(_dryBulbTemperature) != len(_relativeHumidity) or \
+        len(_dryBulbTemperature) != len(_barometricPressure) or \
+        len(_relativeHumidity) != len(_barometricPressure):
+            warning = "All lists must have the same number of elements."
+            print warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
+    except: pass
         
     # declare the lists
-    WetBulbTemp =[]
-    DewPointTemp =[]
+    wetBulbTemp =[]
+    dewPointTemp =[]
     
-    
-    # HEADER
-    
-    #Set a default location.
-    if location_ == None: location = "Somewhere"
-    else: location = location_
-    #Set the timpeStep_.
-    if timeStep_ == None: step = "Hourly"
-    
-    else:
-        timeStep = ["Hourly", "Daily", "Monthly", "Hourly", "Daily-> averaged", "Monthly-> averaged", "Monthly-> averaged for each hour"]
-        if timeStep_ == 0: step = timeStep[0]
-        elif timeStep_ == 1: step = timeStep[1]
-        elif timeStep_ == 2: step = timeStep[2]
-        elif timeStep_ == 3: step = timeStep[3]
-        elif timeStep_ == 4: step = timeStep[4]
-        elif timeStep_ == 5: step = timeStep[5]
-        elif timeStep_ == 6: step = timeStep[6]
-        
-    #Set a default location.
-    if analysisPeriod_ == []: analysisPeriod = [(1,1,1), (12,31,24)]
-    else: analysisPeriod = analysisPeriod_
-    
-    WBheader = ['key:location/dataType/units/frequency/startsAt/endsAt', location, 'Wet Bulb Temperature', 'C', step]
-    WBheader.extend(analysisPeriod)
-    DPheader = ['key:location/dataType/units/frequency/startsAt/endsAt', location, 'Dew Point Temperature', 'C', step]
-    DPheader.extend(analysisPeriod)
-    
-    if AddHeader_ == True:
-        WetBulbTemp[0:7] = WBheader
-        DewPointTemp[0:7] = DPheader
-    else:
-        pass
-    
-    # calculate
-    
-    if _Mode == True:
-        dryBulbTemperature = _dryBulbTemperature[7:]
-        relativeHumidity   = _relativeHumidity[7:]
-        barometricPressure = _barometricPressure[7:]
-        for i in range(0, len(dryBulbTemperature)):
-            wbTemp = WBFUNC(dryBulbTemperature[i], relativeHumidity[i], barometricPressure[i])
-            WetBulbTemp.append(wbTemp)
-            dpTemp = DPTFUNC(dryBulbTemperature[i], relativeHumidity[i])
-            DewPointTemp.append(dpTemp)
-    elif _Mode == False:
+    # calculate data from EPW or from generic data
+    try:
+       # check data type are the same
+        if _dryBulbTemperature[0] == float() or _relativeHumidity[0] == float() or _relativeHumidity[0] == float():
+            warning = "Please, choose whether EPW data or lists of numbers"
+            print warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
+        # calculation
         dryBulbTemperature = []
         relativeHumidity = []
         barometricPressure = []
@@ -207,11 +158,36 @@ def main():
             barometricPressure.append(float(item))
         for i in range(0, len(dryBulbTemperature)):
             wbTemp = WBFUNC(dryBulbTemperature[i], relativeHumidity[i], barometricPressure[i])
-            WetBulbTemp.append(float(wbTemp))
+            wetBulbTemp.append(float(wbTemp))
             dpTemp = DPTFUNC(dryBulbTemperature[i], relativeHumidity[i])
-            DewPointTemp.append(float(dpTemp))
+            dewPointTemp.append(float(dpTemp))
+        print "Congratulation! now you have wet-bulb temperatures from generic weather data."
+    except:
+        # check data type are the same
+        if _relativeHumidity[0] != _barometricPressure[0] or \
+        _dryBulbTemperature[0] != _relativeHumidity[0] or \
+        _dryBulbTemperature[0] != _barometricPressure [0]:
+            warning = "Please, choose whether EPW data or lists of numbers"
+            print warning
+            ghenv.Component.AddRuntimeMessage(w, warning)
+            return -1
+        # calculation
+        dryBulbTemperature = _dryBulbTemperature[7:]
+        relativeHumidity   = _relativeHumidity[7:]
+        barometricPressure = _barometricPressure[7:]
+        for i in range(0, len(dryBulbTemperature)):
+            wbTemp = WBFUNC(dryBulbTemperature[i], relativeHumidity[i], barometricPressure[i])
+            wetBulbTemp.append(wbTemp)
+            dpTemp = DPTFUNC(dryBulbTemperature[i], relativeHumidity[i])
+            dewPointTemp.append(dpTemp)
+        _dryBulbTemperature[2] = "Wet Bulb Temperature"
+        wetBulbTemp = _dryBulbTemperature[:7] + wetBulbTemp
+        _dryBulbTemperature[2] = "Dew Point Temperature"
+        dewPointTemp = _dryBulbTemperature[:7] + dewPointTemp
+        print "Congratulation! now you have EPW wet-bulb temperatures from EPW file."
+        
     # return the values
-    return WetBulbTemp, DewPointTemp 
+    return wetBulbTemp, dewPointTemp 
 
 
 # import the classes
@@ -240,16 +216,12 @@ else:
 #Check the data to make sure it is the correct type
 checkData = False
 if initCheck == True:
-    checkData = checkTheData(_dryBulbTemperature, _relativeHumidity, _Mode, _barometricPressure)
+    checkData = checkTheData(_dryBulbTemperature, _relativeHumidity, _barometricPressure)
 
     if checkData == False :
         result = main()
         if result != -1:
-            if _Mode != None:
-                WetBulbTemp, DewPointTemp = result
-                print 'Temperature calculation completed successfully!'
+            wetBulbTemp, dewPointTemp = result
+            print 'Temperature calculation completed successfully!'
     else:
         print 'Please provide all _inputs'
-    
-    if _Mode == None:
-        print "Please, link a Toggle to _Mode"
