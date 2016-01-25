@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2873,6 +2873,7 @@ class ResultVisualization(object):
             studyLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, studyLayerPath, True)
             if studyLayerIndex < 0: studyLayerIndex = layerT.Add(studyLayer)
             
+            
             # make a sub-layer for current project
             if projectName: layerName = str(projectName)
             else: layerName = 'Option'
@@ -2889,66 +2890,81 @@ class ResultVisualization(object):
                         l = l + 1
                         layerPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l`
                         layerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, layerPath, True)
-                        
+                
                 # creat the new sub layer for each geometry
                 nLayer = rc.DocObjects.Layer()
                 nLayer.Name = layerName + '_' + `l`
                 nLayer.IsVisible = False
                 nLayer.ParentLayerId = layerT[studyLayerIndex].Id
-                # nLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, nLayer.Name, True)
                 
                 nLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, layerPath, True)
                 if nLayerIndex < 0: nLayerIndex = layerT.Add(nLayer)
-                # study = 1; # do it once in a rotation study
-                # add layer for
-                newLayer = rc.DocObjects.Layer()
-                if OrientationStudy:
-                    newLayer.Name = ("%.3f" % (result)) + '<-' + layerName + '_' + `l` +'_Angle '+ `rotationAngle`
-                else:
-                    try: newLayer.Name = ("%.3f" % (result)) + '<-Result for '+ layerName + '_' + `l`
-                    except: newLayer.Name = result
+                if result != None:
+                    # study = 1; # do it once in a rotation study
+                    # add layer for
+                    newLayer = rc.DocObjects.Layer()
+                    if OrientationStudy:
+                        newLayer.Name = ("%.3f" % (result)) + '<-' + layerName + '_' + `l` +'_Angle '+ `rotationAngle`
+                    else:
+                        try: newLayer.Name = ("%.3f" % (result)) + '<-Result for '+ layerName + '_' + `l`
+                        except: newLayer.Name = result
+                            
+                    newLayerFullPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l` + '::' + newLayer.Name
+                    newLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, newLayerFullPath, True)
+                    # newLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, newLayer.Name, True)
+                    if newLayerIndex < 0:
+                        newLayer.IsVisible = True
+                        newLayer.ParentLayerId = layerT[nLayerIndex].Id
+                        newLayerIndex = layerT.Add(newLayer)
                         
-                newLayerFullPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l` + '::' + newLayer.Name
-                newLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, newLayerFullPath, True)
-                # newLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, newLayer.Name, True)
-                if newLayerIndex < 0:
-                    newLayer.IsVisible = True
-                    newLayer.ParentLayerId = layerT[nLayerIndex].Id
-                    newLayerIndex = layerT.Add(newLayer)
-                
-            return newLayerIndex, l
+                    return newLayerIndex, l
+                else:
+                    return nLayerIndex, 1
     
-    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2):
-            #Set up basic object attributes
-            attr = rc.DocObjects.ObjectAttributes()
-            attr.LayerIndex = newLayerIndex
-            attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
-            attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
-            
-            #Write colored meshes into the document
-            try:
-                for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
-            except:
-                self.mesh2Hatch([testGeomety], newLayerIndex, attr)
-            self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
-            
-            #Write the curves into the document.
-            attr.ObjectColor = System.Drawing.Color.Black
-            if crvs != None:
-                for crv in crvs:
-                    try:
-                        rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2, hatchBake = True):
+        #Set up basic object attributes
+        attr = rc.DocObjects.ObjectAttributes()
+        attr.LayerIndex = newLayerIndex
+        attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+        attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
+        
+        #Write colored meshes into the document
+        if hatchBake:
+            if testGeomety != None:
+                try:
+                    for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
+                except:
+                    self.mesh2Hatch([testGeomety], newLayerIndex, attr)
+            if legendGeometry != None: self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
+        else:
+            if testGeomety != None:
+                try:
+                    for mesh in testGeomety:
+                        #Bake the mesh into the scene.
+                        rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
+                except:
+                    rc.RhinoDoc.ActiveDoc.Objects.AddMesh(testGeomety, attr)
+            if legendGeometry != None: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
+        
+        #Write the curves into the document.
+        attr.ObjectColor = System.Drawing.Color.Black
+        if crvs != None:
+            for crv in crvs:
+                try:
+                    rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+                except:
+                    try: rc.RhinoDoc.ActiveDoc.Objects.AddPolyline(crv, attr)
                     except:
                         # This is for breps surfaces as I changed curves to surfaces now
                         try: rc.RhinoDoc.ActiveDoc.Objects.AddBrep(crv, attr)
                         except: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(crv, attr)
-            
-            #Write the text into the document
-            formatString = "%." + str(decimalPlaces) + "f"
-            for text in range(len(legendText)):
-                plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
-                if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
-                rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
+        
+        #Write the text into the document
+        formatString = "%." + str(decimalPlaces) + "f"
+        for text in range(len(legendText)):
+            plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
+            if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
+            rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
     
     def mesh2Hatch(self, meshes, parentLayerIndex, attr = None):
         #Go through each of the meshes and make a group of hatches.
@@ -3031,8 +3047,6 @@ class ResultVisualization(object):
                     attr.LayerIndex = parentLayerIndex
                 attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
                 attr.ObjectColor = colors[count]
-                
-                rc.DocObjects.HatchObject
                 
                 guids.append(rc.RhinoDoc.ActiveDoc.Objects.AddHatch(hatch, attr))
             

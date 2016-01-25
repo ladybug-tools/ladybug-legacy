@@ -46,6 +46,10 @@ Provided by Ladybug 0.0.62
         _xScale_: The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year).
         _yScale_: The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geomtry will be baked into the Rhino scene (this is the default).
+            1 (or True) - the geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - the geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino gometry.
     Returns:
         readMe!: ...
         dataMesh: A series of meshes that represent the different monthly (or daily) input data.  Multiple lists of meshes will be output for several input data streams.
@@ -63,11 +67,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -265,6 +269,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     
     #Set some defaults.
     if legendFontSize == None: legendFontSize = 1
+    allText = []
+    allTextPt = []
     
     #Make a chart boundary.
     chartAxes = []
@@ -306,7 +312,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     for count, monthText in enumerate(monthNames):
         textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize, legendBold)
         textSrfs.extend(textSrf[0])
-    
+    allText.extend(monthNames)
+    allTextPt.extend(textBasePts)
     
     #Organize the data into lists of relevant info for the chart axes.
     unitsList = []
@@ -510,8 +517,13 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     
     #Put in right Y axis labels.
     basePt = rc.Geometry.Point3d(-9*legendFontSize, 0,0)
-    if len(altYAxisTitle_) == 0: yAxisSrf = lb_visualization.text2srf([dataTypeList[0][0] + ' (' + unitsList[0] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
-    else: yAxisSrf = lb_visualization.text2srf([altYAxisTitle_[0]], [basePt], legendFont, legendFontSize*1.5, legendBold)
+    allTextPt.append(basePt)
+    if len(altYAxisTitle_) == 0:
+        yAxisSrf = lb_visualization.text2srf([dataTypeList[0][0] + ' (' + unitsList[0] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
+        allText.append(dataTypeList[0][0] + ' (' + unitsList[0] + ')')
+    else:
+        yAxisSrf = lb_visualization.text2srf([altYAxisTitle_[0]], [basePt], legendFont, legendFontSize*1.5, legendBold)
+        allText.append(altYAxisTitle_[0])
     rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
     for srf in yAxisSrf[0]:
         srf.Transform(rotation)
@@ -534,6 +546,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     for count, valText in enumerate(finalValues):
         textSrf = lb_visualization.text2srf([valText], [yAxisLeftPts[count]], legendFont, legendFontSize, legendBold)
         textSrfs.extend(textSrf[0])
+    allTextPt.extend(yAxisLeftPts)
+    allText.extend(finalValues)
     
     #Put in left Y axis label and get scales for the rest of the data.
     unit1 = unitsList[0]
@@ -546,8 +560,13 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
         if unit.strip('') != unit1.strip('') and done == False:
             unit2 = unitsList[uCount+1]
             basePt = rc.Geometry.Point3d(9*legendFontSize+width, 0,0)
-            if len(altYAxisTitle_) !=2: yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
-            else: yAxisSrf = lb_visualization.text2srf([altYAxisTitle_[1]], [basePt], legendFont, legendFontSize*1.5, legendBold)
+            allTextPt.append(basePt)
+            if len(altYAxisTitle_) !=2:
+                yAxisSrf = lb_visualization.text2srf([dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')'], [basePt], legendFont, legendFontSize*1.5, legendBold)
+                allText.append(dataTypeList[uCount+1][0] + ' (' + unitsList[uCount+1] + ')')
+            else:
+                yAxisSrf = lb_visualization.text2srf([altYAxisTitle_[1]], [basePt], legendFont, legendFontSize*1.5, legendBold)
+                allText.append(altYAxisTitle_[1])
             rotation = rc.Geometry.Transform.Rotation(math.pi/2, basePt)
             for srf in yAxisSrf[0]:
                 srf.Transform(rotation)
@@ -562,6 +581,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             for count, valText in enumerate(finalValues):
                 axesTextSrf = lb_visualization.text2srf([valText], [yAxisRightPts[count]], legendFont, legendFontSize, legendBold)
                 textSrfs.extend(axesTextSrf[0])
+            allTextPt.extend(yAxisRightPts)
+            allText.extend(finalValues)
             done = True
         elif unit.strip('') == unit1.strip(''):
             startVals.append(lowVal1)
@@ -588,6 +609,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     titleTxtPt = rc.Geometry.Point3d(-10*legendFontSize, -7*legendFontSize, 0)
     titleTextSrfs = lb_visualization.text2srf([newlistInfo], [titleTxtPt], legendFont, legendFontSize*1.5, legendBold)
     titleTextSrfs = lb_preparation.flattenList(titleTextSrfs)
+    allTextPt.append(titleTxtPt)
+    allText.append(newlistInfo)
     
     # Group eveything together to use it for the bounding box.
     allGeo = []
@@ -645,6 +668,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
         if methodsList[legCount] == 3: dataTypeListFlat[legCount] = legItem + ' \n(Daily)'
     
     legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize, legendBold)
+    allTextPt.extend(textPt)
+    allText.extend(dataTypeListFlat)
     
     #Create legend.
     legend = []
@@ -663,7 +688,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             newColors[listCount].append(colors[colorCount])
             colorCount += 1
     
-    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp, negativeTrigger
+    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, legendFontSize, legendFont, decimalPlaces
 
 
 def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger):
@@ -985,7 +1010,7 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
 
 def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels):
     #Make the chart curves.
-    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
+    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, textSize, legendFont, decimalPlaces = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
     dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger)
@@ -1015,6 +1040,24 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
         for lst in dataLabelPts:
             for geo in lst: geo.Transform(moveTransform)
     
+    if bakeIt_ > 0:
+        #Make a single mesh for all data.
+        finalJoinedMesh = rc.Geometry.Mesh()
+        for meshList in dataMesh:
+            for mesh in meshList: finalJoinedMesh.Append(mesh)
+        #Make a single list of curves for all data.
+        allDataCurves = []
+        for crvList in dataCurves:
+            for crv in crvList: allDataCurves.append(crv)
+        studyLayerName = 'MONTHLY_CHARTS'
+        # check the study type
+        try:
+            if 'key:location/dataType/units/frequency/startsAt/endsAt' in _inputData[0]: placeName = _inputData[1]
+            else: placeName = 'alternateLayerName'
+        except: placeName = 'alternateLayerName'
+        newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+        if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legend[-1], allText, allTextPt, textSize, legendFont, graphAxes+allDataCurves, decimalPlaces, 2)
+        else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legend[-1], allText, allTextPt, textSize, legendFont, graphAxes+allDataCurves, decimalPlaces, 2, False)
     
     return dataMesh, dataCurves, curveColors, graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataLabelPts, comfortBand
 

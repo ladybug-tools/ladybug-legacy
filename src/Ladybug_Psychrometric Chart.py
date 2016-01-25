@@ -63,9 +63,12 @@ Provided by Ladybug 0.0.62
         basePoint_: An optional base point that will be used to place the Psychrometric Chart in the Rhino scene.  If no base point is provided, the base point will be the Rhino model origin.
         scale_: An optional number to change the scale of the spychrometric chart in the Rhino scene.  By default, this value is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geomtry will be baked into the Rhino scene (this is the default).
+            1 (or True) - the geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - the geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino gometry.
         _runIt: Set to "True" to run the component and generate a psychrometric chart!
-        bakeIt_: Set to True to bake the psychrometric chart into the Rhino scene.  This will produce text and hatched geometry that can be easily exported to vector-based programs like Illustrator. It is also useful if you want to keep a record of outputs from this component in a parametric run.
-    Returns:
+Returns:
         readMe!: ...
         -------------------------: ...
         totalComfortPercent: The percent of the input data that are  inside all comfort and passive strategy polygons.
@@ -87,11 +90,11 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -1806,6 +1809,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         
         #As long as the calculation length is more than 1, make a colored mesh and get chart points for the input data.
         legend = []
+        legendSrfs = None
+        if legendFontSize != None: textSize = legendFontSize
+        else: textSize = 0.5
         if calcLength > 1:
             hourPts, coloredMesh, meshFaceValues = colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_visualization, scaleFactor, lowB, highB, customColors, IPTrigger, farenheitVals)
             legendTitle = "Hours"
@@ -1832,6 +1838,19 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 moveTrans = rc.Geometry.Transform.Translation(0,-20,0)
                 for geo in legend: geo.Transform(moveTrans)
                 legendBasePoint.Transform(moveTrans)
+            
+            #Compile all text into one list.
+            finalLegNum = []
+            formatString = "%."+str(decimalPlaces)+"f"
+            for num in legendText:
+                try: finalLegNum.append(formatString % num)
+                except: finalLegNum.append(num)
+            if removeLessThan: pass
+            else:
+                finalLegNum[0] = "<=" + finalLegNum[0]
+                finalLegNum[-2] = finalLegNum[-2] + "<="
+            chartText.extend(finalLegNum)
+            chartTextPt.extend(textPt)
         else:
             if IPTrigger: hourPts = [rc.Geometry.Point3d(farenheitVals[0], lb_comfortModels.calcHumidRatio(airTemp, relHumid, barPress)[0][0]*scaleFactor, 0)]
             else: hourPts = [rc.Geometry.Point3d(airTemp[0], lb_comfortModels.calcHumidRatio(airTemp, relHumid, barPress)[0][0]*scaleFactor, 0)]
@@ -1863,18 +1882,6 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             pointColors = []
             pointLegends = []
         
-        #Compile all text into one list.
-        finalLegNum = []
-        formatString = "%."+str(decimalPlaces)+"f"
-        for num in legendText:
-            try: finalLegNum.append(formatString % num)
-            except: finalLegNum.append(num)
-        if removeLessThan: pass
-        else:
-            finalLegNum[0] = "<=" + finalLegNum[0]
-            finalLegNum[-2] = finalLegNum[-2] + "<="
-        chartText.extend(finalLegNum)
-        chartTextPt.extend(textPt)
         
         #If the molier transform is selected, apply it to the chart curves.
         if mollierHX_ == True:
@@ -1915,7 +1922,8 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for geo in chartTextPt: geo.Transform(transformMtx)
         
         #If the user has set bakeIt to true, bake the geometry.
-        if bakeIt_:
+        if bakeIt_ > 0:
+            #Make a list with all curves
             allCurves = []
             for geo in chartCurves:
                 try:
@@ -1924,7 +1932,18 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 except: pass
             allCurves.extend(comfortPolygon)
             allCurves.extend(strategyPolygons)
-            lb_visualization.bakeObjects(1, coloredMesh, legendSrfs, chartText, chartTextPt, textSize, legendFont, allCurves)
+            #Set up the new layer.
+            studyLayerName = 'PSYCHROMETRIC_CHARTS'
+            try:
+                if 'Temperature' in _dryBulbTemperature[2]: placeName = _dryBulbTemperature[1]
+                elif 'Humidity' in _relativeHumidity[2]: placeName = _relativeHumidity[1]
+                else: placeName = 'alternateLayerName'
+            except: placeName = 'alternateLayerName'
+            newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+            newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+            #Bake the objects.
+            if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, coloredMesh, legendSrfs, chartText, chartTextPt, textSize, legendFont, allCurves, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, coloredMesh, legendSrfs, chartText, chartTextPt, textSize, legendFont, allCurves, decimalPlaces, False)
         
         return totalComfPercent, totalComfOrNot, strategyTextNames, strategyPercent, strategyOrNot, chartCurves, coloredMesh, legend, legendBasePoint, comfortPolygon, strategyPolygons, hourPts, pointColors, pointLegends
     else:
