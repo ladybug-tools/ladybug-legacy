@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -23,7 +23,7 @@
 """
 Use this component to calculate date information from an hour of the year.  Date information includes the day of the month, the month of the year and the hour of the day.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         HOY: A number between 1 and 8760 that represents an hour of the year.
@@ -38,7 +38,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Day_Month_Hour"
 ghenv.Component.NickName = 'Day_Month_Hour_Calculator'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -56,6 +57,7 @@ def main(HOY):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \

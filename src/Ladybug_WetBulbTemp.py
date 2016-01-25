@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2016, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ NOAA - National Oceanic and Atmospheric Administration
 Special thanks goes to the authors of the online wet-bulb temperature calculator 
 http://www.srh.noaa.gov/epz/?n=wxcalc_rh
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _dryBulbTemperature: The dry bulb temperature [C] from the Import epw component/Ladybug_Separate data or personal lists of data.
@@ -58,7 +58,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_WetBulbTemp"
 ghenv.Component.NickName = 'WetBulbTemp & DewPointTemp'
-ghenv.Component.Message = 'VER 0.0.61\nJAN_22_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -220,6 +221,7 @@ if sc.sticky.has_key('ladybug_release'):
     initCheck = True
     try:
         if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = True
+        if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): initCheck = True
     except:
         initCheck = False
         warning = "You need a newer version of Ladybug to use this compoent." + \

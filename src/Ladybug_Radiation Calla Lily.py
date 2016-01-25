@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -31,7 +31,7 @@ _
 2) The Calla Lily/Dome is the reciprocal of the Tergenza Sky Dome since the Cala Dome essentially shows you how the radiation from the sky will fall onto a hemispherical object.
 3) The Calla Lily/Dome is a smart radiation analysis of a hemisphere.  Your results would effectively be the same if you made a hemisphere in Rhino and ran it through the "Radiation Analysis" component but, with this component, you will get a smoother color gradient and the component will automatically output the point (or vector) with the most radiation.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _selectedSkyMtx: The output from the selectSkyMtx component.
@@ -46,8 +46,11 @@ Provided by Ladybug 0.0.61
             _
             For the Dome, the vertical angles of rotation serve to define the Z scale.  In this sense, the normal to the dome at any given point is the angle at which the radiation study is being run.  This gives a geometric intuitive sense of how you should orient panels to capture or avoid the most sun.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set to "True" to run the component and generate a radiation Calla Lily.
-        bakeIt_: Set to "True" to bake the Calla Lily into the Rhino scene.
     Returns:
         readMe!: ...
         radiationLilyMesh: A colored mesh representing radiation of the Calla Lily or Dome.
@@ -63,10 +66,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Lily"
 ghenv.Component.NickName = 'radiationCallaLily'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_24_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -142,6 +146,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, north,
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -379,18 +384,30 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, north,
             
             
             # bake
-            if bakeIt:
+            if bakeIt > 0:
+                #Put all of the curves together.
+                finalCrvs = []
+                for crv in compassCrvs:
+                    try:
+                        testPt = crv.PointAtEnd
+                        finalCrvs.append(crv)
+                    except: pass
+                
+                #Put all of the text together.
                 legendText.append(titleStr)
                 textPt.append(titlebasePt)
+                legendText.extend(compassText)
+                textPt.extend(compassTextPts)
+                # check the study type
                 placeName = listInfo[0][1]
-                studyLayerName = 'Radiation Lily'
+                studyLayerName = 'RADIATION_LILLY'
                 stMonth, stDay, stHour, endMonth, endDay, endHour = lb_visualization.readRunPeriod((listInfo[0][5], listInfo[0][6]), False)
                 period = `stDay`+ ' ' + lb_visualization.monthList[stMonth-1] + ' ' + `stHour` + \
                  " - " + `endDay`+ ' ' + lb_visualization.monthList[endMonth-1] + ' ' + `endHour` 
-                # check the study type
                 newLayerIndex, l = lb_visualization.setupLayers(period, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
                 
-                lb_visualization.bakeObjects(newLayerIndex, vaseMesh, legendSrfs, legendText, textPt, textSize, legendFont, compassCrvs)
+                if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, vaseMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+                else: lb_visualization.bakeObjects(newLayerIndex, vaseMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
             
             #Find the max value and vector.
             maxValue = max(resultsFlatten)

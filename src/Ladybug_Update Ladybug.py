@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 Code Developers and Beta Testers of new Ladybug components can use this component to remove old Ladybug components, add new Ladybug components, and update existing Ladybug components from a synced Github folder on their computer.
 This component can also update outdated Ladybug components in an old Grasshopper file so long as the updates to the components do not involve new inputs or outputs.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         sourceDirectory_: An optional address to a folder on your computer that contains the updated Ladybug userObjects. If no input is provided here, the component will download the latest version from GitHUB.
@@ -36,7 +36,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.61\nJAN_12_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -29,7 +29,7 @@ All descriptions of importaed data are borrowed from this document.
 The document is available online at this address:
 "http://apps1.eere.energy.gov/buildings/energyplus/pdfs/auxiliaryprograms.pdf"
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _epwFile: An .epw file path on your system as a string.
@@ -56,7 +56,8 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.61\nDEC_02_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nMAR_15_2015

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com>
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ _
 For an image of each of the gardients in the library, check here:
 https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/gradients.jpg
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _gradIndex: An index refering to one of the following possible gradients:
@@ -59,7 +59,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Gradient Library"
 ghenv.Component.NickName = 'GradientLibrary'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nSEP_13_2015
@@ -72,6 +73,7 @@ def main(gradIndex):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \

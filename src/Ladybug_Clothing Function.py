@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ By default, this function used to derive clothing levels based on outside temper
 This version of the component allows users to change the maximum and minimum clothing levels, which Schiavon set at 1 and 0.46 respectively, and the temperatures at which these clothing levels occur, which Schiavon set at 26C and -5 C respectively.
 Note that Schiavon did not endorse the changing of these values but they are provided here to allow users an additional level of freedom.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _outdoorAirTemperature: A number or list of numbers representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept the direct output of dryBulbTemperature from the Import EPW component and this is recommended for hourly comfort analysis.
@@ -43,7 +43,8 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Clothing Function"
 ghenv.Component.NickName = 'CloFunction'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -230,6 +231,7 @@ def main():
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \

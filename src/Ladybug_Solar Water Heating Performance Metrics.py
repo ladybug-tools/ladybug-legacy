@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Dr. Chengchu Yan and Djordje Spasic <ycc05ster@gmail.com, djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2016, Dr. Chengchu Yan and Djordje Spasic <ycc05ster@gmail.com, djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 Use this component to calculate various Solar water heating performance metrics.
 Also use it to calculate the optimal SWH system size and tank storage volume.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         _SWHsurface: Use the same "_SWHsurface" you supplied to the "Solar Water Heating Surface" component.
@@ -149,7 +149,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating Performance Metrics"
 ghenv.Component.NickName = "SolarWaterHeatingPerformanceMetrics"
-ghenv.Component.Message = "VER 0.0.61\nDEC_01_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
@@ -258,7 +259,7 @@ def SWHinputData(SWHsurface, SWHsurfacePercent, SWHsystemSettings, collectorLife
         dischargeTemperature = 93
         deliveryWaterTemperature = 60
         avrJanuaryColdWaterTemperature = None
-        mechanicalRoomTemperatureData = [20 for i in range(0,8760)]  # default 20°C
+        mechanicalRoomTemperatureData = [20 for i in range(0,8760)]  # default 20C
         pipeLength = 20
         pipeDiameterMM = None  #math.sqrt((4 * (flowRatePerM2*collectorActiveArea)/0.7) / math.pi)
         pipeInsulationThicknessMM = None

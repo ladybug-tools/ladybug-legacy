@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,10 +27,10 @@ Use this component to define the Photovoltaics module settings.
 If nothing inputed, the following PV module settings will be used by default:
 - moduleType: Close (flush) roof mount 
 - moduleEfficiency: 15%
-- temperatureCoefficient: -0.5 %/°C
+- temperatureCoefficient: -0.5 %/C
 - moduleActiveAreaPercent: 90%
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         moduleType_: Module type and mounting configuration:
@@ -47,13 +47,13 @@ Provided by Ladybug 0.0.61
                            If not defined, default value of 15(%) will be used.
                            -
                            In percent (%).
-        temperatureCoefficient_: A coefficient which accounts for the percentage the solar module's DC output power decrease/increase for every degree Celsius the solar cells temperature rises above/below 25°C. 
+        temperatureCoefficient_: A coefficient which accounts for the percentage the solar module's DC output power decrease/increase for every degree Celsius the solar cells temperature rises above/below 25C. 
                                  -
                                  In general it ranges from -0.44 to -0.5 for crystaline silicon modules.
                                  -
                                  If not supplied, -0.5 will be used as a default.
                                  -
-                                 In %/°C.
+                                 In %/C.
         moduleActiveAreaPercent_: Percentage of the module's area excluding module framing and gaps between cells. 
                                   -
                                   If not supplied, default value of 90(%) will be used.
@@ -67,7 +67,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Module"
 ghenv.Component.NickName = "PhotovoltaicsModule"
-ghenv.Component.Message = "VER 0.0.61\nDEC_01_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.SubCategory = "6 | WIP"

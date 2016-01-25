@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ This component can also move a legend and change its scale.
 Any Ladybug component that outputs a colored mesh and a legend will have an input that can accept Legend Parameters from this component.
 This component particularly helpful in making the colors of Ladybug graphics consistent for a presentation or for synchonizing the numerical range and colors between Ladybug graphics.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         lowBound_: A number representing the lower boundary of the legend's numerical range.  The default is set to the lowest value of the data stream that the legend refers to.
@@ -46,7 +46,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Legend Parameters"
 ghenv.Component.NickName = 'legendPar'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_24_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nNOV_20_2015

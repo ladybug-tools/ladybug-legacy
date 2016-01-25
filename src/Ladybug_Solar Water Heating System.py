@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ If nothing inputed, the following swh system will be used by default:
 - 1 story
 - unshaded
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         collectorType_: Type of the collector. The following ones can be used:
@@ -39,19 +39,19 @@ Provided by Ladybug 0.0.61
                         Least expensive.
                         Mostly used for single home domestic how water heating and for heating swimming pools.
                         More cost efficient in tropical and subtropical environments. They can also be used in moderate climates for seasonal usage.
-                        Can output water temperatures up to 30°C (86°F).
+                        Can output water temperatures up to 30C (86F).
                         -
                         1 - glazed flat plate
                         Less expensive.
                         More cost efficient in warm and mild-warm climates. But also used in temperate climates.
                         Mostly used for single home domestic how water heating, space heating and space cooling. And for heating swimming pools.
-                        Can output water temperatures up to 60°C (140°F).
+                        Can output water temperatures up to 60C (140F).
                         - 
                         2 - evacuated tube
                         The most expensive.
                         More cost efficient in cold temperate and cold climates (with low ambient temperature, for example: during winter) and during overcast skies.
                         Evacuated tube collectors (or concentrating collectors) are typically used for industrial applications, or multi residential or commercial buildings for space heating and space cooling. 
-                        Can output water temperatures higher than 90°C (194°F) degrees, up to 177°C (350°F).
+                        Can output water temperatures higher than 90C (194F) degrees, up to 177C (350F).
                         -
                         -
                         If not supplied, glazed flat plate collectors (1) will be used.
@@ -85,7 +85,7 @@ Provided by Ladybug 0.0.61
                    1 - open (direct) loop
                    No usage of heatexchangers. Water is the working fluid.
                    Less expensive.
-                   More efficient in warm and mild-warm climates, where it rarely freezes (air temperature never drops below 5°C(41°F) degrees).
+                   More efficient in warm and mild-warm climates, where it rarely freezes (air temperature never drops below 5C(41F) degrees).
                    Only suitable for locations with low water hardness (mineral content) otherwise limescale will form in solar collectors.
                    -
                    -
@@ -122,7 +122,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating System"
 ghenv.Component.NickName = "SolarWaterHeatingSystem"
-ghenv.Component.Message = "VER 0.0.61\nDEC_01_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
@@ -161,7 +162,7 @@ def SWHsystemInputData(collectorType, activeSWHsystem, openLoop, numberOfStories
     
     if activeSWHsystem:
         # active swh system (with pumps(s))
-        mechanicalRoomTemperatureData = [20 for i in range(8760)]  # default value 20°C for each hour = tank storage located inside the building
+        mechanicalRoomTemperatureData = [20 for i in range(8760)]  # default value 20C for each hour = tank storage located inside the building
         pumpPower = None  # will be calculated based on SWH active area
         pumpEfficiency = 0.85  # default value for flat plate glazed collectors
     else:
@@ -233,29 +234,29 @@ Average annual Transmission index of beam irradiance (-): %s
 Results in the following SWH system settings:
 
 Collector optical efficiency (-): %0.2f
-Collector thermal loss (W/m2/°C): %0.2f
+Collector thermal loss (W/m2/C): %0.2f
 Collector active area percent (percent): %0.2f
-Working fluid heat capacity (J/kg/°C): %0.2f
+Working fluid heat capacity (J/kg/C): %0.2f
 Flow rate per M2 (kg/s/m2): %0.3f
 IAM modifier coefficient (-): %0.2f
 Sky View Factor (-): %0.2f
 Average annual Transmission index of beam irradiance (-): %0.2f
 -----
-Max working temperature (°C): %0.2f
-Discharge temperature (°C): %0.2f
-Delivery water temperature (°C): %0.2f
-Average January cold water temperature (°C): %s
-Average mechanical room temperature (°C): %s
+Max working temperature (C): %0.2f
+Discharge temperature (C): %0.2f
+Delivery water temperature (C): %0.2f
+Average January cold water temperature (C): %s
+Average mechanical room temperature (C): %s
 -----
 Pipe length (m): %0.2f
 Pipe diameter (mm): %s
 Pipe insulation thickness (mm): %s
-Pipe insulation conductivity (W/m/°C): %0.2f
+Pipe insulation conductivity (W/m/C): %0.2f
 Pump power (W): %s
 Pump efficiency (-): %0.2f
 -----
 Tank size (l): %s
-Tank loss (W/m2/°C): %0.2f
+Tank loss (W/m2/C): %0.2f
 Height-diameter tank ratio (-): %0.2f
 Heat exchanger effectiveness (-): %0.2f
     """ % (collectorType, activeSWHsystem, openLoop, sum(beamIndexPerHourData)/8760, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyViewFactor, sum(beamIndexPerHourData)/len(beamIndexPerHourData), maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, averageAnnualMechanicalRoomTemp, pipeLength, pipeDiameter, pipeInsulationThickness, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness)

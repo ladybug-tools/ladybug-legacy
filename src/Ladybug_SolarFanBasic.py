@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Saeran Vasanthakumar <saeranv@gmail.com> 
+# Copyright (c) 2013-2016, Saeran Vasanthakumar <saeranv@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -37,7 +37,7 @@ The default set to 3) June 21 to September 21.
 Note that extremely complicated concave shapes will take a long time to calculate a solar fan for.
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _boundary:  closed boundary curve representing a piece of land (such as a park) or a window for which solar access is desired.
@@ -67,7 +67,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_SolarFanBasic"
 ghenv.Component.NickName = 'SolarFanBasic'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -1015,6 +1016,7 @@ def main(north,_boundary,timeperiod,monthRange,location,height):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \

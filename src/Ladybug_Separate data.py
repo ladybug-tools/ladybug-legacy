@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ Use this component to separate the text strings from the numbers in the climate 
 You can then perform mathamatical functions on the numerical climate data using the Grasshopper math components or quickly preview the numerical data stream using the Grasshopper "Quick Graph" component.
 This component can also be used generally to separate any data stream that contains both numbers and text strings.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _inputList: A list of data that contains both text srtings and numbers.  For example, a data stream output from the Import EPW component.
@@ -37,7 +37,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'separateData'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

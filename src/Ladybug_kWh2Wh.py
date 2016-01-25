@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to convert energy values in kW to W, kW/m2 to W/m2, kWh to Wh, kWh/m2 to Wh/m2, kBTU to BTU, or kBTU/ft2 to BTU/ft2.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _Wh: An energy value or list of energy values in kW, kW/m2, kWh, kWh/m2, kBTU, or kBTU/ft2.
@@ -34,7 +34,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_kWh2Wh"
 ghenv.Component.NickName = 'kWh2Wh'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic and Jason Sensibaugh <djordjedspasic@gmail.com and sensij@yahoo.com> 
+# Copyright (c) 2013-2016, Djordje Spasic and Jason Sensibaugh <djordjedspasic@gmail.com and sensij@yahoo.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ Sources:
 http://www.nrel.gov/docs/fy14osti/60272.pdf
 https://pvpmc.sandia.gov
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -52,7 +52,7 @@ Provided by Ladybug 0.0.61
                            If not supplied, the following PV module settings will be used by default:
                            - moduleType: Close (flush) roof mount
                            - moduleEfficiency: 15 %
-                           - temperatureCoefficient: -0.5 %/°C
+                           - temperatureCoefficient: -0.5 %/C
                            - moduleActiveAreaPercent: 90 %
         north_: Input a vector to be used as a true North direction, or a number between 0 and 360 that represents the clockwise degrees off from the Y-axis.
                 -
@@ -70,7 +70,7 @@ Provided by Ladybug 0.0.61
         conditionalStatement_: This input allows users to calculate the Photovoltaics surface component results only for those annualHourlyData_ values which fit specific conditions or criteria. To use this input correctly, hourly data, such as dryBulbTemperature or windSpeed, must be plugged into the "annualHourlyData_" input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<3" (without the quotation marks).
                                conditionalStatement_ accepts "and" and "or" operators. To visualize the hourly data, English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
                                -
-                               For example, if you have an hourly dryBulbTemperature connected as the first list, and windSpeed connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18°C and 23°C, and windSpeed is larger than 3m/s, the conditionalStatement_ should be written as "18<a<23 and b>3" (without the quotation marks).
+                               For example, if you have an hourly dryBulbTemperature connected as the first list, and windSpeed connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and windSpeed is larger than 3m/s, the conditionalStatement_ should be written as "18<a<23 and b>3" (without the quotation marks).
         _runIt: ...
         
     output:
@@ -92,10 +92,10 @@ Provided by Ladybug 0.0.61
                                In kWh/m2.
         moduleTemperaturePerHour: Module's back surface temperature for each hour during year.
                                   -
-                                  In °C.
+                                  In C.
         cellTemperaturePerHour: Cell temperature for each hour during year.
                                 -
-                                In °C.
+                                In C.
         PVsurfaceTiltAngle: The angle from horizontal of the inclination of the PVsurface. Example: 0 = horizontal, 90 = vertical.
                             It ranges from 0-180.
                             -
@@ -111,7 +111,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
 ghenv.Component.NickName = "PhotovoltaicsSurface"
-ghenv.Component.Message = "VER 0.0.61\nDEC_05_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.61\nDEC_05_2015
@@ -375,8 +376,8 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
     ACenergyPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "AC power output", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)]
     DCenergyPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "DC power output", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)]
     totalRadiationPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Total POA irradiance", "kWh/m2", "Hourly", (1, 1, 1), (12, 31, 24)]
-    moduleTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Module temperature", "°C", "Hourly", (1, 1, 1), (12, 31, 24)]
-    cellTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Cell temperature", "°C", "Hourly", (1, 1, 1), (12, 31, 24)]
+    moduleTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Module temperature", "C", "Hourly", (1, 1, 1), (12, 31, 24)]
+    cellTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Cell temperature", "C", "Hourly", (1, 1, 1), (12, 31, 24)]
     beamRadiationPerHour = []
     diffuseRadiationPerHour = []
     groundRadiationPerHour = []
@@ -416,23 +417,23 @@ def printOutput(unitAreaConversionFactor, locationName, latitude, longitude, nor
 Input data:
 
 Location: %s
-Latitude (°): %s
-Longitude (°): %s
-North (°): %s
+Latitude (): %s
+Longitude (): %s
+North (): %s
 Average annual albedo(-): %0.2f
 
 Surface percentage used for PV modules (percent): %0.2f
 Surface area (m2): %0.2f
 Surface active area (m2): %0.2f
 Array type: fixed tilt
-Surface tilt angle (°): %0.2f
-Surface azimuth angle (°): %0.2f
+Surface tilt angle (): %0.2f
+Surface azimuth angle (): %0.2f
 
 Overall DC to AC derate factor (-): %0.3f
 
 Module type and mounting: %0.2f (%s)
 Module efficiency (percent): %0.2f
-Module's temperature coefficient (percent/°C): %0.2f
+Module's temperature coefficient (percent/C): %0.2f
 Module active area Percentage (percent): %0.2f
 
 System size (kW): %0.2f
