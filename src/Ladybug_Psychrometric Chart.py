@@ -64,9 +64,9 @@ Provided by Ladybug 0.0.62
         scale_: An optional number to change the scale of the spychrometric chart in the Rhino scene.  By default, this value is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
-            0 (or False) - No geomtry will be baked into the Rhino scene (this is the default).
-            1 (or True) - the geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
-            2 - the geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino gometry.
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set to "True" to run the component and generate a psychrometric chart!
 Returns:
         readMe!: ...
@@ -1939,7 +1939,6 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 elif 'Humidity' in _relativeHumidity[2]: placeName = _relativeHumidity[1]
                 else: placeName = 'alternateLayerName'
             except: placeName = 'alternateLayerName'
-            newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
             newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
             #Bake the objects.
             if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, coloredMesh, legendSrfs, chartText, chartTextPt, textSize, legendFont, allCurves, decimalPlaces, True)

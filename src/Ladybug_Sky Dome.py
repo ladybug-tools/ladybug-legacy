@@ -34,8 +34,11 @@ Provided by Ladybug 0.0.62
         _scale_: Use this input to change the scale of the sky dome.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         showTotalOnly_: Set to "True" to only show a sky dome with the total radiation.  The default is "False", which will produce 3 sky domes: one of diffuse radiation, one of direct radiation, and one of the total radiation.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set to "True" to run the component and generate a sky dome.
-        bakeIt_: Set to "True" to bake the sky dome into the Rhino scene.
     Returns:
         readMe!: ...
         skyPatchesMesh:  A colored mesh representing the intensity of radiation for each of the sky patches of the sky dome.
@@ -50,11 +53,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -169,7 +172,8 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         # color legend surfaces
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         legendSrfs.Translate(movingVector) # move it to the right place
-        
+        moveTransform = rc.Geometry.Transform.Translation(movingVector)
+        for pt in compassTextPts: pt.Transform(moveTransform)
         
         # generate dome patches colors
         totalRadiationColors = lb_visualization.gradientColor(results, lowB, highB, customColors)
@@ -219,19 +223,26 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         strResults = []
         [strResults.append('%.2f'%num) for num in results]
         
-        
-        if bakeIt:
-            # projectName = listInfo[0][1] + '_Total'
+        if bakeIt > 0:
+            #Put all of the text together.
             legendText.append(titleStr)
-            studyLayerName = 'SkyDome'
-            
+            legendText.extend(compassText)
+            textPt.extend(compassTextPts)
+            #Put all of the curves into one list.
+            finalCrvs = []
+            for crv in compassCrvs:
+                try:
+                    testPt = crv.PointAtEnd
+                    finalCrvs.append(crv)
+                except: pass
             # check the study type
+            studyLayerName = 'SKY_DOME'
             newLayerIndex, l = lb_visualization.setupLayers(skyTypes[i], 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
             
-            lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, compassCrvs)
+            if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, finalCrvs, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, finalCrvs, decimalPlaces, False)
             
         return domeMeshed, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], compassCrvs, movedLegendBasePoint, skyPatchCenPts, skyPatchAreas, strResults, movedSkyPatches
-    
     
     
     # north direction

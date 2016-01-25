@@ -41,9 +41,11 @@ Provided by Ladybug 0.0.62
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set this value to "True" to run the component and generate a wind rose in the Rhino scene.
-        bakeIt_: Set this value to "True" to bake the wind rose into the Rhino scene.
-    
     Returns:
         readMe!: ...
         calmRoseMesh: A mesh in the center of the wind rose representing the relative number of hours where the wind speed is around 0 m/s.
@@ -57,11 +59,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -169,21 +171,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         conversionFac = lb_preparation.checkUnits()
-        
-        def bakePlease(listInfo, meshJoined, legendSrfs, legendText, textPt, legendFont, textSize, windRoseCrvs):
-            # legendText = legendText + ('\n\n' + customHeading)
-            studyLayerName = 'WINDROSE'
-            try:
-                layerName = listInfo[1]
-                dataType = 'Hourly Data:' + listInfo[2]
-            
-            except:
-                layerName = 'Latitude=' +`latitude`
-                dataType = 'No Hourly Data'
-            
-            # check the study type
-            newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
-            lb_visualization.bakeObjects(newLayerIndex, meshJoined, legendSrfs, legendText, textPt, textSize, legendFont, windRoseCrvs)
         
         def movePointList(textPt, movingVector):
             for ptCount, pt in enumerate(textPt):
@@ -565,6 +552,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     if legendScale > 1: movingVector = legendScale * movingVector
                     crvsTemp = []
                     try:
+                        moveTransform = rc.Geometry.Transform.Translation(movingVector)
+                        for pt in compassTextPts: pt.Transform(moveTransform)
+                        
                         segments.Translate(movingVector); allWindRoseMesh.append(segments)
                         if centerMesh!=-1:
                             centerMesh.Translate(movingVector); allWindCenMesh.append(centerMesh)
@@ -600,12 +590,34 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     except Exception, e:
                         print `e`
                         
-                    if bakeIt:
+                    if bakeIt > 0:
+                        #Join everything into one mesh.
+                        finalJoinedMesh = rc.Geometry.Mesh()
+                        finalJoinedMesh.Append(segments)
+                        finalJoinedMesh.Append(centerMesh)
+                        #Put all of the curves into one list.
+                        finalCrvs = []
+                        for crv in crvsTemp:
+                            try:
+                                testPt = crv.PointAtEnd
+                                finalCrvs.append(crv)
+                            except: pass
+                        #Put all of the text together.
+                        legendText.extend(compassText)
+                        textPt.extend(compassTextPts)
+                        #Make labels for the layer.
+                        studyLayerName = 'WINDROSE'
                         try:
-                            bakePlease(listInfo[i], [segments, centerMesh], legendSrfs, legendText, textPt, legendFont, textSize, crvsTemp)
-                        except Exception, e:
-                            print `e`
-                            
+                            layerName = listInfo[i][1]
+                            dataType = 'Hourly Data:' + listInfo[i][2]
+                        except:
+                            layerName = 'Latitude=' +`latitude`
+                            dataType = 'No Hourly Data'
+                        
+                        # check the study type
+                        newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
+                        if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+                        else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
         
             return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurveFinal
 

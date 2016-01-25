@@ -52,8 +52,12 @@ Provided by Ladybug 0.0.62
         -------------------------: ...
         analysisPeriodOrHOY_: An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis. If no value is connected here, the component will run for noon on the winter solstice.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
-        tempOrRad_: Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person.
+        tempOrRad_: Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person. The default is set to 'False'.
         parallel_: Set to "True" to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set to "True" to run the component and calculate solar-adjusted Mean Radiant Temperature.
     Returns:
         readMe!: ...
@@ -72,7 +76,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -112,9 +116,10 @@ inputsDict = {
 14: ["-------------------------", "..."],
 15: ["analysisPeriodOrHOY_", "An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis. If no value is connected here, the component will run for noon on the winter solstice."],
 16: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
-17: ["tempOrRad_", "Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person."],
+17: ["tempOrRad_", "Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person. The default is set to 'False'."],
 18: ["parallel_", "Set to 'True' to run the component using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.  For this reason, the default is set to 'True.'"],
-19: ["_runIt", "The legend base point, which can be used to move the legend in relation to the chart with the grasshopper 'move' component."]
+19: ["bakeIt_", "An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options: \n     0 (or False) - No geometry will be baked into the Rhino scene (this is the default). \n     1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. \n     2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry."],
+20: ["_runIt", "The legend base point, which can be used to move the legend in relation to the chart with the grasshopper 'move' component."]
 }
 
 
@@ -140,7 +145,6 @@ def checkTheInputs():
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -518,11 +522,11 @@ def checkTheInputs():
             northVector = rc.Geometry.Vector3d.YAxis
             northAngle = 0.0
         
-        #Set a default tempOrRad to true.
+        #Set a default tempOrRad to false.
         try:
             if tempOrRad_ != None: tempOrRad = tempOrRad_
-            else: tempOrRad = True
-        except: tempOrRad = True
+            else: tempOrRad = False
+        except: tempOrRad = False
         
         #Set a default rotationAngle to 0.0.
         try:
@@ -565,7 +569,7 @@ def checkTheInputs():
 
 def manageInputOutput(method):
     #If some of the component inputs and outputs are not right, blot them out or change them.
-    for input in range(20):
+    for input in range(21):
         if input == 2:
             if method == 0 or method == 1:
                 ghenv.Component.Params.Input[input].NickName = "."
@@ -603,10 +607,11 @@ def manageInputOutput(method):
             ghenv.Component.Params.Output[output].Name = outputsDict[output][0]
             ghenv.Component.Params.Output[output].Description = outputsDict[output][1]
     
-    return True
+    if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return False
+    else: return True
 
 def restoreInputOutput():
-    for input in range(19):
+    for input in range(21):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
@@ -784,7 +789,7 @@ def resultVisualization(analysisSrfs, results, totalResults, legendPar, legendTi
     if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
     
     
-    return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
+    return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint, legendSrfs, legendText+[titleStr], textPt+[titlebasePt], textSize, legendFont, decimalPlaces
 
 
 def convertFluxToTemp(radiantFlux, cloA, fracEff, radTransCoeff, currentRT, avgWinTrans, energyConvertFac):
@@ -890,7 +895,7 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
             studyLayerNames = "RADIATION_STUDIES"
             
             if radResults!= None:
-                resultColored, legendColored, l, legendBasePoint = resultVisualization(analysisSrfs, meshResults, totalRadResults, legendPar_, unit, studyLayerNames, True, 0, listInfo, lb_preparation, lb_visualization)
+                resultColored, legendColored, l, legendBasePoint, legendSrfs, allTxt, allTxtPt, fontSize, legendFont, decimalPlaces = resultVisualization(analysisSrfs, meshResults, totalRadResults, legendPar_, unit, studyLayerNames, True, 0, listInfo, lb_preparation, lb_visualization)
             
             #Remove the ground mesh, which is the last one.
             resultColored.Faces.DeleteFaces([len(radResults)-1])
@@ -1081,6 +1086,19 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                 solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
                 solarAdjustedMRT.insert(0,str(location))
                 solarAdjustedMRT.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
+                
+                #If the user has requested to bake the results, then bake them.
+                if bakeIt_ > 0:
+                    #Set up the new layer.
+                    studyLayerName = 'SOLAR_TEMPERATURE'
+                    placeName = _location.split('\n')[1]
+                    try:
+                        if len(analysisPeriodOrHOY) != 1: 'AnalysisPeriod = ' + str(analysisPeriodOrHOY)
+                    except: analysisTime = 'HOY = ' + str(analysisPeriodOrHOY)
+                    newLayerIndex, l = lb_visualization.setupLayers(analysisTime, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+                    #Bake the objects.
+                    if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, resultColored, legendSrfs, allTxt, allTxtPt, fontSize, legendFont, None, decimalPlaces, True)
+                    else: lb_visualization.bakeObjects(newLayerIndex, resultColored, legendSrfs, allTxt, allTxtPt, fontSize, legendFont, None, decimalPlaces, False)
                 
                 
                 return ERF, MRTDelta, solarAdjustedMRT, resultColored, legend, legendBasePoint, meshResults, meshSrfAreas
