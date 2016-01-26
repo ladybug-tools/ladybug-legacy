@@ -46,10 +46,12 @@ Provided by Ladybug 0.0.62
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         parallel_: Set to "True" to run the radiation analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
         _runIt: Set to "True" to run the component and perform radiation analysis on the input _geometry.
-        bakeIt_: Set to True to bake the analysis results into the Rhino scene.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         workingDir_: Use this input to change the working directory of the radiation analysis on your system. Input here must be a valid file path location on your computer.  The default is set to "C:\Ladybug" and it is from this file location that radiation results are loaded into grasshopper after the analysis is done.
         projectName_: Use this input to change the project name of the files generated in the working directory.  Input here must be a string without special characters.  If "bakeIt_" is set to "True", the result will be baked into a layer with this project name.
-    
     Returns:
         readMe!: ...
         contextMesh: An uncolored mesh representing the context_ geometry that was input to this component. Connect this output to a "Mesh" grasshopper component to preview this output seperately from the others of this component. Note that this mesh is generated before the analysis is run, allowing you to be sure that the right geometry will be run through the analysis before running this component.
@@ -67,11 +69,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_25_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -266,7 +268,8 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
             newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
                                                             studyLayerName, checkTheName,
                                                             runOrientation, angle, l)
-            lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont)
+            if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
         
         return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 
@@ -388,7 +391,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
                 if legendPar[10] == None: legendPar[10] = False
         
         for angleCount, angle in enumerate(range(len(angles) - 1)):
-            if (bakeIt or angles[angle + 1] == angles[-1]) and results!=-1:
+            if (bakeIt != 0 or angles[angle + 1] == angles[-1]) and results!=-1:
                 
                 # read the values for each angle from the dictionary
                 eachTotalResult = orirntationStudyRes[angle]["totalResult"]
@@ -429,7 +432,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
         if not runOrientation:
             totalResults = [totalResults] # make a list of the list so the same process can be applied to orientation study and normal run
         else:
-            bakeIt = False
+            bakeIt = 0
             
         resultColored = []
         legendColored = []

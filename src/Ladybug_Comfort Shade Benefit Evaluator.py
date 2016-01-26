@@ -55,6 +55,10 @@ Provided by Ladybug 0.0.62
         delNonIntersect_: Set to "True" to delete mesh cells with no intersection with sun vectors.  Mesh cells where shading will have little effect because an equal amount of warm and cool temperature vectors will still be left in white.
         legendPar_: Legend parameters that can be used to re-color the shade, change the high and low boundary, or sync multiple evaluated shades with the same colors and legend parameters.
         parallel_: Set to "True" to run the simulation with multiple cores.  This can increase the speed of the calculation substantially and is recommended if you are not running other big or important processes.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry. 
         _runIt: Set to 'True' to run the simulation.
     Returns:
         readMe!: ...
@@ -71,11 +75,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_25_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -811,6 +815,20 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
         #If we have got all of the outputs, let the user know that the calculation has been successful.
         print 'Shade benefit caclculation successful!'
         
+        if bakeIt_ > 0:
+            #Bring all of the text together.
+            legendText.append(analysisTitle)
+            textPt.append(titlebasePt)
+            #Join the shade mesh into one.
+            analysisSrfs = rc.Geometry.Mesh()
+            for meshList in shadeMeshList:
+                for mesh in meshList: analysisSrfs.Append(mesh)
+            #Bake the objects
+            studyLayerName = 'SHADE_BENEFIT_ANALYSIS'
+            placeName = _location.split('\n')[1]
+            newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+            if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
         
         return shadeHelpfulnessList, shadeHarmfulnessList, shadeNetEffectList, shadeMeshList, legend, legendBasePoint
     else:
