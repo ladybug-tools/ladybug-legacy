@@ -70,7 +70,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_25_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -269,7 +269,7 @@ def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legend
 
 
 
-def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints_viewStudy, viewPtsWeights, legendPar, parallel, bakeIt):
+def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints_viewStudy, legendPar, parallel, bakeIt):
     # import the classes
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     lb_mesh = sc.sticky["ladybug_Mesh"]()
@@ -284,6 +284,9 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
     if viewCheck != -1:
         viewPoints_viewStudy, viewType = viewCheck
     else: return -1
+    
+    try: viewPtsWeights = viewPtsWeights_
+    except: viewPtsWeights = viewResolution_
     
     # read orientation study parameters
     runOrientation, rotateContext, rotationBasePt, angles = lb_preparation.readOrientationParameters(orientationStudyP)
@@ -534,8 +537,8 @@ except:
     restoreComponentInputs()
 
 #Run the component.
-if _runIt and len(_geometry)!=0 and _geometry[0] != None and _disFromBase and initCheck == True:
-    result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_, _viewTypeOrPoints, viewPtsWeights_, legendPar_, parallel_, bakeIt_)
+if _runIt and len(_geometry)!=0 and _geometry[0] != None and _disFromBase and initCheck == True and _viewTypeOrPoints:
+    result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_, _viewTypeOrPoints, legendPar_, parallel_, bakeIt_)
     
     if result!= -1:
         if len(result) == 6:
