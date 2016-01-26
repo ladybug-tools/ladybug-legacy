@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.60\nSEP_19_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
