@@ -59,7 +59,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_02_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -593,8 +593,10 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     if bakeIt > 0:
                         #Join everything into one mesh.
                         finalJoinedMesh = rc.Geometry.Mesh()
-                        finalJoinedMesh.Append(segments)
-                        finalJoinedMesh.Append(centerMesh)
+                        try: finalJoinedMesh.Append(segments)
+                        except: pass
+                        try: finalJoinedMesh.Append(centerMesh)
+                        except: pass
                         #Put all of the curves into one list.
                         finalCrvs = []
                         for crv in crvsTemp:
