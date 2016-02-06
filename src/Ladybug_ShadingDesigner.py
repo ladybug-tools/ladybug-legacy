@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -622,7 +622,7 @@ def main(method, depth, sunVectors, numShds, distBtwn, horOrVert):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
+            #if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
