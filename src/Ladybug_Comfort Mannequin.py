@@ -43,7 +43,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Comfort Mannequin"
 ghenv.Component.NickName = 'ComfortMannequin'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_07_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
@@ -65,7 +65,7 @@ def checkTheInputs():
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
+            #if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
