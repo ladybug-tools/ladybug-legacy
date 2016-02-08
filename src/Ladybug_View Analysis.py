@@ -49,7 +49,10 @@ Provided by Ladybug 0.0.62
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         parallel_: Set to "True" to run the visibility analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
         _runIt: Set to "True" to run the component and perform visibility analysis of the input _geometry.
-        bakeIt_: Set to "True" to bake the analysis results into the Rhino scene.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         readMe!: ...
         contextMesh: An uncolored mesh representing the context_ geometry that was input to this component. Connect this output to a "Mesh" grasshopper component to preview this output seperately from the others of this component. Note that this mesh is generated before the analysis is run, allowing you to be sure that the right geometry will be run through the analysis before running this component.
@@ -67,11 +70,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nJAN_05_2016
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -107,7 +110,7 @@ inputsDict = {
 8: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
 9: ["parallel_", "Set to 'True' to run the visibility analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine."],
 10: ["_runIt", "Set to 'True' to run the component and perform visibility analysis of the input _geometry."],
-11: ["bakeIt_", "Set to 'True' to bake the analysis results into the Rhino scene."]
+11: ["bakeIt_", "An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options: \n     0 (or False) - No geometry will be baked into the Rhino scene (this is the default). \n     1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. \n     2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry."]
 }
 
 
@@ -252,20 +255,21 @@ def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legend
     
     if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
     
-    if bakeIt:
+    if bakeIt > 0:
         legendText.append(titleStr)
         textPt.append(titlebasePt)
         # check the study type
         newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
                                                         studyLayerName, checkTheName,
                                                         runOrientation, angle, l)
-        lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont)
+        if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
+        else: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
     
     return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 
 
 
-def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints_viewStudy, viewPtsWeights, legendPar, parallel, bakeIt):
+def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints_viewStudy, legendPar, parallel, bakeIt):
     # import the classes
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     lb_mesh = sc.sticky["ladybug_Mesh"]()
@@ -280,6 +284,9 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
     if viewCheck != -1:
         viewPoints_viewStudy, viewType = viewCheck
     else: return -1
+    
+    try: viewPtsWeights = viewPtsWeights_
+    except: viewPtsWeights = viewResolution_
     
     # read orientation study parameters
     runOrientation, rotateContext, rotationBasePt, angles = lb_preparation.readOrientationParameters(orientationStudyP)
@@ -530,8 +537,8 @@ except:
     restoreComponentInputs()
 
 #Run the component.
-if _runIt and len(_geometry)!=0 and _geometry[0] != None and _disFromBase and initCheck == True:
-    result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_, _viewTypeOrPoints, viewPtsWeights_, legendPar_, parallel_, bakeIt_)
+if _runIt and len(_geometry)!=0 and _geometry[0] != None and _disFromBase and initCheck == True and _viewTypeOrPoints:
+    result = main(_geometry, context_, _gridSize_, _disFromBase, orientationStudyP_, _viewTypeOrPoints, legendPar_, parallel_, bakeIt_)
     
     if result!= -1:
         if len(result) == 6:

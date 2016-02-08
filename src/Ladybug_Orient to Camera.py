@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Orient to Camera"
 ghenv.Component.NickName = 'Orient2Camera'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_23_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"

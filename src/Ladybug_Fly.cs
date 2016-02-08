@@ -75,7 +75,7 @@ public class Script_Instance : GH_ScriptInstance
     //
     // This file is part of Ladybug.
     //
-    // Copyright (c) 2013-2015, James Ramsedn and Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com>
+    // Copyright (c) 2013-2016, James Ramsedn and Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com>
     // Ladybug is free software; you can redistribute it and/or modify
     // it under the terms of the GNU General Public License as published
     // by the Free Software Foundation; either version 3 of the License,
@@ -98,18 +98,17 @@ public class Script_Instance : GH_ScriptInstance
       Fly is originally posted as a code snippet by David Rutten. The code has been modified by James Ramsedn and Mostapha Sadeghipour Roudsari.
 
       -
-      Provided by Ladybug 0.0.60
+      Provided by Ladybug 0.0.62
       ";
 
     Component.Params.Input[0].Description = "Connect input sliders. Component will execute all the possible combinations";
     Component.Params.Input[1].Description = "Set to True to let the fly fly!";
     Component.Params.Output[0].Description = "This output has no use for now. Just for making some noise!";
-
     Component.Name = "Ladybug_fly";
     Component.NickName = "FLY!";
     Component.Category = "Ladybug";
     Component.SubCategory = "4 | Extra";
-    Component.Message = "VER 0.0.60\nOCT_31_2015";
+    Component.Message = "VER 0.0.62\nJAN_26_2016";
 
     //add a toggle if we need one
     // I comment out this based on some user feedback. It's cool but can be pretty confusing
