@@ -226,9 +226,9 @@ def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
     return [viewResults], [averageViewResults], listInfo, ptVisibility
 
 
-def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo, runOrientation, lb_visualization, lb_preparation):
+def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo, runOrientation, viewType, lb_visualization, lb_preparation):
     #Check the analysis Type.
-    projectName = 'ViewToPoints'
+    projectName = 'ViewStudy'
     
     #Read Legend Parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
@@ -252,7 +252,11 @@ def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legend
     # color legend surfaces
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     
-    customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(_viewTypeOrPoints)`
+    if viewType == -1: customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(_viewTypeOrPoints)`
+    elif viewType == 0: customHeading = '\n\nHorizontal Radial View Analysis'
+    elif viewType == 1: customHeading = '\n\nHorizontal Cone-Of-Vision Analysis'
+    elif viewType == 2: customHeading = '\n\nSpherical View Analysis'
+    else: customHeading = '\n\nSkyview Analysis'
     if runOrientation:
         try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
         except: pass
@@ -468,7 +472,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
                         #eachTotalResult = [[],[],[]]
                         resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(mergedContextSrfs, analysisSrfs,
                                           results[0], eachTotalResult[0], legendPar, '%',
-                                          'VIEW_STUDIES', bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo, runOrientation, lb_visualization, lb_preparation)
+                                          'VIEW_STUDIES', bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo, runOrientation, viewType, lb_visualization, lb_preparation)
                         resV += 1
     else:
         # no orientation study
@@ -502,7 +506,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
                 # Add an option for orientation study
                 resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(contextSrfs, analysisSrfs,
                                   results[i], totalResults[0][i], legendPar, '%',
-                                  'VIEW_STUDIES', bakeIt, CheckTheName, 0, angles[-1], listInfo, runOrientation, lb_visualization, lb_preparation)
+                                  'VIEW_STUDIES', bakeIt, CheckTheName, 0, angles[-1], listInfo, runOrientation, viewType, lb_visualization, lb_preparation)
                 resV += 1
         
         # return outputs
