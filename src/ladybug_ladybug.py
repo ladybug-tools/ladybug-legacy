@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_28_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_09_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2320,13 +2320,14 @@ class RunAnalysisInsideGH(object):
         return sunlightHoursResult, totalSLH, sunVisibility
     
     
-    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType):
+    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas):
         # preparing bulk lists for parallel process.
         view = [0] * len(testPts)
         viewResult = [0] * len(testPts)
         intersectionStTime = time.time()
         PI = math.pi
         
+        #Get the importance if point weights are specified.
         targetViewsCount  = len(viewPoints)
         ptImportance = []
         for ptCount in range(targetViewsCount):
@@ -2336,6 +2337,14 @@ class RunAnalysisInsideGH(object):
             except:
                 ptImportance.append(100/targetViewsCount)
         
+        #Get the importance for view vectors.
+        vecImportance = []
+        totalArea = sum(patchAreas)
+        for area in patchAreas:
+            vecImportance.append((area*100)/totalArea)
+        
+        
+        #Create an empty list to be filled.
         ptVisibility = []
         for pt in testPts: ptVisibility.append(range(len(viewPoints)))
         
@@ -2390,7 +2399,7 @@ class RunAnalysisInsideGH(object):
                         if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh, ray) != -1: check = 0
                     
                     if check != 0:
-                        view[i] += ptImportance[vecCount]
+                        view[i] += vecImportance[vecCount]
                     ptVisibility[i][vecCount] = check
                 
                 viewResult[i] = view[i] # This is stupid but I'm tired to change it now...

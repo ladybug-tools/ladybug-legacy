@@ -70,11 +70,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_09_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nFEB_09_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -132,7 +132,7 @@ def restoreComponentInputs():
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def checkViewType(lb_preparation):
-    viewVecs, viewType = [], -1
+    viewVecs, viewType, patchAreas = [], -1, []
     try:
         viewType = int(_viewTypeOrPoints[0])
         if viewType >= 0 and viewType <= 3: pass
@@ -150,7 +150,7 @@ def checkViewType(lb_preparation):
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1
-        viewVecs = checkViewResolution(viewRes, viewType, lb_preparation)
+        viewVecs, patchAreas = checkViewResolution(viewRes, viewType, lb_preparation)
     except:
         try:
             for val in _viewTypeOrPoints:
@@ -163,24 +163,29 @@ def checkViewType(lb_preparation):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1
     
-    return viewVecs, viewType
+    return viewVecs, viewType, patchAreas
 
 def checkViewResolution(viewResolution, viewType, lb_preparation):
     newVecs = []
+    patchAreas = []
     
     if viewType != 0:
         skyPatches = lb_preparation.generateSkyGeo(rc.Geometry.Point3d.Origin, viewResolution, 1)
         for patch in skyPatches:
-            patchPt = rc.Geometry.AreaMassProperties.Compute(patch).Centroid
+            patchAreaProp = rc.Geometry.AreaMassProperties.Compute(patch)
+            patchPt = patchAreaProp.Centroid
+            patchA = patchAreaProp.Area
             Vec = None
             if viewType == 2 or viewType == 3: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
             elif viewType == 1 and patchPt.Z < 0.5: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
             
             if Vec != None:
                 newVecs.append(Vec)
+                patchAreas.append(patchA)
                 if viewType == 1 or viewType == 2:
                     revVec = rc.Geometry.Vector3d(-patchPt.X, -patchPt.Y, -patchPt.Z)
                     newVecs.append(revVec)
+                    patchAreas.append(patchA)
     else:
         numberDivisions = (viewResolution+1) * 20
         initAngle = 0
@@ -192,7 +197,7 @@ def checkViewResolution(viewResolution, viewType, lb_preparation):
             newVecs.append(viewVecInit)
             initAngle += divisionAngle
     
-    return newVecs
+    return newVecs, patchAreas
 
 
 def openLegend(legendRes):
@@ -204,7 +209,7 @@ def openLegend(legendRes):
     else: return
 
 
-def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH):
+def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH):
     listInfo = ['key:location/dataType/units/frequency/startsAt/endsAt', 'City/Latitude', 'View Analysis', '%', 'NA', (1, 1, 1), (12, 31, 24)]
     if parallel:
         try:
@@ -216,7 +221,7 @@ def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
     if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
     else: joinedContext = None
     
-    viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType)
+    viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas)
     
     return [viewResults], [averageViewResults], listInfo, ptVisibility
 
@@ -282,7 +287,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
     viewType = -1
     viewCheck = checkViewType(lb_preparation)
     if viewCheck != -1:
-        viewPoints_viewStudy, viewType = viewCheck
+        viewPoints_viewStudy, viewType, patchAreas = viewCheck
     else: return -1
     
     try: viewPtsWeights = viewPtsWeights_
@@ -391,7 +396,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
             sunVectors_sunlightHour = []
             
             results, eachTotalResult, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                        analysisSrfs, mergedContextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH)
+                                        analysisSrfs, mergedContextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH)
             
             #collect surfaces, results, and values
             orirntationStudyRes[angle] = {"angle" : angle,
@@ -469,7 +474,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
         # no orientation study
         angle = 0; l = [0]
         results, totalResults, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH)
+                                analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH)
     
     #Returen view vectors is the vector method is specified.
     viewVecs = []
