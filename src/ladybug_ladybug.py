@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_09_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_14_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2361,18 +2361,17 @@ class RunAnalysisInsideGH(object):
                     
                     vector = rc.Geometry.Vector3d(viewPt - testPts[i])
                     vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and the vector
-                    check = 0
-                    if vecAngle < (PI/2):
-                        check = 1; # this is simply here becuse I can't trust the break! Isn't it stupid?
-                        line = rc.Geometry.Line(testPts[i], viewPt)
-                        
-                        if bldgMesh!=None:
-                            if rc.Geometry.Intersect.Intersection.MeshLine(bldgMesh, line)[1] != None: check = 0
-                        if check != 0 and contextMesh!=None:
-                            if rc.Geometry.Intersect.Intersection.MeshLine(contextMesh, line)[1] != None: check = 0
-                        
-                        if check != 0:
-                            view[i] += ptImportance[ptCount]
+                    
+                    check = 1; # this is simply here becuse I can't trust the break! Isn't it stupid?
+                    line = rc.Geometry.Line(testPts[i], viewPt)
+                    
+                    if bldgMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshLine(bldgMesh, line)[1] != None: check = 0
+                    if check != 0 and contextMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshLine(contextMesh, line)[1] != None: check = 0
+                    
+                    if check != 0:
+                        view[i] += ptImportance[ptCount]
                         
                     ptVisibility[i][ptCount] = check
                 viewResult[i] = view[i] # This is stupid but I'm tired to change it now...
@@ -2390,6 +2389,8 @@ class RunAnalysisInsideGH(object):
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
+                    vecAngle = rc.Geometry.Vector3d.VectorAngle(viewVec, testVec[i]) # calculate the angle between the surface and the vector
+                    
                     check = 1
                     ray = rc.Geometry.Ray3d(testPts[i], viewVec)
                     
@@ -2399,7 +2400,8 @@ class RunAnalysisInsideGH(object):
                         if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh, ray) != -1: check = 0
                     
                     if check != 0:
-                        view[i] += vecImportance[vecCount]
+                        if viewType < 4: view[i] += vecImportance[vecCount]
+                        else: view[i] += vecImportance[vecCount] * 2 * math.cos(vecAngle)
                     ptVisibility[i][vecCount] = check
                 
                 viewResult[i] = view[i] # This is stupid but I'm tired to change it now...
