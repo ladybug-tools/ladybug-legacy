@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.62
             1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors.  Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
             2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
             3 - Sky Exposure - The percentage of the sky that is visible from the points of the input _geometry (as opposed to Sky View, which is the amount of sky seen by a surface).  This is equivalent to a solid angle or even-spaced ray-tracing calculation from the point.  It is useful for evaluating one's general visual connection to the sky at a given set of points.
-            4 - Sky View - The percentage of the sky that is visible from the surface _geometry (as opposed to Sky Exposure, which is the amount of sky seen by the points).  While Sky Exposure treats each patch of the sky with relatively equal weight, Sky View weights these patches by their area projected into the plane of the surface being evaluated.  In other words, Sky vView for a horizontal surface would give more importance to the sky patches that are overhead vs near the horizon.  Sky View is an important factor in for modelling urban heat island since the inability of warm urban surfaces to radiate heat to a cool night sky is one of the largest contributors of the heat island effect.
+            4 - Sky View - The percentage of the sky that is visible from the surface _geometry (as opposed to Sky Exposure, which is the amount of sky seen by the points).  While Sky Exposure treats each patch of the sky with relatively equal weight, Sky View weights these patches by their area projected into the plane of the surface being evaluated.  In other words, Sky View for a horizontal surface would give more importance to the sky patches that are overhead vs near the horizon.  Sky View is an important factor in for modelling urban heat island since the inability of warm urban surfaces to radiate heat to a cool night sky is one of the largest contributors of the heat island effect.
         viewPtsWeights_: A list of numbers that align with the test points to assign weights of importance to the several _viewTypeOrPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value.
         _____________________: ...
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
@@ -71,11 +71,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_09_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_14_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nFEB_09_2016
+#compatibleLBVersion = VER 0.0.59\nFEB_14_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
