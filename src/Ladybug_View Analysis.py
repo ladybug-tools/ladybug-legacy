@@ -5,7 +5,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> and Chris Mackey <Chris@MackeyArchitecture.com>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -43,7 +43,8 @@ Provided by Ladybug 0.0.62
             0 - Horizontal Radial - The percentage of the 360 horizontal view band visible from each test point. Use this to study horizontal views from interior spaces to the outdoors.
             1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors.  Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
             2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
-            3 - Skyview - The percentage of the sky that is visible from the input _geometry.
+            3 - Sky Exposure - The percentage of the sky that is visible from the points of the input _geometry (as opposed to Sky View, which is the amount of sky seen by a surface).  This is equivalent to a solid angle or even-spaced ray-tracing calculation from the point.  It is useful for evaluating one's general visual connection to the sky at a given set of points.
+            4 - Sky View - The percentage of the sky that is visible from the surface _geometry (as opposed to Sky Exposure, which is the amount of sky seen by the points).  While Sky Exposure treats each patch of the sky with relatively equal weight, Sky View weights these patches by their area projected into the plane of the surface being evaluated.  In other words, Sky View for a horizontal surface would give more importance to the sky patches that are overhead vs near the horizon.  Sky View is an important factor in for modelling urban heat island since the inability of warm urban surfaces to radiate heat to a cool night sky is one of the largest contributors of the heat island effect.
         viewPtsWeights_: A list of numbers that align with the test points to assign weights of importance to the several _viewTypeOrPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value.
         _____________________: ...
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
@@ -70,11 +71,11 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_19_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nFEB_14_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -104,7 +105,7 @@ inputsDict = {
 2: ["_gridSize_", "A number in Rhino model units that represents the average size of a grid cell for visibility analysis on the test _geometry.  This value should be smaller than the smallest dimension of the test _geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take."],
 3: ["_disFromBase", "A number in Rhino model units that represents the offset distance of the test point grid from the input test _geometry.  Usually, the test point grid is offset by a small amount from the test _geometry in order to ensure that visibility analysis is done for the correct side of the test _geometry.  If the resulting mesh of this component is offset to the wrong side of test _geometry, you should use the 'Flip' Rhino command on the test _geometry before inputting it to this component."],
 4: ["orientationStudyP_", "Optional output from the 'Orientation Study Parameter' component.  You can use an Orientation Study input here to answer questions like 'What orientation of my building will give me the highest or lowest visibility from the street?'  An Orientation Study will automatically rotate your input _geometry around several times and record the visibility results each time in order to output a list of values for averageView and a grafted data stream for viewStudyResult."],
-5: ["_viewTypeOrPoints", "An integer representing the type of view analysis that you would like to conduct or a list of points to which you would like to test the view.  For integer options, choose from the following options: \n0 - Horizontal Radial - The percentage of the 360 horizontal view band visible from each test point. Use this to study horizontal views from interior spaces to the outdoors. \n 1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n3 - Skyview - The percentage of the sky that is visible from the input _geometry."],
+5: ["_viewTypeOrPoints", "An integer representing the type of view analysis that you would like to conduct or a list of points to which you would like to test the view.  For integer options, choose from the following options: \n0 - Horizontal Radial - The percentage of the 360 horizontal view band visible from each test point. Use this to study horizontal views from interior spaces to the outdoors. \n 1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n3 - Sky Exposure - The percentage of the sky that is visible from the points of the input _geometry (as opposed to Sky View, which is the amount of sky seen by a surface).  This is equivalent to a solid angle or even-spaced ray-tracing calculation from the point.  It is useful for evaluating one's general visual connection to the sky at a given set of points. \n4 - Sky View - The percentage of the sky that is visible from the surface _geometry (as opposed to Sky Exposure, which is the amount of sky seen by the points).  While Sky Exposure treats each patch of the sky with relatively equal weight, sky view weights these patches by their area projected into the plane of the surface being evaluated.  In other words, sky view for a horizontal surface would give more importance to the sky patches that are overhead vs near the horizon.  Sky view is an important factor in for modelling urban heat island since the inability of warm urban surfaces to radiate heat to a cool night sky is one of the largest contributors of the heat island effect."],
 6: ["viewPtsWeights_", "A list of numbers that align with the test points to assign weights of importance to the several _viewTypeOrPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value."],
 7: ["_____________________", "..."],
 8: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
@@ -132,10 +133,10 @@ def restoreComponentInputs():
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def checkViewType(lb_preparation):
-    viewVecs, viewType = [], -1
+    viewVecs, viewType, patchAreas = [], -1, []
     try:
         viewType = int(_viewTypeOrPoints[0])
-        if viewType >= 0 and viewType <= 3: pass
+        if viewType >= 0 and viewType <= 4: pass
         else:
             warning = "_viewTypeOrPoints must be between 0 and 3."
             print warning
@@ -150,7 +151,7 @@ def checkViewType(lb_preparation):
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1
-        viewVecs = checkViewResolution(viewRes, viewType, lb_preparation)
+        viewVecs, patchAreas = checkViewResolution(viewRes, viewType, lb_preparation)
     except:
         try:
             for val in _viewTypeOrPoints:
@@ -163,24 +164,29 @@ def checkViewType(lb_preparation):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1
     
-    return viewVecs, viewType
+    return viewVecs, viewType, patchAreas
 
 def checkViewResolution(viewResolution, viewType, lb_preparation):
     newVecs = []
+    patchAreas = []
     
     if viewType != 0:
         skyPatches = lb_preparation.generateSkyGeo(rc.Geometry.Point3d.Origin, viewResolution, 1)
         for patch in skyPatches:
-            patchPt = rc.Geometry.AreaMassProperties.Compute(patch).Centroid
+            patchAreaProp = rc.Geometry.AreaMassProperties.Compute(patch)
+            patchPt = patchAreaProp.Centroid
+            patchA = patchAreaProp.Area
             Vec = None
-            if viewType == 2 or viewType == 3: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
+            if viewType >= 2: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
             elif viewType == 1 and patchPt.Z < 0.5: Vec = rc.Geometry.Vector3d(patchPt.X, patchPt.Y, patchPt.Z)
             
             if Vec != None:
                 newVecs.append(Vec)
+                patchAreas.append(patchA)
                 if viewType == 1 or viewType == 2:
                     revVec = rc.Geometry.Vector3d(-patchPt.X, -patchPt.Y, -patchPt.Z)
                     newVecs.append(revVec)
+                    patchAreas.append(patchA)
     else:
         numberDivisions = (viewResolution+1) * 20
         initAngle = 0
@@ -192,7 +198,7 @@ def checkViewResolution(viewResolution, viewType, lb_preparation):
             newVecs.append(viewVecInit)
             initAngle += divisionAngle
     
-    return newVecs
+    return newVecs, patchAreas
 
 
 def openLegend(legendRes):
@@ -204,7 +210,7 @@ def openLegend(legendRes):
     else: return
 
 
-def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH):
+def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH):
     listInfo = ['key:location/dataType/units/frequency/startsAt/endsAt', 'City/Latitude', 'View Analysis', '%', 'NA', (1, 1, 1), (12, 31, 24)]
     if parallel:
         try:
@@ -216,14 +222,14 @@ def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
     if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
     else: joinedContext = None
     
-    viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType)
+    viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas)
     
     return [viewResults], [averageViewResults], listInfo, ptVisibility
 
 
-def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo, runOrientation, lb_visualization, lb_preparation):
+def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo, runOrientation, viewType, lb_visualization, lb_preparation):
     #Check the analysis Type.
-    projectName = 'ViewToPoints'
+    projectName = 'ViewStudy'
     
     #Read Legend Parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
@@ -247,7 +253,12 @@ def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legend
     # color legend surfaces
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     
-    customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(_viewTypeOrPoints)`
+    if viewType == -1: customHeading = '\n\nView Analysis' + '\n#View Points = ' + `len(_viewTypeOrPoints)`
+    elif viewType == 0: customHeading = '\n\nHorizontal Radial View Analysis'
+    elif viewType == 1: customHeading = '\n\nHorizontal 60-Degree Cone-Of-Vision Analysis'
+    elif viewType == 2: customHeading = '\n\nSpherical View Analysis'
+    elif viewType == 3: customHeading = '\n\nSky Exposure Analysis'
+    else: customHeading = '\n\nSky View Analysis'
     if runOrientation:
         try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
         except: pass
@@ -282,7 +293,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
     viewType = -1
     viewCheck = checkViewType(lb_preparation)
     if viewCheck != -1:
-        viewPoints_viewStudy, viewType = viewCheck
+        viewPoints_viewStudy, viewType, patchAreas = viewCheck
     else: return -1
     
     try: viewPtsWeights = viewPtsWeights_
@@ -391,7 +402,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
             sunVectors_sunlightHour = []
             
             results, eachTotalResult, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                        analysisSrfs, mergedContextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH)
+                                        analysisSrfs, mergedContextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH)
             
             #collect surfaces, results, and values
             orirntationStudyRes[angle] = {"angle" : angle,
@@ -463,13 +474,13 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
                         #eachTotalResult = [[],[],[]]
                         resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(mergedContextSrfs, analysisSrfs,
                                           results[0], eachTotalResult[0], legendPar, '%',
-                                          'VIEW_STUDIES', bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo, runOrientation, lb_visualization, lb_preparation)
+                                          'VIEW_STUDIES', bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo, runOrientation, viewType, lb_visualization, lb_preparation)
                         resV += 1
     else:
         # no orientation study
         angle = 0; l = [0]
         results, totalResults, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, lb_mesh, lb_runStudy_GH)
+                                analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH)
     
     #Returen view vectors is the vector method is specified.
     viewVecs = []
@@ -497,7 +508,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
                 # Add an option for orientation study
                 resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(contextSrfs, analysisSrfs,
                                   results[i], totalResults[0][i], legendPar, '%',
-                                  'VIEW_STUDIES', bakeIt, CheckTheName, 0, angles[-1], listInfo, runOrientation, lb_visualization, lb_preparation)
+                                  'VIEW_STUDIES', bakeIt, CheckTheName, 0, angles[-1], listInfo, runOrientation, viewType, lb_visualization, lb_preparation)
                 resV += 1
         
         # return outputs
