@@ -373,7 +373,7 @@ def checkTheInputs():
         
         #If a bodylocation is input, move the original body location.
         mannequinMesh = []
-        if len(bodyLocation_) != 0:
+        if len(bodyLocation_) != 0 and bodyLocation_[0] != None:
             for loc in bodyLocation_:
                 newMesh = []
                 for point in mannequinMeshInit:
