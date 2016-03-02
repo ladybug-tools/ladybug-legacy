@@ -1451,7 +1451,9 @@ if _runIt == True and checkInputOutput == True:
                     effectiveRadiantField.Add(item, GH_Path(pCount))
                     MRTDelta.Add(MRTDeltaInit[pCount][iCount], GH_Path(pCount))
                     solarAdjustedMRT.Add(solarAdjustedMRTInit[pCount][iCount], GH_Path(pCount))
-                    mannequinMesh.Add(mannequinMeshInit[pCount][iCount], GH_Path(pCount))
+                    try:
+                        mannequinMesh.Add(mannequinMeshInit[pCount][iCount], GH_Path(pCount))
+                    except: pass
 
 #Hide the legend base point.
 ghenv.Component.Params.Output[8].Hidden = True
