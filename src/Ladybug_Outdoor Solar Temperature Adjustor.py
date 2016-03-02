@@ -97,6 +97,8 @@ from Grasshopper.Kernel.Data import GH_Path
 import math
 import System.Threading.Tasks as tasks
 
+w = gh.GH_RuntimeMessageLevel.Warning
+
 
 inputsDict = {
     
@@ -377,6 +379,8 @@ def checkTheInputs():
                 for point in mannequinMeshInit:
                     newMesh.append(rc.Geometry.Point3d(point.X+loc.X, point.Y+loc.Y, point.Z+loc.Z))
                 mannequinMesh.append(newMesh)
+        else:
+            mannequinMesh.append(mannequinMeshInit)
     
     #Create a ground mesh.
     if methodInit != 2:
@@ -390,7 +394,7 @@ def checkTheInputs():
         groundMesh.Vertices.Add(point3)
         groundMesh.Vertices.Add(point4)
         groundMesh.Faces.AddFace(0, 1, 2, 3)
-        if bodyLocation_ != None:
+        if len(bodyLocation_) != 0:
             groundMesh.Transform(moveTransform)
         else: pass
     else:
@@ -1439,12 +1443,15 @@ if _runIt == True and checkInputOutput == True:
             effectiveRadiantField = DataTree[Object]()
             MRTDelta = DataTree[Object]()
             solarAdjustedMRT = DataTree[Object]()
+            mannequinMeshInit = mannequinMesh[:]
+            mannequinMesh = DataTree[Object]()
             
             for pCount, point in enumerate(effectiveRadiantFieldInit):
                 for iCount, item in enumerate(point):
                     effectiveRadiantField.Add(item, GH_Path(pCount))
                     MRTDelta.Add(MRTDeltaInit[pCount][iCount], GH_Path(pCount))
                     solarAdjustedMRT.Add(solarAdjustedMRTInit[pCount][iCount], GH_Path(pCount))
+                    mannequinMesh.Add(mannequinMeshInit[pCount][iCount], GH_Path(pCount))
 
 #Hide the legend base point.
 ghenv.Component.Params.Output[8].Hidden = True
