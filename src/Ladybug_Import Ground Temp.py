@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Anton Szilasi with help from Chris Mackey <ajszilasi@gmail.com> 
+# Copyright (c) 2013-2016, Anton Szilasi with help from Chris Mackey <ajszilasi@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to visualise ground temperatures throughout the year at specific depths. Please note that epw files usually only provide ground temperature data at depths 0.5 meters, 2 meters and 4 meters thus data has been interpolated for all other depths. In particular this interpolation assumes that ground temperatures do not vary over the seasons once the depth has reach 9 meters below the ground surface.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.62
     
     Args:
         _groundTemperatureData: ...
@@ -45,7 +45,8 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_24_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_10_2015
@@ -383,6 +384,7 @@ def main(_epw_file):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \

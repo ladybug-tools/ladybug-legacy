@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -37,7 +37,7 @@ _
 The information for the polygons representing passive strategies comes from the climate consultant psychrometric chart.  Further information on how these polygons are calculated can be found here:
 http://apps1.eere.energy.gov/buildings/tools_directory/software.cfm/ID=123/pagename=alpha_list
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.62
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.  Finally, this component can also acccept temperatures in Farenheit in order to draw a chart with IP units but, in order for this component to sense that the values are Farenheit, there must be at least one 'F' or 'F' in the stream of connected data.
@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.60
         passiveStrategy_: An optional text input of passive strategies to be laid over the psychrometric chart as polygons.  It is recommended that you use the "Ladybug_Passive Strategy List" to select which polygons you would like to display.  Otherwise, acceptable text inputs include "Evaporative Cooling", "Thermal Mass + Night Vent", "Occupant Use of Fans", "Internal Heat Gain", and "Dessicant Dehumidification".
         strategyPar_: Optional passive strategy parameters from the "Ladybug_Passive Strategy Parameters" component.  Use this to adjust the maximum comfortable wind speed, the building balance temperature, and the temperature limits for thermal mass and night flushing.
         mollierHX_: Set to "True" to visualize the psychrometric chart as a mollier-hx diagram.  This is essentially a psychrometric chart where the axes have been switched, which is popular in Europe.
-        -------------------------: ...
+        enthalpyOrWetBulb_: Set to "True" to have the psychrometric chart plot lines of constant enthalpy and set to "False" to have the chart plot linest of constant wet bulb temperature.  The default is set to "True" for enthalpy.
         analysisPeriod_: An optional analysis period from the Ladybug_Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
         annualHourlyData_: An optional list of hourly data from the Import epw component, which will be used to create hourPointColors that correspond to the hours of the data (e.g. windSpeed).  You can connect up several different annualHourly data here.
         conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the psychrometric chart. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
@@ -63,8 +63,12 @@ Provided by Ladybug 0.0.60
         basePoint_: An optional base point that will be used to place the Psychrometric Chart in the Rhino scene.  If no base point is provided, the base point will be the Rhino model origin.
         scale_: An optional number to change the scale of the spychrometric chart in the Rhino scene.  By default, this value is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set to "True" to run the component and generate a psychrometric chart!
-    Returns:
+Returns:
         readMe!: ...
         -------------------------: ...
         totalComfortPercent: The percent of the input data that are  inside all comfort and passive strategy polygons.
@@ -86,10 +90,11 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.60\nSEP_08_2015'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_19_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -105,7 +110,7 @@ from clr import AddReference
 AddReference('Grasshopper')
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
-
+import copy
 
 
 def mollierHXTransform(geometry):
@@ -675,32 +680,59 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
         for ptCount, point in enumerate(ratioBasePt):
             mollierHXTransform(point)
             ratioBasePt[ptCount] = rc.Geometry.Point3d(point.X-(legendFontSize), point.Y, 0)
+    topBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(maxHrLines[-1], rc.Geometry.Vector3d.ZAxis))
     
-    
-    #Make lines of constant enthalpy.
-    if IPTrigger:
-        enthalpyForLines = range(0,55,5)
-        celciEnthalpyForLines = BTUlb2kJkg(enthalpyForLines)
+    #Make lines of constant enthalpy or wet bulb temperature.
+    if enthalpyOrWetBulb_ == True or enthalpyOrWetBulb_ == None:
+        if IPTrigger:
+            enthalpyForLines = range(0,55,5)
+            celciEnthalpyForLines = BTUlb2kJkg(enthalpyForLines)
+        else:
+            celciEnthalpyForLines = enthalpyForLines = range(-10,120,10)
+        enthalLines = []
+        enthText = []
+        
+        for ecount, enthl in enumerate(enthalpyForLines):
+            if IPTrigger: enthText.append(str(enthl)+" BTU/lb")
+            else: enthText.append(str(enthl)+" kJ/kg")
+            startVal = lb_comfortModels.calcTempFromEnthalpy(celciEnthalpyForLines[ecount], 0.0)
+            if IPTrigger: startVal = C2F([startVal])[0]
+            startPt = rc.Geometry.Point3d(startVal, 0.0, 0.0)
+            endVal = lb_comfortModels.calcTempFromEnthalpy(celciEnthalpyForLines[ecount], 0.03)
+            if IPTrigger: endVal = C2F([endVal])[0]
+            endPt = rc.Geometry.Point3d(endVal, 0.03*scaleFactor, 0.0)
+            enthLine = rc.Geometry.LineCurve(startPt, endPt)
+            enthalLines.append(enthLine)
     else:
-        celciEnthalpyForLines = enthalpyForLines = range(-10,120,10)
-    enthalLines = []
-    enthText = []
+        if IPTrigger:
+            wetBulbForLines = range(-5,95,5)
+            celciWetBulbForLines = F2C(wetBulbForLines)
+        else:
+            celciWetBulbForLines = wetBulbForLines = range(-20,36,2)
+        enthalLines = []
+        enthText = []
+        
+        for ecount, enthl in enumerate(wetBulbForLines):
+            if IPTrigger: enthText.append(str(enthl)+" F")
+            else: enthText.append(str(enthl)+" C")
+            startRH = 0
+            startVal, startHR = lb_comfortModels.calcTempFromWetBulb(celciWetBulbForLines[ecount], startRH, avgBarPress)
+            if IPTrigger: startVal = C2F([startVal])[0]
+            startPt = rc.Geometry.Point3d(startVal, startHR, 0.0)
+            endRH = 100
+            endVal, endHR = lb_comfortModels.calcTempFromWetBulb(celciWetBulbForLines[ecount], endRH, avgBarPress)
+            if IPTrigger: endVal = C2F([endVal])[0]
+            endPt = rc.Geometry.Point3d(endVal, endHR*scaleFactor, 0.0)
+            enthLine = rc.Geometry.LineCurve(startPt, endPt)
+            enthalLines.append(enthLine)
     
-    for ecount, enthl in enumerate(enthalpyForLines):
-        if IPTrigger: enthText.append(str(enthl)+" BTU/lb")
-        else: enthText.append(str(enthl)+" kJ/kg")
-        startVal = lb_comfortModels.calcTempFromEnthalpy(celciEnthalpyForLines[ecount], 0.0)
-        if IPTrigger: startVal = C2F([startVal])[0]
-        startPt = rc.Geometry.Point3d(startVal, 0.0, 0.0)
-        endVal = lb_comfortModels.calcTempFromEnthalpy(celciEnthalpyForLines[ecount], 0.03)
-        if IPTrigger: endVal = C2F([endVal])[0]
-        endPt = rc.Geometry.Point3d(endVal, 0.03*scaleFactor, 0.0)
-        enthLine = rc.Geometry.LineCurve(startPt, endPt)
-        enthalLines.append(enthLine)
-    
-    #Split the enthalpy lines with the boundary of the chart.
+    #Split the enthalpy/wet bulb lines with the boundary of the chart.
     for crvCount, curve in enumerate(enthalLines):
         splitCrv = curve.Split(satBrep, sc.doc.ModelAbsoluteTolerance)
+        if len(splitCrv) != 0: enthalLines[crvCount] = splitCrv[0]
+    maxHRBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(maxHrLines[-1], rc.Geometry.Vector3d.ZAxis))
+    for crvCount, curve in enumerate(enthalLines):
+        splitCrv = curve.Split(maxHRBrep, sc.doc.ModelAbsoluteTolerance)
         if len(splitCrv) != 0: enthalLines[crvCount] = splitCrv[0]
     maxTBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(maxTempCurves[-1], rc.Geometry.Vector3d.ZAxis))
     for crvCount, curve in enumerate(enthalLines):
@@ -709,14 +741,23 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     
     #Make the text for the lines of constant enthalpy.
     enthLabelBasePts = []
+    if enthalpyOrWetBulb_ == True or enthalpyOrWetBulb_ == None: textFactor = 5
+    else: textFactor = 3
+    if mollierHX_:
+        if enthalpyOrWetBulb_ == True or enthalpyOrWetBulb_ == None: vertTFactor = 1.26
+        else: vertTFactor = 0.75
+    else: vertTFactor = None
+    
     for count, enth in enumerate(enthalLines):
-        enthLabelBasePts.append(rc.Geometry.Point3d(enth.PointAtEnd.X-(legendFontSize*5), enth.PointAtEnd.Y+(legendFontSize*0.5), 0))
+        enthLabelBasePts.append(rc.Geometry.Point3d(enth.PointAtEnd.X-(legendFontSize*textFactor), enth.PointAtEnd.Y+(legendFontSize*0.5), 0))
     if mollierHX_ == True:
         for ptCount, point in enumerate(enthLabelBasePts):
             mollierHXTransform(point)
-            enthLabelBasePts[ptCount] = rc.Geometry.Point3d(point.X, point.Y+(1.26/legendFontSize), 0)
+            enthLabelBasePts[ptCount] = rc.Geometry.Point3d(point.X, point.Y+(vertTFactor/legendFontSize), 0)
     
     # Bring all of the curves into one list.
+    chartText = []
+    chartTextPt = []
     chartCurves = []
     chartCurves.extend(maxhumidCurves)
     chartCurves.extend(maxTempCurves)
@@ -724,11 +765,15 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     chartCurves.extend(enthalLines)
     
     # Make the temperature text for the chart.
+    chartText.extend(tempText)
+    chartTextPt.extend(tempLabelBasePts)
     tempLabels = []
     for count, text in enumerate(tempText):
         tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize, legendBold)[0])
     
     # Make the humidity ratio text for the chart.
+    chartText.extend(ratioText)
+    chartTextPt.extend(ratioBasePt)
     ratioLabels = []
     for count, text in enumerate(ratioText):
         ratioLabels.extend(lb_visualization.text2srf([text], [ratioBasePt[count]], legendFont, legendFontSize, legendBold)[0])
@@ -746,10 +791,14 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
             relHumidBasePts[ptCount] = rc.Geometry.Point3d(point.X, point.Y+(0.5/legendFontSize), 0)
     for humid in relHumidNum:
         relHumidTxt.append(str(humid)+"%")
+    chartText.extend(relHumidTxt[:-1])
+    chartTextPt.extend(relHumidBasePts[:-1])
     for count, text in enumerate(relHumidTxt[:-1]):
         relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75, legendBold)[0])
     
     #Make the enthalpy labels for the chart.
+    chartText.extend(enthText)
+    chartTextPt.extend(enthLabelBasePts)
     enthLabels = []
     for count, text in enumerate(enthText):
         enthLabels.extend(lb_visualization.text2srf([text], [enthLabelBasePts[count]], legendFont, legendFontSize*0.75, legendBold)[0])
@@ -764,11 +813,14 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
         rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, xAxisPt[0])
         for geo in xAxisLabels:
             geo.Transform(rotateTransf)
+    chartText.extend(xAxisTxt)
+    chartTextPt.extend(xAxisPt)
     
     yAxisLabels = []
     yAxisTxt = ["Humidity Ratio"]
     if mollierHX_ == True:
-        yAxisPt = [rc.Geometry.Point3d(20, 50+(4*legendFontSize), 0)]
+        if IPTrigger: yAxisPt = [rc.Geometry.Point3d(40, 115+(4*legendFontSize), 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(20, 50+(4*legendFontSize), 0)]
         yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     else:
         yAxisPt = [rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.0245*scaleFactor, 0)]
@@ -776,6 +828,8 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
         rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.0245*scaleFactor, 0))
         for geo in yAxisLabels:
             geo.Transform(rotateTransf)
+    chartText.extend(yAxisTxt)
+    chartTextPt.extend(yAxisPt)
     
     #Make the chart title.
     def getDateStr(start, end):
@@ -797,6 +851,8 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     else: titlePt = [rc.Geometry.Point3d(-19, 0.0295*scaleFactor, 0), rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-19, (0.0295*scaleFactor)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
         titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
+    chartText.extend(titleTxt)
+    chartTextPt.extend(titlePt)
     
     #Bring all text and curves together in one list.
     chartCrvAndText = []
@@ -815,7 +871,7 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
         chartCrvAndText.append(item)
     
     
-    return chartCrvAndText, humidCurves
+    return chartCrvAndText, humidCurves, chartText, chartTextPt
 
 
 def colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_visualization, scaleFactor, lowB, highB, customColors, IPTrigger, farenheitVals):
@@ -1618,7 +1674,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     return finalTotalPercent, finalComfOrNot, strategyPercent, strategyOrNot
 
 
-def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization):
+def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan, lb_visualization):
     #Define the lists.
     pointColors = []
     colorLegends = []
@@ -1635,7 +1691,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     
     #Generate a legend for comfort.
     legend = []
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend.append(legendSrfs)
@@ -1648,7 +1704,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     for listCount, list in enumerate(annualHourlyDataSplit):
         if len(list) != 0:
             legend = []
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             legendColors = lb_visualization.gradientColor(legendText[:-1], "min", "max", customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)
@@ -1666,6 +1722,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -1680,12 +1737,12 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
         # Read the legend parameters.
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
         
         # Generate the chart curves.
         if IPTrigger == True: scaleFactor = 1500*(9/5)
         else: scaleFactor = 1500
-        chartCurves, humidityLines = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, lb_visualization)
+        chartCurves, humidityLines, chartText, chartTextPt = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, lb_visualization)
         
         #If there is annual hourly data, split it up.
         if annualHourlyData_ != []:
@@ -1713,7 +1770,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                     barPress2.append(barPress[0])
                 barPress = barPress2
             if len(patternList) == 8760:
-                HOYS, months, days = getHOYsBasedOnPeriod(analysisPeriod_, 1)
+                HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
                 newPatternList = []
                 for hour in HOYS:
                     newPatternList.append(patternList[hour-1])
@@ -1752,14 +1809,23 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         
         #As long as the calculation length is more than 1, make a colored mesh and get chart points for the input data.
         legend = []
+        legendSrfs = None
+        if legendFontSize != None: textSize = legendFontSize
+        else: textSize = 0.5
         if calcLength > 1:
             hourPts, coloredMesh, meshFaceValues = colorMesh(airTemp, relHumid, barPress, lb_preparation, lb_comfortModels, lb_visualization, scaleFactor, lowB, highB, customColors, IPTrigger, farenheitVals)
             legendTitle = "Hours"
-            if mollierHX_ == True: lb_visualization.calculateBB(chartCurves[:3], True)
+            if mollierHX_ == True:
+                if IPTrigger: lb_visualization.calculateBB(chartCurves[:3], True)
+                else: lb_visualization.calculateBB(chartCurves[:3], True)
             else:
-                if IPTrigger: lb_visualization.calculateBB(chartCurves[:3]+chartCurves[100:110], True)
-                else: lb_visualization.calculateBB(chartCurves[75:83], True)
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+                if IPTrigger:
+                    if enthalpyOrWetBulb_ == True or enthalpyOrWetBulb_ == None: lb_visualization.calculateBB(chartCurves[:3]+chartCurves[100:110], True)
+                    else: lb_visualization.calculateBB(chartCurves[:3]+chartCurves[110:120], True)
+                else:
+                    if enthalpyOrWetBulb_ == True or enthalpyOrWetBulb_ == None: lb_visualization.calculateBB(chartCurves[75:83], True)
+                    else: lb_visualization.calculateBB(chartCurves[80:100], True)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)
@@ -1772,6 +1838,19 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 moveTrans = rc.Geometry.Transform.Translation(0,-20,0)
                 for geo in legend: geo.Transform(moveTrans)
                 legendBasePoint.Transform(moveTrans)
+            
+            #Compile all text into one list.
+            finalLegNum = []
+            formatString = "%."+str(decimalPlaces)+"f"
+            for num in legendText:
+                try: finalLegNum.append(formatString % num)
+                except: finalLegNum.append(num)
+            if removeLessThan: pass
+            else:
+                finalLegNum[0] = "<=" + finalLegNum[0]
+                finalLegNum[-2] = finalLegNum[-2] + "<="
+            chartText.extend(finalLegNum)
+            chartTextPt.extend(textPt)
         else:
             if IPTrigger: hourPts = [rc.Geometry.Point3d(farenheitVals[0], lb_comfortModels.calcHumidRatio(airTemp, relHumid, barPress)[0][0]*scaleFactor, 0)]
             else: hourPts = [rc.Geometry.Point3d(airTemp[0], lb_comfortModels.calcHumidRatio(airTemp, relHumid, barPress)[0][0]*scaleFactor, 0)]
@@ -1798,10 +1877,11 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         
         #Generate colors for the points.
         if len(totalComfOrNot) > 1:
-            pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_visualization)
+            pointColors, pointLegends = getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan, lb_visualization)
         else:
             pointColors = []
             pointLegends = []
+        
         
         #If the molier transform is selected, apply it to the chart curves.
         if mollierHX_ == True:
@@ -1811,6 +1891,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for geo in comfortPolygon: mollierHXTransform(geo)
             for geo in strategyPolygons: mollierHXTransform(geo)
             for geo in hourPts: mollierHXTransform(geo)
+            for geo in chartTextPt: mollierHXTransform(geo)
         
         #If the user has selected to scale or move the geometry, scale it all and/or move it all.
         if basePoint_ != None:
@@ -1826,6 +1907,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 for geo in list:
                     geo.Transform(transformMtx)
             basePoint = basePoint_
+            for geo in chartTextPt: geo.Transform(transformMtx)
         else: basePoint = rc.Geometry.Point3d(0,0,0)
         
         if scale_ != None:
@@ -1837,7 +1919,30 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for geo in comfortPolygon: geo.Transform(transformMtx)
             for geo in strategyPolygons: geo.Transform(transformMtx)
             for geo in hourPts: geo.Transform(transformMtx)
+            for geo in chartTextPt: geo.Transform(transformMtx)
         
+        #If the user has set bakeIt to true, bake the geometry.
+        if bakeIt_ > 0:
+            #Make a list with all curves
+            allCurves = []
+            for geo in chartCurves:
+                try:
+                    geo.PointAtStart
+                    allCurves.append(geo)
+                except: pass
+            allCurves.extend(comfortPolygon)
+            allCurves.extend(strategyPolygons)
+            #Set up the new layer.
+            studyLayerName = 'PSYCHROMETRIC_CHARTS'
+            try:
+                if 'Temperature' in _dryBulbTemperature[2]: placeName = _dryBulbTemperature[1]
+                elif 'Humidity' in _relativeHumidity[2]: placeName = _relativeHumidity[1]
+                else: placeName = 'alternateLayerName'
+            except: placeName = 'alternateLayerName'
+            newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+            #Bake the objects.
+            if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, coloredMesh, legendSrfs, chartText, chartTextPt, textSize, legendFont, allCurves, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, coloredMesh, legendSrfs, chartText, chartTextPt, textSize, legendFont, allCurves, decimalPlaces, False)
         
         return totalComfPercent, totalComfOrNot, strategyTextNames, strategyPercent, strategyOrNot, chartCurves, coloredMesh, legend, legendBasePoint, comfortPolygon, strategyPolygons, hourPts, pointColors, pointLegends
     else:

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -29,24 +29,30 @@ Formulas from: "Comparison of predictive equations for resting Metabolic rate in
 Frankenfield, Roth-Yousey, Compher, American Dietetic Association, 2005.:
 https://www.andeal.org/files/Docs/Frankenfield_et_al_2005%5B1%5D.pdf
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.62
     
     input:
-        age_: An age of the person in years.
+        age_: An age of the person.
               -
-              If not supplied, default value of 30 will be used.
-        gender_: Person's gender.
-                 -
-                 1 or "male"
-                 2 or "female".
-                 -
-                 If not supplied, "male" will be used as a default value.
-        height_: Person's height in centimetres.
+              If not supplied, default value of 35 will be used.
+              -
+              In years.
+        sex_: Person's sex.
+              -
+              1 or "male"
+              2 or "female".
+              -
+              If not supplied, "male" will be used as a default value.
+        height_: Person's height.
                  -
                  If not supplied default value of 175 cm will be used.
-        weight_: Person's weight in kilograms.
+                 -
+                 In centimetres.
+        weight_: Person's weight.
                  -
                  If not supplied default value of 75 kg will be used.
+                 -
+                 In kilograms.
         bodyPosition_: Position of person's body.
                       -
                       1 or "sitting" for sitting position.
@@ -55,24 +61,39 @@ Provided by Ladybug 0.0.59
                       -
                       If not supplied, 2 (standing) will be used as a default value.
         clothingInsulation_: Clothing insulation of a person in "clo" units.
-                   It ranges from 0 (nude person) to 4 (polar outfit).
-                   Overall clo value can be determined by adding individual clo values for each type of cloths, based on a clo values table ( http://www.engineeringtoolbox.com/clo-clothing-thermal-insulation-d_732.html )
-                   A more simplified approch would be:
-                   -
-                   0.20 - Very light summer cloths (shorts/skirt, t-shirt, slippers, no socks)
-                   0.55 - Summer cloths (light trousers, short sleeves or blouse)
-                   1 - Street-business suit or Typical indoor winter clothing
-                   1.5 - Suit and cotton coat
-                   2 - Winter suit and coat
-                   4 - Heavy polar outfit (fur pants, coat, hood, gloves...)
-                   -
-                   If not supplied it will be caclulated for each hour based on air temperature, with minimal 0.6 and maximal 4 clo values.
+                             It ranges from 0 (nude person) to 4 (polar outfit).
+                             Overall clo value can be determined by adding individual clo values for each type of clothes, based on a clo values table ( http://www.engineeringtoolbox.com/clo-clothing-thermal-insulation-d_732.html )
+                             A more simplified approch would be:
+                             -
+                             0.20 - very light summer clothes (shorts/skirt, t-shirt, slippers, no socks)
+                             0.55 - summer clothes (light trousers, short sleeves or blouse)
+                             1 - street-business suit or Typical indoor winter clothing
+                             1.5 - suit and cotton coat
+                             2 - winter suit and coat
+                             2.58 - firefighting clothes
+                             4 - heavy polar outfit (fur pants, coat, hood, gloves...)
+                             -
+                             If not supplied it will be caclulated for each hour based on air temperature, with minimal 0.5 and maximal 4.1 clo values.
+                             -
+                             In clo.
+        clothingAlbedo_: Average clothing and skin albedo of a person.
+                         Ranges from 0 to 100%. In theory clothes-skin albedo of 0 would absorb, while 100% will reflect all solar radiation.
+                         Some of the examples:
+                         -
+                         light colored (white and bright clothes) - 57 %
+                         dark colored (black and gray clothes) - 21 %
+                         medium colored (any clothes colors between upper two) - 37 %
+                         protective polyethylene/aluminium suits - 95 %
+                         -
+                         If not supplied 37% (medium colored) will be used as a default.
+                         -
+                         In percent.
         acclimated_: Determine whether the test person had previously experienced heat/cold stress.
                      -
                      "acclimated" or True if person in subject is acclimatized,
                      "unacclimated" or False if it's not.
                      -
-                     If no value is supplied, False (unacclimated) will be used by default.
+                     If no value is supplied, True (acclimated) will be used by default.
         metabolicRate_: Activity's metabolic rate in mets. If not supplied 2.32 will be used as default value
                         Here are some of the examples of metabolic rates mets based on activity:
                         Activity - met
@@ -118,9 +139,14 @@ Provided by Ladybug 0.0.59
                         Running (15km/h) - 9.5
                         -
                         If not supplied default value of 2.32 (walking 4 km/h or 1.1m/s) mets will be used.
-        activityDuration_: Duration of the activity sequence in minutes.
+                        -
+                        In mets.
+        activityDuration_: Duration of the activity sequence.
+                           It should not be lower than 180 minutes (3 hours) and it should be dividable with 60 (meaning only full hour values are accepted: 180, 240, 300, 360, 420, 480, 540 ...)
                            -
                            If not supplied, default value of 480 minutes (8 hours) will be used.
+                           -
+                           In minutes.
     output:
         readMe!: ...
         BMI: Body Mass Index - is the ratio of the persons weight to square of height. It is generally used as a method of screening for weight category.
@@ -157,52 +183,53 @@ Provided by Ladybug 0.0.59
              -
              Once the person knows the number of daily calories needed to maintain its weight, it can easily calculate the number of calories it needs to eat in order to gain or lose weight.
              In calories/day.
-        bodyCharacteristics: A list of inputted values (age, gender, height, weight, bodyPosition, clothingInsulation, acclimated, metabolicRate, activityDuration).
+        bodyCharacteristics: A list of inputted values (age, sex, height, weight, bodyPosition, clothingInsulation, acclimated, metabolicRate, activityDuration).
                              -
                              Use it for the "Thermal comfort indices" component's "bodyCharacteristics_" input.
 """
 
 ghenv.Component.Name = "Ladybug_Body Characteristics"
 ghenv.Component.NickName = "BodyCharacteristics"
-ghenv.Component.Message = "VER 0.0.59\nAUG_31_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nJUL_14_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
+ghenv.Component.SubCategory = "4 | Extra"
+#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.Kernel as gh
 import scriptcontext as sc
 
 
-def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimated, metabolicRate, activityDuration):
+def main(age, sex, height, weight, bodyPosition, clothingInsulation, clothingAlbedo, acclimated, metabolicRate, activityDuration):
     try:
         if (age == None) or (age <= 0):
-            age = 30  # in years
+            age = 35  # in years
         
-        if (gender == None):
-            gender = "male"  # default
+        if (sex == None):
+            sex = "male"  # default
         else:
             try:
-                if (gender.lower() == "male"):
-                    gender = "male"
-                elif (gender.lower() == "female"):
-                    gender = "female"
+                if (sex.lower() == "male"):
+                    sex = "male"
+                elif (sex.lower() == "female"):
+                    sex = "female"
                 else:
                     raise
             except Exception,e:
                 try:
-                    if (int(gender) == 1):
-                        gender = "male"
-                    elif (int(gender) == 2):
-                        gender = "female"
+                    if (int(sex) == 1):
+                        sex = "male"
+                    elif (int(sex) == 2):
+                        sex = "female"
                     else:
                         raise
                 except Exception,e:
                     bodyCharacteristics = []
                     BMR = BMI = BMILevel = None
                     validInputData = False
-                    printMsg = "Something is wrong with your \"gender_\" input data. Please hover over this input to check the types of the data it supports."
+                    printMsg = "Something is wrong with your \"sex_\" input data. Please hover over this input to check the types of the data it supports."
                     
                     return BMR, BMI, BMILevel, bodyCharacteristics, validInputData, printMsg
         
@@ -246,11 +273,14 @@ def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimat
                     
                     return BMR, BMI, BMILevel, bodyCharacteristics, validInputData, printMsg
         
-        if (clothingInsulation == None):# or (clothingInsulation <= 0):
-            clothingInsulation = None
+        if (clothingInsulation == None) or (clothingInsulation < 0):
+            clothingInsulation = None  # it will be calculated
+        
+        if (clothingAlbedo == None) or (clothingAlbedo < 0) or (clothingAlbedo > 100):
+            clothingAlbedo = 37  # default in %, medium colored
         
         if (acclimated == None):
-            acclimated = "unacclimated"  # default
+            acclimated = "acclimated"  # default
         else:
             try:
                 if (acclimated.lower() == "unacclimated"):
@@ -278,8 +308,16 @@ def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimat
         if (metabolicRate == None) and (metabolicRate <= 0):
             metabolicRate = 2.32  # default value 2.32 mets = 135 W/m2
         
-        if (activityDuration == None) and (activityDuration <= 0):
+        if (activityDuration == None):
             activityDuration = 480  # default, in minutes
+        elif (activityDuration < 180) or (activityDuration % 60 != 0):
+            bodyCharacteristics = []
+            BMR = BMI = BMILevel = None
+            validInputData = False
+            printMsg = "activityDuration_ can not be lower than 180 minutes (3 hours) and it should be dividable with 60.\n" + \
+                       "Here are some of the correct input examples: 180, 240, 300, 360, 420, 480, 540 ..."
+            
+            return BMR, BMI, BMILevel, bodyCharacteristics, validInputData, printMsg
     
     except Exception, e:
         bodyCharacteristics = []
@@ -291,11 +329,11 @@ def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimat
     
     
     # BMR
-    if (gender == "male"):
+    if (sex == "male"):
         BMR = 9.99 * weight + 6.25 * heightCM - 4.92 * age + 5  # in calories/day (formula by Mifflin-St. Jeor)
         #BMR = 66.47 + (13.75*weight) + (5*heightCM) - (6.75*age)  # in calories/day  (formula by Harris Benedict)
         #BMR = 879 + 10.2*weight  # in calories/day  (formula by Owen)
-    elif (gender == "female"):
+    elif (sex == "female"):
         BMR = 9.99 * weight + 6.25 * heightCM - 5 * age - 161  # in calories/day (formula by Mifflin-St. Jeor)
         #BMR = 655.09 + (9.56*weight) + (1.84*heightCM) - (4.67*age)  # in calories/day  (formula by Harris Benedict)
         #BMR = 795 + 7.18*weight  # in calories/day  (formula by Owen)
@@ -305,7 +343,7 @@ def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimat
     BMI = weight/((heightM)**2)  # kg/m2
     
     # BMI categories by NHANES II survey
-    if (gender == "male"):
+    if (sex == "male"):
         if (BMI < 17.5):
             BMILevel = "Anorexia"
         elif (BMI >= 17.5) and (BMI < 20.7):
@@ -320,7 +358,7 @@ def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimat
             BMILevel = "Obese"
         elif (BMI >= 40):
             BMILevel = "Extreme obesity"
-    elif (gender == "female"):
+    elif (sex == "female"):
         if (BMI < 17.5):
             BMILevel = "Anorexia"
         elif (BMI >= 17.5) and (BMI < 19.1):
@@ -337,9 +375,9 @@ def main(age, gender, height, weight, bodyPosition, clothingInsulation, acclimat
             BMILevel = "Extreme obesity"
     
     # printing
-    print "Input data:\n\nAge: %0.2f\nGender: %s\nHeight: %0.2f\nWeight: %0.2f\nBody position: %s\nClothing: %s\nAcclimated: %s\nMetabolic rate: %0.2f\nActivity duration: %0.2f" % (age, gender, heightCM, weight, bodyPosition, clothingInsulation, acclimated, metabolicRate, activityDuration)
+    print "Input data:\n\nAge (years): %0.2f\nSex: %s\nHeight (cm): %0.2f\nWeight (kg): %0.2f\nBody position: %s\nClothing insulation (clo): %s\nClothing albedo (percent): %s\nAcclimated: %s\nMetabolic rate (met): %0.2f\nActivity duration (minutes): %0.2f" % (age, sex, heightCM, weight, bodyPosition, clothingInsulation, clothingAlbedo, acclimated, metabolicRate, activityDuration)
     
-    bodyCharacteristics = [age, gender, heightCM, weight, bodyPosition, clothingInsulation, acclimated, metabolicRate, activityDuration]
+    bodyCharacteristics = [age, sex, heightCM, weight, bodyPosition, clothingInsulation, clothingAlbedo, acclimated, metabolicRate, activityDuration]
     validInputData = True
     printMsg = "ok"
     
@@ -350,7 +388,7 @@ level = gh.GH_RuntimeMessageLevel.Warning
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         
-        BMR, BMI, BMILevel, bodyCharacteristics, validInputData, printMsg = main(age_, gender_, height_, weight_, bodyPosition_, clothingInsulation_, acclimated_, metabolicRate_, activityDuration_)
+        BMR, BMI, BMILevel, bodyCharacteristics, validInputData, printMsg = main(age_, sex_, height_, weight_, bodyPosition_, clothingInsulation_, clothingAlbedo_, acclimated_, metabolicRate_, activityDuration_)
         if not validInputData:
             print printMsg
             ghenv.Component.AddRuntimeMessage(level, printMsg)
