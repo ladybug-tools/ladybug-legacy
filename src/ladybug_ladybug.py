@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -36,7 +36,7 @@ along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.62
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -46,7 +46,8 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_24_2015'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_14_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -56,6 +57,7 @@ except: pass
 import rhinoscriptsyntax as rs
 import Rhino as rc
 import scriptcontext as sc
+import Grasshopper
 import Grasshopper.Kernel as gh
 import math
 import shutil
@@ -131,6 +133,26 @@ class CheckIn():
                     return
                 
                 sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
+        
+        self.updateCategoryIcon()
+    
+    @staticmethod
+    def updateCategoryIcon():
+        try:
+            url = "https://raw.githubusercontent.com/mostaphaRoudsari/ladybug/master/resources/icon_16_16.png"
+            icon = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "LB_icon_16_16.png")
+            if not os.path.isfile(icon):
+                client = System.Net.WebClient()
+                client.DownloadFile(url, icon)
+            
+            iconBitmap = System.Drawing.Bitmap(icon)
+            Grasshopper.Instances.ComponentServer.AddCategoryIcon("Ladybug", iconBitmap)
+        except:
+            pass
+            
+        Grasshopper.Instances.ComponentServer.AddCategoryShortName("Ladybug", "LB")
+        Grasshopper.Instances.ComponentServer.AddCategorySymbolName("Ladybug", "L")
+        Grasshopper.Kernel.GH_ComponentServer.UpdateRibbonUI() #Reload the Ribbon
     
     def getComponentVersion(self):
         monthDict = {'JAN':'01', 'FEB':'02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06',
@@ -259,6 +281,19 @@ class versionCheck(object):
                      "into canvas and try again."
         w = gh.GH_RuntimeMessageLevel.Warning
         GHComponent.AddRuntimeMessage(w, warningMsg)
+    
+    def isInputMissing(self, GHComponent):
+        isInputMissing = False
+        
+        for param in GHComponent.Params.Input:
+            if param.NickName.startswith("_") and \
+                not param.NickName.endswith("_") and \
+                not param.VolatileDataCount:
+                    warning = "Input parameter %s failed to collect data!"%param.NickName
+                    GHComponent.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    isInputMissing = True
+        
+        return isInputMissing
 
 
 class Preparation(object):
@@ -453,11 +488,11 @@ class Preparation(object):
             return day, month, time
             
         return (`day` + ' ' + month + ' ' + time)
-
+    
     def tupleStr2Tuple(self, str):
         strSplit = str[1:-1].split(',')
         return (int(strSplit[0]), int(strSplit[1]), int(strSplit[2]))
-
+    
     def date2Hour(self, month, day, hour):
         # fix the end day
         numOfDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
@@ -585,7 +620,7 @@ class Preparation(object):
     
     
     def readLegendParameters(self, legendPar, getCenter = True):
-        if legendPar == []: legendPar = [None] * 8
+        if legendPar == []: legendPar = [None] * 11
         if legendPar[0] == None: lowB = 'min'
         elif legendPar[0] == 'min': lowB = 'min'
         else: lowB = float(legendPar[0])
@@ -606,7 +641,6 @@ class Preparation(object):
         if legendPar[4] or getCenter: legendBasePoint = self.getCenPt(legendPar[4])
         else: legendBasePoint = None
         
-        # print len(legendPar)
         if legendPar[5] == None or float(legendPar[5])==0: legendScale = 1
         else: legendScale = legendPar[5]
         
@@ -616,12 +650,16 @@ class Preparation(object):
         if legendPar[7] == None: legendFontSize = None
         else: legendFontSize = legendPar[7]
         
-        try:
-            if legendPar[8] == None: legendBold = False
-            else: legendBold = legendPar[8]
-        except: legendBold = False
-
-        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold
+        if legendPar[8] == None: legendBold = False
+        else: legendBold = legendPar[8]
+        
+        if legendPar[9] == None: decimalPlaces = 2
+        else: decimalPlaces = legendPar[9]
+        
+        if legendPar[10] == None: removeLessThan = False
+        else: removeLessThan = legendPar[10]
+        
+        return lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan
     
     def readOrientationParameters(self, orientationStudyP):
         try:
@@ -836,7 +874,7 @@ class Preparation(object):
         groundtemp1st = [self.strToBeFoundgt, location, 'Depth', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
-
+        
         lnum = 1 # Line number
         
         with epwfile as i:
@@ -1435,7 +1473,7 @@ class Sunpath(object):
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
     def solInitOutput(self, month, day, hour, solarTime = False):
-        year = 2015
+        year = 2016
         self.time = hour
         
         a = 1 if (month < 3) else 0
@@ -2282,81 +2320,117 @@ class RunAnalysisInsideGH(object):
         return sunlightHoursResult, totalSLH, sunVisibility
     
     
-    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac):
-        
-        # preparing bulk lists
+    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas):
+        # preparing bulk lists for parallel process.
         view = [0] * len(testPts)
         viewResult = [0] * len(testPts)
         intersectionStTime = time.time()
-        YAxis = rc.Geometry.Vector3d.YAxis
-        ZAxis = rc.Geometry.Vector3d.ZAxis
         PI = math.pi
         
+        #Get the importance if point weights are specified.
         targetViewsCount  = len(viewPoints)
         ptImportance = []
         for ptCount in range(targetViewsCount):
             try:
-                
-                if viewPtsWeights[ptCount] == 0:
-                    ptImportance.append(100/targetViewsCount)
-                else:
-                    ptImportance.append(viewPtsWeights[ptCount]*100)
+                if viewPtsWeights[ptCount] == 0: ptImportance.append(100/targetViewsCount)
+                else: ptImportance.append(viewPtsWeights[ptCount]*100)
             except:
                 ptImportance.append(100/targetViewsCount)
         
+        #Get the importance for view vectors.
+        vecImportance = []
+        totalArea = sum(patchAreas)
+        for area in patchAreas:
+            vecImportance.append((area*100)/totalArea)
         
-        viewVector = []
         
+        #Create an empty list to be filled.
         ptVisibility = []
         for pt in testPts: ptVisibility.append(range(len(viewPoints)))
         
+        #If the view type is spherical or connical, neglect it from the view analysis.
+        if viewType == 1 or viewType == 2: bldgMesh = None
+        
+        #Function for view by test points.
         try:
-            def viewCalculator(i):
+            def viewCalculatorPoint(i):
                 for ptCount, viewPt in enumerate(viewPoints):
                     
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
                     vector = rc.Geometry.Vector3d(viewPt - testPts[i])
-                    vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and sun vector
-                    check = 0
-                    if vecAngle < (PI/2):
-                        check = 1; # this is simply here becuse I can't trust the break! Isn't it stupid?
-                        line = rc.Geometry.Line(testPts[i], viewPt)
-                        
-                        if bldgMesh!=None:
-                            if rc.Geometry.Intersect.Intersection.MeshLine(bldgMesh, line)[1] != None: check = 0
-                        if check != 0 and contextMesh!=None:
-                            if rc.Geometry.Intersect.Intersection.MeshLine(contextMesh, line)[1] != None: check = 0
-                        
-                        if check != 0:
-                            view[i] += ptImportance[ptCount]
+                    vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and the vector
+                    
+                    check = 1; # this is simply here becuse I can't trust the break! Isn't it stupid?
+                    line = rc.Geometry.Line(testPts[i], viewPt)
+                    
+                    if bldgMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshLine(bldgMesh, line)[1] != None: check = 0
+                    if check != 0 and contextMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshLine(contextMesh, line)[1] != None: check = 0
+                    
+                    if check != 0:
+                        view[i] += ptImportance[ptCount]
                         
                     ptVisibility[i][ptCount] = check
                 viewResult[i] = view[i] # This is stupid but I'm tired to change it now...
                 
                 if viewResult[i] > 100: viewResult[i] = 100
         except Exception, e:
-            # print `e`
-            # print 'Error in View calculation...'
             print "The calculation is terminated by user!"
             assert False
         
-        # calling the function
+        
+        #Function for view by view vectors.
         try:
-            # calling the function
+            def viewCalculatorVec(i):
+                for vecCount, viewVec in enumerate(viewPoints):
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    vecAngle = rc.Geometry.Vector3d.VectorAngle(viewVec, testVec[i]) # calculate the angle between the surface and the vector
+                    
+                    check = 1
+                    ray = rc.Geometry.Ray3d(testPts[i], viewVec)
+                    
+                    if bldgMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshRay(bldgMesh, ray) != -1: check = 0
+                    if check != 0 and contextMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh, ray) != -1: check = 0
+                    
+                    if check != 0:
+                        if viewType < 4: view[i] += vecImportance[vecCount]
+                        else: view[i] += vecImportance[vecCount] * 2 * math.cos(vecAngle)
+                    ptVisibility[i][vecCount] = check
+                
+                viewResult[i] = view[i] # This is stupid but I'm tired to change it now...
+                if viewResult[i] > 100: viewResult[i] = 100
+        except Exception, e:
+            print "The calculation is terminated by user!"
+            assert False
+        
+        
+        # Call the correct function.
+        try:
             if parallel:
-                tasks.Parallel.ForEach(range(len(testPts)), viewCalculator)
+                if viewType == -1:
+                    tasks.Parallel.ForEach(range(len(testPts)), viewCalculatorPoint)
+                else:
+                    tasks.Parallel.ForEach(range(len(testPts)), viewCalculatorVec)
             else:
-                for i in range(len(testPts)):
-                    viewCalculator(i)
+                if viewType == -1:
+                    for i in range(len(testPts)): viewCalculatorPoint(i)
+                else:
+                    for i in range(len(testPts)):
+                        viewCalculatorVec(i)
         except:
             return None, None, None
-            
         intersectionEndTime = time.time()
         print 'View calculation time = ', ("%.3f" % (intersectionEndTime - intersectionStTime)), 'Seconds...'
         
-        # average view
+        
+        # Calculate average view
         averageView = sum(viewResult)/len(viewResult)
             
         return viewResult, averageView, ptVisibility
@@ -2391,7 +2465,9 @@ class ResultVisualization(object):
         16: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(255,255,255)],
         17: [System.Drawing.Color.FromArgb(0,16,120), System.Drawing.Color.FromArgb(38,70,160), System.Drawing.Color.FromArgb(5,180,222), System.Drawing.Color.FromArgb(16,180,109), System.Drawing.Color.FromArgb(59,183,35), System.Drawing.Color.FromArgb(143,209,19), System.Drawing.Color.FromArgb(228,215,29), System.Drawing.Color.FromArgb(246,147,17), System.Drawing.Color.FromArgb(243,74,0), System.Drawing.Color.FromArgb(255,0,0)],
         18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
-        19: [System.Drawing.Color.FromArgb(153,153,153), System.Drawing.Color.FromArgb(100,149,237), System.Drawing.Color.FromArgb(104,152,231), System.Drawing.Color.FromArgb(115,159,214), System.Drawing.Color.FromArgb(132,171,188), System.Drawing.Color.FromArgb(154,186,155), System.Drawing.Color.FromArgb(178,202,119), System.Drawing.Color.FromArgb(201,218,82), System.Drawing.Color.FromArgb(223,233,49), System.Drawing.Color.FromArgb(240,245,23), System.Drawing.Color.FromArgb(251,252,6), System.Drawing.Color.FromArgb(255,255,0)]
+        19: [System.Drawing.Color.FromArgb(138,17,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(128,102,64)],
+        20: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(137,0,139), System.Drawing.Color.FromArgb(218,0,218), System.Drawing.Color.FromArgb(196,0,255), System.Drawing.Color.FromArgb(0,92,255), System.Drawing.Color.FromArgb(0,198,252), System.Drawing.Color.FromArgb(0,244,215), System.Drawing.Color.FromArgb(0,220,101), System.Drawing.Color.FromArgb(7,193,0), System.Drawing.Color.FromArgb(115,220,0), System.Drawing.Color.FromArgb(249,251,0), System.Drawing.Color.FromArgb(254,178,0), System.Drawing.Color.FromArgb(253,77,0), System.Drawing.Color.FromArgb(255,15,15), System.Drawing.Color.FromArgb(255,135,135), System.Drawing.Color.FromArgb(255,255,255)],
+        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)]
         }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
@@ -2525,7 +2601,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -2542,7 +2618,7 @@ class ResultVisualization(object):
             for pt in range(numPt):
                 point = rc.Geometry.Point3d(basePt[0] + (pt%2) * legendWidth, basePt[1] + int(pt/2) * legendHeight, basePt[2])
                 ptList.append(point)
-    
+            
             meshVertices = ptList; textPt = []
             legendSrf = rc.Geometry.Mesh()
             for segNum in  range(numOfSeg):
@@ -2569,8 +2645,6 @@ class ResultVisualization(object):
         if  textSize == None:
             textSize = (legendHeight/3) * legendScale
         
-        # numbers
-        # rs.frange(0, 1, round(1/(numofColors-1),6))
         try:
             numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
         except:
@@ -2578,12 +2652,17 @@ class ResultVisualization(object):
                 numbers = [lowB]; numOfSeg = 1
             else:
                 numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
-        ###
+        if decimalPlaces == None: decimalPlaces = 2
+        
+        ### Create the numbers in the legend.
         if len(numbers) < numOfSeg: numbers.append(highB)
         elif len(numbers) > numOfSeg: numbers = numbers[:-1]
-        numbersStr = [("%.2f" % x) for x in numbers]
-        numbersStr[0] = "<=" + numbersStr[0]
-        numbersStr[-1] = numbersStr[-1] + "<="
+        formatString = "%."+str(decimalPlaces)+"f"
+        numbersStr = [(formatString % x) for x in numbers]
+        if greaterLessThan: pass
+        else:
+            numbersStr[0] = "<=" + numbersStr[0]
+            numbersStr[-1] = numbersStr[-1] + "<="
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
         
@@ -2805,6 +2884,7 @@ class ResultVisualization(object):
             studyLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, studyLayerPath, True)
             if studyLayerIndex < 0: studyLayerIndex = layerT.Add(studyLayer)
             
+            
             # make a sub-layer for current project
             if projectName: layerName = str(projectName)
             else: layerName = 'Option'
@@ -2821,60 +2901,169 @@ class ResultVisualization(object):
                         l = l + 1
                         layerPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l`
                         layerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, layerPath, True)
-                        
+                
                 # creat the new sub layer for each geometry
                 nLayer = rc.DocObjects.Layer()
                 nLayer.Name = layerName + '_' + `l`
                 nLayer.IsVisible = False
                 nLayer.ParentLayerId = layerT[studyLayerIndex].Id
-                # nLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, nLayer.Name, True)
                 
                 nLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, layerPath, True)
                 if nLayerIndex < 0: nLayerIndex = layerT.Add(nLayer)
-                # study = 1; # do it once in a rotation study
-                # add layer for
-                newLayer = rc.DocObjects.Layer()
-                if OrientationStudy:
-                    newLayer.Name = ("%.3f" % (result)) + '<-' + layerName + '_' + `l` +'_Angle '+ `rotationAngle`
-                else:
-                    try: newLayer.Name = ("%.3f" % (result)) + '<-Result for '+ layerName + '_' + `l`
-                    except: newLayer.Name = result
+                if result != None:
+                    # study = 1; # do it once in a rotation study
+                    # add layer for
+                    newLayer = rc.DocObjects.Layer()
+                    if OrientationStudy:
+                        newLayer.Name = ("%.3f" % (result)) + '<-' + layerName + '_' + `l` +'_Angle '+ `rotationAngle`
+                    else:
+                        try: newLayer.Name = ("%.3f" % (result)) + '<-Result for '+ layerName + '_' + `l`
+                        except: newLayer.Name = result
+                            
+                    newLayerFullPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l` + '::' + newLayer.Name
+                    newLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, newLayerFullPath, True)
+                    # newLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, newLayer.Name, True)
+                    if newLayerIndex < 0:
+                        newLayer.IsVisible = True
+                        newLayer.ParentLayerId = layerT[nLayerIndex].Id
+                        newLayerIndex = layerT.Add(newLayer)
                         
-                newLayerFullPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l` + '::' + newLayer.Name
-                newLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, newLayerFullPath, True)
-                # newLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, newLayer.Name, True)
-                if newLayerIndex < 0:
-                    newLayer.IsVisible = True
-                    newLayer.ParentLayerId = layerT[nLayerIndex].Id
-                    newLayerIndex = layerT.Add(newLayer)
-                
-            return newLayerIndex, l
+                    return newLayerIndex, l
+                else:
+                    return nLayerIndex, 1
     
-    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None):
-            attr = rc.DocObjects.ObjectAttributes()
-            attr.LayerIndex = newLayerIndex
-            attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
-            attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
-            try:
-                for mesh in testGeomety: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
-            except:
-                rc.RhinoDoc.ActiveDoc.Objects.AddMesh(testGeomety, attr)
-            
-            rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
-            if crvs != None:
-                for crv in crvs:
-                    try:
-                        rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2, hatchBake = True):
+        #Set up basic object attributes
+        attr = rc.DocObjects.ObjectAttributes()
+        attr.LayerIndex = newLayerIndex
+        attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+        attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
+        
+        #Write colored meshes into the document
+        if hatchBake:
+            if testGeomety != None:
+                try:
+                    for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
+                except:
+                    self.mesh2Hatch([testGeomety], newLayerIndex, attr)
+            if legendGeometry != None: self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
+        else:
+            if testGeomety != None:
+                try:
+                    for mesh in testGeomety:
+                        #Bake the mesh into the scene.
+                        rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
+                except:
+                    rc.RhinoDoc.ActiveDoc.Objects.AddMesh(testGeomety, attr)
+            if legendGeometry != None: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
+        
+        #Write the curves into the document.
+        attr.ObjectColor = System.Drawing.Color.Black
+        if crvs != None:
+            for crv in crvs:
+                try:
+                    rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+                except:
+                    try: rc.RhinoDoc.ActiveDoc.Objects.AddPolyline(crv, attr)
                     except:
                         # This is for breps surfaces as I changed curves to surfaces now
                         try: rc.RhinoDoc.ActiveDoc.Objects.AddBrep(crv, attr)
                         except: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(crv, attr)
-            for text in range(len(legendText)):
-                plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
-                if type(legendText[text]) is not str: legendText[text] = ("%.2f" % legendText[text])
-                rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
+        
+        #Write the text into the document
+        formatString = "%." + str(decimalPlaces) + "f"
+        for text in range(len(legendText)):
+            plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
+            if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
+            rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
+    
+    def mesh2Hatch(self, meshes, parentLayerIndex, attr = None):
+        #Go through each of the meshes and make a group of hatches.
+        for mesh in meshes:
+            
+            #Make some lists to hold key parameters
+            hatches = []
+            colors = []
+            guids = []
+            runningVertexCount = 0
+            meshColors = mesh.VertexColors
+            
+            for faceCount, face in enumerate(mesh.Faces):
+                faceColorList = []
+                facePointList = []
                 
-                # end of the script
+                #Extract the points and colors.
+                if face.IsQuad:
+                    faceColorList.append(meshColors[face.A])
+                    faceColorList.append(meshColors[face.B])
+                    faceColorList.append(meshColors[face.C])
+                    faceColorList.append(meshColors[face.D])
+                    
+                    facePointList.append(mesh.PointAt(faceCount, 1,0,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,1,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,1,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,0,1))
+                else:
+                    faceColorList.append(meshColors[face.A])
+                    faceColorList.append(meshColors[face.B])
+                    faceColorList.append(meshColors[face.C])
+                    
+                    facePointList.append(mesh.PointAt(faceCount, 1,0,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,1,0,0))
+                    facePointList.append(mesh.PointAt(faceCount, 0,0,1,0))
+                
+                #Calculate the average color of the face.
+                if face.IsQuad:
+                    hatchColorR = (faceColorList[0].R + faceColorList[1].R + faceColorList[2].R + faceColorList[3].R) / 4
+                    hatchColorG = (faceColorList[0].G + faceColorList[1].G + faceColorList[2].G + faceColorList[3].G) / 4
+                    hatchColorB = (faceColorList[0].B + faceColorList[1].B + faceColorList[2].B + faceColorList[3].B) / 4
+                else:
+                    hatchColorR = (faceColorList[0].R + faceColorList[1].R + faceColorList[2].R) / 3
+                    hatchColorG = (faceColorList[0].G + faceColorList[1].G + faceColorList[2].G) / 3
+                    hatchColorB = (faceColorList[0].B + faceColorList[1].B + faceColorList[2].B) / 3
+                hatchColor = System.Drawing.Color.FromArgb(255, hatchColorR, hatchColorG, hatchColorB)
+                
+                #Create the outline of a new hatch.
+                hatchCurveInit = rc.Geometry.PolylineCurve(facePointList)
+                if face.IsQuad: hatchExtra = rc.Geometry.LineCurve(facePointList[0], facePointList[3])
+                else: hatchExtra = rc.Geometry.LineCurve(facePointList[0], facePointList[2])
+                hatchCurve = rc.Geometry.Curve.JoinCurves([hatchCurveInit, hatchExtra], sc.doc.ModelAbsoluteTolerance)[0]
+                
+                #Create the hatch.
+                try:
+                    if hatchCurve.IsPlanar():
+                        meshFaceHatch = rc.Geometry.Hatch.Create(hatchCurve, 0, 0, 0)[0]
+                        hatches.append(meshFaceHatch)
+                        colors.append(hatchColor)
+                    else:
+                        #We have to split the quad face into two triangles.
+                        hatchCurveInit1 = rc.Geometry.PolylineCurve([facePointList[0], facePointList[1], facePointList[2]])
+                        hatchExtra1 = rc.Geometry.LineCurve(facePointList[0], facePointList[2])
+                        hatchCurve1 = rc.Geometry.Curve.JoinCurves([hatchCurveInit1, hatchExtra1], sc.doc.ModelAbsoluteTolerance)[0]
+                        meshFaceHatch1 = rc.Geometry.Hatch.Create(hatchCurve1, 0, 0, 0)[0]
+                        hatchCurveInit2 = rc.Geometry.PolylineCurve([facePointList[2], facePointList[3], facePointList[0]])
+                        hatchExtra2 = rc.Geometry.LineCurve(facePointList[2], facePointList[0])
+                        hatchCurve2 = rc.Geometry.Curve.JoinCurves([hatchCurveInit2, hatchExtra2], sc.doc.ModelAbsoluteTolerance)[0]
+                        meshFaceHatch2 = rc.Geometry.Hatch.Create(hatchCurve2, 0, 0, 0)[0]
+                        
+                        hatches.extend([meshFaceHatch1, meshFaceHatch2])
+                        colors.extend([hatchColor, hatchColor])
+                except:pass
+            
+            
+            #Bake the hatch into the scene.
+            for count, hatch in enumerate(hatches):
+                if attr == None:
+                    attr = rc.DocObjects.ObjectAttributes()
+                    attr.LayerIndex = parentLayerIndex
+                attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+                attr.ObjectColor = colors[count]
+                
+                guids.append(rc.RhinoDoc.ActiveDoc.Objects.AddHatch(hatch, attr))
+            
+            #Group the hatches into one object so that they are easy to handle in the Rhino scene.
+            groupT = rc.RhinoDoc.ActiveDoc.Groups
+            rc.DocObjects.Tables.GroupTable.Add(groupT, guids)
 
 
 class ComfortModels(object):
@@ -2890,7 +3079,7 @@ class ComfortModels(object):
         
         r = []
         set = self.comfPierceSET(ta, tr, vel, rh, met , clo, wme)
-        stillAirThreshold = 0.15
+        stillAirThreshold = 0.1
         
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function 
         def utilSecant(a, b, epsilon):
@@ -3273,6 +3462,35 @@ class ComfortModels(object):
         
         return upTemper, downTemper
     
+    def calcMRTThreshold(self, initialGuessDown, airTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD):
+        if targetPPD == 10.0: targetPMV = 0.5
+        elif targetPPD == 6.0: targetPMV = 0.220
+        elif targetPPD == 15.0: targetPMV = 0.690
+        elif targetPPD == 20.0: targetPMV = 0.84373
+        elif targetPPD < 5.0: targetPMV = 0.0001
+        else:
+            #Use Rhino's geometry functions to compute a target pmv
+            def pmvCrv(pmv):
+                return 100.0 - 95.0 * math.exp(-0.03353 * pow(pmv, 4.0) - 0.2179 * pow(pmv, 2.0))
+            
+            distribPts = []
+            startPMV = 0
+            for pmvCount in range(20):
+                distribPts.append(rc.Geometry.Point3d(startPMV, pmvCrv(startPMV), 0))
+                startPMV += 0.25
+            distribCrv = rc.Geometry.Curve.CreateInterpolatedCurve(distribPts, 3)
+            testLine = rc.Geometry.LineCurve(rc.Geometry.Point3d(0, targetPPD, 0), rc.Geometry.Point3d(5, targetPPD, 0))
+            intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
+            targetPMV = intersectPts[0].PointA.X
+        
+        downTemper = initialGuessDown
+        downDelta = 3
+        while abs(downDelta) > 0.01:
+            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(airTemp, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+            downDelta = -targetPMV - pmv
+            downTemper = downTemper + downDelta
+        
+        return downTemper, pmv, set
     
     def comfAdaptiveComfortASH55(self, ta, tr, runningMean, vel, eightyOrNinety, levelOfConditioning = 0):
         # Define the variables that will be used throughout the calculation.
@@ -3465,10 +3683,10 @@ class ComfortModels(object):
         
         #Do a series of checks to be sure that the input values are within the bounds accepted by the model.
         check = True
-        if Ta < -50.0 or Ta > 50.0: check = False
-        else: pass
-        if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
-        else: pass
+        #if Ta < -50.0 or Ta > 50.0: check = False
+        #else: pass
+        #if Tmrt-Ta < -30.0 or Tmrt-Ta > 70.0: check = False
+        #else: pass
         if va < 0.5: va = 0.5
         elif va > 17: va = 17
         else: pass
@@ -3852,11 +4070,33 @@ class ComfortModels(object):
         
         return relHumid
     
+    def calcRelHumidFromDryBulbDewPt(self, temperature, dewPt):
+        #Calculate the partial pressure of water in the atmosphere.
+        A = 6.11657
+        m = 7.591386
+        Tn = 240.7263
+        Td = dewPt + 273
+        Pw = ((math.pow(10, (m/((Tn/Td)+1)))) * A) / 100
+        
+        #Convert Temperature to Kelvin
+        TKelvin = temperature + 273
+        #Calculate saturation pressure.
+        Pws = self.calcVapPressHighAccuracy([TKelvin])[0]
+        
+        #Calculate the relative humidity.
+        relHumid = (Pw/Pws)*100
+        
+        return relHumid
     
     def calcTempFromEnthalpy(self, enthalpy, absHumid):
         airTemp =(enthalpy - 2.5*(absHumid*1000))/(1.01 + (0.00189*absHumid*1000))
         return airTemp
     
+    def calcTempFromWetBulb(self, wetBulb, relHumid, avgBarPress):
+        humidityRatio, enthalpy, partialPressure, saturationPressure = self.calcHumidRatio([wetBulb], [relHumid], [avgBarPress])
+        absHumid, enthalpy, partialPressure, saturationPressure = self.calcHumidRatio([wetBulb], [100], [avgBarPress])
+        airTemp = wetBulb + (((absHumid[0]-humidityRatio[0])*2260000)/(1005)) 
+        return airTemp, humidityRatio[0]
     
     def outlineCurve(self, curve):
         solidBrep = rc.Geometry.Brep.CreatePlanarBreps([curve])[0]
@@ -4573,6 +4813,364 @@ class ComfortModels(object):
         [0.4528350000000001, 0.45463612555555566, 0.45616600444444455, 0.4574278542857145, 0.45842489269841274, 0.4591603373015874, 0.4596374057142858, 0.45985931555555565, 0.45982928444444443, 0.45955052999999996, 0.4590262698412699, 0.45825972158730166, 0.4572541028571428, 0.4560126312698413, 0.4545385244444445, 0.45283500000000004, 0.45090527555555554, 0.4487525687301587, 0.44638009714285715, 0.44379107841269844, 0.44098873015873014, 0.43797627, 0.4347569155555555, 0.43133388444444437, 0.4277103942857143, 0.4238896626984128, 0.4198749073015873, 0.41566934571428577, 0.4112761955555556, 0.4066986744444444, 0.40194, 0.39700635888888886, 0.39191581396825403, 0.38668939714285716, 0.3813481403174603, 0.3759130753968254, 0.3704052342857143, 0.36484564888888893, 0.3592553511111111, 0.3536553728571429, 0.34806674603174603, 0.34251050253968246, 0.3370076742857143, 0.3315792931746032, 0.3262463911111111, 0.32103, 0.3159446888888889, 0.3109791753968254, 0.3061157142857143, 0.30133656031746026, 0.29662396825396825, 0.29196019285714286, 0.2873274888888889, 0.2827081111111111, 0.27808431428571434, 0.2734383531746032, 0.26875248253968254, 0.2640089571428572, 0.25919003174603183, 0.2542779611111111, 0.24925500000000003, 0.24410888555555557, 0.23884928444444448, 0.23349134571428576, 0.22805021841269843, 0.2225410515873016, 0.21697899428571432, 0.2113791955555555, 0.20575680444444444, 0.20012697, 0.19450484126984124, 0.18890556730158728, 0.18334429714285713, 0.17783617984126984, 0.17239636444444442, 0.16704000000000002, 0.16178223555555554, 0.1566382201587302, 0.15162310285714284, 0.1467520326984127, 0.1420401587301587, 0.13750262999999996, 0.1331545955555555, 0.12901120444444442, 0.1250876057142857, 0.12139894841269841, 0.11796038158730159, 0.1147870542857143, 0.11189411555555553, 0.10929671444444444, 0.10701]]
         
         return spline_stand[az][alt]
+    
+    class physiologicalEquivalentTemperature():
+        # based on: Peter Hoeppe PET fortran code, from:
+        # "Urban climatic map and standards for wind environment - Feasibility study, Technical Input Report No.1",
+        # The Chinese University of Hong Kong, Planning Department, Nov 2008
+        
+        def __init__(self, Ta, MRT, rh, ws, age, sex, heightM, weight, bodyPosition, M, Icl):
+            # personal inputs
+            self.ta = Ta  # in Celsius degrees
+            self.tmrt = MRT  # in Celsius degrees
+            self.rh = rh  # in %
+            self.v = ws  # in m/s
+            self.vpa = self.rh / 100.0 * 6.105 * math.exp(17.27 * self.ta / (237.7 + self.ta))
+            self.age = age  # in years
+            if sex == "male": sex = 1
+            elif sex == "female": sex = 2
+            self.sex = sex
+            self.ht = heightM  # in meters
+            self.mbody = weight  # in kg
+            self.work = M  # in W/m2
+            if ((Icl-0.02) < 0.01):
+                Icl = 0.02
+            self.icl = Icl
+            self.eta = 0.0
+            self.fcl = 1 + (0.31*self.icl)
+            if bodyPosition == "sitting":
+                self.feff = 0.696
+            elif bodyPosition == "standing":
+                self.feff = 0.725
+            elif bodyPosition == "crouching":
+                self.feff = 0.67
+            # constants
+            self.po = 1013.25
+            self.p = 1013.25
+            self.rob = 1.06
+            self.cb = 3640.0
+            self.food = 0.0
+            self.emsk = 0.99
+            self.emcl = 0.95
+            self.evap = 2.42 * math.pow(10.0, 6.0)
+            self.sigm = 5.67 * math.pow(10.0, -8.0)
+        
+        def inkoerp(self):
+            # inner body energy
+            eswdif = 3.19 * math.pow(self.mbody, 0.75) * (1.0 + 0.004 * (30.0 - self.age) + 0.018 * (self.ht * 100.0 / math.pow(self.mbody, 1.0 / 3.0) - 42.1))
+            eswphy = 3.45 * math.pow(self.mbody, 0.75) * (1.0 + 0.004 * (30.0 - self.age) + 0.01 * (self.ht * 100.0 / math.pow(self.mbody, 1.0 / 3.0) - 43.4))
+            eswpot = self.work + eswphy
+            fec = self.work + eswdif
+            he = 0.0
+            if self.sex == 1:
+                he = eswpot
+            elif self.sex == 2:
+                he = fec
+            self.h = he * (1.0 - self.eta)
+            # sensible respiratory energy
+            self.cair = 1010.0
+            self.tex = 0.47 * self.ta + 21.0
+            self.rtv = 1.44 * math.pow(10.0, -6.0) * he
+            self.eres = self.cair * (self.ta - self.tex) * self.rtv
+            # deferred respiration energy
+            self.vpex = 6.11 * math.pow(10.0, 7.45 * self.tex / (235.0 + self.tex))
+            self.erel = 0.623 * self.evap / self.p * (self.vpa - self.vpex) * self.rtv
+            self.ere = self.eres + self.erel
+            
+            return self.ere
+        
+        def berech(self):
+            self.wetsk = 0.0
+            c = [None for i in range(11)]
+            tcore = [None for i in range(7)]
+            self.adu = 0.203 * math.pow(self.mbody, 0.425) * math.pow(self.ht, 0.725)
+            self.hc = 2.67 + 6.5 * math.pow(self.v, 0.67)
+            self.hc = self.hc * math.pow(self.p / self.po, 0.55)
+            self.facl = (173.51 * self.icl - 2.36 - 100.76 * self.icl * self.icl + 19.28 * math.pow(self.icl, 3.0)) / 100.0
+            if self.facl > 1.0:
+                self.facl = 1.0
+            rcl = self.icl / 6.45 / self.facl
+            if self.icl >= 2.0:
+                y = 1.0
+            if self.icl > 0.6 and self.icl < 2.0:
+                y = (self.ht - 0.2) / self.ht
+            if self.icl <= 0.6 and self.icl > 0.3:
+                y = 0.5
+            if self.icl <= 0.3 and self.icl > 0.0:
+                y = 0.1
+            r2 = self.adu * (self.fcl - 1.0 + self.facl) / (6.28 * self.ht * y)
+            r1 = self.facl * self.adu / (6.28 * self.ht * y)
+            di = r2 - r1
+            # skin temperatures
+            for j in range(1,7):
+                self.tsk = 34.0
+                self.count1 = 0
+                self.tcl = (self.ta + self.tmrt + self.tsk) / 3.0
+                self.enbal2 = 0.0
+                while True:
+                    for count2 in range(1,100):
+                        self.acl = self.adu * self.facl + self.adu * (self.fcl - 1.0)
+                        rclo2 = self.emcl * self.sigm * (math.pow(self.tcl + 273.2, 4.0) - math.pow(self.tmrt + 273.2, 4.0)) * self.feff
+                        htcl = 6.28 * self.ht * y * di / (rcl * math.log(r2 / r1) * self.acl)
+                        self.tsk = 1.0 / htcl * (self.hc * (self.tcl - self.ta) + rclo2) + self.tcl
+                        # radiation balance
+                        self.aeff = self.adu * self.feff
+                        self.rbare = self.aeff * (1.0 - self.facl) * self.emsk * self.sigm * (math.pow(self.tmrt + 273.2, 4.0) - math.pow(self.tsk + 273.2, 4.0))
+                        self.rclo = self.feff * self.acl * self.emcl * self.sigm * (math.pow(self.tmrt + 273.2, 4.0) - math.pow(self.tcl + 273.2, 4.0))
+                        self.rsum = self.rbare + self.rclo
+                        # convection
+                        self.cbare = self.hc * (self.ta - self.tsk) * self.adu * (1.0 - self.facl)
+                        self.cclo = self.hc * (self.ta - self.tcl) * self.acl
+                        self.csum = self.cbare + self.cclo
+                        # core temperature
+                        c[0] = self.h + self.ere
+                        c[1] = self.adu * self.rob * self.cb
+                        c[2] = 18.0 - 0.5 * self.tsk
+                        c[3] = 5.28 * self.adu * c[2]
+                        c[4] = 13.0 / 625.0 * c[1]
+                        c[5] = 0.76075 * c[1]
+                        c[6] = c[3] - c[5] - self.tsk * c[4]
+                        c[7] = -c[0] * c[2] - self.tsk * c[3] + self.tsk * c[5]
+                        c[8] = c[6] * c[6] - 4.0 * c[4] * c[7]
+                        c[9] = 5.28 * self.adu - c[5] - c[4] * self.tsk
+                        c[10] = c[9] * c[9] - 4.0 * c[4] * (c[5] * self.tsk - c[0] - 5.28 * self.adu * self.tsk)
+                        if self.tsk == 36.0:
+                            self.tsk = 36.01
+                        tcore[6] = c[0] / (5.28 * self.adu + c[1] * 6.3 / 3600.0) + self.tsk
+                        tcore[2] = c[0] / (5.28 * self.adu + c[1] * 6.3 / 3600.0 / (1.0 + 0.5 * (34.0 - self.tsk))) + self.tsk
+                        if c[10] >= 0.0:
+                            tcore[5] = (-c[9] - math.pow(c[10], 0.5)) / (2.0 * c[4])
+                            tcore[0] = (-c[9] + math.pow(c[10], 0.5)) / (2.0 * c[4])
+                        if c[8] >= 0.0:
+                            tcore[1] = (-c[6] + math.pow(abs(c[8]), 0.5)) / (2.0 * c[4])
+                            tcore[4] = (-c[6] - math.pow(abs(c[8]), 0.5)) / (2.0 * c[4])
+                        tcore[3] = c[0] / (5.28 * self.adu + c[1] * 1.0 / 40.0) + self.tsk
+                        # transpiration
+                        tbody = 0.1 * self.tsk + 0.9 * tcore[j - 1]
+                        swm = 304.94 * (tbody - 36.6) * self.adu / 3600000.0
+                        self.vpts = 6.11 * math.pow(10.0, 7.45 * self.tsk / (235.0 + self.tsk))
+                        if tbody <= 36.6:
+                            swm = 0.0
+                        swf = 0.7 * swm
+                        if self.sex == 1:
+                            sw = swm
+                        if self.sex == 2:
+                            sw = swf
+                        eswphy = -sw * self.evap
+                        he = 0.633 * self.hc / (self.p * self.cair)
+                        fec = 1.0 / (1.0 + 0.92 * self.hc * rcl)
+                        eswpot = he * (self.vpa - self.vpts) * self.adu * self.evap * fec
+                        self.wetsk = eswphy / eswpot
+                        if self.wetsk > 1.0:
+                            self.wetsk = 1.0
+                        eswdif = eswphy - eswpot
+                        if eswdif <= 0.0:
+                            self.esw = eswpot
+                        if eswdif > 0.0:
+                            self.esw = eswphy
+                        if self.esw > 0.0:
+                            self.esw = 0.0
+                        # diffusion
+                        self.rdsk = 0.79 * math.pow(10.0, 7.0)
+                        self.rdcl = 0.0
+                        self.ed = self.evap / (self.rdsk + self.rdcl) * self.adu * (1.0 - self.wetsk) * (self.vpa - self.vpts)
+                        # max vb
+                        vb1 = 34.0 - self.tsk
+                        vb2 = tcore[j - 1] - 36.6
+                        if vb2 < 0.0:
+                            vb2 = 0.0
+                        if vb1 < 0.0:
+                            vb1 = 0.0
+                        vb = (6.3 + 75.0 * vb2) / (1.0 + 0.5 * vb1)
+                        # energy balance
+                        self.enbal = self.h + self.ed + self.ere + self.esw + self.csum + self.rsum + self.food
+                        # clothing temperature
+                        if self.count1 == 0:
+                            self.xx = 1.0
+                        if self.count1 == 1:
+                            self.xx = 0.1
+                        if self.count1 == 2:
+                            self.xx = 0.01
+                        if self.count1 == 3:
+                            self.xx = 0.001
+                        if self.enbal > 0.0:
+                            self.tcl = self.tcl + self.xx
+                        if self.enbal < 0.0:
+                            self.tcl = self.tcl - self.xx
+                        if (self.enbal > 0.0 or self.enbal2 <= 0.0) and (self.enbal < 0.0 or self.enbal2 >= 0.0):
+                            self.enbal2 = self.enbal
+                            count2 += 1
+                        else:
+                            break
+                    if self.count1 == 0.0 or self.count1 == 1.0 or self.count1 == 2.0:
+                        self.count1 = self.count1 + 1
+                        self.enbal2 = 0.0
+                    else:
+                        break
+                for k in range(20):
+                    if self.count1 == 3.0 and (j != 2 and j != 5):
+                        if j != 6 and j != 1:
+                            if j != 3:
+                                if j != 7:
+                                    if j == 4:
+                                        g100 = True
+                                        break
+                                else:
+                                    if tcore[j - 1] >= 36.6 or self.tsk <= 34.0:
+                                        g100 = False
+                                        break
+                                    g100 = True
+                                    break
+                            else:
+                                if tcore[j - 1] >= 36.6 or self.tsk > 34.0:
+                                    g100 = False
+                                    break
+                                g100 = True
+                                break
+                        else:
+                            if c[10] < 0.0 or (tcore[j - 1] < 36.6 or self.tsk <= 33.85):
+                                g100 = False
+                                break
+                            g100 = True
+                            break
+                    if c[8] < 0.0 or (tcore[j - 1] < 36.6 or self.tsk > 34.05):
+                        g100 = False
+                        break
+                if g100 == False:
+                    continue
+                else:
+                    if (j == 4 or vb < 91.0) and (j != 4 or vb >= 89.0):
+                        if vb > 90.0:
+                            vb = 90.0
+                        # water loss
+                        ws = sw * 3600.0 * 1000.0
+                        if ws > 2000.0:
+                            ws = 2000.0
+                        wd = self.ed / self.evap * 3600.0 * (-1000.0)
+                        wr = self.erel / self.evap * 3600.0 * (-1000.0)
+                        self.wsum = ws + wr + wd
+                        return tcore[j-1], self.rsum, self.csum, self.ed
+                # water loss
+                ws = sw * 3600.0 * 1000.0
+                wd = self.ed / self.evap * 3600.0 * (-1000.0)
+                wr = self.erel / self.evap * 3600.0 * (-1000.0)
+                self.wsum = ws + wr + wd
+                if j-3 < 0:
+                    index = 3
+                else:
+                    index = j-3
+                
+                return tcore[index], self.rsum, self.csum, self.ed
+        
+        def pet(self):
+            self.tx = self.ta
+            self.enbal2 = 0.0
+            self.count1 = 0
+            while self.count1 != 4:
+                self.hc = 2.67 + 6.5 * math.pow(0.1, 0.67)
+                self.hc = self.hc * math.pow(self.p / self.po, 0.55)
+                # radiation saldo
+                self.aeff = self.adu * self.feff
+                self.rbare = self.aeff * (1.0 - self.facl) * self.emsk * self.sigm * (math.pow(self.tx + 273.2, 4.0) - math.pow(self.tsk + 273.2, 4.0))
+                self.rclo = self.feff * self.acl * self.emcl * self.sigm * (math.pow(self.tx + 273.2, 4.0) - math.pow(self.tcl + 273.2, 4.0))
+                self.rsum = self.rbare + self.rclo
+                # convection
+                self.cbare = self.hc * (self.tx - self.tsk) * self.adu * (1.0 - self.facl)
+                self.cclo = self.hc * (self.tx - self.tcl) * self.acl
+                self.csum = self.cbare + self.cclo
+                # diffusion
+                self.ed = self.evap / (self.rdsk + self.rdcl) * self.adu * (1.0 - self.wetsk) * (12.0 - self.vpts)
+                # breathing
+                self.tex = 0.47 * self.tx + 21.0
+                self.eres = self.cair * (self.tx - self.tex) * self.rtv
+                self.vpex = 6.11 * math.pow(10.0, 7.45 * self.tex / (235.0 + self.tex))
+                self.erel = 0.623 * self.evap / self.p * (12.0 - self.vpex) * self.rtv
+                self.ere = self.eres + self.erel
+                # energy balance
+                self.enbal = self.h + self.ed + self.ere + self.esw + self.csum + self.rsum
+                if self.count1 == 0:
+                    self.xx = 1.0
+                if self.count1 == 1:
+                    self.xx = 0.1
+                if self.count1 == 2:
+                    self.xx = 0.01
+                if self.count1 == 3:
+                    self.xx = 0.001
+                if self.enbal > 0.0:
+                    self.tx = self.tx - self.xx
+                if self.enbal < 0.0:
+                    self.tx = self.tx + self.xx
+                if (self.enbal > 0.0 or self.enbal2 <= 0.0) and (self.enbal < 0.0 or self.enbal2 >= 0.0):
+                    self.enbal2 = self.enbal
+                else:
+                    self.count1 = self.count1 + 1
+            
+            return
+        
+        def thermalCategories(self, climate):
+            
+            PET = self.tx
+            if climate == "humid":
+                # categories by Lin and Matzarakis (2008) (tropical and subtropical humid climate)
+                if (PET < 14):
+                    effectPET = -4
+                    comfortablePET = 0
+                elif (PET >= 14) and (PET < 18):
+                    effectPET = -3
+                    comfortablePET = 0
+                elif (PET >= 18) and (PET < 22):
+                    effectPET = -2
+                    comfortablePET = 0
+                elif (PET >= 22) and (PET < 26):
+                    effectPET = -1
+                    comfortablePET = 0
+                elif (PET >= 26) and (PET <= 30):
+                    effectPET = 0
+                    comfortablePET = 1
+                elif (PET > 30) and (PET <= 34):
+                    effectPET = 1
+                    comfortablePET = 0
+                elif (PET > 34) and (PET <= 38):
+                    effectPET = 2
+                    comfortablePET = 0
+                elif (PET > 38) and (PET <= 42):
+                    effectPET = 3
+                    comfortablePET = 0
+                elif (PET > 42):
+                    effectPET = 4
+                    comfortablePET = 0
+            
+            elif climate == "temperate":
+                # categories by Matzarakis and Mayer (1996) (temperate climate)
+                if (PET < 4):
+                    effectPET = -4
+                    comfortablePET = 0
+                elif (PET >= 4) and (PET < 8):
+                    effectPET = -3
+                    comfortablePET = 0
+                elif (PET >= 8) and (PET < 13):
+                    effectPET = -2
+                    comfortablePET = 0
+                elif (PET >= 13) and (PET < 18):
+                    effectPET = -1
+                    comfortablePET = 0
+                elif (PET >= 18) and (PET <= 23):
+                    effectPET = 0
+                    comfortablePET = 1
+                elif (PET > 23) and (PET <= 29):
+                    effectPET = 1
+                    comfortablePET = 0
+                elif (PET > 29) and (PET <= 35):
+                    effectPET = 2
+                    comfortablePET = 0
+                elif (PET > 35) and (PET <= 41):
+                    effectPET = 3
+                    comfortablePET = 0
+                elif (PET > 41):
+                    effectPET = 4
+                    comfortablePET = 0
+            
+            return effectPET, comfortablePET
 
 
 class WindSpeed(object):
@@ -4671,7 +5269,7 @@ class WindSpeed(object):
 
 
 class Photovoltaics(object):
-    """ Set of methods for Photovoltaics and Solar hot water analysis """
+    """ Set of methods for Photovoltaics and Solar Water Heating analysis """
     def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
         # sunZenith, sunAzimuth, sunAltitude angles
         # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
@@ -4803,14 +5401,51 @@ class Photovoltaics(object):
         
         return sunZenithD, sunAzimuthD, sunAltitudeD
     
-    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo):
-        # pvwatts Plane-of-Array Irradiance by Perez 1990 algorithm
+    def calculateAlbedo(self, dryBulbTemperature):
+        # correcting albedo values for the presence of snow
+        # based on: Metenorm 6 Handbook part II: Theory, Meteotest
+        
+        startingDayHOY = 0
+        endingDayHOY = 24
+        dailyTaAverage = []
+        for i in range(365):
+            HOYsPerDay = dryBulbTemperature[startingDayHOY:endingDayHOY]
+            dailyTaAverage.append(sum(HOYsPerDay)/24)
+            startingDayHOY += 24
+            endingDayHOY += 24
+        
+        dailyTaAverageShifted = dailyTaAverage[-14:] + dailyTaAverage[:]
+        
+        startingWeekHOY = 0
+        endingWeekHOY = 14
+        albedoL = []
+        lastTwoWeeksTaAverageL = []
+        for i in range(365):
+            lastTwoWeeksTaAverage = sum(dailyTaAverageShifted[startingWeekHOY+i:endingWeekHOY+i])/14
+            lastTwoWeeksTaAverageL.append(lastTwoWeeksTaAverage)
+            if lastTwoWeeksTaAverage > 10:
+                albedo = 0.2
+            elif lastTwoWeeksTaAverage < -10:
+                albedo = 0.8
+            else:
+                albedo = 0.423 - 0.042*lastTwoWeeksTaAverage
+                if albedo < 0.2:
+                    albedo = 0.2
+                elif albedo > 0.8:
+                    albedo = 0.8
+            for i in range(24):
+                albedoL.append(albedo)
+        
+        return albedoL
+    
+    def POAirradiance(self, sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, DNI, DHI, albedo, beamTransIndex=1, SVF=1):
         
         if sunZenithD > 90:
             sunZenithD = 90
             sunAzimuthD = 0
         
-        GHI = DHI + DNI * math.cos(math.radians(sunZenithD))
+        DNIshaded = DNI * beamTransIndex
+        GHI = DHI + DNIshaded * math.cos(math.radians(sunZenithD))
         
         # convert degree angles to radians:
         srfTiltR = math.radians(srfTiltD)
@@ -4830,9 +5465,9 @@ class Photovoltaics(object):
         AOI_D = math.degrees(AOI_R)  # in degrees
         
         # Eb beam irradiance
-        Eb = DNI * math.cos(AOI_R)
+        Eb = DNIshaded * math.cos(AOI_R)
         
-        # Ed_sky (Perez 1990 Model modified model) diffuse sky irradiance
+        # Ed_sky (Perez 1990 modified model diffuse sky irradiance)
         a = max(0, math.cos(AOI_R))
         b = max(math.cos(math.radians(85)), math.cos(sunZenithR))
         
@@ -4841,7 +5476,7 @@ class Photovoltaics(object):
         if DHI == 0:
             divison = 0
         elif DHI > 0:
-            divison = ((DHI+DNI)/DHI)
+            divison = ((DHI+DNIshaded)/DHI)
         epsilon = ( divison + k*(sunZenithD**3)) / (1 + k*(sunZenithD**3))
         
         # Perez model coefficients for irradiance based on epsilon bins
@@ -4913,28 +5548,35 @@ class Photovoltaics(object):
         
         # isotropic, circumsolar, and horizon brightening components of the sky diffuse irradiance:
         if (sunZenithD <= 87.5):
-            Di = DHI*(1-F1)*((1+math.cos(srfTiltR))/2)
-            Dc = DHI*F1*(a/b)
-            Dh = DHI*F2*math.sin(srfTiltR)
+            Di = (DHI*(1-F1)*((1+math.cos(srfTiltR))/2)) * SVF
+            Dc = (DHI*F1*(a/b)) * beamTransIndex  # based on assumption that all circumsolar component brightening is concentrated at the position of the sun, and therefor completely blocked in case of shading
+            if SVF >= 0.05:  # based on area of the sky dome intersected with sunZenithD when: 87.5 < sunZenithD <= 90
+                Dh = 0
+            else:
+                Dh = DHI*F2*math.sin(srfTiltR)
         # only isotropic brightening component of the sky diffuse irradiance:
         elif (sunZenithD > 87.5):
-            Di = (1+math.cos(srfTiltR))/2
+            Di = ((1+math.cos(srfTiltR))/2) * SVF
             Dc = 0
             Dh = 0
         
         Ed_sky = Di + Dc + Dh
         
-        # Eg ground reflected irradiance
-        Eground = ((DNI * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
+        # Eg ground reflected irradiance by Liu, Jordan, (1963).
+        Eground = ((DNIshaded * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
         
         Epoa = Eb + Eground + Ed_sky  # in Wh/m2
         
-        if Epoa < 0 or ((DNI<=0) and (DHI<=0)):
+        if Eb < 0: Eb = 0
+        if Eground < 0: Eground = 0
+        if Ed_sky < 0: Ed_sky = 0
+        
+        if Epoa < 0 or ((DNIshaded<=0) and (DHI<=0)):
             Epoa = Eb = Ed_sky = Eground = 0
         
         return Epoa, Eb, Ed_sky, Eground, AOI_R
     
-    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, Ta, ws, DNI, DHI):
+    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, gamma, Ta, ws10, DNI, DHI):
         # PVWatts v1 Thermal, Module Temperature, Cell Temperature Module and Inverter models
         
         # Sandia PV Array Performance Module Cover
@@ -4950,14 +5592,14 @@ class Photovoltaics(object):
         Etr = Epoa - (1-f)*Eb*math.cos(AOI_R)
         
         # Thermal Model by Fuentes (1987)
-        if moduleType == 0:   # glass/cell/glass   close roof mount
-            a = -2.98
-            b = -0.0471
-            deltaT = 1
-        elif moduleType == 1:   # glass/cell/polymer sheet   insulated back
+        if moduleType == 0:   # glass/cell/polymer sheet   insulated back
             a = -2.81
             b = -0.0455
             deltaT = 0
+        elif moduleType == 1:   # glass/cell/glass   close roof mount
+            a = -2.98
+            b = -0.0471
+            deltaT = 1
         elif moduleType == 2:   # glass/cell/polymer sheet   open rack
             a = -3.56
             b = -0.0750
@@ -4968,18 +5610,17 @@ class Photovoltaics(object):
             deltaT = 3
         
         # Sandia Module Temperature Model
-        Tm = Epoa * (math.exp(a+(b*ws))) + Ta  # in C degrees
+        Tm = Epoa * (math.exp(a+(b*ws10))) + Ta  # in C degrees
         
         # Sandia Cell Temperature Model
         Tcell = Tm + (Epoa/1000)*deltaT  # in C degrees
         
         if ((DNI<=0) and (DHI<=0)):
-            Pac = 0
-            return Tm, Tcell, Pac
+            Pdc_ = Pac = 0
+            return Tm, Tcell, Pdc_, Pac
         
         # PVFORM version 3.3 adapted Module Model
         Pdc0 = nameplateDCpowerRating   # in kWatts
-        gamma = -0.005   # default value for crystalline silicon PV modules
         
         if Etr > 125:
             Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))
@@ -5007,11 +5648,11 @@ class Photovoltaics(object):
         
         if Pac < 0: Pac = 0
         
-        return Tm, Tcell, Pac
+        return Tm, Tcell, Pdc_, Pac
     
-    def srfAzimuthAngle(self, PVsurface):
+    def calculateSrfAzimuthAngle(self, PVsurface):
         # calculate PVsurface azimuth angle
-        obj = rs.coercegeometry(PVsurface)
+        obj = PVsurface.DuplicateBrep()
         objSrf = obj.Faces[0]
         reparematizedDomain = rc.Geometry.Interval(0,1)
         objSrf.SetDomain(0, reparematizedDomain)
@@ -5048,9 +5689,39 @@ class Photovoltaics(object):
         
         return srfAzimuthD, surfaceTiltD
     
-    def srfTiltAngle(self, PVsurface):
+    def srfAzimuthAngle(self, PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceAzimuthAngle != None):
+            if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+            else:
+                srfAzimuthD = PVsurfaceAzimuthAngle
+            surfaceTiltDCalculated = "needs to be calculated"
+        
+        # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceAzimuthAngle == None):
+            if PVsurfaceInputType == "brep":
+                srfAzimuthD, surfaceTiltDCalculated = self.calculateSrfAzimuthAngle(PVsurface)
+                if surfaceTiltDCalculated == None:
+                    surfaceTiltDCalculated = "needs to be calculated"
+            
+            # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
+            elif PVsurfaceInputType == "number":
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+                surfaceTiltDCalculated = "needs to be calculated"
+        
+        return srfAzimuthD, surfaceTiltDCalculated
+    
+    def calculateSrfTiltAngle(self, PVsurface):
         # calculate PVsurface tilt angle
-        obj = rs.coercegeometry(PVsurface)
+        obj = PVsurface.DuplicateBrep()
         zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
         zAxis = rc.Geometry.Vector3d(0,0,1)
         worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
@@ -5085,8 +5756,78 @@ class Photovoltaics(object):
         srfTiltD = math.degrees(srfTitlR)
         
         return srfTiltD
-
-    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, depth_m=2, soilThermalDiffusivity_m2_s=2.5, minimalTemperature_C=1):
+    
+    def srfTiltAngle(self, PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceTiltAngle != None):
+            
+            if (PVsurfaceTiltAngle < 0):
+                srfTiltD = 0
+            elif (PVsurfaceTiltAngle > 180):
+                srfTiltD = 0
+            else:
+                srfTiltD = PVsurfaceTiltAngle
+        
+        # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceTiltAngle == None):
+            
+            # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
+            if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
+                srfTiltD = surfaceTiltDCalculated
+            elif surfaceTiltDCalculated == "needs to be calculated":
+                if PVsurfaceInputType == "brep":
+                    srfTiltD = self.calculateSrfTiltAngle(PVsurface)
+                # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
+                elif PVsurfaceInputType == "number":
+                    srfTiltD = abs(latitude)
+        
+        return srfTiltD
+    
+    def angle2northClockwise(self, north):
+        # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
+        try:
+            northVec = rc.Geometry.Vector3d.YAxis
+            northVec.Rotate(-math.radians(float(north)),rc.Geometry.Vector3d.ZAxis)
+            northVec.Unitize()
+            return 2*math.pi-math.radians(float(north)), northVec
+        except Exception, e:
+            try:
+                northVec =rc.Geometry.Vector3d(north)
+                northVec.Unitize()
+                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVec, rc.Geometry.Plane.WorldXY), northVec
+            except Exception, e:
+                return 0, rc.Geometry.Vector3d.YAxis
+    
+    def correctSrfAzimuthDforNorth(self, north, srfAzimuthD):
+        # nothing inputted in "north_" - use default value: 0
+        if north == None:
+            northDeg = 0  # default
+            correctedSrfAzimuthD = srfAzimuthD
+            validNorth = True
+            printMsg = "ok"
+        else:
+            try:  # check if it's a number
+                north = float(north)
+                if north < 0 or north > 360:
+                    correctedSrfAzimuthD = northDeg = None
+                    validNorth = False
+                    printMsg = "Please input north angle value from 0 to 360."
+                    return correctedSrfAzimuthD, validNorth, printMsg
+            except Exception, e:  # check if it's a vector
+                north.Unitize()
+            
+            northRad, northVec = self.angle2northClockwise(north)
+            northDeg = 360-math.degrees(northRad)
+            correctedSrfAzimuthD = northDeg + srfAzimuthD
+            if correctedSrfAzimuthD > 360:
+                correctedSrfAzimuthD = correctedSrfAzimuthD - 360
+            validNorth = True
+            printMsg = "ok"
+        
+        return correctedSrfAzimuthD, northDeg, validNorth, printMsg
+    
+    def inletWaterTemperature(self, dryBulbTemperature_C, method=0, minimalTemperature_C=1, depth_m=2, soilThermalDiffusivity_m2_s=2.5):
         # calculate cold (inlet) water temperature
         # soilThermalDiffusivity (m2/s) per material (valid for method "0" only):
         # 0.00000024 - dry sand
@@ -5189,52 +5930,112 @@ class Photovoltaics(object):
         
         return TinletPerHOY_C, TinletAverageAnnual_C, TinletHOYminimal_C, TinletHOYmaximal_C
     
-    def shwdesign(self, activeArea, Ta, Tw, SR, Qload, Fr, FrUL, tankLoss, tankSize, tankArea, TdeliveryW, TmaxW, TdischargeW, pipingLosses, minSR=None):
-        # based on "A simplified method for optimal design of solar water heating systems based on life-cycle energy analysis",
-        # Renewable Energy journal, Yan, Wang, Ma, Shi, Vol 74, Feb 2015
+    def swhdesign(self, activeArea, srfTiltD, AOI_R, bo, FavTa, FavUL, Eb_shaded, Ed_shaded, Eg, Qload, Cp, mDot, Ta, Tcold, Tw, TdeliveryW, TmaxW, TdischargeW, TmechRoom, L, Di, insulT, k, pumpPower, pumpEfficiency, tankSize, tankArea, tankLoss, epsilon, minSR=None):
         
-        if SR > 0:
-            collectorHeatLoss = FrUL*((Tw-Ta)/SR)
+        # based on:
+        # "Solar Engineering of Thermal Processes", John Wiley and Sons, J. Duffie, W. Beckman, 3rd ed., 2006.
+        # "Technical Manual for the SAM Solar Water Heating Model", NREL, N. DiOrio, C. Christensen, J. Burch, A. Dobos, 2014.
+        # "A simplified method for optimal design of solar water heating systems based on life-cycle energy analysis", Renewable Energy journal, Yan, Wang, Ma, Shi, Vol 74, Feb 2015
+        
+        waterSpecificHeat = 4.18  # kJ/(kg*C)
+        waterDensity = 1000  # kg/m3
+        eta_aux = 1  # auxiliaryHeaterEnergyFactor. equals 1 for electric water heater
+        
+        # convert test results
+        mDotCp = activeArea * mDot * Cp  # W/C
+        FrTau = FavTa / (1 + (activeArea*FavUL)/(2*mDotCp))
+        FrUL = FavUL / (1 + (activeArea*FavUL)/(2*mDotCp))
+        
+        # capacitance rate corrections
+        F_UL = -(mDotCp / activeArea) * math.log(1 - ((FrUL * activeArea) / mDotCp))
+        r = (mDotCp / activeArea * (1 - math.exp(-activeArea * F_UL / mDotCp))) / FavUL
+        FrTa_capacitanceRate = r * FrTau
+        FrUL_capacitanceRate = r * FrUL
+        
+        # pipe losses
+        if insulT == 0: insulT = 0.0001  # fix for math.log(Do / Di)
+        Do = Di + (2*insulT)
+        Uout = (2 * k) / (Do * math.log(Do / Di))
+        A_pipe = math.pi * Do * L
+        UA_pipe = Uout * A_pipe
+        Fr_pipeloss = FrTa_capacitanceRate / (1 + (UA_pipe / mDotCp))
+        FrUL_pipeloss = FrUL_capacitanceRate * (((1 - (UA_pipe / mDotCp)) + (Uout * (A_pipe + A_pipe)) / (activeArea * FrUL_capacitanceRate)) / (1 + (UA_pipe / mDotCp)))
+        
+        # effect of the heat exchanger
+        Fr_ = Fr_pipeloss / (1 + ((activeArea*FrUL_pipeloss)/mDotCp) * ((mDotCp/(epsilon*mDotCp))-1))
+        FrUL_ = FrUL_pipeloss / (1 + ((activeArea*FrUL_pipeloss)/mDotCp) * ((mDotCp/(epsilon*mDotCp))-1))
+        
+        # incidence angle modifiers (IAM) for Flat plate collectors and longitudinal direction of Evacuated tube collectors (for top-bottom direction of tubes optical axis)
+        AOI_D_b = math.degrees(AOI_R)
+        AOI_D_d = 59.7 - 0.1388*srfTiltD + 0.001497*(srfTiltD**2)
+        AOI_D_g = 90 - 0.5788*srfTiltD + 0.002693*(srfTiltD**2)
+        
+        if (AOI_D_b <= 60):
+            Ktau_b = 1-(bo*((1/math.cos( math.radians(AOI_D_b)))- 1))
+            Ktau_d = 1-(bo*((1/math.cos( math.radians(AOI_D_d)))- 1))
+            Ktau_g = 1-(bo*((1/math.cos( math.radians(AOI_D_g)))- 1))
+        else:
+            Ktau_b = (1-bo)*(1-((AOI_D_b-60)/30))
+            Ktau_d = (1-bo)*(1-((AOI_D_d-60)/30))
+            Ktau_g = (1-bo)*(1-((AOI_D_g-60)/30))
+        # incidence angle modifier cannot be negative
+        if Ktau_b < 0: Ktau_b = 0
+        if Ktau_d < 0: Ktau_d = 0
+        if Ktau_g < 0: Ktau_g = 0
+        
+        SR_IAM = Eb_shaded*Ktau_b + Ed_shaded*Ktau_d + Eg*Ktau_g  # Wh/m2
+        
+        
+        if SR_IAM > 0:
+            collectorHeatLoss = FrUL_*((Tw-Ta)/SR_IAM)  # unitless
         else:
             collectorHeatLoss = 0
         
-        if SR <= 0:
-            collectorEfficiency = Fr
+        if SR_IAM <= 0:
+            collectorEfficiency = Fr_  # unitless
         else:
-            collectorEfficiency = Fr-collectorHeatLoss
+            collectorEfficiency = Fr_-collectorHeatLoss  # unitless
         if collectorEfficiency < 0:
-            collectorEfficiency = Fr
+            collectorEfficiency = Fr_  # unitless
         
         if minSR == None:
-            minSR = (FrUL*(Tw-Ta))/Fr
+            minSR = (FrUL_*(Tw-Ta))/Fr_  # Wh/m2
         
-        if SR > minSR:
-            Qsolar = pipingLosses*(collectorEfficiency*SR*activeArea/1000)
+        if SR_IAM > minSR:
+            # absorbed radiation larger than losses
+            Qsolar = collectorEfficiency * SR_IAM * activeArea/1000  # kWh
+            Qpump = (pumpPower * pumpEfficiency)/1000  # kWh, day, regardless of whether there is, or there isn't heating load
         else:
             Qsolar = 0
+            Qpump = 0  # day or night
         
-        Qloss = tankLoss*tankArea*(Tw-Ta)/1000
-        
-        if Tw > TdeliveryW:
-            Qsupply = pipingLosses*Qload
-        else:
+        if Qload != 0:
+            # day or night, when there is heating load
+            if Tw >= TdeliveryW:
+                Qsupply = Qload - Qpump/eta_aux  # kWh
+                Qaux = 0
+            elif Tw < TdeliveryW:
+                HWC = (Qload/0.000277778)/(0.001 * 1000 * 4.2 * (TdeliveryW-Tcold))  # liters
+                Qsupply = (HWC * 0.001 * 1000 * 4.2 * (Tw-Tcold)* 0.000277778)/eta_aux  # kWh
+                Qaux = (HWC * 0.001 * 1000 * 4.2 * (TdeliveryW-Tw)* 0.000277778)/eta_aux  # kWh, heating up the water with auxiliary heater
+            if Qsupply < 0: Qsupply = 0
+        elif Qload == 0:
+            # day or night, when there is no heating load
             Qsupply = 0
-        
-        if Tw > TdeliveryW:
             Qaux = 0
-        else:
-            Qaux = Qload
         
-        if Tw > TmaxW:
-            Qdis = (Tw-TdischargeW)*4.2*tankSize*1000/3600
+        if Tw >= TmaxW:
+            Qdis = (Tw-TdischargeW)*waterSpecificHeat*tankSize*waterDensity/3600  # kWh
+            Qpump = 0  # swh system stagnate until excess heat is discharged
         else:
             Qdis = 0
         
-        dQ = Qsolar - Qloss - Qsupply - Qdis
-        dt = dQ*3600/(4.2*tankSize*1000)
-        Tw = Tw + dt
+        Qloss = tankLoss*tankArea*(Tw-TmechRoom)/1000  # kWh (negative value represents gain instead of loss)
+        dQ = Qsolar - Qloss - Qsupply - Qdis  # kWh
+        dt = dQ*3600/(waterSpecificHeat*tankSize*waterDensity)  # C
+        Tw = Tw + dt  # C
         
-        return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, dQ, dt, Tw
+        return collectorHeatLoss, collectorEfficiency, Qsolar, Qloss, Qsupply, Qaux, Qdis, Qpump, dQ, dt, Tw
     
     def WMMcoefficients(self, COFfilePath=None):
         # WMM coefficients extractor and WMM 2015-2020 coefficients

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to make a 3D chart in the Rhino scene of any climate data or hourly simulation data.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.62
     
     Args:
         _inputData: A list of input data to plot.
@@ -35,7 +35,10 @@ Provided by Ladybug 0.0.60
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
         condStatement_ : An optional conditional statement, which will remove data from the chart that does not fit the conditions. The input must be a valid python conditional statement (e.g. a > 25).
-        bakeIt_ : If set to True, the chart will be Baked into the Rhino scene as a colored mesh.  Text will be baked as Rhino text objects, which facilitates easy export to PDF or vector-editing programs.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         readMe!: ...
         graphMesh: A 3D plot of the input data as a colored mesh.  Multiple meshes will be output for several input data streams or graph scales.
@@ -50,10 +53,11 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_09_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -366,6 +370,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -500,8 +505,8 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 zSC = abs(zSC)
                 
                 # read legend parameters
-                if len(legendPs) == 1: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
-                else: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[i], False)
+                if len(legendPs) == 1: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
+                else: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[i], False)
                 
                 # Get the graph colors
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
@@ -574,7 +579,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 # create legend geometries
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
                 
                 textPt.append(titlebasePt)
                 
@@ -641,7 +646,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     for point in textPt: point.Transform(translation)
                 else: pass
                 
-                if bakeIt:
+                if bakeIt > 0:
                     studyLayerName = '3D_CHARTS'
                     legendText.append(titleStr)
                     # check the study type
@@ -650,7 +655,8 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     except:
                         placeName = 'alternateLayerName'
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText+textStrings, textPt+textBasePts, textSize, legendFont, chartCrvs)
+                    if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText+textStrings, textPt+textBasePts, textSize, legendFont, chartCrvs, decimalPlaces)
+                    else: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText+textStrings, textPt+textBasePts, textSize, legendFont, chartCrvs, decimalPlaces, False)
                 
                 res[0].append(coloredChart)
                 res[1].append([legendSrfs, legendTextCrv])

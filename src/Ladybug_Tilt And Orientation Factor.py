@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -22,45 +22,31 @@
 
 
 """
-This component calculates the Tilt and Orientation Factor (TOF) for PV modules/Solar hot watter collectors.
-TOF is a solar radiation at the actual tilt and orientation divided by the solar radiation at the optimum tilt and orientation, expressed in percent. 
+This component calculates the Optimal Tilt, Optimal Orientation and TOF (Tilt and Orientation Factor) for PV modules or Solar water heating collectors.
+TOF is a solar radiation at the actual tilt and orientation divided by the solar radiation at the optimum tilt and orientation.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.62
     
     input:
-        _PVsurface: - Input planar Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
-                    - Or input surface Area, in square meters (example: "100").
-        _epwFile: Input .epw file path by using grasshopper's "File Path" component.
-        PVsurfaceTiltAngle_: The angle from horizontal of the inclination of the PVsurface. Example: 0 = horizontal, 90 = vertical. (range 0-180)
-                             -
-                             If not supplied, but surface inputted into "_PVsurface", PVsurfaceTiltAngle will be calculated from an angle PVsurface closes with XY plane.
-                             If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area inputed), location's latitude will be used as default value.
-        PVsurfaceAzimuthAngle_: The orientation angle (clockwise from the true north) of the PVsurface normal vector. (range 0-360)
-                                -
-                                If not supplied, but surface inputted into "_PVsurface", PVsurfaceAzimuthAngle will be calculated from an angle PVsurface closes with its north.
-                                If not supplied, but surface NOT inputted into "_PVsurface" (instead, a surface area inputed), default value of 180 (south-facing) for locations in the northern hemisphere or 0 (north-facing) for locations in the southern hemisphere, will be used.
-        annualShading_: Losses due to buildings, structures, trees, mountains or other objects that prevent solar radiation from reaching the PV module/Solar hot water collector.
-                  Input range: 0 to 100(%), 0 being unshaded, and 100 being totally shaded PV module/SHW collector.
+        _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
+        _PV_SWHsurface: - Input planar Grasshopper/Rhino Surface (not a polysurface) on which the PV modules/SWH collectors will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PV_SWHsurface. Surface normal should be faced towards the sun.
+                        - Or create the Surface based on initial PV/SWH system size by using "PV SWH system size" component.
+        annualShading_: Losses due to buildings, structures, trees, mountains or other objects that prevent solar radiation from reaching the PV module/Solar water heating collector.
+                  Input range: 0 to 100(%), 0 being unshaded, and 100 being totally shaded PV module/SWH collector.
                   -
                   If not supplied default value of 0(%) will be used.
         north_: Input a vector to be used as a true North direction, or a number between 0 and 360 that represents the clockwise degrees off from the Y-axis.
                 -
                 If not supplied, default North direction will be set to the Y-axis (0 degrees).
-        albedo_: Average reflection coefficient of the area surrounding the PV surface. It ranges from 0 for very dark to 1 for bright white or metallic surface. Here are some specific values:
+        albedo_: A list of 8767 (with header) or 8760 (without the header) albedo values for each hour during a year.
+                 Albedo (or Reflection coefficient) is an average ratio of the global incident solar radiation reflected from the area surrounding the PV surface.
+                 It ranges from 0 to 1.
                  -
-                 Dry asphalt  0.12
-                 Wet Asphalt  0.18
-                 Bare soil  0.17
-                 Grass  0.20
-                 Concrete  0.30
-                 Granite  0.32
-                 Dry sand  0.35
-                 Copper  0.74
-                 Wet snow  0.65
-                 Fresh snow  0.82
-                 Aluminum  0.85
+                 It depends on the time of the year/day, surface type, temperature, vegetation, presence of water, ice and snow etc.
                  -
-                 If not supplied default value of 0.20 (Grass) will be used.
+                 If no list supplied, default value of 0.20 will be used, corrected(increased) for the presence of snow (if any).
+                 -
+                 Unitless.
         precision_: Represents the square root number of analysis field for the output "geometry" mesh. Ranges from 1-100.
                     Example - precision of 4, would mean that 4 fields in X direction (Azimuth) and 4 fields in Y direction (Tilt) = 16 fields, will be used to calculate the final "geometry" mesh.
                     For lower precision numbers (say < 20) even precision numbers are more accurate.
@@ -90,34 +76,35 @@ Provided by Ladybug 0.0.60
               Some USA states, like Oregon and Washington require TSRF to be minimum 75% in order for the PV system to be applicable for incentive programs.
               -
               In percent(%).
-        PVsurfaceTilt: Tilt angle of the inputted PVsurface.
+        PVsurfaceTilt: Tilt angle of the inputted PV_SWHsurface.
                        In degrees ().
-        PVsurfaceAzimuth: Orientation angle of the inputted PVsurface.
+        PVsurfaceAzimuth: Orientation angle of the inputted PV_SWHsurface.
                           In degrees ().
-        optimalTilt: Optimal tilt of the PVsurface for a given location. Optimal tilt being the one that receives the most annual solar radiation.
+        optimalTilt: Optimal tilt of the PV_SWHsurface for a given location. Optimal tilt being the one that receives the most annual solar radiation.
                      In degrees ().
-        optimalAzimuth: Optimal orientation of the PVsurface for a given location. Optimal azimuth being the one that receives the most annual solar radiation.
+        optimalAzimuth: Optimal orientation of the PV_SWHsurface for a given location. Optimal azimuth being the one that receives the most annual solar radiation.
                         In degrees ().
-        optimalRoofPitch: Optimal steepness of the PVsurface for a given location. Optimal steepness being the one that receives the most annual solar radiation.
+        optimalRoofPitch: Optimal steepness of the PV_SWHsurface for a given location. Optimal steepness being the one that receives the most annual solar radiation.
                           In inches/inches
-        optimalRadiation: Total solar radiation per square meter for a whole year received on a PVsurface of optimal tilt and azimuth, at given location.
+        optimalRadiation: Total solar radiation per square meter for a whole year received on a PV_SWHsurface of optimal tilt and azimuth, at given location.
                           In kWh/m2
         geometry: Geometry of the whole TOF mesh chart.
                   Connect this output to a Grasshopper's "Geo" parameter in order to preview the "geometry" separately in the Rhino scene.
         originPt: The origin point of the "geometry" output.
                   Use this point to move "geometry" output around in the Rhino scene with the grasshopper's "Move" component.
-        analysisPt: A point indicating inputted PVsurface's Tilt/Azimuth position on the solar radiation table.
+        analysisPt: A point indicating inputted PV_SWHsurface's Tilt/Azimuth position on the solar radiation table.
         legend: A legend for the annual total solar radiation (in kWh/m2). Connect this output to a Grasshopper's "Geo" parameter in order to preview the legend separately in the Rhino scene.  
         legendBasePt: Legend base point, which can be used to move the "legend" geometry with grasshopper's "Move" component.
 """
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
-#compatibleLBVersion = VER 0.0.59\nMAY_26_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
 import Grasshopper.Kernel as gh
@@ -138,17 +125,28 @@ def getEpwData(epwFile, annualShading, albedo, precision, scale, origin, legendP
             # weather data
             weatherData = lb_preparation.epwDataReader(epwFile, locationName)
             dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, liquidPrecipitationDepth, barometricPressure, modelYear = weatherData
+            Ta = dryBulbTemperature[7:]
             
             if (annualShading == None) or (annualShading < 0) or (annualShading > 100):
                 annualShading = 0  # default
             
-            if (albedo == None) or (albedo < 0) or (albedo > 1):
-                albedo = 0.2  # default
+            if (len(albedo) == 0) or (albedo[0] is ""):
+                albedoL = lb_photovoltaics.calculateAlbedo(Ta)  # default
+            elif (len(albedo) == 8767):
+                albedoL = albedo[7:]
+            elif (len(albedo) == 8760):
+                albedoL = albedo
+            else:
+                locationName = latitude = longitude = timeZone = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = annualShading = albedoL = precision = scale = origin = originOffset = legendPar = None
+                validEpwData = False
+                printMsg = "Something is wrong with your \"albedo_\" list input.\n\"albedo_\" input accepts a list of 8767 (with header) or 8760 (without the header) abledo values."
+                
+                return locationName, latitude, longitude, timeZone, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg
             
             if (precision == None) or (precision < 1) or (precision > 100):
                 precision = 2  # default
             
-            if (scale == None) or (scale < 0):
+            if (scale == None) or (scale <= 0):
                 scale = 1
             
             if (origin == None):
@@ -158,7 +156,8 @@ def getEpwData(epwFile, annualShading, albedo, precision, scale, origin, legendP
                 originOffset = Rhino.Geometry.Point3d(origin.X+15, origin.Y, origin.Z)  # default 0,0,0 point
             
             if (len(legendPar) == 0):
-                legendPar = [None, None, None, [System.Drawing.Color.FromArgb(98,20,0), System.Drawing.Color.FromArgb(204,79,0), System.Drawing.Color.FromArgb(255,174,52), System.Drawing.Color.FromArgb(254,255,255)], None, None, None, None, None, None]
+                lowB = None; highB = None; numSeg = None; customColors = [System.Drawing.Color.FromArgb(98,20,0), System.Drawing.Color.FromArgb(204,79,0), System.Drawing.Color.FromArgb(255,174,52), System.Drawing.Color.FromArgb(254,255,255)]; legendBasePoint = None; legendScale = None; legendFont = None; legendFontSize = None; legendBold = None; decimalPlaces = 2; removeLessThan = False
+                legendPar = [lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan]
             
             
             DNI = directNormalRadiation[7:]
@@ -190,186 +189,50 @@ def getEpwData(epwFile, annualShading, albedo, precision, scale, origin, legendP
             validEpwData = True
             printMsg = "ok"
             
-            return locationName, float(latitude), float(longitude), float(timeZone), float(elevation), DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, annualShading, albedo, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg
+            return locationName, float(latitude), float(longitude), float(timeZone), DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg
         
         except Exception, e:
-            print "e: ", e
             # something is wrong with "_epwFile" input
-            locationName = latitude = longitude = timeZone = elevation = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = annualShading = albedo = precision = scale = origin = originOffset = legendPar = None
+            locationName = latitude = longitude = timeZone = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = annualShading = albedoL = precision = scale = origin = originOffset = legendPar = None
             validEpwData = False
             printMsg = "Something is wrong with \"_epwFile\" input."
     else:
-        locationName = latitude = longitude = timeZone = elevation = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = annualShading = albedo = precision = scale = origin = originOffset = legendPar = None
+        locationName = latitude = longitude = timeZone = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = annualShading = albedoL = precision = scale = origin = originOffset = legendPar = None
         validEpwData = False
-        printMsg = "Please supply .epw file path to \"_epwFile\" input"
+        printMsg = "Please supply .epw file path to \"_epwFile\" input."
     
-    return locationName, latitude, longitude, timeZone, elevation, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, annualShading, albedo, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg
+    return locationName, latitude, longitude, timeZone, DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg
 
 
-def PVsurfaceInputData(PVsurface):
+def PVsurfaceInputData(PV_SWHsurface):
     
-    if (PVsurface == None):
+    if (PV_SWHsurface == None):
         PVsurfaceInputType = srfArea = None
         validPVsurfaceData = False
-        printMsg = "Please input Surface (not polysurface) to \"_PVsurface\".\nOr input surface Area in square meters (example: \"100\").\nOr input Nameplate DC power rating in kiloWatts (example: \"4 kw\")."
+        printMsg = "Please input a Surface (not polysurface) to \"_PV_SWHsurface\"."
         
         return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
     
-    # check PVsurface input
-    obj = rs.coercegeometry(PVsurface)
-    
-    # input is surface
-    if isinstance(obj,Rhino.Geometry.Brep):
-        PVsurfaceInputType = "brep"
-        facesCount = obj.Faces.Count
-        if facesCount > 1:
-            # inputted polysurface
-            PVsurfaceInputType = srfArea = None
-            validPVsurfaceData = False
-            printMsg = "The brep you supplied to \"_PVsurface\" is a polysurface. Please supply a surface"
-            
-            return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
-        else:
-            # inputted brep with a single surface
-            srfArea = Rhino.Geometry.AreaMassProperties.Compute(obj).Area  # in m2
-            validPVsurfaceData = True
-            printMsg = "ok"
-            
-            return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
+    # check PV_SWHsurface input
+    PVsurfaceInputType = "brep"
+    facesCount = PV_SWHsurface.Faces.Count
+    if facesCount > 1:
+        # inputted polysurface
+        PVsurfaceInputType = srfArea = None
+        validPVsurfaceData = False
+        printMsg = "The brep you supplied to \"_PV_SWHsurface\" is a polysurface. Please supply a surface"
+        
+        return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
     else:
-        PVsurfaceInputType = "number"
-        try:
-            # input is number (pv surface area in m2)
-            srfArea = float(PVsurface)  # in m2
-            validPVsurfaceData = True
-            printMsg = "ok"
-            
-            return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
-        except Exception, e:
-            pass
-        
-        # input is string (nameplateDCpowerRating in kW)
-        lowerString = PVsurface.lower()
-        
-        if "kw" in lowerString:
-            PVsurfaceInputType = srfArea = None
-            validPVsurfaceData = False
-            printMsg = "\"Tilt and orientation factor\" component does not support the \"kw\" PVsurface inputs. Please input either a Grasshopper/Rhino surface or its area."
-            
-            return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
-        else:
-            PVsurfaceInputType = srfArea = None
-            validPVsurfaceData = False
-            printMsg = "Something is wrong with your \"PVsurface\" input data"
-            
-            return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
-
-
-def srfAzimuthAngle(PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
-    
-    # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
-    if (PVsurfaceAzimuthAngle != None):
-        if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
-            if latitude > 0:
-                srfAzimuthD = 180  # equator facing for northern hemisphere
-            elif latitude < 0:
-                srfAzimuthD = 0  # equator facing for southern hemisphere
-        else:
-            srfAzimuthD = PVsurfaceAzimuthAngle
-        surfaceTiltDCalculated = "needs to be calculated"
-    
-    # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
-    elif (PVsurfaceAzimuthAngle == None):
-        if PVsurfaceInputType == "brep":
-            srfAzimuthD, surfaceTiltDCalculated = lb_photovoltaics.srfAzimuthAngle(PVsurface)
-            if surfaceTiltDCalculated == None:
-                surfaceTiltDCalculated = "needs to be calculated"
-        
-        # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
-        elif PVsurfaceInputType == "number":
-            if latitude > 0:
-                srfAzimuthD = 180  # equator facing for northern hemisphere
-            elif latitude < 0:
-                srfAzimuthD = 0  # equator facing for southern hemisphere
-            surfaceTiltDCalculated = "needs to be calculated"
-    
-    return round(srfAzimuthD,1), surfaceTiltDCalculated
-
-
-def srfTiltAngle(PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
-    
-    # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
-    if (PVsurfaceTiltAngle != None):
-        
-        if (PVsurfaceTiltAngle < 0):
-            srfTiltD = 0
-        elif (PVsurfaceTiltAngle > 180):
-            srfTiltD = 0
-        else:
-            srfTiltD = PVsurfaceTiltAngle
-    
-    # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
-    elif (PVsurfaceTiltAngle == None):
-        
-        # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
-        if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
-            srfTiltD = surfaceTiltDCalculated
-        elif surfaceTiltDCalculated == "needs to be calculated":
-            if PVsurfaceInputType == "brep":
-                srfTiltD = lb_photovoltaics.srfTiltAngle(PVsurface)
-            # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
-            elif PVsurfaceInputType == "number":
-                srfTiltD = abs(latitude)
-    
-    return round(srfTiltD,1)
-
-
-def angle2northClockwise(north):
-    # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
-    try:
-        northVec =Rhino.Geometry.Vector3d.YAxis
-        northVec.Rotate(-math.radians(float(north)),Rhino.Geometry.Vector3d.ZAxis)
-        northVec.Unitize()
-        return 2*math.pi-math.radians(float(north)), northVec
-    except Exception, e:
-        try:
-            northVec =Rhino.Geometry.Vector3d(north)
-            northVec.Unitize()
-            return Rhino.Geometry.Vector3d.VectorAngle(Rhino.Geometry.Vector3d.YAxis, northVec, Rhino.Geometry.Plane.WorldXY), northVec
-        except Exception, e:
-            return 0, Rhino.Geometry.Vector3d.YAxis
-
-
-def correctSrfAzimuthDforNorth(north, srfAzimuthD):
-    # nothing inputted in "north_" - use default value: 0
-    if north == None:
-        northDeg = 0  # default
-        correctedSrfAzimuthD = srfAzimuthD
-        validNorth = True
+        # inputted brep with a single surface
+        srfArea = Rhino.Geometry.AreaMassProperties.Compute(PV_SWHsurface).Area  # in m2
+        validPVsurfaceData = True
         printMsg = "ok"
-    else:
-        try:  # check if it's a number
-            north = float(north)
-            if north < 0 or north > 360:
-                correctedSrfAzimuthD = northDeg = None
-                validNorth = False
-                printMsg = "Please input north angle value from 0 to 360."
-                return correctedSrfAzimuthD, validNorth, printMsg
-        except Exception, e:  # check if it's a vector
-            north.Unitize()
         
-        northRad, northVec = angle2northClockwise(north)  # clockwise
-        northDeg = 360-math.degrees(northRad)  # clockwise
-        correctedSrfAzimuthD = northDeg + srfAzimuthD
-        if correctedSrfAzimuthD > 360:
-            correctedSrfAzimuthD = correctedSrfAzimuthD - 360
-        validNorth = True
-        printMsg = "ok"
-    
-    return correctedSrfAzimuthD, northDeg, validNorth, printMsg
+        return PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg
 
 
-def main(latitude, longitude, timeZone, locationName, years, months, days, hours, HOYs, srfArea, srfTiltD, srfAzimuthD, correctedSrfAzimuthD, directNormalRadiation, diffuseHorizontalRadiation, albedo, precision, originOffset):
+def main(latitude, longitude, timeZone, locationName, years, months, days, hours, HOYs, srfArea, srfTiltD, srfAzimuthD, correctedSrfAzimuthD, directNormalRadiation, diffuseHorizontalRadiation, albedoL, precision, originOffset):
     
     # TOF mesh Tilt, Azimuth values
     srfTiltTOFList = []
@@ -412,7 +275,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
             totalRadiationPerYear = 0
             for g,hoy in enumerate(HOYs):
                 sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, years[g], months[g], days[g], hours[g]-1)
-                Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltTOF, srfAzimuthTOF, directNormalRadiation[g], diffuseHorizontalRadiation[g], albedo)
+                Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltTOF, srfAzimuthTOF, directNormalRadiation[g], diffuseHorizontalRadiation[g], albedoL[g])
                 totalRadiationPerYear += Epoa  # in Wh/m2
             totalRadiationPerYearL.append(totalRadiationPerYear)
             if anglesClockwise == True:  # angles clockwise
@@ -424,7 +287,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
             meshPts.append(meshPt)
             meshLiftedPts.append(liftedMeshPt)
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     colors = lb_visualization.gradientColor(totalRadiationPerYearL, lowB, highB, customColors)
     
     mesh = lb_meshpreparation.meshFromPoints(precision+1, precision+1, meshPts, colors)
@@ -532,7 +395,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
     totalRadiationPerYear = 0
     for i,hoy in enumerate(HOYs):
         sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, years[i], months[i], days[i], hours[i]-1)
-        Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, directNormalRadiation[i], diffuseHorizontalRadiation[i], albedo)
+        Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, directNormalRadiation[i], diffuseHorizontalRadiation[i], albedoL[i])
         totalRadiationPerYear += Epoa  # in Wh/m2
     
     # TOF, TSRF of the inputted (analysed) surface
@@ -625,7 +488,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
         y2AxisNotchValuesOrigins.append(y2AxisNotchValuesOrigin)
         oddRoofPitchAnglesLabels.append(label)
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     if not legendFontSize: legendFontSize = 2
     
     # xAxis, yAxis, y2Axis LabelMeshes
@@ -693,7 +556,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
 
 def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     if legendBasePoint == None:
         legendBasePoint = Rhino.Geometry.Point3d(meshPts[precision].X+25, meshPts[precision].Y, meshPts[precision].Z)
     
@@ -704,15 +567,19 @@ def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
         legendBasePoint.Transform(tmScale)
     
     # generate the legend
-    totalRadiationPerYearLint = [int(annualEpoa/1000) for annualEpoa in totalRadiationPerYearL]
+    totalRadiationPerYearLint = [annualEpoa/1000 for annualEpoa in totalRadiationPerYearL]
     lb_visualization.calculateBB([mesh])
-    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Annual radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Annual radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend = [legendSrfs] + lb_preparation.flattenList(legendTextSrfs)
     legendPlusLegendBasePoint = legend + [legendBasePoint]
+    
+    # hide originPt, legendBasePt outputs
+    ghenv.Component.Params.Output[12].Hidden= True
+    ghenv.Component.Params.Output[15].Hidden= True
     
     return legend, legendBasePoint
 
@@ -739,25 +606,23 @@ def bakingGrouping(locationName, geometry, legend, analysisPt, TOF, TSRF):
     Rhino.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, geometryIds)
 
 
-def printOutput(north, latitude, longitude, timeZone, elevation, locationName, albedo, srfArea, precision, scale, origin):
+def printOutput(north, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin):
     resultsCompletedMsg = "Tilt and orientation factor component results successfully completed!"
     printOutputMsg = \
     """
 Input data:
 
-Location: %s
-Latitude: %s
-Longitude: %s
-Time zone: %s
-Elevation: %s
-North: %s
-Albedo: %s
+Location (): %s
+Latitude (): %s
+Longitude (): %s
+North (): %s
+Average annual albedo(-): %0.2f
 
 Surface area (m2): %0.2f
 Precision: %s
 Scale: %s
 Origin: %0.2f,%0.2f,%0.2f
-    """ % (locationName, latitude, longitude, timeZone, elevation, north, albedo, srfArea, precision, scale, origin.X, origin.Y, origin.Z)
+    """ % (locationName, latitude, longitude, north, sum(albedoL)/8760, srfArea, precision, scale, origin.X, origin.Y, origin.Z)
     print resultsCompletedMsg
     print printOutputMsg
 
@@ -769,25 +634,26 @@ if sc.sticky.has_key("ladybug_release"):
         lb_meshpreparation = sc.sticky["ladybug_Mesh"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
-        if _PVsurface:
-            PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg = PVsurfaceInputData(_PVsurface)
-            if validPVsurfaceData:
-                locationName, latitude, longitude, timeZone, elevation, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, annualShading, albedo, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg = getEpwData(_epwFile, annualShading_, albedo_, precision_, scale_, origin_, legendPar_)
-                if validEpwData:
+        
+        if _epwFile:
+            locationName, latitude, longitude, timeZone, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg = getEpwData(_epwFile, annualShading_, albedo_, precision_, scale_, origin_, legendPar_)
+            if validEpwData:
+                PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg = PVsurfaceInputData(_PV_SWHsurface)
+                if validPVsurfaceData:
                     # all inputs ok
                     if _runIt:
-                        anglesClockwise = True
-                        srfAzimuthD, surfaceTiltDCalculated = srfAzimuthAngle(PVsurfaceAzimuthAngle_, PVsurfaceInputType, _PVsurface, latitude)
-                        correctedSrfAzimuthD, northDeg, validNorth, printMsg = correctSrfAzimuthDforNorth(north_, srfAzimuthD)
-                        srfTiltD = srfTiltAngle(PVsurfaceTiltAngle_, surfaceTiltDCalculated, PVsurfaceInputType, _PVsurface, latitude)
-                        totalRadiationPerYearL, maximalTotalRadiationPerYear, totalRadiationPerYear, meshPts, mesh, projectedIsoCrvs, projectedLastIsoCrvs, isoCrvPercents, optimalAzimuthD, optimalTiltD, optimalRoofPitch, analysisPt, TOF, TSRF = main(latitude, longitude, timeZone, locationName, years, months, days, hours, HOYs, srfArea, srfTiltD, srfAzimuthD, correctedSrfAzimuthD, directNormalRadiation, diffuseHorizontalRadiation, albedo, precision, originOffset)
+                        anglesClockwise = True; PVsurfaceTiltAngle_ = None; PVsurfaceAzimuthAngle_ = None
+                        srfAzimuthD, surfaceTiltDCalculated = lb_photovoltaics.srfAzimuthAngle(PVsurfaceAzimuthAngle_, PVsurfaceInputType, _PV_SWHsurface, latitude)
+                        correctedSrfAzimuthD, northDeg, validNorth, printMsg = lb_photovoltaics.correctSrfAzimuthDforNorth(north_, srfAzimuthD)
+                        srfTiltD = lb_photovoltaics.srfTiltAngle(PVsurfaceTiltAngle_, surfaceTiltDCalculated, PVsurfaceInputType, _PV_SWHsurface, latitude)
+                        totalRadiationPerYearL, maximalTotalRadiationPerYear, totalRadiationPerYear, meshPts, mesh, projectedIsoCrvs, projectedLastIsoCrvs, isoCrvPercents, optimalAzimuthD, optimalTiltD, optimalRoofPitch, analysisPt, TOF, TSRF = main(latitude, longitude, timeZone, locationName, years, months, days, hours, HOYs, srfArea, srfTiltD, srfAzimuthD, correctedSrfAzimuthD, directNormalRadiation, diffuseHorizontalRadiation, albedoL, precision, originOffset)
                         geometry = createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalTiltD, optimalAzimuthD, TOF, TSRF, projectedIsoCrvs, projectedLastIsoCrvs, isoCrvPercents, originOffset, legendPar, locationName, latitude, longitude)
                         legend, legendBasePt = legendGeometry(legendPar, meshPts, totalRadiationPerYearL)
                         if bakeIt_: bakingGrouping(locationName, geometry, legend, analysisPt, TOF, TSRF)
-                        printOutput(northDeg, latitude, longitude, timeZone, elevation, locationName, albedo, srfArea, precision, scale, origin)
+                        printOutput(northDeg, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin)
                         PVsurfaceTilt = srfTiltD; PVsurfaceAzimuth = srfAzimuthD; optimalTilt = optimalTiltD; optimalAzimuth = optimalAzimuthD; optimalRadiation = maximalTotalRadiationPerYear; originPt = origin
                     else:
-                        print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Tilt and orientation factor component"
+                        print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Tilt and orientation factor component."
                 else:
                     print printMsg
                     ghenv.Component.AddRuntimeMessage(level, printMsg)
@@ -795,7 +661,7 @@ if sc.sticky.has_key("ladybug_release"):
                 print printMsg
                 ghenv.Component.AddRuntimeMessage(level, printMsg)
         else:
-            printMsg = "Please input a Surface (not a polysurface) to \"_PVsurface\".\nOr input surface Area in square meters (example: \"100\").\nOr input Nameplate DC power rating in kiloWatts (example: \"4 kw\")."
+            printMsg = "Please supply .epw file path to \"_epwFile\" input."
             print printMsg
             ghenv.Component.AddRuntimeMessage(level, printMsg)
     else:
@@ -804,7 +670,6 @@ if sc.sticky.has_key("ladybug_release"):
             "If you have already updated userObjects drag the Ladybug_Ladybug component " + \
             "into the canvas and try again."
         print printMsg
-        ghenv.Component.AddRuntimeMessage(level, printMsg)
 else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg

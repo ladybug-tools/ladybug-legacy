@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to convert energy values in W to kW, W/m2 to kW/m2, Wh to kWh, Wh/m2 to kWh/m2, BTU to kBTU, or BTU/ft2 to kBTU/ft2.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.62
     
     Args:
         _Wh: An energy value or list of energy values in W, W/m2, Wh, Wh/m2, BTU, or BTU/ft2.
@@ -34,7 +34,8 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Wh2kWh"
 ghenv.Component.NickName = 'Wh2kWh'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -44,18 +45,22 @@ except: pass
 
 kWh = []
 for num in _Wh:
-    if num == 'W':
-        kWh.append('kW')
-    elif num == 'W/m2':
-        kWh.append('kW/m2')
-    elif num == 'Wh':
-        kWh.append('kWh')
-    elif num == 'Wh/m2':
-        kWh.append('kWh/m2')
-    elif num == 'BTU':
-        kWh.append('kBTU')
-    elif num == 'BTU/ft2':
-        kWh.append('kBTU/ft2')
-    else:
+    try:
+        if 'WH/M2' in num.upper():
+            kWh.append('kWh/m2')
+        elif 'W/M2' in num.upper():
+            kWh.append('kW/m2')
+        elif num.upper() == 'WH':
+            kWh.append('kWh')
+        elif num.upper() == 'W':
+            kWh.append('kW')
+        elif 'BTU' in num.upper():
+            kWh.append('kBTU')
+        elif 'BTU/FT2' in num.upper():
+            kWh.append('kBTU/ft2')
+        else:
+            try: kWh.append(float(num)/1000)
+            except: kWh.append(num)
+    except:
         try: kWh.append(float(num)/1000)
         except: kWh.append(num)

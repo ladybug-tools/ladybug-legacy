@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The Adaptive model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.59
+Provided by Ladybug 0.0.62
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
@@ -62,7 +62,8 @@ Provided by Ladybug 0.0.59
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.60\nAUG_04_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.60\nFEB_01_2015
@@ -208,7 +209,7 @@ def checkTheInputs():
                     alpha = 0.8
                     divisor = 1 + alpha + math.pow(alpha,2) + math.pow(alpha,3) + math.pow(alpha,4) + math.pow(alpha,5)
                     dividend = (sum(_prevailingOutdoorTemp[-24:-1] + [_prevailingOutdoorTemp[-1]])/24) + (alpha*(sum(_prevailingOutdoorTemp[-48:-24])/24)) + (math.pow(alpha,2)*(sum(_prevailingOutdoorTemp[-72:-48])/24)) + (math.pow(alpha,3)*(sum(_prevailingOutdoorTemp[-96:-72])/24)) + (math.pow(alpha,4)*(sum(_prevailingOutdoorTemp[-120:-96])/24)) + (math.pow(alpha,5)*(sum(_prevailingOutdoorTemp[-144:-120])/24))
-                    startingTemp = divisor/dividend
+                    startingTemp = dividend/divisor
                     if startingTemp < 10: coldTimes.append(0)
                     outdoorTemp = _prevailingOutdoorTemp[7:]
                     startingMean = sum(outdoorTemp[:24])/24
@@ -476,6 +477,7 @@ checkData = False
 if sc.sticky.has_key('ladybug_release'):
     try:
         if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): pass
+        if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): pass
     except:
         warning = "You need a newer version of Ladybug to use this compoent." + \
         "Use updateLadybug component to update userObjects.\n" + \
