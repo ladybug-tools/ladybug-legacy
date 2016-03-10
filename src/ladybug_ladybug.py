@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -36,7 +36,7 @@ along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -46,7 +46,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.61\nDEC_29_2015'
+ghenv.Component.Message = 'VER 0.0.62\nFEB_14_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -1472,7 +1473,7 @@ class Sunpath(object):
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
     def solInitOutput(self, month, day, hour, solarTime = False):
-        year = 2015
+        year = 2016
         self.time = hour
         
         a = 1 if (month < 3) else 0
@@ -2319,81 +2320,117 @@ class RunAnalysisInsideGH(object):
         return sunlightHoursResult, totalSLH, sunVisibility
     
     
-    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac):
-        
-        # preparing bulk lists
+    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas):
+        # preparing bulk lists for parallel process.
         view = [0] * len(testPts)
         viewResult = [0] * len(testPts)
         intersectionStTime = time.time()
-        YAxis = rc.Geometry.Vector3d.YAxis
-        ZAxis = rc.Geometry.Vector3d.ZAxis
         PI = math.pi
         
+        #Get the importance if point weights are specified.
         targetViewsCount  = len(viewPoints)
         ptImportance = []
         for ptCount in range(targetViewsCount):
             try:
-                
-                if viewPtsWeights[ptCount] == 0:
-                    ptImportance.append(100/targetViewsCount)
-                else:
-                    ptImportance.append(viewPtsWeights[ptCount]*100)
+                if viewPtsWeights[ptCount] == 0: ptImportance.append(100/targetViewsCount)
+                else: ptImportance.append(viewPtsWeights[ptCount]*100)
             except:
                 ptImportance.append(100/targetViewsCount)
         
+        #Get the importance for view vectors.
+        vecImportance = []
+        totalArea = sum(patchAreas)
+        for area in patchAreas:
+            vecImportance.append((area*100)/totalArea)
         
-        viewVector = []
         
+        #Create an empty list to be filled.
         ptVisibility = []
         for pt in testPts: ptVisibility.append(range(len(viewPoints)))
         
+        #If the view type is spherical or connical, neglect it from the view analysis.
+        if viewType == 1 or viewType == 2: bldgMesh = None
+        
+        #Function for view by test points.
         try:
-            def viewCalculator(i):
+            def viewCalculatorPoint(i):
                 for ptCount, viewPt in enumerate(viewPoints):
                     
                     # let the user cancel the process
                     if gh.GH_Document.IsEscapeKeyDown(): assert False
                     
                     vector = rc.Geometry.Vector3d(viewPt - testPts[i])
-                    vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and sun vector
-                    check = 0
-                    if vecAngle < (PI/2):
-                        check = 1; # this is simply here becuse I can't trust the break! Isn't it stupid?
-                        line = rc.Geometry.Line(testPts[i], viewPt)
-                        
-                        if bldgMesh!=None:
-                            if rc.Geometry.Intersect.Intersection.MeshLine(bldgMesh, line)[1] != None: check = 0
-                        if check != 0 and contextMesh!=None:
-                            if rc.Geometry.Intersect.Intersection.MeshLine(contextMesh, line)[1] != None: check = 0
-                        
-                        if check != 0:
-                            view[i] += ptImportance[ptCount]
+                    vecAngle = rc.Geometry.Vector3d.VectorAngle(vector, testVec[i]) # calculate the angle between the surface and the vector
+                    
+                    check = 1; # this is simply here becuse I can't trust the break! Isn't it stupid?
+                    line = rc.Geometry.Line(testPts[i], viewPt)
+                    
+                    if bldgMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshLine(bldgMesh, line)[1] != None: check = 0
+                    if check != 0 and contextMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshLine(contextMesh, line)[1] != None: check = 0
+                    
+                    if check != 0:
+                        view[i] += ptImportance[ptCount]
                         
                     ptVisibility[i][ptCount] = check
                 viewResult[i] = view[i] # This is stupid but I'm tired to change it now...
                 
                 if viewResult[i] > 100: viewResult[i] = 100
         except Exception, e:
-            # print `e`
-            # print 'Error in View calculation...'
             print "The calculation is terminated by user!"
             assert False
         
-        # calling the function
+        
+        #Function for view by view vectors.
         try:
-            # calling the function
+            def viewCalculatorVec(i):
+                for vecCount, viewVec in enumerate(viewPoints):
+                    # let the user cancel the process
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    vecAngle = rc.Geometry.Vector3d.VectorAngle(viewVec, testVec[i]) # calculate the angle between the surface and the vector
+                    
+                    check = 1
+                    ray = rc.Geometry.Ray3d(testPts[i], viewVec)
+                    
+                    if bldgMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshRay(bldgMesh, ray) != -1: check = 0
+                    if check != 0 and contextMesh!=None:
+                        if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh, ray) != -1: check = 0
+                    
+                    if check != 0:
+                        if viewType < 4: view[i] += vecImportance[vecCount]
+                        else: view[i] += vecImportance[vecCount] * 2 * math.cos(vecAngle)
+                    ptVisibility[i][vecCount] = check
+                
+                viewResult[i] = view[i] # This is stupid but I'm tired to change it now...
+                if viewResult[i] > 100: viewResult[i] = 100
+        except Exception, e:
+            print "The calculation is terminated by user!"
+            assert False
+        
+        
+        # Call the correct function.
+        try:
             if parallel:
-                tasks.Parallel.ForEach(range(len(testPts)), viewCalculator)
+                if viewType == -1:
+                    tasks.Parallel.ForEach(range(len(testPts)), viewCalculatorPoint)
+                else:
+                    tasks.Parallel.ForEach(range(len(testPts)), viewCalculatorVec)
             else:
-                for i in range(len(testPts)):
-                    viewCalculator(i)
+                if viewType == -1:
+                    for i in range(len(testPts)): viewCalculatorPoint(i)
+                else:
+                    for i in range(len(testPts)):
+                        viewCalculatorVec(i)
         except:
             return None, None, None
-            
         intersectionEndTime = time.time()
         print 'View calculation time = ', ("%.3f" % (intersectionEndTime - intersectionStTime)), 'Seconds...'
         
-        # average view
+        
+        # Calculate average view
         averageView = sum(viewResult)/len(viewResult)
             
         return viewResult, averageView, ptVisibility
@@ -2847,6 +2884,7 @@ class ResultVisualization(object):
             studyLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, studyLayerPath, True)
             if studyLayerIndex < 0: studyLayerIndex = layerT.Add(studyLayer)
             
+            
             # make a sub-layer for current project
             if projectName: layerName = str(projectName)
             else: layerName = 'Option'
@@ -2863,66 +2901,81 @@ class ResultVisualization(object):
                         l = l + 1
                         layerPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l`
                         layerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, layerPath, True)
-                        
+                
                 # creat the new sub layer for each geometry
                 nLayer = rc.DocObjects.Layer()
                 nLayer.Name = layerName + '_' + `l`
                 nLayer.IsVisible = False
                 nLayer.ParentLayerId = layerT[studyLayerIndex].Id
-                # nLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, nLayer.Name, True)
                 
                 nLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, layerPath, True)
                 if nLayerIndex < 0: nLayerIndex = layerT.Add(nLayer)
-                # study = 1; # do it once in a rotation study
-                # add layer for
-                newLayer = rc.DocObjects.Layer()
-                if OrientationStudy:
-                    newLayer.Name = ("%.3f" % (result)) + '<-' + layerName + '_' + `l` +'_Angle '+ `rotationAngle`
-                else:
-                    try: newLayer.Name = ("%.3f" % (result)) + '<-Result for '+ layerName + '_' + `l`
-                    except: newLayer.Name = result
+                if result != None:
+                    # study = 1; # do it once in a rotation study
+                    # add layer for
+                    newLayer = rc.DocObjects.Layer()
+                    if OrientationStudy:
+                        newLayer.Name = ("%.3f" % (result)) + '<-' + layerName + '_' + `l` +'_Angle '+ `rotationAngle`
+                    else:
+                        try: newLayer.Name = ("%.3f" % (result)) + '<-Result for '+ layerName + '_' + `l`
+                        except: newLayer.Name = result
+                            
+                    newLayerFullPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l` + '::' + newLayer.Name
+                    newLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, newLayerFullPath, True)
+                    # newLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, newLayer.Name, True)
+                    if newLayerIndex < 0:
+                        newLayer.IsVisible = True
+                        newLayer.ParentLayerId = layerT[nLayerIndex].Id
+                        newLayerIndex = layerT.Add(newLayer)
                         
-                newLayerFullPath = parentLayer.Name + '::' + studyLayer.Name + '::'+ layerName + '_' + `l` + '::' + newLayer.Name
-                newLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, newLayerFullPath, True)
-                # newLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, newLayer.Name, True)
-                if newLayerIndex < 0:
-                    newLayer.IsVisible = True
-                    newLayer.ParentLayerId = layerT[nLayerIndex].Id
-                    newLayerIndex = layerT.Add(newLayer)
-                
-            return newLayerIndex, l
+                    return newLayerIndex, l
+                else:
+                    return nLayerIndex, 1
     
-    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2):
-            #Set up basic object attributes
-            attr = rc.DocObjects.ObjectAttributes()
-            attr.LayerIndex = newLayerIndex
-            attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
-            attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
-            
-            #Write colored meshes into the document
-            try:
-                for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
-            except:
-                self.mesh2Hatch([testGeomety], newLayerIndex, attr)
-            self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
-            
-            #Write the curves into the document.
-            attr.ObjectColor = System.Drawing.Color.Black
-            if crvs != None:
-                for crv in crvs:
-                    try:
-                        rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+    def bakeObjects(self, newLayerIndex, testGeomety, legendGeometry, legendText, textPt, textSize, fontName = 'Verdana', crvs = None, decimalPlaces = 2, hatchBake = True):
+        #Set up basic object attributes
+        attr = rc.DocObjects.ObjectAttributes()
+        attr.LayerIndex = newLayerIndex
+        attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+        attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
+        
+        #Write colored meshes into the document
+        if hatchBake:
+            if testGeomety != None:
+                try:
+                    for mesh in testGeomety: self.mesh2Hatch(mesh, newLayerIndex, attr)
+                except:
+                    self.mesh2Hatch([testGeomety], newLayerIndex, attr)
+            if legendGeometry != None: self.mesh2Hatch([legendGeometry], newLayerIndex, attr)
+        else:
+            if testGeomety != None:
+                try:
+                    for mesh in testGeomety:
+                        #Bake the mesh into the scene.
+                        rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
+                except:
+                    rc.RhinoDoc.ActiveDoc.Objects.AddMesh(testGeomety, attr)
+            if legendGeometry != None: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(legendGeometry, attr)
+        
+        #Write the curves into the document.
+        attr.ObjectColor = System.Drawing.Color.Black
+        if crvs != None:
+            for crv in crvs:
+                try:
+                    rc.RhinoDoc.ActiveDoc.Objects.AddCurve(crv, attr)
+                except:
+                    try: rc.RhinoDoc.ActiveDoc.Objects.AddPolyline(crv, attr)
                     except:
                         # This is for breps surfaces as I changed curves to surfaces now
                         try: rc.RhinoDoc.ActiveDoc.Objects.AddBrep(crv, attr)
                         except: rc.RhinoDoc.ActiveDoc.Objects.AddMesh(crv, attr)
-            
-            #Write the text into the document
-            formatString = "%." + str(decimalPlaces) + "f"
-            for text in range(len(legendText)):
-                plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
-                if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
-                rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
+        
+        #Write the text into the document
+        formatString = "%." + str(decimalPlaces) + "f"
+        for text in range(len(legendText)):
+            plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
+            if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
+            rc.RhinoDoc.ActiveDoc.Objects.AddText(legendText[text], plane, textSize, fontName, False, False, attr)
     
     def mesh2Hatch(self, meshes, parentLayerIndex, attr = None):
         #Go through each of the meshes and make a group of hatches.
@@ -3006,8 +3059,6 @@ class ResultVisualization(object):
                 attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
                 attr.ObjectColor = colors[count]
                 
-                rc.DocObjects.HatchObject
-                
                 guids.append(rc.RhinoDoc.ActiveDoc.Objects.AddHatch(hatch, attr))
             
             #Group the hatches into one object so that they are easy to handle in the Rhino scene.
@@ -3028,7 +3079,7 @@ class ComfortModels(object):
         
         r = []
         set = self.comfPierceSET(ta, tr, vel, rh, met , clo, wme)
-        stillAirThreshold = 0.15
+        stillAirThreshold = 0.1
         
         #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function 
         def utilSecant(a, b, epsilon):

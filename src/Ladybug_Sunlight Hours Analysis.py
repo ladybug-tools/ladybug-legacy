@@ -5,7 +5,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -28,7 +28,7 @@ This component can be used to evaluate the number of hours of sunlight received 
 It can also be used for coarsely-gridded shadow studies in the Rhino scene .  For finer and more detailed shadow studies with simple input geometry, the Ladybug ShadowStudy component can be used.  For detailed shadow studies with complex geometry, the Honeybee daylight tools are recommended.
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -43,10 +43,12 @@ Provided by Ladybug 0.0.61
         legendPar_: Optional output from the "Orientation Study Parameter" component.  You can use an Orientation Study input here to answer questions like "What orientation of my building will give me the highest or lowest hours of direct sunlight for my analysis period?"  An Orientation Study will automatically rotate your input _geometry around several times and record the sunlight hours results each time in order to output a list of values for totalSunlightHours and a grafted data stream for sunlightHoursResult.
         parallel_: Set to "True" to run the sunlight hours analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
         _runIt: Set to "True" to run the component and perform sunlight hours analysis on the input _geometry.
-        bakeIt_: Set to "True" to bake the analysis results into the Rhino scene.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         workingDir_: Use this input to change the working directory of the sunlight hours analysis on your system. Input here must be a valid file path location on your computer.  The default is set to "C:\Ladybug" and it is from this file location that sunlight hours results are loaded into grasshopper after the analysis is done.
         projectName_: Use this input to change the project name of the files generated in the working directory.  Input here must be a string without special characters.  If "bakeIt_" is set to "True", the result will be baked into a layer with this project name.
-    
     Returns:
         readMe!: ...
         contextMesh: An uncolored mesh representing the context_ geometry that was input to this component. Connect this output to a "Mesh" grasshopper component to preview this output seperately from the others of this component. Note that this mesh is generated before the analysis is run, allowing you to be sure that the right geometry will be run through the analysis before running this component.
@@ -64,10 +66,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -96,6 +99,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -217,6 +221,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         return results, totalResults, listInfo, sunVisibility
     
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
+        
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
         if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[5]
         elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[5]
@@ -255,7 +260,8 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
             newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
                                                             studyLayerName, checkTheName,
                                                             runOrientation, angle, l)
-            lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont)
+            if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
         
         return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
 
@@ -362,21 +368,22 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
             if legendPar== [] or legendPar[4] == None:
                 lb_visualization.calculateBB(allBuildingsAndContext)
             
-            # preset the legen parameters if it is not set by the user
+            # preset the legend parameters if it is not set by the user
             if legendPar== []:
-                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, 1, 'Verdana', None, False]
+                legendPar = [minValue, maxValue, None, [], lb_visualization.BoundingBoxPar, 1, 'Verdana', None, False, 2, False]
             else:
-                if legendPar[0] == None: legendPar[0] = [minValue]
-                if legendPar[1] == None: legenPar[1] = maxValue
+                if legendPar[0] == None: legendPar[0] = minValue
+                if legendPar[1] == None: legendPar[1] = maxValue
                 if legendPar[4] == None: legendPar[4] = lb_visualization.BoundingBoxPar
                 if legendPar[5] == None or float(legendPar[5])==0: legendPar[5] = 1
                 if legendPar[6] == None: legendPar[6] = 'Verdana'
                 if legendPar[7] == None: legendPar[7] = None
                 if legendPar[8] == None: legendPar[8] = False
-                
+                if legendPar[9] == None: legendPar[9] = 2
+                if legendPar[10] == None: legendPar[10] = False
                 
         for angleCount, angle in enumerate(range(len(angles) - 1)):
-            if (bakeIt or angles[angle + 1] == angles[-1]) and results!=-1:
+            if (bakeIt != 0 or angles[angle + 1] == angles[-1]) and results!=-1:
                 
                 # read the values for each angle from the dictionary
                 eachTotalResult = orirntationStudyRes[angle]["totalResult"]
@@ -417,7 +424,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         if not runOrientation:
             totalResults = [totalResults] # make a list of the list so the same process can be applied to orientation study and normal run
         else:
-            bakeIt = False
+            bakeIt = 0
         
         resultColored = []
         legendColored = []

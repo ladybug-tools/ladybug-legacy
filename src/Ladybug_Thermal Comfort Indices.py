@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com>
+# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com>
 # with assistance of Dr. Krzysztof Blazejczyk <k.blaz@twarda.pan.pl>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
@@ -44,7 +44,7 @@ Use this component to calculate various thermal comfort indices:
 - THI (Temperature Humidity Index)
 - PHS (Predicted Heat Strain)
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         _comfortIndex: Choose one of the comfort indices:
@@ -71,26 +71,26 @@ Provided by Ladybug 0.0.61
         _dryBulbTemperature: Air temperature.
                              Input a single value or a whole list from "Import epw" component's "dryBulbTemperature" output.
                              -
-                             In Celsius degrees (°C).
+                             In Celsius degrees (C).
         meanRadiantTemperature_: An average temperature of the surfaces that surround the analysis location.
                                  For indoor conditions or outdoor in-shade, it should be equal to air temperature. So just input the same data you inputted to "_dryBulbTemperature".
                                  -
                                  If nothing supplied, it will be calculated for outdoor conditions (both in-shade and out-shade).
                                  -
-                                 In Celsius degrees (°C).
+                                 In Celsius degrees (C).
         dewPointTemperature_: Dew point temperature.
                               Input a single value or a whole list from "Import epw" component's "dewPointTemperature" output.
                               -
                               If not supplied, it will be calculated from _dryBulbTemperature and relativeHumidity_ data.
                               -
-                              In Celsius degrees (°C).
+                              In Celsius degrees (C).
         relativeHumidity_: Relative humidity.
                            Input a single value or a whole list from "Import epw" component's "relativeHumidity" output.
                            -
                            If not supplied 50% will be used as a default (indoor conditions).
                            -
                            In percent (from 0% to 110%).
-        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing person’s gravity center). It can be a single value or a list of values.
+        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing persons gravity center). It can be a single value or a list of values.
                     Take the "windSpeed" output from "Import epw" component and plug it to "Wind Speed Calculator" component's "_windSpeed_tenMeters" input. Set the "heightAboveGround_" input to "1.1". Then plug in the data from "Wind Speed Calculator" component's "windSpeedAtHeight" output to this component's "windSpeed_" input.
                     In this way we converted the 10 meter wind speed from the .epw file to required 1.1m.
                     -
@@ -147,7 +147,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = "VER 0.0.61\nDEC_29_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.60\nDEC_29_2015
@@ -1500,25 +1501,25 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     ]
     
     IndiceUnitsCat = [
-    ["°C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot", "Boolean value"],
-    ["°C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"],
-    ["°C", "-6 = Hyper-glacial,  -5 = Glacial,  -4 = Extremely cold,  -3 = Very cold,  -2 = Cold,  -1 = Cool,  0 = Comfortable,  1 = Hot, 2 = Very hot, 3 = Torrid", "Boolean value"],
+    ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot", "Boolean value"],
+    ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"],
+    ["C", "-6 = Hyper-glacial,  -5 = Glacial,  -4 = Extremely cold,  -3 = Very cold,  -2 = Cold,  -1 = Cool,  0 = Comfortable,  1 = Hot, 2 = Very hot, 3 = Torrid", "Boolean value"],
     ["W/m2", "-4 = Extreme frost,  -3 = Frosty,  -2 = Cold,  -1 = Cool,  0 = Comfortable,  1 = Warm, 2 = Hot, 3 = Extremely hot", "Boolean value"],
-    ["°C", "-6 = Extreme risk of frostbite,  -5 = Very high risk of frostbite,  -4 = High risk of frostbite,  -3 = Moderate risk of frostbite,  -2 = Low risk of frostbite,  -1 = Very low risk of frostbite, 0 = No risk of frostbite", "Boolean value"],
-    ["°C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"],
-    ["°C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"],
-    ["°C", "-4 = Very cold,  -3 = Cold,  -2 = Cool,  -1 = Fresh,  0 = Comfortable,  1 = Warm, 2 = Hot", "Boolean value"],
-    ["°C", "Appareal increments:\n-5 = Overcoat, cap,  -4 = Overcoat,  -3 = Coat and sweater,  -2 = Sweater,  -1 = Thin sweater,  0 = Normal office wear,  1 = Cotton pants,  2 = Light undershirt,  3 = Shirt, shorts,  4 = Minimal clothes. Sun protection as needed", "Boolean value"],
+    ["C", "-6 = Extreme risk of frostbite,  -5 = Very high risk of frostbite,  -4 = High risk of frostbite,  -3 = Moderate risk of frostbite,  -2 = Low risk of frostbite,  -1 = Very low risk of frostbite, 0 = No risk of frostbite", "Boolean value"],
+    ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"],
+    ["C", "0 = Comfortable,  1 = Moderate Hot,  2 = Hot,  3 = Quite hot,  4 = Very hot,  5 = Extremely hot", "Boolean value"],
+    ["C", "-4 = Very cold,  -3 = Cold,  -2 = Cool,  -1 = Fresh,  0 = Comfortable,  1 = Warm, 2 = Hot", "Boolean value"],
+    ["C", "Appareal increments:\n-5 = Overcoat, cap,  -4 = Overcoat,  -3 = Coat and sweater,  -2 = Sweater,  -1 = Thin sweater,  0 = Normal office wear,  1 = Cotton pants,  2 = Light undershirt,  3 = Shirt, shorts,  4 = Minimal clothes. Sun protection as needed", "Boolean value"],
     ["unitless", "-3 = Very cold, -2 = Quite cold,  -1 = Cold,  0 = Comfortable,  1 = Hot,  2 = Quite hot,  3 = Very hot", "Boolean value"],
     ["unitless", "-2 = Very cold,  -1 = Cold,  0 = Comfortable,  1 = Hot,  2 = Very hot", "Boolean value"],
-    ["°C"],
+    ["C"],
     ["clo", "-4 = Arctic, -3 = Very cold,, -2 = Cold,  -1 = Cool,  0 = Comfortable,  1 = Warm,  2 = Very warm", "Boolean value"],
     ["beats per minute", "0 = Average,  1 = Below Average,  2 = Poor,  3 = Warning", "Boolean value"],
     ["g/hour", "0 = No risk,  1 = Dehydration warning,  2 = Dehydration hazard", "Boolean value"],
-    ["°C", "-4 = Very cold, -3 = Cold, -2 = Cool, -1 = Slightly cool, 0 = Comfortable,  1 = Slightly warm,  2 = Warm,  3 = Hot,  4 = Very hot", "Boolean value"],
-    ["°C", "-4 = Very cold, -3 = Cold, -2 = Cool, -1 = Slightly cool, 0 = Comfortable,  1 = Slightly warm,  2 = Warm,  3 = Hot,  4 = Very hot", "Boolean value"],
-    ["°C", "-3 = Extremely cold, -2 = Cold, -1 = Cool, 0 = Comfortable,  1 = Hot,  2 = Extremely hot", "Boolean value"],
-    ["°C", "0 = Comfortable,  1 = Discomfort without health risk,  2 = Long-term constraint,  3 = Short-term constraint,  4 = Immediate constraint", "Boolean value"]
+    ["C", "-4 = Very cold, -3 = Cold, -2 = Cool, -1 = Slightly cool, 0 = Comfortable,  1 = Slightly warm,  2 = Warm,  3 = Hot,  4 = Very hot", "Boolean value"],
+    ["C", "-4 = Very cold, -3 = Cold, -2 = Cool, -1 = Slightly cool, 0 = Comfortable,  1 = Slightly warm,  2 = Warm,  3 = Hot,  4 = Very hot", "Boolean value"],
+    ["C", "-3 = Extremely cold, -2 = Cold, -1 = Cool, 0 = Comfortable,  1 = Hot,  2 = Extremely hot", "Boolean value"],
+    ["C", "0 = Comfortable,  1 = Discomfort without health risk,  2 = Long-term constraint,  3 = Short-term constraint,  4 = Immediate constraint", "Boolean value"]
     ]
     
     for i in range(len(IndiceTitles[comfortIndex])):
@@ -1552,67 +1553,67 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     ] # outputNames = outputNickNames
     
     outputDescriptions = [
-    ["Heat Index (°C) - the human-perceived increase in air temperature due to humidity increase. It is used by National Weather Service (NSW).\nHeat Index is calculated for shade values. Exposure to full sunshine can increase heat index values by up to 8°C (14°F)",  #comfortIndexValues
+    ["Heat Index (C) - the human-perceived increase in air temperature due to humidity increase. It is used by National Weather Service (NSW).\nHeat Index is calculated for shade values. Exposure to full sunshine can increase heat index values by up to 8C (14F)",  #comfortIndexValues
     
     "Each number (from 0 to 4) represents a certain HI thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<26.6°C): Satisfactory temperature. Can continue with activity.\n" + \
-    "- category 1 (26.6-32.2°C): Caution: fatigue is possible with prolonged exposure and activity. Continuing activity could result in heat cramps.\n" + \
-    "- category 2 (32.2-40.5°C): Extreme caution: heat cramps and heat exhaustion are possible. Continuing activity could result in heat stroke.\n" + \
-    "- category 3 (40.5-54.4°C): Danger: heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.\n" + \
-    "- category 4 (>54.4°C): Extreme danger: heat stroke is imminent.",  # comfortIndexCategory
+    "- category 0 (<26.6C): Satisfactory temperature. Can continue with activity.\n" + \
+    "- category 1 (26.6-32.2C): Caution: fatigue is possible with prolonged exposure and activity. Continuing activity could result in heat cramps.\n" + \
+    "- category 2 (32.2-40.5C): Extreme caution: heat cramps and heat exhaustion are possible. Continuing activity could result in heat stroke.\n" + \
+    "- category 3 (40.5-54.4C): Danger: heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.\n" + \
+    "- category 4 (>54.4C): Extreme danger: heat stroke is imminent.",  # comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning HI temperature is < 26.6°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning HI temperature is < 26.6C)",  #comfortableOrNot
     
-    "Percentage of time, during which HI is < 26.6°C",  #percentComfortable
+    "Percentage of time, during which HI is < 26.6C",  #percentComfortable
     
-    "Percentage of time, during which HI is > 54.4°C",  #percentHotExtreme
+    "Percentage of time, during which HI is > 54.4C",  #percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
     
-    ["Humidex (°C) - the human-perceived increase in air temperature due to Dew point temperature increase. Used by Canadian Meteorologist service.",  #comfortIndexValues
+    ["Humidex (C) - the human-perceived increase in air temperature due to Dew point temperature increase. Used by Canadian Meteorologist service.",  #comfortIndexValues
     
     "Each number (from 0 to 5) represents a certain humidex thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<30°C): Little or no discomfort\n" + \
-    "- category 1 (30-35°C): Noticeable discomfort\n" + \
-    "- category 2 (35-40°C): Evident discomfort\n" + \
-    "- category 3 (40-45°C): Intense discomfort; avoid exertion\n" + \
-    "- category 4 (45-54°C): Dangerous discomfort\n" + \
-    "- category 5 (>54°C): Heat stroke probable",  #comfortIndexCategory
+    "- category 0 (<30C): Little or no discomfort\n" + \
+    "- category 1 (30-35C): Noticeable discomfort\n" + \
+    "- category 2 (35-40C): Evident discomfort\n" + \
+    "- category 3 (40-45C): Intense discomfort; avoid exertion\n" + \
+    "- category 4 (45-54C): Dangerous discomfort\n" + \
+    "- category 5 (>54C): Heat stroke probable",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning humidex is < 30°C)",  # comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning humidex is < 30C)",  # comfortableOrNot
     
-    "Percentage of time chosen for analysis period, during which humidex is < 26.6°C",  # percentComfortable
+    "Percentage of time chosen for analysis period, during which humidex is < 26.6C",  # percentComfortable
     
-    "Percentage of time chosen for analysis period, during which humidex is > 54.4°C", # percentHotExtreme
+    "Percentage of time chosen for analysis period, during which humidex is > 54.4C", # percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
     
-    ["Discomfort Index (or Thom's Index)(°C) - the human-perceived increase in air temperature due to himidity increase.",  #comfortIndexValues
+    ["Discomfort Index (or Thom's Index)(C) - the human-perceived increase in air temperature due to himidity increase.",  #comfortIndexValues
     
     "Each number (from -6 to 3) represents a certain DI thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category -6 (<-40°C) Hyper-glacial\n" + \
-    "- category -5 (-40-(-20)°C) Glacial\n" + \
-    "- category -4 (-20-(-10)°C) Extremely cold\n" + \
-    "- category -3 (-10-(-1.8)°C) Very cold\n" + \
-    "- category -2 (-1.8-(13)°C): Cold\n" + \
-    "- category -1 (13-15°C): Cool\n" + \
-    "- category 0 (15-20°C): Comfortable\n" + \
-    "- category 1 (20-26.5°C): Hot\n" + \
-    "- category 2 (26.5-30°C): Very hot\n" + \
-    "- category 3 (>30°C): Torrid",  #comfortIndexCategory
+    "- category -6 (<-40C) Hyper-glacial\n" + \
+    "- category -5 (-40-(-20)C) Glacial\n" + \
+    "- category -4 (-20-(-10)C) Extremely cold\n" + \
+    "- category -3 (-10-(-1.8)C) Very cold\n" + \
+    "- category -2 (-1.8-(13)C): Cold\n" + \
+    "- category -1 (13-15C): Cool\n" + \
+    "- category 0 (15-20C): Comfortable\n" + \
+    "- category 1 (20-26.5C): Hot\n" + \
+    "- category 2 (26.5-30C): Very hot\n" + \
+    "- category 3 (>30C): Torrid",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning DI temperature is 15-20°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning DI temperature is 15-20C)",  #comfortableOrNot
     
-    "Percentage of time chosen for analysis period, during which DI is 15-20°C",  #percentComfortable
+    "Percentage of time chosen for analysis period, during which DI is 15-20C",  #percentComfortable
     
-    "Percentage of time chosen for analysis period, during which DI is > 30°C",  #percentHotExtreme
+    "Percentage of time chosen for analysis period, during which DI is > 30C",  #percentHotExtreme
     
-    "Percentage of time chosen for analysis period, during which DI is < -40°C"]  #percentColdExtreme
+    "Percentage of time chosen for analysis period, during which DI is < -40C"]  #percentColdExtreme
     
     ,
     
@@ -1639,113 +1640,113 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     ,
     
-    ["Wind Chill Temperature (°C) - the perceived decrease in air temperature felt by the body on exposed skin due to the flow of air.\nIt's used by both National Weather Service (NSW) in US and Canadian Meteorologist service. This is new (2001 by JAG/TI) WCT.\nWind chill index does not take into account the effect of sunshine.\nBright sunshine may reduce the effect of wind chill (make it feel warmer) by 6 to 10 units(C or F)!\nWindchill temperature is defined only for temperatures at or below 10C (50F) and for wind speeds at and above 1.3 m/s (or 4.8 km/h or 3.0 mph)",  #comfortIndexValues
+    ["Wind Chill Temperature (C) - the perceived decrease in air temperature felt by the body on exposed skin due to the flow of air.\nIt's used by both National Weather Service (NSW) in US and Canadian Meteorologist service. This is new (2001 by JAG/TI) WCT.\nWind chill index does not take into account the effect of sunshine.\nBright sunshine may reduce the effect of wind chill (make it feel warmer) by 6 to 10 units(C or F)!\nWindchill temperature is defined only for temperatures at or below 10C (50F) and for wind speeds at and above 1.3 m/s (or 4.8 km/h or 3.0 mph)",  #comfortIndexValues
     
     "Each number (from -6 to 0) represents a certain WCT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (>0°C) No discomfort. No risk of frostbite for most people\n" + \
-    "- category -1 (0-(-9)°C) Slight increase in discomfort. Low risk of frostbite for most people\n" + \
-    "- category -2 (-9-(-27)°C) Risk of hypothermia if outside for long periods without adequate protection. Low risk of frostbite for most people\n" + \
-    "- category -3 (-27-(-39)°C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. Increasing risk of frostbite for most people in 10 to 30 minutes of exposure\n" + \
-    "- category -4 (-39-(-47)°C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 5 to 10 minutes of exposure\n" + \
-    "- category -5 (-47-(-54)°C) Serious risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 2 to 5 minutes of exposure\n" + \
-    "- category -6 (<-54°C) Danger! Outdoor conditions are hazardous. High risk of frostbite for most people in 2 minutes of exposure or less",  #comfortIndexCategory
+    "- category 0 (>0C) No discomfort. No risk of frostbite for most people\n" + \
+    "- category -1 (0-(-9)C) Slight increase in discomfort. Low risk of frostbite for most people\n" + \
+    "- category -2 (-9-(-27)C) Risk of hypothermia if outside for long periods without adequate protection. Low risk of frostbite for most people\n" + \
+    "- category -3 (-27-(-39)C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. Increasing risk of frostbite for most people in 10 to 30 minutes of exposure\n" + \
+    "- category -4 (-39-(-47)C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 5 to 10 minutes of exposure\n" + \
+    "- category -5 (-47-(-54)C) Serious risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 2 to 5 minutes of exposure\n" + \
+    "- category -6 (<-54C) Danger! Outdoor conditions are hazardous. High risk of frostbite for most people in 2 minutes of exposure or less",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that there is danger of frostbite, 1 there is not danger of frostbite at that hour (meaning WCT temperature is in range: >-27°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that there is danger of frostbite, 1 there is not danger of frostbite at that hour (meaning WCT temperature is in range: >-27C)",  #comfortableOrNot
     
-    "Percentage of time, during which there is low risk of frostbite (DI is > -27°C)",  #percentComfortable
+    "Percentage of time, during which there is low risk of frostbite (DI is > -27C)",  #percentComfortable
     " ",  #percentHotExtreme
     
-    "Percentage of time, during which there is high risk of frostbite (DI is < -54°C)"]  #percentColdExtreme
+    "Percentage of time, during which there is high risk of frostbite (DI is < -54C)"]  #percentColdExtreme
     
     ,
     
-    ["Wet-Bulb Globe Temperature(°C) - perceived indoor temperature.\nIt is used by the U.S. military and American Academy of Pediatrics and OSHA (Occupational Safety and Health Administration) to obtain measure of heat stress involved in manual labor jobs of soldiers, construction workers, steel mill workers, firefighters, law enforcement officers, athletes...",  #comfortIndexValues
+    ["Wet-Bulb Globe Temperature(C) - perceived indoor temperature.\nIt is used by the U.S. military and American Academy of Pediatrics and OSHA (Occupational Safety and Health Administration) to obtain measure of heat stress involved in manual labor jobs of soldiers, construction workers, steel mill workers, firefighters, law enforcement officers, athletes...",  #comfortIndexValues
     
     "Each number (from 0 to 5) represents a certain WBGT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<26°C): No change in activity is required.\n" + \
-    "- category 1 (26-27.7°C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
-    "- category 2 (27.7-29.4°C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 3 (29.4-31.1°C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 4 (31.1-32.2°C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 5 (>32.2°C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
+    "- category 0 (<26C): No change in activity is required.\n" + \
+    "- category 1 (26-27.7C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
+    "- category 2 (27.7-29.4C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 3 (29.4-31.1C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 4 (31.1-32.2C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 5 (>32.2C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1C)",  #comfortableOrNot
     
-    "Percentage of time, during which WBGT is < 26°C",  #percentComfortable
+    "Percentage of time, during which WBGT is < 26C",  #percentComfortable
     
-    "Percentage of time, during which WBGT is > 32.2°C",  #percentHotExtreme
+    "Percentage of time, during which WBGT is > 32.2C",  #percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
     
-    ["Wet-Bulb Globe Temperature(°C) - perceived outdoor temperature.\nIt is used by the U.S. military, American Academy of Pediatrics and OSHA (Occupational Safety and Health Administration) to obtain measure of heat stress involved in manual labor jobs of soldiers, construction workers, steel mill workers, firefighters, law enforcement officers, athletes...",  #comfortIndexValues
+    ["Wet-Bulb Globe Temperature(C) - perceived outdoor temperature.\nIt is used by the U.S. military, American Academy of Pediatrics and OSHA (Occupational Safety and Health Administration) to obtain measure of heat stress involved in manual labor jobs of soldiers, construction workers, steel mill workers, firefighters, law enforcement officers, athletes...",  #comfortIndexValues
     
     "Each number (from 0 to 5) represents a certain WBGT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<26°C): No change in activity is required.\n" + \
-    "- category 1 (26-27.7°C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
-    "- category 2 (27.7-29.4°C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 3 (29.4-31.1°C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 4 (31.1-32.2°C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 5 (>32.2°C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
+    "- category 0 (<26C): No change in activity is required.\n" + \
+    "- category 1 (26-27.7C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
+    "- category 2 (27.7-29.4C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 3 (29.4-31.1C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 4 (31.1-32.2C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 5 (>32.2C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1C)",  #comfortableOrNot
     
-    "Percentage of time, during which WBGT is < 26°C",  #percentComfortable
+    "Percentage of time, during which WBGT is < 26C",  #percentComfortable
     
-    "Percentage of time, during which WBGT is > 32.2°C",  #percentHotExtreme
+    "Percentage of time, during which WBGT is > 32.2C",  #percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
     
-    ["Effective Temperature (°C) - influence of air temperature, wind speed, relative humidity of air, and solar radiation on man indoors and outdoors (both in shade and under the sun)",  #comfortIndexValues
+    ["Effective Temperature (C) - influence of air temperature, wind speed, relative humidity of air, and solar radiation on man indoors and outdoors (both in shade and under the sun)",  #comfortIndexValues
     
     "Each number (from -4 to 2) represents a certain TE thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category -4 (<1°C): Very cold\n" + \
-    "- category -3 (1-9°C): Cold\n" + \
-    "- category -2 (9-17°C): Cool\n" + \
-    "- category -1 (17-21°C): Fresh\n" + \
-    "- category 0 (21-23°C): Comfortable\n" + \
-    "- category 1 (23-27°C): Warm\n" + \
-    "- category 2 (>27°C): Hot",  #comfortIndexCategory
+    "- category -4 (<1C): Very cold\n" + \
+    "- category -3 (1-9C): Cold\n" + \
+    "- category -2 (9-17C): Cool\n" + \
+    "- category -1 (17-21C): Fresh\n" + \
+    "- category 0 (21-23C): Comfortable\n" + \
+    "- category 1 (23-27C): Warm\n" + \
+    "- category 2 (>27C): Hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning TE temperature is in range: 21 to 23°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning TE temperature is in range: 21 to 23C)",  #comfortableOrNot
     
-    "Percentage of time, during which TE is < 21-23°C",  #percentComfortable
+    "Percentage of time, during which TE is < 21-23C",  #percentComfortable
     
-    "Percentage of time, during which TE is > 27°C",  #percentHotExtreme
+    "Percentage of time, during which TE is > 27C",  #percentHotExtreme
     
-    "Percentage of time, during which TE is < 1°C"]  #percentColdExtreme
+    "Percentage of time, during which TE is < 1C"]  #percentColdExtreme
     
     ,
     
-    ["Apparent Temperature (°C) - combines wind chill and heat index to give one single perceived outdoor temperature for Australian climate.\nNon-radiation formula from ABM(Australian Bureau of Meteorology).",  #comfortIndexValues
+    ["Apparent Temperature (C) - combines wind chill and heat index to give one single perceived outdoor temperature for Australian climate.\nNon-radiation formula from ABM(Australian Bureau of Meteorology).",  #comfortIndexValues
     
     "Each number (from -6 to 4) represents a certain AT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
     "Appareal increments:\n" + \
-    "- category 4 (>40°C): Minimal; sun protection required\n" + \
-    "- category 3 (35-40°C): Minimal; sun protection as needed\n" + \
-    "- category 2 (30-35°C): Short sleeve, shirt and shorts\n" + \
-    "- category 1 (25-30°C): Light undershirt\n" + \
-    "- category 0 (20-25°C): Cotton-type slacks (pants)\n" + \
-    "- category -1 (15-20°C): Normal office wear\n" + \
-    "- category -2 (10-15°C): Thin or sleeveless sweater\n" + \
-    "- category -3 (5-10°C): Sweater. Thicker underwear\n" + \
-    "- category -4 (0-5°C): Coat and sweater\n" + \
-    "- category -5 (-5-0°C): Overcoat. Wind protection as needed\n" + \
-    "- category -6 (<-5°C): Overcoat. Head insulation. Heavier footwear",  #comfortIndexCategory
+    "- category 4 (>40C): Minimal; sun protection required\n" + \
+    "- category 3 (35-40C): Minimal; sun protection as needed\n" + \
+    "- category 2 (30-35C): Short sleeve, shirt and shorts\n" + \
+    "- category 1 (25-30C): Light undershirt\n" + \
+    "- category 0 (20-25C): Cotton-type slacks (pants)\n" + \
+    "- category -1 (15-20C): Normal office wear\n" + \
+    "- category -2 (10-15C): Thin or sleeveless sweater\n" + \
+    "- category -3 (5-10C): Sweater. Thicker underwear\n" + \
+    "- category -4 (0-5C): Coat and sweater\n" + \
+    "- category -5 (-5-0C): Overcoat. Wind protection as needed\n" + \
+    "- category -6 (<-5C): Overcoat. Head insulation. Heavier footwear",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning AT temperature is in range: 20 to 25°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning AT temperature is in range: 20 to 25C)",  #comfortableOrNot
     
-    "Percentage of time, during which AT is < 20-25°C",  #percentComfortable
+    "Percentage of time, during which AT is < 20-25C",  #percentComfortable
     
-    "Percentage of time, during which AT is > 40°C",  #percentHotExtreme
+    "Percentage of time, during which AT is > 40C",  #percentHotExtreme
     
-    "Percentage of time, during which AT is < -5°C"]  #percentColdExtreme
+    "Percentage of time, during which AT is < -5C"]  #percentColdExtreme
     
     ,
     
@@ -1791,7 +1792,7 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     ,
     
-    ["Mean Radiant Temperature (°C) - uniform temperature of an imaginary enclosure in which the radiant heat transfer from the human body is equal to the radiant heat transfer in the actual non-uniform enclosure.\nFor indoor conditions MRT equals the dry bulb (air) temperature.", #comfortIndexValues
+    ["Mean Radiant Temperature (C) - uniform temperature of an imaginary enclosure in which the radiant heat transfer from the human body is equal to the radiant heat transfer in the actual non-uniform enclosure.\nFor indoor conditions MRT equals the dry bulb (air) temperature.", #comfortIndexValues
     " ",
     " ",
     " ",
@@ -1857,110 +1858,110 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     ,
     
-    ["Physiologically Equivalent Temperature (°C) for temperate climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
+    ["Physiologically Equivalent Temperature (C) for temperate climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
     
     "Each number (from -4 to 4) represents a certain PET level/category. With categories being the following:\n" + \
     "--\n" + \
-    "- category -4 (<4 °C) Very cold\n" + \
-    "- category -3 (4-8 °C) Cold\n" + \
-    "- category -2 (8-13 °C) Cool\n" + \
-    "- category -1 (13-18 °C) Slightly cool\n" + \
-    "- category 0 (18-23 °C) Comfortable\n" + \
-    "- category 1 (23-29 °C) Slightly warm\n" + \
-    "- category 2 (29-35 °C) Warm\n" + \
-    "- category 2 (35-41 °C) Hot\n" + \
-    "- category 4 (>4 °C) Very hot",  #comfortIndexCategory
+    "- category -4 (<4 C) Very cold\n" + \
+    "- category -3 (4-8 C) Cold\n" + \
+    "- category -2 (8-13 C) Cool\n" + \
+    "- category -1 (13-18 C) Slightly cool\n" + \
+    "- category 0 (18-23 C) Comfortable\n" + \
+    "- category 1 (23-29 C) Slightly warm\n" + \
+    "- category 2 (29-35 C) Warm\n" + \
+    "- category 2 (35-41 C) Hot\n" + \
+    "- category 4 (>4 C) Very hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23C)",  #comfortableOrNot
     
-    "Percentage of time, during which PET is 18-23°C",  #percentComfortable
+    "Percentage of time, during which PET is 18-23C",  #percentComfortable
     
-    "Percentage of time, during which PET is > 41°C",  #percentHotExtreme
+    "Percentage of time, during which PET is > 41C",  #percentHotExtreme
     
-    "Percentage of time, during which PET is < 4°C"]  #percentColdExtreme
+    "Percentage of time, during which PET is < 4C"]  #percentColdExtreme
     
     ,
     
-    ["Physiologically Equivalent Temperature (°C) for (sub)tropical climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
+    ["Physiologically Equivalent Temperature (C) for (sub)tropical climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
     
     "Each number (from -4 to 4) represents a certain PET level/category. With categories being the following:\n" + \
     "--\n" + \
-    "- category -4 (<14 °C) Very cold\n" + \
-    "- category -3 (14-18 °C) Cold\n" + \
-    "- category -2 (18-22 °C) Cool\n" + \
-    "- category -1 (22-26 °C) Slightly cool\n" + \
-    "- category 0 (26-30 °C) Comfortable\n" + \
-    "- category 1 (30-34 °C) Slightly warm\n" + \
-    "- category 2 (34-38 °C) Warm\n" + \
-    "- category 2 (38-42 °C) Hot\n" + \
-    "- category 4 (>42 °C) Very hot",  #comfortIndexCategory
+    "- category -4 (<14 C) Very cold\n" + \
+    "- category -3 (14-18 C) Cold\n" + \
+    "- category -2 (18-22 C) Cool\n" + \
+    "- category -1 (22-26 C) Slightly cool\n" + \
+    "- category 0 (26-30 C) Comfortable\n" + \
+    "- category 1 (30-34 C) Slightly warm\n" + \
+    "- category 2 (34-38 C) Warm\n" + \
+    "- category 2 (38-42 C) Hot\n" + \
+    "- category 4 (>42 C) Very hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23C)",  #comfortableOrNot
     
-    "Percentage of time, during which PET is 26-30°C",  #percentComfortable
+    "Percentage of time, during which PET is 26-30C",  #percentComfortable
     
-    "Percentage of time, during which PET is > 42°C",  #percentHotExtreme
+    "Percentage of time, during which PET is > 42C",  #percentHotExtreme
     
-    "Percentage of time, during which PET is < 14°C"]  #percentColdExtreme
+    "Percentage of time, during which PET is < 14C"]  #percentColdExtreme
     
     ,
     
-    ["Temperature Humidity Index (°C) - the human-perceived increase in air temperature due to humidity increase.\nIt is used by Central Weather Bureau of Taiwan. Essentially it represents the modified version of Discomfort Index (DI).\nIt is meant to be used in inshade, non windy conditions.",  #comfortIndexValues
+    ["Temperature Humidity Index (C) - the human-perceived increase in air temperature due to humidity increase.\nIt is used by Central Weather Bureau of Taiwan. Essentially it represents the modified version of Discomfort Index (DI).\nIt is meant to be used in inshade, non windy conditions.",  #comfortIndexValues
     
     "Each number (from -3 to 2) represents a certain THI level/category. With categories being the following:\n" + \
     "--\n" + \
-    "- category -3 (<11 °C) Extremely cold\n" + \
-    "- category -2 (11-16 °C) Cold\n" + \
-    "- category -1 (16-20 °C) Cool\n" + \
-    "- category 0 (20-27 °C) Comfortable\n" + \
-    "- category 1 (27-31 °C) Hot\n" + \
-    "- category 2 (>31 °C) Extremely hot",  #comfortIndexCategory
+    "- category -3 (<11 C) Extremely cold\n" + \
+    "- category -2 (11-16 C) Cold\n" + \
+    "- category -1 (16-20 C) Cool\n" + \
+    "- category 0 (20-27 C) Comfortable\n" + \
+    "- category 1 (27-31 C) Hot\n" + \
+    "- category 2 (>31 C) Extremely hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning THI is in range: 20 to 27°C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning THI is in range: 20 to 27C)",  #comfortableOrNot
     
-    "Percentage of time, during which THI is 20-27°C",  #percentComfortable
+    "Percentage of time, during which THI is 20-27C",  #percentComfortable
     
-    "Percentage of time, during which THI is > 31°C",  #percentHotExtreme
+    "Percentage of time, during which THI is > 31C",  #percentHotExtreme
     
-    "Percentage of time, during which THI is < 11°C"]  #percentColdExtreme
+    "Percentage of time, during which THI is < 11C"]  #percentColdExtreme
     
     ,
     
-    ["Predicted Heat Strain (°C) - ISO 7933 model for evaluation of thermal stress experienced by a person/athlete/worker in a hot environment.",  #comfortIndexValues
+    ["Predicted Heat Strain (C) - ISO 7933 model for evaluation of thermal stress experienced by a person/athlete/worker in a hot environment.",  #comfortIndexValues
     
     "Each number (from 0 to 4) represents a certain PHS level/category. With categories being the following:\n" + \
     "--\n" + \
     "- category 0:  Comfortable - no health risk\n" + \
     "  Excessive water loss happened at least %s minutes from the start of activity.\n" % activityDuration + \
-    "  or Central (rectal) temperature of 38°C was exceeded at least %s minutes from the start of activity.\n" % activityDuration + \
+    "  or Central (rectal) temperature of 38C was exceeded at least %s minutes from the start of activity.\n" % activityDuration + \
     " \n" + \
     "- category 1:  Discomfort without health risk\n" + \
     "  Excessive water loss happened during %s to %s minutes from the start of activity.\n" % ((activityDuration - activityDuration*0.015), activityDuration) + \
-    "  or Central (rectal) temperature of 38°C was exceeded during %s to %s minutes from the start of activity.\n" % ((activityDuration - activityDuration*0.015), activityDuration) + \
+    "  or Central (rectal) temperature of 38C was exceeded during %s to %s minutes from the start of activity.\n" % ((activityDuration - activityDuration*0.015), activityDuration) + \
     " \n" + \
     "- category 2:  Long-term constraint - discomfort and risk of dehydration after several hours of exposure\n" + \
     "  Excessive water loss happened during 120 to %s minutes from the start of activity.\n" % (activityDuration - activityDuration*0.015) + \
-    "  or Central (rectal) temperature of 38°C was exceeded during 120 to %s minutes from the start of activity.\n" % (activityDuration - activityDuration*0.015) + \
+    "  or Central (rectal) temperature of 38C was exceeded during 120 to %s minutes from the start of activity.\n" % (activityDuration - activityDuration*0.015) + \
     " \n" + \
     "- category 3:  Short-term constraint - health risk after 30 to 120 minutes of exposure\n" + \
     "  Excessive water loss happened during 30 to 120 minutes from the start of activity.\n" + \
-    "  or Central (rectal) temperature of 38°C was exceeded during 30 to 120 minutes from the start of activity.\n" + \
+    "  or Central (rectal) temperature of 38C was exceeded during 30 to 120 minutes from the start of activity.\n" + \
     " \n" + \
     "- category 4:  Immediate constraint - health risks even for exposures of very short durations (less than 30 minutes)\n"
     "  Excessive water loss happened 30 minutes or less from the start of activity.\n" + \
-    "  or Central (rectal) temperature of 38°C was exceeded 30 minutes or less from the start of activity.\n",  #comfortIndexCategory
+    "  or Central (rectal) temperature of 38C was exceeded 30 minutes or less from the start of activity.\n",  #comfortIndexCategory
     
     "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour, meaning:\n" + \
     "  Excessive water loss happened at least %s minutes from the start of activity.\n" % activityDuration + \
-    "  or Central (rectal) temperature of 38°C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #comfortableOrNot
+    "  or Central (rectal) temperature of 38C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #comfortableOrNot
     
     "Percentage of time, during which:\n" + \
     "  Excessive water loss happened at least %s minutes from the start of activity.\n" % activityDuration + \
-    "  or Central (rectal) temperature of 38°C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #percentComfortable
+    "  or Central (rectal) temperature of 38C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #percentComfortable
     
     "Percentage of time, during which:\n" + \
     "  Excessive water loss happened 30 minutes or less from the start of activity.\n" + \
-    "  or Central (rectal) temperature of 38°C was exceeded 30 minutes or less from the start of activity.",  #percentHotExtreme
+    "  or Central (rectal) temperature of 38C was exceeded 30 minutes or less from the start of activity.",  #percentHotExtreme
     
     " "]  #percentColdExtreme
     ]
@@ -1975,7 +1976,7 @@ def printThermalComfortIndexName(comfortIndex, date, HOYs, PETresults):
     # print PETresults or PHSresults only for HOY_ inputted:
     if PETresults and (len(HOYs) == 1):
         coreTemperature, skinTemperature, totalHeatLoss, skinSweating, internalHeat, radiationBalance, convection, waterVaporDiffusion, sweatEvaporation, respiration = PETresults
-        print "\nBODY PARAMETERS\nCore temperature (°C): %0.2f\nMean skin temperature (°C): %0.2f\nTotal heat loss (g/h): %0.2f\nSkin wettedness (unitless): %0.2f\n\nHEAT FLUXES\nInternal heat (W): %0.2f\nRadiation balance (W): %0.2f\nConvection (W): %0.2f\nWater vapor diffusion (W): %0.2f\nSweat evaporation (W): %0.2f\nRespiration (W): %0.2f" % (coreTemperature, skinTemperature, totalHeatLoss, skinSweating, internalHeat, radiationBalance, convection, waterVaporDiffusion, sweatEvaporation, respiration)
+        print "\nBODY PARAMETERS\nCore temperature (C): %0.2f\nMean skin temperature (C): %0.2f\nTotal heat loss (g/h): %0.2f\nSkin wettedness (unitless): %0.2f\n\nHEAT FLUXES\nInternal heat (W): %0.2f\nRadiation balance (W): %0.2f\nConvection (W): %0.2f\nWater vapor diffusion (W): %0.2f\nSweat evaporation (W): %0.2f\nRespiration (W): %0.2f" % (coreTemperature, skinTemperature, totalHeatLoss, skinSweating, internalHeat, radiationBalance, convection, waterVaporDiffusion, sweatEvaporation, respiration)
 
 
 level = gh.GH_RuntimeMessageLevel.Warning

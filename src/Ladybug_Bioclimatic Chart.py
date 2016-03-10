@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Abraham Yezioro <ayez@ar.technion.ac.il> 
+# Copyright (c) 2013-2016, Abraham Yezioro <ayez@ar.technion.ac.il> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -32,7 +32,7 @@ References:
     5. Brown G.Z. and DeKay M., 2001. Sun, WInd & Light. Architectural Design Strategies (2nd edition). John WIley  & Sons, Inc.
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius. This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -76,7 +76,8 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 ghenv.Component.SubCategory = "6 | WIP"

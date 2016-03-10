@@ -1,10 +1,10 @@
-﻿# This component helps you to set and control the view from Grasshopper
+# This component helps you to set and control the view from Grasshopper
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to set the camera location and direction for the Rhino "Perspective" viewport.
 Here is the video that shows how it works: http://www.youtube.com/watch?v=7Mmhz867zY8
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _cameraLocation: A point representing the location of the viewport camera.
@@ -38,7 +38,8 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Set the View"
 ghenv.Component.NickName = 'setTheView'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_17_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

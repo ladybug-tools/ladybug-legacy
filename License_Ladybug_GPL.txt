@@ -22,6 +22,11 @@ Ladybug uses Radiance’s gendaymtx.exe, which is subject to its own licensing c
 https://github.com/NREL/Radiance
 
 
+Ladybug uses formulas for PMV and Adatptive comfort models that have been developed by many scientists over several decades and have been published in the ASHRAE55 and EN-15251 international standards.  The code for these formulas has been re-written in Python by Chris Mackey based on the javascript version in the Center for the Built Environment's Thermal Comfort Tool developed by Hoyt, Tyler; Schiavon, Stefano; Piccioli, Alberto; Moon, Dustin; and Steinfeld, Kyle (2013).  The CBE Comfor Tool is subject to a GPL licence.  For more information, see the Comfort Tool website or the Comfort Tool github:
+
+http://cbe.berkeley.edu/comforttool/ , https://github.com/CenterForTheBuiltEnvironment/comfort_tool
+
+
 Ladybug uses mathematical formulas developed by the UTCI (Universal Thermal Climate Index) project. The UTCI code in Ladybug was re-written in Python by Chris Mackey based on the original F90 UTCI source code of Peter Broede, IfADo - Leibniz Research Centre for Working Environment and Human Factors at Dortmund Technical University, Germany. UTCI is subjected to it’s own license. Please refer to UTCI website for more information:
 
 http://www.utci.org/utci_doku.php

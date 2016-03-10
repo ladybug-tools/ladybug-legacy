@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ The sun-path function used here is a Python version of the RADIANCE sun-path scr
 http://www.radiance-online.org/download-install/CVS%20source%20code
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -52,7 +52,10 @@ Provided by Ladybug 0.0.61
         ---------------- : ...
         _dailyOrAnnualSunPath_: By default, this value is set to "True" (or 1), which will produce a sun path for the whole year.  Set this input to "False" (or 0) to generate a sun path for just one day of the year (or several days if multiple days are included in the analysis period).
         solarOrStandardTime_: Set to 'True' to have the sunPath display in solar time and set to 'False' to have it display in standard time.  The default is set to 'False.'  Note that this input only changes the way in which the supath curves are drawn currently and does not yet change the position of the sun based on the input hour.
-        bakeIt_: Set to True to bake the sunpath into the Rhino scene.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         readMe!: ...
         sunVectors: Vector(s) indicating the direction of sunlight for each sun position on the sun path. 
@@ -75,10 +78,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -279,6 +283,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -301,20 +306,20 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 sunS.Append(sun)
             return lb_visualization.colorMesh(repeatedColors, sunS)
 
-        def bakePlease(listInfo, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs):
+        def bakePlease(listInfo, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs, decimalPlaces):
             # legendText = legendText + ('\n\n' + customHeading)
             studyLayerName = 'SUNPATH'
             try:
                 layerName = listInfo[1]
                 dataType = 'Hourly Data:' + listInfo[2]
-            
             except:
                 layerName = 'Latitude=' +`latitude`
                 dataType = 'No Hourly Data'
             
             # check the study type
             newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
-            lb_visualization.bakeObjects(newLayerIndex, sunsJoined, legendSrfs, legendText, textPt, textSize, legendFont, sunPathCrvs)
+            if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, sunsJoined, legendSrfs, legendText, textPt, textSize, legendFont, sunPathCrvs, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, sunsJoined, legendSrfs, legendText, textPt, textSize, legendFont, sunPathCrvs, decimalPlaces, False)
         
         def movePointList(textPt, movingVector):
             for ptCount, pt in enumerate(textPt):
@@ -605,7 +610,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         allSunPosInfo.append(modifiedsunPosInfo)
                         allValues.append(values)
                         
-                        if bakeIt: bakePlease(listInfo[i], sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, crvsTemp)
+                        if bakeIt > 0: bakePlease(listInfo[i], sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, crvsTemp, decimalPlaces)
                 
                 return allSunPositions, allSunsJoined, sunVectors, allSunPathCrvs, allLegend, allValues, sunAlt, sunAzm, cenPts, allSunPosInfo, legendBasePoints, [sunUpHours], allTitle, titleBasePoints
             
@@ -646,7 +651,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 legendText.extend(compassText)
                 textPt.extend(compassTextPts)
                 
-                if bakeIt: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvsInit)
+                if bakeIt > 0: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvsInit, decimalPlaces)
                 
             else: return -1
                 

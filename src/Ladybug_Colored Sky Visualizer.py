@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Trygve Wastvedt and Chris Mackey <Trygve.Wastvedt@gmail.com and Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Trygve Wastvedt and Chris Mackey <Trygve.Wastvedt@gmail.com and Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to visualize a Perez sky as a colored mesh in the Rhino scene using the weather file location, a time and date, and an estimate of turbidity (or amount of particulates in the atmosphere.
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         north_: Input a vector to be used as a true North direction for the sky dome or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -40,6 +40,10 @@ Provided by Ladybug 0.0.61
         scale_: An optional input to scale the dome mesh.  The default is set to 1.
         centerPt_: An optional point to move the center of the sky dome mesh.  The default is set to the Rhino origin.
         domeOrRect_: Set to "True" to generate a sky color mesh that is in the shape of a dome and set to "False" to generate a sky as a flat rectangular mesh.  The default is set to "True" to generate the sky as a dome.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         readMe!: ...
         coloredMesh: A colored mesh of the sky.
@@ -50,10 +54,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Colored Sky Visualizer"
 ghenv.Component.NickName = 'skyVizualizer'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -70,7 +75,7 @@ from Grasshopper.Kernel.Data import GH_Path
 
 def checkTheInputs():
     #Set the Julian year to be used for the analysis.
-    year = 2014
+    year = 2016
     
     #Read out the location data.
     latitude, longitude, timeZone, elevation = readLocation(_location)
@@ -305,6 +310,7 @@ def main(domeOrRect, doy, days, months, year, hours, timeZone, latitude, longitu
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -322,6 +328,8 @@ def main(domeOrRect, doy, days, months, year, hours, timeZone, latitude, longitu
         skyColorsXYZ = []
         skyMeshes = []
         skyTextLabels = []
+        allText= []
+        allTextPt = []
         
         #Generate a set of base points for the input hours.
         basePoints = []
@@ -381,6 +389,8 @@ def main(domeOrRect, doy, days, months, year, hours, timeZone, latitude, longitu
                 dateText = str(lb_preparation.hour2Date(day*24+hour))
                 textSrf = lb_visualization.text2srf([dateText], [lb_visualization.BoundingBoxPar[5]], legendFont, scale/2.1)
                 skyTextLabels.extend(textSrf)
+                allText.append(dateText)
+                allTextPt.append(lb_visualization.BoundingBoxPar[5])
                 
                 #Print the information for each sky
                 lb_skyColor.info()
@@ -391,6 +401,20 @@ def main(domeOrRect, doy, days, months, year, hours, timeZone, latitude, longitu
             for geo in skyMeshes: geo.Transform(transformMtx)
             for list in skyTextLabels:
                 for geo in list: geo.Transform(transformMtx)
+        
+        #If the user has set bakeIt to true, bake the geometry.
+        if bakeIt_ > 0:
+            #Make a mesh with all sky domes.
+            totalMesh = rc.Geometry.Mesh()
+            for mesh in skyMeshes: totalMesh.Append(mesh)
+            #Set up the new layer.
+            studyLayerName = 'COLORED_SKIES'
+            placeName = _location.split('\n')[1]
+            analysisTime = 'DOYs = ' + str(doy) + ', Hours = ' + str(hours)
+            newLayerIndex, l = lb_visualization.setupLayers(analysisTime, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+            #Bake the objects.
+            if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, totalMesh, None, allText, allTextPt, scale/2.1, legendFont, None, 0, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, totalMesh, None, allText, allTextPt, scale/2.1, legendFont, None, 0, False)
         
         
         return skyMeshes, skyColors, skyColorsXYZ, skyTextLabels

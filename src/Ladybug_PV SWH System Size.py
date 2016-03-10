@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to generate the PVsurface or SWHsurface for "Photovoltaics surface" or "Solar Water Heating surface" components, based on initial PV or SWH system sizes.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         _location: The output from the "importEPW" or "constructLocation" component.  This is essentially a list of text summarizing a location on the earth.
@@ -40,17 +40,17 @@ Provided by Ladybug 0.0.61
                          -
                          If not supplied, location's latitude will be used as default value.
                          -
-                         In degrees (°).
+                         In degrees ().
         arrayAzimuthAngle_: The orientation angle (clockwise from the true north) of the PV/SWH array plane's normal vector. (range 0-360)
                             -
                             To get the maximal amount of energy, input the "optimalAzimuth" output from "Tilt And Orientation Factor"'s component.
                             -
                             If not supplied, the following values will be used as default: 180 (due south) for northern hemisphere, 0 (due north) for southern hemisphere.
                             -
-                            In degrees(°).
+                            In degrees().
         tiltedArrayHeight_: The height of the array, measured in the tilted plane.
                             It is depends on the height/width of the PV module/SWH collector. It also depends on the way modules/collectors are positioned in PV/SWH array (vertically or horizontally).
-                            It can vary from 1 to 2.3 meters x number of modules in a single PV/SWH column.
+                            It can vary from 1 to 2.3 meters x number of modules/collectors in a single PV/SWH column.
                             -
                             If not supplied, default value of 1.6 meters (with a single PV module/SWH collector per row) will be used.
                             -
@@ -121,7 +121,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_PV SWH System Size"
 ghenv.Component.NickName = "PV_SWH_SystemSize"
-ghenv.Component.Message = "VER 0.0.61\nDEC_01_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 ghenv.Component.SubCategory = "6 | WIP"
@@ -526,26 +527,26 @@ def printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea
     if moduleEfficiency != None:  # _PVmoduleSettings inputted:
         PVSWHmoduleSystemSettings = "Data taken from _PVmoduleSettings:\nModule efficiency: %s\nModule active area percent: %s" % (moduleEfficiency, moduleActiveAreaPercent)
     else:  # _SWHsystemSettings inputted:
-        PVSWHmoduleSystemSettings = "Data taken from _SWHsystemSettings:\nCollector optical efficiency (-): %s\nCollector thermal loss (W/m2/°C): %s\nCollector active area percent: %s" % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
+        PVSWHmoduleSystemSettings = "Data taken from _SWHsystemSettings:\nCollector optical efficiency (-): %s\nCollector thermal loss (W/m2/C): %s\nCollector active area percent: %s" % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
     printOutputMsg = \
     """
 Input data:
 
 Location: %s
-Latitude (°): %s
-Longitude (°): %s
-North (°): %s
+Latitude (): %s
+Longitude (): %s
+North (): %s
 
 System size (kW): %0.2f
 Surface area (m2): %0.2f
 Surface active area (m2):
-Array tilt angle (°): %0.2f
-Array azimuth angle (°): %0.2f
+Array tilt angle (): %0.2f
+Array azimuth angle (): %0.2f
 Tilted array height (m): %0.2f
 Number of rows: %0.2f
 Skew rows distance (m): %0.2f
 Minimal spacing period: %s or %s
-Base surface tilt angle(°): %0.2f
+Base surface tilt angle(): %0.2f
 Array origin point: %0.2f, %0.2f
 Array origin corner: %s (%s)
 

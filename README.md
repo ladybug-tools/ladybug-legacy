@@ -37,6 +37,8 @@ Contributors(a-z):
 ========================================
 [Anton Szilasi](https://github.com/antonszilasi)
 
+[Antonello Di Nunzio](https://github.com/AntonelloDN)
+
 Alex Jacobson
 
 [Abraham Yezioro](https://github.com/ayezioro)

@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Saeran Vasanthakumar <saeranv@gmail.com> 
+# Copyright (c) 2013-2016, Saeran Vasanthakumar <saeranv@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -38,7 +38,7 @@ Reference: Niemasz, J., Sargent, J., Reinhart D.F., "Solar Zoning and Energy in
 Detached Residential Dwellings," Proceedings of SIMAUD 2011, Boston, April 2011.
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _boundary: A closed boundary curve representing a piece of land (such as a property to be developed) for which solar access of the surrounding land is desired.
@@ -67,7 +67,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_SolarEnvelopeBasic"
 ghenv.Component.NickName = 'SolarEnvelopeBasic'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -303,6 +304,7 @@ def main(north,boundary,timeperiod,monthRange,location):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \

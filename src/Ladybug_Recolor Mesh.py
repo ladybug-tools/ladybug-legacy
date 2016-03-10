@@ -26,7 +26,7 @@ Use this component to re-color a mesh with new a numerical data set whose length
 This component is useful if you have post-processed any of the numerical data out of the Ladybug components using Grasshopper math components.
 It is also necessary to view results from the Ladybug Real Time Radiation Analysis.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to re-color the _inputMesh.
@@ -35,9 +35,11 @@ Provided by Ladybug 0.0.61
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.  Legend Parameters can be used to change the colors, numerical range, and/or number of divisions of any Ladybug legend along with the corresponding colored mesh.
         analysisTitle_: Text representing a new title for the re-colored mesh.  If no title is input here, the default will read "unnamed."
         legendTitle_: Text representing a new legend title for re-colored mesh. Legends are usually titled with the units of the _analysisResult.  If no text is provided here, the default title will read "unkown units."
-        bakeIt_: Set to "True" to bake the resulting mesh and legend into the Rhino scene.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         layerName_: If bakeIt_ is set to "True", input Text here corresponding to the Rhino layer onto which the resulting mesh and legend should be baked.
-        
     Returns:
         readMe!: ...
         newMesh: A new mesh that has been re-colored based on the _analysisResult data.
@@ -47,12 +49,13 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Recolor Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_24_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 
 
 import scriptcontext as sc
@@ -202,7 +205,7 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
             
             if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
             
-            if bakeIt:
+            if bakeIt > 0:
                 formatString = "%."+str(decimalPlaces)+"f"
                 for count, item in enumerate(legendText):
                     try:
@@ -214,8 +217,8 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
                 if layerName == None: layerName = 'Custom'
                 # check the study type
                 newLayerIndex, l = lb_visualization.setupLayers('Modified Version', 'LADYBUG', layerName, studyLayerName)
-                lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont)
-                
+                if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
+                else: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
             return coloredChart, [legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]], legendBasePoint, colors, legendColors
         else:
             warning = 'Connect inputData!'

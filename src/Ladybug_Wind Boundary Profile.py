@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic and Chris Mackey <djordjedspasic@gmail.com and chris@mackeyarchitecture.com> 
+# Copyright (c) 2013-2016, Djordje Spasic and Chris Mackey <djordjedspasic@gmail.com and chris@mackeyarchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ Use this component to visualize a wind profile curve for a given terrain type.  
 -
 More information on the power law of the wind profile can be found here: http://en.wikipedia.org/wiki/Wind_profile_power_law
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -61,7 +61,10 @@ Provided by Ladybug 0.0.61
             3 = Colored Line Wind Arrows - use this option to generate arrows as lines with colored tips.
             4 = Black Line Wind Arrows - use this option to generate arrows as lines with black tips.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
-        bakeIt_: Set to "True" to bake the wind boundary profile into the Rhino scene.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         readMe!: ...
         --------------------: ...
@@ -78,10 +81,11 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -102,6 +106,7 @@ def checkTheInputs():
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -712,6 +717,8 @@ def createChartAxes(heightsAboveGround, windVectorScale, scaleFactor, windVec, w
 def makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, legendFontSize, legendBold, lb_visualization):
     #Create the lists to be filled.
     axesText = []
+    allText = []
+    allTextPt = []
     
     #Figure out the x-axis base pts.
     xValuesOrigins = []
@@ -730,6 +737,8 @@ def makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir
         for count, point in enumerate(xValuesOrigins):
             textPlane = rc.Geometry.Plane(point, rotatedWindVec, rc.Geometry.Vector3d.ZAxis)
             xValuesTextMeshes.extend(lb_visualization.text2srf(xAxisText[count], point, legendFont, legendFontSize*.75, legendBold, textPlane, 4))
+    allText.extend(xAxisText)
+    allTextPt.extend(xValuesOrigins)
     
     for meshTxt in xValuesTextMeshes:
         axesText.extend(meshTxt)
@@ -769,15 +778,19 @@ def makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir
                 textPlane = rc.Geometry.Plane(newPoint, rotatedWindVec, rc.Geometry.Vector3d.ZAxis)
                 yValuesTextMeshes.extend(lb_visualization.text2srf(character, newPoint, legendFont, legendFontSize*.75, legendBold, textPlane, 2))
                 charCount += 1
+    allText.extend(yAxisText)
+    allTextPt.extend(yValuesOrigins)
     
     for meshTxt in yValuesTextMeshes:
         axesText.extend(meshTxt)
     
     
-    return axesText
+    return axesText, allText, allTextPt
 
 def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, windVectorScale, axesLines, epwStr, terrainType, analysisPeriod, titleStatement, legendFont, legendFontSize, legendBold, lb_visualization, lb_preparation):
     unitsTextLabels = []
+    untisTxt = []
+    unitsTxtPts = []
     
     #Find the point and text for the X-Axis Label.
     xAxisLabelText = "Wind Speed (m/s)"
@@ -789,6 +802,8 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
     
     #Create the X-Axis label.
     xAxisTextLabelMesh = lb_visualization.text2srf([xAxisLabelText], [axesBasePt], legendFont, legendFontSize, legendBold, None, 4)
+    untisTxt.append(xAxisLabelText)
+    unitsTxtPts.append(axesBasePt)
     
     #If the profile has been oriented to a cardinal direction, re-orient the text label.
     if windDir != []:
@@ -817,6 +832,8 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
     
     #Create the Y-Axis label.
     yAxisTextLabelMesh = lb_visualization.text2srf([yAxisLabelText], [axesBasePt], legendFont, legendFontSize, legendBold, None, 4)
+    untisTxt.append(yAxisLabelText)
+    unitsTxtPts.append(axesBasePt)
     
     #Rotate the Y-Axis label.
     rotation = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.XAxis, rc.Geometry.Vector3d.YAxis, axesBasePt)
@@ -863,6 +880,8 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
     
     #Create the Title label.
     titleLabelMesh = lb_visualization.text2srf([titleText], [titleBasePt], legendFont, legendFontSize*1.2, legendBold, None, 0)
+    untisTxt.append(titleText)
+    unitsTxtPts.append(titleBasePt)
     
     #If the profile has been oriented to a cardinal direction, re-orient the text label.
     if windDir != []:
@@ -883,107 +902,14 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
     for meshTxt in titleLabelMesh:
         unitsTextLabels.extend(meshTxt)
     
-    return unitsTextLabels
-
-
-def setupAddLayers(layParentName, laySubName, projectName, newLayer, category):
-    #  setup parent and sublayers
-    layerT = rc.RhinoDoc.ActiveDoc.Layers
-    layParent = rc.DocObjects.Layer.GetDefaultLayerProperties()
-    laySub = rc.DocObjects.Layer.GetDefaultLayerProperties()
-    laySubPath = layParentName + "::" + laySubName
-    layParent.Name = layParentName
-    laySub.Name = laySubName
-    layParent.Color = System.Drawing.Color.FromArgb(255,192,203)
-    laySub.Color = System.Drawing.Color.FromArgb(0,169,255)
-    
-    # adding parent/sublayers
-    layParentIndex = layerT.Find(layParentName, True)
-    if layParentIndex >= 0:
-        parent = layerT[layParentIndex]
-        laySub.ParentLayerId = parent.Id
-        index = layerT.Add(laySub)
-    else:
-        layerT.Add(layParent)
-    laySubIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, laySubPath, True)
-    if laySubIndex < 0:
-        layParentIndex = layerT.Find(layParentName, True)
-        parent = layerT[layParentIndex]
-        laySub.ParentLayerId = parent.Id
-        index = layerT.Add(laySub)
-    
-    # check projectName
-    if projectName:
-        projectName = str(projectName)
-    else:
-        projectName = "Project"
-    if rc.DocObjects.Layer.IsValidName(projectName) == False: 
-            print "Layer name: '" +  projectName + "' is not a valid layer name"
-            return None
-    
-    # setting up and adding projectname_n layers
-    layerPCAIndex = layerT.Find(laySubName, True)
-    layerPCA = layerT[layerPCAIndex]
-    project_n = rc.DocObjects.Layer.GetDefaultLayerProperties()
-    project_n.IsVisible = False
-    project_n.ParentLayerId = layerPCA.Id
-    projectNameLayers = layerPCA.GetChildren()
-    if not projectNameLayers:
-        projectName_n = projectName + "_0"
-        project_n.Name = projectName_n
-        project_nIndex = layerT.Add(project_n)
-    elif projectNameLayers:
-        integers = []
-        try:
-            for l in projectNameLayers:
-                if projectName in l.Name:
-                    integers.append(int(l.Name.split(projectName + "_")[-1]))
-                    lastLayer = l.Name
-            integers.sort()
-            maxInt = integers[-1]
-            if newLayer == True:
-                projectName_n = projectName + "_" + str(maxInt + 1)
-                project_n.Name = projectName_n
-                project_nIndex = layerT.Add(project_n)
-            else: 
-                project_nIndex = layerT.Find(lastLayer, True)
-        except:
-            project_n.Name = projectName + "_0"
-            project_nIndex = layerT.Add(project_n)
-    
-    # setting up and adding category layers
-    project_n = layerT[project_nIndex]
-    categoryL = rc.DocObjects.Layer.GetDefaultLayerProperties()
-    categoryL.ParentLayerId = project_n.Id
-    projectNameLayers = project_n.GetChildren()
-    integers = []
-    if projectNameLayers:
-        for l in projectNameLayers:
-            if category in l.Name:
-                integers.append(int(l.Name.split("_")[-1]))
-        try:
-            integers.sort()
-            maxInt = integers[-1]
-            categoryName_n = category + "_" +str(int(maxInt)+1)
-            categoryL.Name = categoryName_n
-            categoryIndex = layerT.Add(categoryL)
-        except:
-            categoryL.Name = category  + "_0"
-            categoryIndex = layerT.Add(categoryL)
-            maxInt = -1
-    else:
-        categoryL.Name = category + "_0"
-        categoryIndex = layerT.Add(categoryL)
-        maxInt = -1
-    
-    return categoryIndex, categoryL.Name
+    return unitsTextLabels, untisTxt, unitsTxtPts
 
 
 def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
     #Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
-    #Set a default windDirHieghts.
+    #Set lists to be filled.
     windDirHieghts = []
     
     #Define a maximum wind speed if none is provided in the legendPar.
@@ -1241,15 +1167,6 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
                 colors = []
                 values = windSpdHeight[1:]
         
-        #Convert the colors into Rhino materials if bakeIt is set to true.
-        arrowMeshesMaterialIndexes = []
-        arrowMeshMaterial = rc.DocObjects.Material()
-        if bakeIt_ and colors != []:
-            for color in colors:
-                arrowMeshMaterial.DiffuseColor = color
-                newMatIndex = rc.RhinoDoc.ActiveDoc.Materials.Add(arrowMeshMaterial)
-                arrowMeshesMaterialIndexes.append(newMatIndex)
-        
         #Plot the chart axes.
         profileAxes = []
         axesLines, axesArrows, xAxisPts, yAxisPts, xAxisText, yAxisText = createChartAxes(heightsAboveGround, windVectorScale, scaleFactor, windVec, windDir, maxSpeed)
@@ -1307,11 +1224,11 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
         elif windDir == []: keepLegendStatic = True
         
         # Create the axes text lables
-        axesText = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
+        axesText, axesTextStr, axesTextPt = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
         
         #i love rosi.
         #Create the units labels of the axes.
-        unitsTextLabels = makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, windVectorScale, axesLines, epwStr, terrainType, analysisPeriod, titleStatement, legendFont, textSize, legendBold, lb_visualization, lb_preparation)
+        unitsTextLabels, untisTxt, unitsTxtPts = makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, windVectorScale, axesLines, epwStr, terrainType, analysisPeriod, titleStatement, legendFont, textSize, legendBold, lb_visualization, lb_preparation)
         axesText.extend(unitsTextLabels)
         
         #If the user has specified a base point, use this to move everything.
@@ -1334,46 +1251,45 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
                 geo.Transform(transformMtx)
         
         # If bakeIt is set to true, then bake all of the geometry.
-        if bakeIt_:
-            layerIndex, layerName = setupAddLayers("LADYBUG", "WIND_BOUNDARY_PROFILE", "myProject", False, "Wind_boundary_profile_")
-            
-            attr = rc.DocObjects.ObjectAttributes()
-            attr.LayerIndex = layerIndex
-            legendIds = []
-            arrowMeshesIds = []
-            for mesh in legend:
-                id = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
-                legendIds.append(id)
-            boundaryCrvId = rc.RhinoDoc.ActiveDoc.Objects.AddCurve(profileCrv[0], attr)
-            if windVecMesh != None:
-                for i,mesh2 in enumerate(windVecMesh):
-                    attr.MaterialIndex = arrowMeshesMaterialIndexes[i]
-                    attr.MaterialSource = rc.DocObjects.ObjectMaterialSource.MaterialFromObject
-                    arrowMeshId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh2, attr)
-                    arrowMeshesIds.append(arrowMeshId)
-            # Add axis.
-            lineIds = []
-            for line in profileAxes:
+        if bakeIt_ > 0:
+            #Group all of the curves together.
+            finalCrvs = []
+            for crv in profileAxes:
                 try:
-                    lineId = rc.RhinoDoc.ActiveDoc.Objects.AddCurve(line,attr)
-                    lineIds.append(lineId)
-                except:
-                    lineId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(line,attr)
-                    lineIds.append(lineId)
+                    testPt = crv.PointAtEnd
+                    finalCrvs.append(crv)
+                except: pass
+            finalCrvs.extend(profileCrv)
+            #Make a joined mesh.
+            try:
+                finalMesh = rc.Geometry.Mesh()
+                for mesh in windVecMesh:
+                    try: finalMesh.Append(mesh)
+                    except: finalCrvs.append(rc.Geometry.LineCurve(mesh))
+            except: finalMesh = None
             
-            #Add text.
-            textIds = []
-            for txt in axesText:
-                textId = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(txt,attr)
-                textIds.append(textId)
+            #Group all of the Text together.
+            allText = []
+            allTextPt = []
+            allText.extend(axesTextStr)
+            allTextPt.extend(axesTextPt)
+            allText.extend(untisTxt)
+            allTextPt.extend(unitsTxtPts)
+            try:
+                allText.extend(legendText)
+                allTextPt.extend(textPt)
+            except: legendSrfs = None
+            # check the study type
+            try:
+                if 'Wind Speed' in _windSpeed_tenMeters[2]: placeName = _windSpeed_tenMeters[1]
+                elif 'Wind Direction' in windDirection_[2]: placeName = windDirection_[1]
+                else: placeName = 'alternateLayerName'
+            except: placeName = 'alternateLayerName'
+            studyLayerName = 'WIND_BOUNDARY_PROFILE'
+            newLayerIndex, l = lb_visualization.setupLayers(str(analysisPeriod), 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
             
-            # group baked geometry
-            if windVecMesh != None:
-                ids = legendIds + arrowMeshesIds + [boundaryCrvId] + lineIds + textIds
-            else:
-                ids = legendIds + [boundaryCrvId] + lineIds + textIds
-            groupIndex = rc.RhinoDoc.ActiveDoc.Groups.Add(layerName)
-            rc.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, ids)
+            if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, False)
         
         
         return profileCrv, windVecMesh, windSpdHeight, windDirHieghts, windVec, anchorPts, profileAxes, axesText, legend, legendBasePoint

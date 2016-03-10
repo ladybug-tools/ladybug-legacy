@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 This component allows you to visualize a selected sky matrix from the selectSkyMxt component in order to see the patches of the sky dome where radiation is coming from.
 The component will produce 3 sky domes by default: a dome showing just the diffuse radiation, a dome showing just the direct radiation, and a dome showing the total radiation.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -34,8 +34,11 @@ Provided by Ladybug 0.0.61
         _scale_: Use this input to change the scale of the sky dome.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         showTotalOnly_: Set to "True" to only show a sky dome with the total radiation.  The default is "False", which will produce 3 sky domes: one of diffuse radiation, one of direct radiation, and one of the total radiation.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set to "True" to run the component and generate a sky dome.
-        bakeIt_: Set to "True" to bake the sky dome into the Rhino scene.
     Returns:
         readMe!: ...
         skyPatchesMesh:  A colored mesh representing the intensity of radiation for each of the sky patches of the sky dome.
@@ -50,10 +53,11 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -75,6 +79,7 @@ def skyPreparation(skyType):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -167,7 +172,8 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         # color legend surfaces
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
         legendSrfs.Translate(movingVector) # move it to the right place
-        
+        moveTransform = rc.Geometry.Transform.Translation(movingVector)
+        for pt in compassTextPts: pt.Transform(moveTransform)
         
         # generate dome patches colors
         totalRadiationColors = lb_visualization.gradientColor(results, lowB, highB, customColors)
@@ -217,19 +223,26 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         strResults = []
         [strResults.append('%.2f'%num) for num in results]
         
-        
-        if bakeIt:
-            # projectName = listInfo[0][1] + '_Total'
+        if bakeIt > 0:
+            #Put all of the text together.
             legendText.append(titleStr)
-            studyLayerName = 'SkyDome'
-            
+            legendText.extend(compassText)
+            textPt.extend(compassTextPts)
+            #Put all of the curves into one list.
+            finalCrvs = []
+            for crv in compassCrvs:
+                try:
+                    testPt = crv.PointAtEnd
+                    finalCrvs.append(crv)
+                except: pass
             # check the study type
+            studyLayerName = 'SKY_DOME'
             newLayerIndex, l = lb_visualization.setupLayers(skyTypes[i], 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
             
-            lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, compassCrvs)
+            if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, finalCrvs, decimalPlaces, True)
+            else: lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, finalCrvs, decimalPlaces, False)
             
         return domeMeshed, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], compassCrvs, movedLegendBasePoint, skyPatchCenPts, skyPatchAreas, strResults, movedSkyPatches
-    
     
     
     # north direction

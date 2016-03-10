@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ Gendaymtx is written by Ian Ashdown and Greg Ward. For more information, check t
 http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymtx.pdf
 
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _epwFile: The output of the Ladybug Open EPW component or the file path location of the epw weather file on your system.
@@ -45,7 +45,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -55,8 +56,6 @@ except: pass
 
 import os
 import scriptcontext as sc
-from clr import AddReference
-AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 from itertools import izip
 import shutil
@@ -127,6 +126,7 @@ def main(epwFile, skyType, workingDir, useOldRes):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -160,6 +160,10 @@ def main(epwFile, skyType, workingDir, useOldRes):
         #check if the file is there
         if not os.path.isfile(gendaymtxFile) or  os.path.getsize(gendaymtxFile)< 15000 : return -3
         
+        if not os.access(gendaymtxFile, os.X_OK):
+            raise Exception("%s is blocked by system! Right click on the file,"%gendaymtxFile + \
+                " select properties and unblock it.")
+                
         ## check for epw file to be connected
         if epwFile != None and epwFile[-3:] == 'epw':
             if not os.path.isfile(epwFile):

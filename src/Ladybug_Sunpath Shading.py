@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -33,7 +33,7 @@ Use "beamIndexPerHour" and "skyViewFactor" outputs for Solar Water Heating colle
 "annualShading" output is based on "Using sun path charts to estimate the effects of shading on PV arrays", University of Oregon, Frank Vignola:
 http://solardat.uoregon.edu/download/Papers/UsingSunPathChartstoEstimatetheEffectofShadingonPVArrays.pdf
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -197,7 +197,8 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = "VER 0.0.61\nDEC_05_2015"
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.61\nDEC_05_2015
@@ -408,7 +409,7 @@ def checkInputData(analysisGeometry, ACenergyPerHour, context, coniferousTrees, 
     validContextCategories = [index for index in [validContext1, validContext2, validContext3] if index > 0]
     
     # default transmission indices based on: Planning and Installing Photovoltaic Systems: A Guide for Installers, Architects and Engineers,
-    # Deutsche Gesellschaft Für Sonnenenergie (Dgs), Dec 2007.
+    # Deutsche Gesellschaft Fr Sonnenenergie (Dgs), Dec 2007.
     if (coniferousAllyearIndex == None) or (coniferousAllyearIndex < 0) or (coniferousAllyearIndex > 1):
         coniferousAllyearIndex = 0.30
     if (deciduousInleafIndex == None) or (deciduousInleafIndex < 0) or (deciduousInleafIndex > 1):
@@ -1222,9 +1223,9 @@ def printOutput(locationName, latitude, longitude, northRad, srfAreaL, ACenergyP
 Input data:
 
 Location: %s
-Latitude (°): %s
-Longitude (°): %s
-North (°): %s
+Latitude (): %s
+Longitude (): %s
+North (): %s
 
 Surface area (m2): %s
 

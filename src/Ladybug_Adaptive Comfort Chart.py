@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The Adaptive model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.62
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the 'Read EP Result' or 'Import EPW' component.
@@ -53,6 +53,10 @@ Provided by Ladybug 0.0.61
         basePoint_: An optional base point that will be used to place the adaptive chart in the Rhino scene.  If no base point is provided, the base point will be the Rhino model origin.
         scale_: An optional number to change the scale of the adaptive chart in the Rhino scene.  By default, this value is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         _runIt: Set to "True" to run the component and generate an Adaptive comfort chart.
     Returns:
         readMe!: ...
@@ -75,10 +79,11 @@ Provided by Ladybug 0.0.61
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_20_2015'
+ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -91,6 +96,7 @@ import System
 from System import Object
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
+import copy
 
 w = gh.GH_RuntimeMessageLevel.Warning
 tol = sc.doc.ModelAbsoluteTolerance
@@ -468,6 +474,8 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     #Define lists to be filled.
     chartCrvAndText = []
     finalComfortPolygons = []
+    allText = []
+    allTextPt = []
     
     #Set a default text height if the user has not provided one.
     if legendFontSize == None:
@@ -694,9 +702,13 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     tempLabels = []
     for count, text in enumerate(tempText):
         tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize, legendBold)[0])
+    allText.extend(tempText)
+    allTextPt.extend(tempLabelBasePts)
     prevailLabels = []
     for count, text in enumerate(prevailText):
         tempLabels.extend(lb_visualization.text2srf([text], [prevailLabelBasePts[count]], legendFont, legendFontSize, legendBold)[0])
+    allText.extend(prevailText)
+    allTextPt.extend(prevailLabelBasePts)
     
     #Bump up the text size for Farenheit.
     if IPTrigger == True: legendFontSize = 1
@@ -712,6 +724,8 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
         if belowTen == False or includeColdTimes == False: xAxisPt = [rc.Geometry.Point3d(55, 50 -(5*legendFontSize), 0)]
         else: xAxisPt = [rc.Geometry.Point3d(30, 32-(5*legendFontSize), 0)]
     tempLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
+    allText.extend(xAxisTxt)
+    allTextPt.extend(xAxisPt)
     
     yAxisLabels = []
     if IPTrigger == False: yAxisTxt = ["Desired Indoor Operative Temperature (C)"]
@@ -727,6 +741,8 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     for geo in yAxisLabels:
         geo.Transform(rotateTransf)
     tempLabels.extend(yAxisLabels)
+    allText.extend(yAxisTxt)
+    allTextPt.extend(yAxisPt)
     
     #Make the chart title.
     def getDateStr(start, end):
@@ -751,14 +767,17 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
         else: titlePt = [rc.Geometry.Point3d(-7, 22, 0), rc.Geometry.Point3d(-7, (22)-(legendFontSize*2.5), 0),  rc.Geometry.Point3d(-7, (22)-(legendFontSize*5), 0)]
     for count, text in enumerate(titleTxt):
         titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
-    
-    #Make sure that there is a good surface to use to make the legend.
+    allText.extend(titleTxt)
+    allTextPt.extend(titlePt)
     
     #Bring all text and curves together in one list.
     for item in tempNumLines:
         chartCrvAndText.append(item)
     for item in prevailTempNumLines:
         chartCrvAndText.append(item)
+    allCrvs = copy.copy(chartCrvAndText)
+    for polylist in finalComfortPolygons:
+        allCrvs.extend(polylist)
     for item in tempLabels:
         chartCrvAndText.append(item)
     for item in titleLabels:
@@ -767,7 +786,7 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     if IPTrigger == False: bound = tempNumLines[0:8]
     else: bound = tempNumLines[0:15]
     
-    return chartCrvAndText, finalComfortPolygons, belowTen, bound
+    return chartCrvAndText, finalComfortPolygons, belowTen, bound, allCrvs, allText, allTextPt
 
 
 def colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, lb_visualization, lowB, highB, customColors, belowTen, includeColdTimes, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals):
@@ -1084,32 +1103,34 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
         if len(list) != 0:
             pointColors.append(lb_visualization.gradientColor(list, "min", "max", customColors))
     
-    #Generate a legend for comfort.
-    legend = []
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
-    legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
-    legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-    legend.append(legendSrfs)
-    for list in legendTextCrv:
-        for item in list:
-            legend.append(item)
-    colorLegends.append(legend)
-    
-    #Generate legends for annualHourly Data.
-    for listCount, list in enumerate(annualHourlyDataSplit):
-        if len(list) != 0:
-            legend = []
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
-            legendColors = lb_visualization.gradientColor(legendText[:-1], "min", "max", customColors)
-            legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-            legend.append(legendSrfs)
-            for list in legendTextCrv:
-                for item in list:
-                    legend.append(item)
-            colorLegends.append(legend)
-    
-    
-    return pointColors, colorLegends
+    try:
+        #Generate a legend for comfort.
+        legend = []
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
+        legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
+        legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
+        legend.append(legendSrfs)
+        for list in legendTextCrv:
+            for item in list:
+                legend.append(item)
+        colorLegends.append(legend)
+        
+        #Generate legends for annualHourly Data.
+        for listCount, list in enumerate(annualHourlyDataSplit):
+            if len(list) != 0:
+                legend = []
+                legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
+                legendColors = lb_visualization.gradientColor(legendText[:-1], "min", "max", customColors)
+                legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
+                legend.append(legendSrfs)
+                for list in legendTextCrv:
+                    for item in list:
+                        legend.append(item)
+                colorLegends.append(legend)
+        
+        return pointColors, colorLegends
+    except:
+        return pointColors, []
 
 
 def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals, lb_preparation, lb_comfortModels, lb_visualization):
@@ -1276,11 +1297,14 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         if patternList != []: annualHourlyDataSplit = newAnnualHourlyDataSplit
     
     # Generate the chart curves.
-    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound = drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels)
+    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound, allCurves, allText, allTextPt = drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels)
     
     #Generate the colored mesh.
     #As long as the calculation length is more than 1, make a colored mesh and get chart points for the input data.
     legend = []
+    legendSrfs = None
+    if legendFontSize != None: textSize = legendFontSize
+    else: textSize = 0.5
     if calcLength > 1:
         chartHourPoints, adaptiveChartMesh, meshFaceValues = colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, lb_visualization, lowB, highB, customColors, belowTen, includeColdTimes, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals)
         legendTitle = "Hours"
@@ -1294,6 +1318,18 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 legend.append(item)
         if legendBasePoint == None:
             legendBasePoint = lb_visualization.BoundingBoxPar[0]
+        #Compile all text into one list.
+        finalLegNum = []
+        formatString = "%."+str(decimalPlaces)+"f"
+        for num in legendText:
+            try: finalLegNum.append(formatString % num)
+            except: finalLegNum.append(num)
+        if removeLessThan: pass
+        else:
+            finalLegNum[0] = "<=" + finalLegNum[0]
+            finalLegNum[-2] = finalLegNum[-2] + "<="
+        allText.extend(finalLegNum)
+        allTextPt.extend(textPt)
     else:
         chartHourPoints = [rc.Geometry.Point3d((airTemp[0]+radTemp[0])/2, prevailTemp[0], 0)]
         adaptiveChartMesh = None
@@ -1350,8 +1386,8 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             for geo in geoList: geo.Transform(transformMtx)
         for geo in chartHourPoints: geo.Transform(transformMtx)
         for geoList in colorLegends:
-            for geo in geoList:
-                geo.Transform(transformMtx)
+            for geo in geoList: geo.Transform(transformMtx)
+        for geo in allTextPt: geo.Transform(transformMtx)
         basePoint = basePoint_
     else: basePoint = rc.Geometry.Point3d(0,0,0)
     
@@ -1365,9 +1401,22 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             for geo in geoList: geo.Transform(transformMtx)
         for geo in chartHourPoints: geo.Transform(transformMtx)
         for geoList in colorLegends:
-            for geo in geoList:
-                geo.Transform(transformMtx)
+            for geo in geoList: geo.Transform(transformMtx)
+        for geo in allTextPt: geo.Transform(transformMtx)
     
+    #If the user has set bakeIt to true, bake the geometry.
+    if bakeIt_ > 0:
+        #Set up the new layer.
+        studyLayerName = 'ADAPTIVE_CHARTS'
+        try:
+            if 'Temperature' in _prevailingOutdoorTemp[2]: placeName = _prevailingOutdoorTemp[1]
+            elif 'Temperature' in _dryBulbTemperature[2]: placeName = _dryBulbTemperature[1]
+            else: placeName = 'alternateLayerName'
+        except: placeName = 'alternateLayerName'
+        newLayerIndex, l = lb_visualization.setupLayers(None, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+        #Bake the objects.
+        if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, adaptiveChartMesh, legendSrfs, allText, allTextPt, textSize, legendFont, allCurves, decimalPlaces, True)
+        else: lb_visualization.bakeObjects(newLayerIndex, adaptiveChartMesh, legendSrfs, allText, allTextPt, textSize, legendFont, allCurves, decimalPlaces, False)
     
     return comfortableOrNotInit, conditionOfPersonInit, degreesFromTargetInit, comfPercentOfTimeInit, percentHotColdInit, chartCurvesAndTxt, adaptiveChartMesh, legend, legendBasePt, finalComfortPolygons, chartHourPoints, pointColors, colorLegends
 
@@ -1379,6 +1428,7 @@ initCheck = False
 if sc.sticky.has_key('ladybug_release'):
     try:
         if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): pass
+        if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): pass
         initCheck = True
     except:
         warning = "You need a newer version of Ladybug to use this compoent." + \
