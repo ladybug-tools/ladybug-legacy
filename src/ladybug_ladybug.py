@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_14_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_11_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -5659,18 +5659,19 @@ class Photovoltaics(object):
         objSrf.SetDomain(1, reparematizedDomain)
         srfNormal = objSrf.NormalAt(0.5, 0.5)
         srfNormal.Unitize()
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
         
-        if srfNormal == rc.Geometry.Vector3d(0,0,1):
+        if (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (1-tol < srfNormal.Z < 1+tol):
             # "_PVsurface" surface is parallel to the XY plane, faced upward
             srfAzimuthD = 180
             surfaceTiltD = 0
-        elif srfNormal == rc.Geometry.Vector3d(0,0,-1):
+        elif (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (-1-tol < srfNormal.Z < -1+tol):
             # "_PVsurface" surface is parallel to the XY plane, faced downward
             srfAzimuthD = 180
             surfaceTiltD = 180
         else:
             # "_PVsurface" surface is not parallel to the XY plane
-            if srfNormal.Z == 0:
+            if (-tol < srfNormal.Z < tol):
                 # "_PVsurface" surface is perpendicular to the XY plane, faced downward
                 surfaceTiltD = 90
             else:
