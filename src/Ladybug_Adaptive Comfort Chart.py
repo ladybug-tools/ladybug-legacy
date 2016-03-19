@@ -79,7 +79,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_19_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -728,14 +728,14 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     allTextPt.extend(xAxisPt)
     
     yAxisLabels = []
-    if IPTrigger == False: yAxisTxt = ["Desired Indoor Operative Temperature (C)"]
-    else: yAxisTxt = ["Desired Indoor Operative Temperature (F)"]
+    if IPTrigger == False: yAxisTxt = ["Indoor Operative Temperature (C)"]
+    else: yAxisTxt = ["Indoor Operative Temperature (F)"]
     if IPTrigger == False:
-        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(7, 14, 0)]
-        else: yAxisPt = [rc.Geometry.Point3d(-23, 9, 0)]
+        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(7, 17, 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(-23, 11, 0)]
     else:
-        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(45, 60, 0)]
-        else: yAxisPt = [rc.Geometry.Point3d(-8, 50, 0)]
+        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(45, 67, 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(-8, 56, 0)]
     yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, yAxisPt[0])
     for geo in yAxisLabels:
