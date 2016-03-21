@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_11_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_21_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2320,7 +2320,7 @@ class RunAnalysisInsideGH(object):
         return sunlightHoursResult, totalSLH, sunVisibility
     
     
-    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas):
+    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas, geoBlockView):
         # preparing bulk lists for parallel process.
         view = [0] * len(testPts)
         viewResult = [0] * len(testPts)
@@ -2349,7 +2349,7 @@ class RunAnalysisInsideGH(object):
         for pt in testPts: ptVisibility.append(range(len(viewPoints)))
         
         #If the view type is spherical or connical, neglect it from the view analysis.
-        if viewType == 1 or viewType == 2: bldgMesh = None
+        if geoBlockView == False: bldgMesh = None
         
         #Function for view by test points.
         try:
