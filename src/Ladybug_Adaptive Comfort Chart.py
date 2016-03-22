@@ -79,7 +79,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_19_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_21_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1331,7 +1331,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         allText.extend(finalLegNum)
         allTextPt.extend(textPt)
     else:
-        chartHourPoints = [rc.Geometry.Point3d((airTemp[0]+radTemp[0])/2, prevailTemp[0], 0)]
+        chartHourPoints = [rc.Geometry.Point3d(prevailTemp[0], (airTemp[0]+radTemp[0])/2, 0)]
         adaptiveChartMesh = None
         meshFaceValues = []
         legendBasePoint = None
