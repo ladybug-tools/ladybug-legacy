@@ -1,4 +1,4 @@
-#
+﻿#
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
 # This file is part of Ladybug.
@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_SolarEnvelopeBasic"
 ghenv.Component.NickName = 'SolarEnvelopeBasic'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_17_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -180,11 +180,11 @@ class SunCalculation:
   
         eqtime = 4*math.degrees(vary*math.sin(2*math.radians(Mlong))-2*Eccent*math.sin(math.radians(Manom))+4*Eccent*vary*math.sin(math.radians(Manom))*math.cos(2*math.radians(Mlong))-0.5*vary*vary*math.sin(4*math.radians(Mlong))-1.25*Eccent*Eccent*math.sin(2*math.radians(Manom)))
 
-        hourangle= math.degrees(math.acos(math.cos(math.radians(90.833))/(math.cos(math.radians(latitude))*math.cos(math.radians(declination)))-math.tan(math.radians(latitude))*math.tan(math.radians(declination))))
+        #hourangle= math.degrees(math.acos(math.cos(math.radians(90.833))/(math.cos(math.radians(latitude))*math.cos(math.radians(declination)))-math.tan(math.radians(latitude))*math.tan(math.radians(declination))))
 
         self.solarnoon_t=(720-4*longitude-eqtime+timezone*60)/1440
-        self.sunrise_t  =self.solarnoon_t-hourangle*4/1440
-        self.sunset_t   =self.solarnoon_t+hourangle*4/1440
+        #self.sunrise_t  =self.solarnoon_t-hourangle*4/1440
+        #self.sunset_t   =self.solarnoon_t+hourangle*4/1440
 
 # -----------------------------------------------------------
 

@@ -11,7 +11,6 @@
 # or (at your option) any later version. 
 # 
 # Ladybug is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of 
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
 # GNU General Public License for more details.
 # 
@@ -46,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_14_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_22_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2320,7 +2319,7 @@ class RunAnalysisInsideGH(object):
         return sunlightHoursResult, totalSLH, sunVisibility
     
     
-    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas):
+    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas, geoBlockView):
         # preparing bulk lists for parallel process.
         view = [0] * len(testPts)
         viewResult = [0] * len(testPts)
@@ -2349,7 +2348,7 @@ class RunAnalysisInsideGH(object):
         for pt in testPts: ptVisibility.append(range(len(viewPoints)))
         
         #If the view type is spherical or connical, neglect it from the view analysis.
-        if viewType == 1 or viewType == 2: bldgMesh = None
+        if geoBlockView == False: bldgMesh = None
         
         #Function for view by test points.
         try:
@@ -3507,7 +3506,7 @@ class ComfortModels(object):
                 # when top > 25 degC.
                 if vel < 0.9: coolingEffect = 1.2
                 elif  vel < 1.2: coolingEffect = 1.8
-                elif vel > 1.2: coolingEffect = 2.2
+                elif vel >= 1.2: coolingEffect = 2.2
                 else: pass
             
             #Figure out the relation between comfort and outdoor temperature depending on the level of conditioning.
@@ -3558,7 +3557,7 @@ class ComfortModels(object):
             if (vel >= 0.6 and to >= 25):
                 if vel < 0.9: coolingEffect = 1.2
                 elif  vel < 1.2: coolingEffect = 1.8
-                elif vel > 1.2: coolingEffect = 2.2
+                elif vel >= 1.2: coolingEffect = 2.2
                 else: pass
             if levelOfConditioning == 0: tComf = 0.31 * 33.5 + 17.8
             else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 33.5 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
@@ -5659,18 +5658,19 @@ class Photovoltaics(object):
         objSrf.SetDomain(1, reparematizedDomain)
         srfNormal = objSrf.NormalAt(0.5, 0.5)
         srfNormal.Unitize()
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
         
-        if srfNormal == rc.Geometry.Vector3d(0,0,1):
+        if (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (1-tol < srfNormal.Z < 1+tol):
             # "_PVsurface" surface is parallel to the XY plane, faced upward
             srfAzimuthD = 180
             surfaceTiltD = 0
-        elif srfNormal == rc.Geometry.Vector3d(0,0,-1):
+        elif (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (-1-tol < srfNormal.Z < -1+tol):
             # "_PVsurface" surface is parallel to the XY plane, faced downward
             srfAzimuthD = 180
             surfaceTiltD = 180
         else:
             # "_PVsurface" surface is not parallel to the XY plane
-            if srfNormal.Z == 0:
+            if (-tol < srfNormal.Z < tol):
                 # "_PVsurface" surface is perpendicular to the XY plane, faced downward
                 surfaceTiltD = 90
             else:

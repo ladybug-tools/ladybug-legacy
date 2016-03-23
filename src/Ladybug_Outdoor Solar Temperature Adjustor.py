@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_01_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -91,10 +91,13 @@ from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 import System
+from System import Object
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
 import System.Threading.Tasks as tasks
+
+w = gh.GH_RuntimeMessageLevel.Warning
 
 
 inputsDict = {
@@ -142,429 +145,396 @@ outputsDict = {
 
 def checkTheInputs():
     # import the classes
-    if sc.sticky.has_key('ladybug_release'):
-        try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-        except:
-            warning = "You need a newer version of Ladybug to use this compoent." + \
-            "Use updateLadybug component to update userObjects.\n" + \
-            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
-            "into canvas and try again."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
-            
-        lb_preparation = sc.sticky["ladybug_Preparation"]()
-        lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
-        lb_mesh = sc.sticky["ladybug_Mesh"]()
-        lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()
-        lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
-        lb_sunpath = sc.sticky["ladybug_SunPath"]()
-        
-        #Set a default value for epwStr.
-        epwStr = []
-        
-        #Check to see if the user has connected valid MRT data.
-        checkData1 = False
-        radTemp = []
-        if len(_meanRadTemperature) != 0:
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
+    lb_mesh = sc.sticky["ladybug_Mesh"]()
+    lb_runStudy_GH = sc.sticky["ladybug_RunAnalysis"]()
+    lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
+    lb_sunpath = sc.sticky["ladybug_SunPath"]()
+    
+    #Set a default value for epwStr.
+    epwStr = []
+    
+    #Check to see if the user has connected valid MRT data.
+    checkData1 = False
+    radTemp = []
+    try:
+        if "Temperature" in _meanRadTemperature[2]:
+            radTemp = _meanRadTemperature[7:]
+            checkData1 = True
+            epwData = True
+            epwStr = _meanRadTemperature[0:7]
+    except: pass
+    if checkData1 == False:
+        for item in _meanRadTemperature:
             try:
-                if "Temperature" in _meanRadTemperature[2]:
-                    radTemp = _meanRadTemperature[7:]
-                    checkData1 = True
-                    epwData = True
-                    epwStr = _meanRadTemperature[0:7]
-            except: pass
-            if checkData1 == False:
-                for item in _meanRadTemperature:
-                    try:
-                        radTemp.append(float(item))
-                        checkData1 = True
-                    except: checkData1 = False
-            if checkData1 == False:
-                warning = '_meanRadTemperature input does not contain valid temperature values in degrees Celcius.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                radTemp.append(float(item))
+                checkData1 = True
+            except: checkData1 = False
+    if checkData1 == False:
+        warning = '_meanRadTemperature input does not contain valid temperature values in degrees Celcius.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
+    
+    
+    #If there is only one value for MRT, duplicate it 8760 times.
+    if len(radTemp) < 8760 and len(radTemp) !=0:
+        if len(radTemp) == 1:
+            dupData = []
+            for count in range(8760):
+                dupData.append(radTemp[0])
+            radTemp = dupData
         else:
-            print 'Connect a value for meanRadiantTemperature_.'
-            if _runIt == True:
-                warning = 'Connect a value for meanRadiantTemperature_.'
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        #If there is only one value for MRT, duplicate it 8760 times.
-        if len(radTemp) < 8760 and len(radTemp) !=0:
-            if len(radTemp) == 1:
-                dupData = []
-                for count in range(8760):
-                    dupData.append(radTemp[0])
-                radTemp = dupData
-            else:
-                checkData1 = False
-                warning = 'Input for _meanRadTemperature must be either the output of an energy simulation, a list of 8760 values, or a single MRT to be applied for every hour of the year.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        
-        #Check to be sure the there is a _cumSkyMtxOrDirNormRad and use it to set the method of the component.
-        checkData2 = False
-        cumSkyMtx = None
-        location = None
-        methodInit = 0
-        directSolarRad = []
-        if len(_cumSkyMtxOrDirNormRad) > 0:
-            if _cumSkyMtxOrDirNormRad != [None]:
-                if "SkyResultsCollection object" in str(_cumSkyMtxOrDirNormRad[0]):
-                    checkData2 = True
-                    cumSkyMtx = _cumSkyMtxOrDirNormRad[0]
-                    location = cumSkyMtx.location
-                elif str(_cumSkyMtxOrDirNormRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
-                    try:
-                        if 'Direct Normal Radiation' in _cumSkyMtxOrDirNormRad[2] and len(_cumSkyMtxOrDirNormRad) == 8767:
-                            location = _cumSkyMtxOrDirNormRad[1]
-                            methodInit = 2
-                            checkData2 = True
-                            directSolarRad = _cumSkyMtxOrDirNormRad[7:]
-                        else:
-                            warning = 'Weather data connected to _cumSkyMtxOrDirNormRad is not Direct Normal Radiation or is not hourly data for a full year.'
-                            print warning
-                            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-                    except:
-                        warning = 'Invalid value for _cumSkyMtxOrDirNormRad.'
+            warning = 'Input for _meanRadTemperature must be either the output of an energy simulation, a list of 8760 values, or a single MRT to be applied for every hour of the year.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    
+    #Check to be sure the there is a _cumSkyMtxOrDirNormRad and use it to set the method of the component.
+    cumSkyMtx = None
+    location = None
+    methodInit = 0
+    directSolarRad = []
+    if len(_cumSkyMtxOrDirNormRad) > 0:
+        if _cumSkyMtxOrDirNormRad != [None]:
+            if "SkyResultsCollection object" in str(_cumSkyMtxOrDirNormRad[0]):
+                cumSkyMtx = _cumSkyMtxOrDirNormRad[0]
+                location = cumSkyMtx.location
+            elif str(_cumSkyMtxOrDirNormRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
+                try:
+                    if 'Direct Normal Radiation' in _cumSkyMtxOrDirNormRad[2] and len(_cumSkyMtxOrDirNormRad) == 8767:
+                        location = _cumSkyMtxOrDirNormRad[1]
+                        methodInit = 2
+                        directSolarRad = _cumSkyMtxOrDirNormRad[7:]
+                    else:
+                        warning = 'Weather data connected to _cumSkyMtxOrDirNormRad is not Direct Normal Radiation or is not hourly data for a full year.'
                         print warning
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-                else:
+                        return -1
+                except:
                     warning = 'Invalid value for _cumSkyMtxOrDirNormRad.'
                     print warning
                     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    return -1
             else:
-                warning = 'Null value connected for _cumSkyMtxOrDirNormRad.'
+                warning = 'Invalid value for _cumSkyMtxOrDirNormRad.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        
-        # Get the diffuse Horizontal radiation.
-        checkData8 = True
-        diffSolarRad = []
-        if methodInit == 2:
-            try:
-                if len(_diffuseHorizRad) > 0:
-                    if _diffuseHorizRad != [None]:
-                        if str(_diffuseHorizRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
-                            try:
-                                if 'Diffuse Horizontal Radiation' in _diffuseHorizRad[2] and len(_diffuseHorizRad) == 8767:
-                                    diffSolarRad = _diffuseHorizRad[7:]
-                                else:
-                                    checkData8 = False
-                                    warning = 'Weather data connected to _diffuseHorizRad is not Diffuse Horizontal Radiation or is not hourly data for a full year.'
-                                    print warning
-                                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-                            except:
-                                checkData8 = False
-                                warning = 'Invalid value for _diffuseHorizRad.'
+                return -1
+        else:
+            warning = 'Null value connected for _cumSkyMtxOrDirNormRad.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    
+    # Get the diffuse Horizontal radiation.
+    diffSolarRad = []
+    if methodInit == 2:
+        try:
+            if len(_diffuseHorizRad) > 0:
+                if _diffuseHorizRad != [None]:
+                    if str(_diffuseHorizRad[0]) == 'key:location/dataType/units/frequency/startsAt/endsAt':
+                        try:
+                            if 'Diffuse Horizontal Radiation' in _diffuseHorizRad[2] and len(_diffuseHorizRad) == 8767:
+                                diffSolarRad = _diffuseHorizRad[7:]
+                            else:
+                                warning = 'Weather data connected to _diffuseHorizRad is not Diffuse Horizontal Radiation or is not hourly data for a full year.'
                                 print warning
                                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-                        else:
-                            checkData8 = False
+                                return -1
+                        except:
                             warning = 'Invalid value for _diffuseHorizRad.'
                             print warning
                             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                            return -1
                     else:
-                        checkData8 = False
-                        warning = 'Null value connected for _diffuseHorizRad.'
+                        warning = 'Invalid value for _diffuseHorizRad.'
                         print warning
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                        return -1
                 else:
-                    checkData8 = False
-            except: pass
-        
-        #Check the bodyPosture_ input to be sure that it is a valid interger.
-        checkData3 = True
-        if methodInit == 0:
-            if bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2:
-                bodyPosture = bodyPosture_
-            elif bodyPosture_ == 3 or bodyPosture_ == 4 or bodyPosture_ == 5:
-                bodyPosture = bodyPosture_
-                methodInit = 1
-            elif bodyPosture_ == None:
-                bodyPosture = 1
+                    warning = 'Null value connected for _diffuseHorizRad.'
+                    print warning
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                    return -1
             else:
-                checkData3 = False
-                warning = 'Input for bodyPosture_ is not an accepted input interger.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+        except:
+            return -1
+    
+    #Check the bodyPosture_ input to be sure that it is a valid interger.
+    if methodInit == 0:
+        if bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2:
+            bodyPosture = bodyPosture_
+        elif bodyPosture_ == 3 or bodyPosture_ == 4 or bodyPosture_ == 5:
+            bodyPosture = bodyPosture_
+            methodInit = 1
+        elif bodyPosture_ == None:
+            bodyPosture = 1
         else:
-            bodyPosture = -1
-        
-        
-        #Convert the rotation angle to radians or set a default of 0 if there is none.
-        rotateAngle = 0.0
-        if methodInit != 2:
-            try:
-                if rotationAngle_ != None: rotateAngle = rotationAngle_*0.0174532925
-            except: pass
-        
-        #Create the comfort mannequin.
-        conversionFac = lb_preparation.checkUnits()
-        if checkData3 == True and methodInit != 2:
-            if bodyPosture == 1:
-                mannequinData = lb_comfortModels.getSeatedMannequinData()
-            elif bodyPosture == 0 or bodyPosture == 2:
-                mannequinData = lb_comfortModels.getStandingMannequinData()
-            elif bodyPosture == 4:
-                mannequinData = lb_comfortModels.getSeatedMannequinSimple()
-            elif bodyPosture == 3 or bodyPosture == 5:
-                mannequinData = lb_comfortModels.getStandingMannequinSimple()
-            #Construct the mannequin from the point data.
-            mannequinMeshBreps = []
-            for faceList in mannequinData:
-                surfacePts = []
-                for pointCoord in faceList:
-                    point = rc.Geometry.Point3d(pointCoord[0], pointCoord[1], pointCoord[2])
-                    surfacePts.append(point)
-                if len(surfacePts) == 4: 
-                    surface = rc.Geometry.Brep.CreateFromCornerPoints(surfacePts[0], surfacePts[1], surfacePts[2], surfacePts[3], sc.doc.ModelAbsoluteTolerance)
-                else:
-                    surface = rc.Geometry.Brep.CreateFromCornerPoints(surfacePts[0], surfacePts[1], surfacePts[2], sc.doc.ModelAbsoluteTolerance)
-                mannequinMeshBreps.append(surface)
-            mannequinMesh = rc.Geometry.Brep.JoinBreps(mannequinMeshBreps, sc.doc.ModelAbsoluteTolerance)[0]
-            #Scale the mannequin based on the model units.
-            scale = rc.Geometry.Transform.Scale(rc.Geometry.Plane.WorldXY, 1/conversionFac, 1/conversionFac, 1/conversionFac)
-            mannequinMesh.Transform(scale)
-            #If the user has selected a mannequin laying down, rotate the standing mannequin.
-            if bodyPosture == 2 or bodyPosture == 5:
-                lieDownTransform = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.ZAxis, rc.Geometry.Vector3d.YAxis, rc.Geometry.Point3d.Origin)
-                moveUpTransform = rc.Geometry.Transform.Translation(0,-.85,.15)
-                mannequinMesh.Transform(lieDownTransform)
-                mannequinMesh.Transform(moveUpTransform)
-            else: pass
-            #Rotate the mannequin as the user wants.
-            if rotateAngle != 0.0:
-                rotateTransform = rc.Geometry.Transform.Rotation(rotateAngle, rc.Geometry.Vector3d.ZAxis, rc.Geometry.Point3d.Origin)
-                mannequinMesh.Transform(rotateTransform)
-            else: pass
-            #Change the location of the mannequin as the user wants.
-            if bodyLocation_ != None:
+            warning = 'Input for bodyPosture_ is not an accepted input interger.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    else:
+        bodyPosture = -1
+    
+    
+    #Convert the rotation angle to radians or set a default of 0 if there is none.
+    rotateAngle = 0.0
+    if methodInit != 2:
+        try:
+            if rotationAngle_ != None: rotateAngle = rotationAngle_*0.0174532925
+        except: pass
+    
+    #Create the comfort mannequin.
+    conversionFac = lb_preparation.checkUnits()
+    if methodInit != 2:
+        if bodyPosture == 1:
+            mannequinData = lb_comfortModels.getSeatedMannequinData()
+        elif bodyPosture == 0 or bodyPosture == 2:
+            mannequinData = lb_comfortModels.getStandingMannequinData()
+        elif bodyPosture == 4:
+            mannequinData = lb_comfortModels.getSeatedMannequinSimple()
+        elif bodyPosture == 3 or bodyPosture == 5:
+            mannequinData = lb_comfortModels.getStandingMannequinSimple()
+        #Construct the mannequin from the point data.
+        mannequinMeshBreps = []
+        for faceList in mannequinData:
+            surfacePts = []
+            for pointCoord in faceList:
+                point = rc.Geometry.Point3d(pointCoord[0], pointCoord[1], pointCoord[2])
+                surfacePts.append(point)
+            if len(surfacePts) == 4: 
+                surface = rc.Geometry.Brep.CreateFromCornerPoints(surfacePts[0], surfacePts[1], surfacePts[2], surfacePts[3], sc.doc.ModelAbsoluteTolerance)
+            else:
+                surface = rc.Geometry.Brep.CreateFromCornerPoints(surfacePts[0], surfacePts[1], surfacePts[2], sc.doc.ModelAbsoluteTolerance)
+            mannequinMeshBreps.append(surface)
+        mannequinMesh = rc.Geometry.Brep.JoinBreps(mannequinMeshBreps, sc.doc.ModelAbsoluteTolerance)[0]
+        #Scale the mannequin based on the model units.
+        scale = rc.Geometry.Transform.Scale(rc.Geometry.Plane.WorldXY, 1/conversionFac, 1/conversionFac, 1/conversionFac)
+        mannequinMesh.Transform(scale)
+        #If the user has selected a mannequin laying down, rotate the standing mannequin.
+        if bodyPosture == 2 or bodyPosture == 5:
+            lieDownTransform = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.ZAxis, rc.Geometry.Vector3d.YAxis, rc.Geometry.Point3d.Origin)
+            moveUpTransform = rc.Geometry.Transform.Translation(0,-.85,.15)
+            mannequinMesh.Transform(lieDownTransform)
+            mannequinMesh.Transform(moveUpTransform)
+        else: pass
+        #Rotate the mannequin as the user wants.
+        if rotateAngle != 0.0:
+            rotateTransform = rc.Geometry.Transform.Rotation(rotateAngle, rc.Geometry.Vector3d.ZAxis, rc.Geometry.Point3d.Origin)
+            mannequinMesh.Transform(rotateTransform)
+        else: pass
+        #Change the location of the mannequin as the user wants.
+        if len(bodyLocation_) != 0:
+            if len(bodyLocation_) == 1:
                 moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z)
                 mannequinMesh.Transform(moveTransform)
-            else: pass
-            #Turn the mannequin brep into a mesh.
-            mannequinMesh = rc.Geometry.Mesh.CreateFromBrep(mannequinMesh, rc.Geometry.MeshingParameters.Coarse)
-        elif methodInit == 2:
-            mannequinMesh = []
-            #Get a series of 9 points to represent the person, which will be used to calculate the fraction of the body visible to the sun through the context.
-            if bodyPosture_ == 0 or bodyPosture_ == 3:
-                if bodyLocation_ != None:
-                    offsetDist = 0.8/conversionFac
-                    mannequinAvgHeight = bodyLocation_.Z + offsetDist
-                    mannequinX = bodyLocation_.X
-                    mannequinY = bodyLocation_.Y
-                else:
-                    offsetDist = 0.8/conversionFac
-                    mannequinAvgHeight = 0.85/conversionFac
-                    mannequinX = 0
-                    mannequinY = 0
-                if bodyPosture_ == 0: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
-                else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
-                for height in offsetHeights:
-                    mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
-            elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
-                offsetDist = 0.58/conversionFac
-                if bodyLocation_ != None:
-                    mannequinAvgHeight = bodyLocation_.Z + offsetDist
-                    mannequinX = bodyLocation_.X
-                    mannequinY = bodyLocation_.Y
-                else:
-                    mannequinAvgHeight = 0.65/conversionFac
-                    mannequinX = 0
-                    mannequinY = 0
-                if bodyPosture_ == 1 or bodyPosture_ == None: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
-                else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
-                for height in offsetHeights:
-                    mannequinMesh.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
             else:
-                if bodyLocation_ != None:
-                    mannequinAvgHeight = bodyLocation_.Z + 0.1/conversionFac
-                    mannequinX = bodyLocation_.X
-                    mannequinY = bodyLocation_.Y
-                else:
-                    mannequinAvgHeight = 0.1/conversionFac
-                    mannequinX = 0
-                    mannequinY = 0
-                offsetDist = 0.8/conversionFac
-                if bodyPosture_ == 2: offsetY = [mannequinY - offsetDist, (mannequinY - offsetDist)+((offsetDist*2)/8), (mannequinY - offsetDist)+((offsetDist*4)/8), (mannequinY - offsetDist)+((offsetDist*6)/8), mannequinY, (mannequinY + offsetDist)-((offsetDist*6)/8), (mannequinY + offsetDist)-((offsetDist*4)/8), (mannequinY + offsetDist)-(offsetDist*2)/8, (mannequinY + offsetDist)]
-                else: offsetY = [mannequinY - offsetDist, mannequinY, mannequinY + offsetDist]
-                for yTrans in offsetY:
-                    mannequinMesh.append(rc.Geometry.Point3d(mannequinX, yTrans, mannequinAvgHeight))
-                
-                if bodyLocation_ != None: mannequinMeshInit = bodyLocation_
-                else: mannequinMeshInit = rc.Geometry.Point3d(0,0, 0.1*conversionFac)
-                offsetDist = 0.9/conversionFac
-        
-        #Create a ground mesh.
-        if checkData3 == True and methodInit != 2:
-            groundMesh = rc.Geometry.Mesh()
-            point1 = rc.Geometry.Point3d(-.5, -1, 0)
-            point2 = rc.Geometry.Point3d(-.5, -2, 0)
-            point3 = rc.Geometry.Point3d(.5, -2, 0)
-            point4 = rc.Geometry.Point3d(.5, -1, 0)
-            groundMesh.Vertices.Add(point1)
-            groundMesh.Vertices.Add(point2)
-            groundMesh.Vertices.Add(point3)
-            groundMesh.Vertices.Add(point4)
-            groundMesh.Faces.AddFace(0, 1, 2, 3)
-            if bodyLocation_ != None:
-                groundMesh.Transform(moveTransform)
-            else: pass
-        else:
-            groundMesh = None
-        
-        # Mesh the context.
-        if len(contextShading_)!=0:
-            ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
-            contextMesh, contextBrep = lb_preparation.cleanAndCoerceList(contextShading_)
-            
-            ## mesh Brep
-            contextMeshedBrep = lb_mesh.parallel_makeContextMesh(contextBrep)
-            
-            ## Flatten the list of surfaces
-            contextMeshedBrep = lb_preparation.flattenList(contextMeshedBrep)
-            contextSrfs = contextMesh + contextMeshedBrep
-        else: contextSrfs = []
-        
-        #Check the ground reflectivity.
-        checkData4 = True
-        if groundReflectivity_ != None:
-            if groundReflectivity_ < 1 and groundReflectivity_ > 0:
-                groundR = groundReflectivity_
-            else:
-                groundR = None
-                checkData4 = False
-                warning = 'groundReflectivity_ must be a value between 0 and 1.'
+                warning = 'Input for bodyLocation_ can only be a single point if using a detailed mannequin radiation mesh and a cumSkyMtx. \n Switch the analysis to dirNormRad to run this component for multiple points.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+        else: pass
+        #Turn the mannequin brep into a mesh.
+        mannequinMesh = rc.Geometry.Mesh.CreateFromBrep(mannequinMesh, rc.Geometry.MeshingParameters.Coarse)
+    elif methodInit == 2:
+        mannequinMeshInit = []
+        #Get a series of 3 - 9 points to represent the person, which will be used to calculate the fraction of the body visible to the sun through the context.
+        if bodyPosture_ == 0 or bodyPosture_ == 3:
+            offsetDist = 0.8/conversionFac
+            mannequinAvgHeight = 0.85/conversionFac
+            mannequinX = 0
+            mannequinY = 0
+            if bodyPosture_ == 0: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
+            else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
+            for height in offsetHeights:
+                mannequinMeshInit.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
+        elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
+            offsetDist = 0.58/conversionFac
+            mannequinAvgHeight = 0.65/conversionFac
+            mannequinX = 0
+            mannequinY = 0
+            if bodyPosture_ == 1 or bodyPosture_ == None: offsetHeights = [mannequinAvgHeight - offsetDist, (mannequinAvgHeight - offsetDist)+((offsetDist*2)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*4)/8), (mannequinAvgHeight - offsetDist)+((offsetDist*6)/8), mannequinAvgHeight, (mannequinAvgHeight + offsetDist)-((offsetDist*6)/8), (mannequinAvgHeight + offsetDist)-((offsetDist*4)/8), (mannequinAvgHeight + offsetDist)-(offsetDist*2)/8, (mannequinAvgHeight + offsetDist)]
+            else: offsetHeights = [mannequinAvgHeight - offsetDist, mannequinAvgHeight, mannequinAvgHeight + offsetDist]
+            for height in offsetHeights:
+                mannequinMeshInit.append(rc.Geometry.Point3d(mannequinX, mannequinY, height))
         else:
-            groundR = 0.25
-            print 'No value found for groundReflectivity_.  The ground reflectivity will be set to 0.25 for grass or light bare soil.'
+            mannequinAvgHeight = 0.1/conversionFac
+            mannequinX = 0
+            mannequinY = 0
+            offsetDist = 0.8/conversionFac
+            if bodyPosture_ == 2: offsetY = [mannequinY - offsetDist, (mannequinY - offsetDist)+((offsetDist*2)/8), (mannequinY - offsetDist)+((offsetDist*4)/8), (mannequinY - offsetDist)+((offsetDist*6)/8), mannequinY, (mannequinY + offsetDist)-((offsetDist*6)/8), (mannequinY + offsetDist)-((offsetDist*4)/8), (mannequinY + offsetDist)-(offsetDist*2)/8, (mannequinY + offsetDist)]
+            else: offsetY = [mannequinY - offsetDist, mannequinY, mannequinY + offsetDist]
+            for yTrans in offsetY:
+                mannequinMeshInit.append(rc.Geometry.Point3d(mannequinX, yTrans, mannequinAvgHeight))
         
-        #Check the clothing absorptivity.
-        checkData5 = True
-        if clothingAbsorptivity_ != None:
-            if clothingAbsorptivity_ < 1 and clothingAbsorptivity_ > 0:
-                cloA = clothingAbsorptivity_
-            else:
-                cloA = None
-                checkData5 = False
-                warning = 'clothingAbsorptivity_ must be a value between 0 and 1.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        #If a bodylocation is input, move the original body location.
+        mannequinMesh = []
+        if len(bodyLocation_) != 0 and bodyLocation_[0] != None:
+            for loc in bodyLocation_:
+                newMesh = []
+                for point in mannequinMeshInit:
+                    newMesh.append(rc.Geometry.Point3d(point.X+loc.X, point.Y+loc.Y, point.Z+loc.Z))
+                mannequinMesh.append(newMesh)
         else:
-            cloA = 0.7
-            print 'No value found for clothingAbsorptivity_.  The clothing absorptivity will be set to 0.7 for (average/brown) skin and average clothing.'
-        
-        #Check the windowTransmissivity_.
-        checkData6 = True
-        winTrans = []
-        if windowTransmissivity_ != []:
-            if len(windowTransmissivity_) == 8760:
-                allGood = True
-                for transVal in windowTransmissivity_:
-                    transFloat = float(transVal)
-                    if transFloat <= 1.0 and transFloat >= 0.0: winTrans.append(transFloat)
-                    else: allGood = False
-                if allGood == False:
-                    checkData6 = False
-                    warning = 'windowTransmissivity_ must be a value between 0 and 1.'
-                    print warning
-                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            elif len(windowTransmissivity_) == 1:
-                if windowTransmissivity_[0] <= 1.0 and windowTransmissivity_[0] >= 0.0:
-                    for count in range(8760):
-                        winTrans.append(windowTransmissivity_[0])
-                else:
-                    checkData6 = False
-                    warning = 'windowTransmissivity_ must be a value between 0 and 1.'
-                    print warning
-                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            else:
-                checkData6 = False
-                warning = 'windowTransmissivity_ must be either a list of 8760 values that correspond to hourly changing transmissivity over the year or a single constant value for the whole year.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        else:
-            for count in range(8760):
-                winTrans.append(1)
-            print 'No value found for windowTransmissivity_.  The window transmissivity will be set to 1.0 for a fully outdoor calculation.'
-        
-        #Set the default parallel to true.
-        if parallel_ == None: parallel = True
-        else: parallel = parallel_
-        
-        #Make the default analyisis period for the whole year if the user has not input one.
-        checkData9 = True
-        periodMethod = 0
-        if analysisPeriodOrHOY_ == []:
-            analysisPeriodOrHOY = 8508
-            periodMethod = 1
-        else:
-            #Check if the analysis period is an hour of the year or an HOY
-            try:
-                analysisPeriodOrHOY = int(analysisPeriodOrHOY_[0])
-                periodMethod = 1
-                if analysisPeriodOrHOY < 1 or analysisPeriodOrHOY > 8760:
-                    checkData9 = False
-                    warning = 'Hour of the year input for analysisPeriodOrHOY_ must be either a value between 1 and 8760.'
-                    print warning
-                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            except:
-                analysisPeriodOrHOY = analysisPeriodOrHOY_
-        
-        #Set a north vector if there is not oe already.
-        if north_ != None:
-            northAngle, northVector = lb_preparation.angle2north(north_)
-        else:
-            northVector = rc.Geometry.Vector3d.YAxis
-            northAngle = 0.0
-        
-        #Set a default tempOrRad to false.
-        try:
-            if tempOrRad_ != None: tempOrRad = tempOrRad_
-            else: tempOrRad = False
-        except: tempOrRad = False
-        
-        #Set a default rotationAngle to 0.0.
-        try:
-            if rotationAngle_ != None: rotationAngle = rotationAngle_
-            else: rotationAngle = 0.0
-        except: rotationAngle = 0.0
-        
-        #Pull the location data from the inputs.
-        checkData7 = True
-        latitude = None
-        longitude = None
-        timeZone = None
-        if _location != None:
-            try:
-                locList = _location.split('\n')
-                for line in locList:
-                    if "Latitude" in line: latitude = float(line.split(',')[0])
-                    elif "Longitude" in line: longitude = float(line.split(',')[0])
-                    elif "Time Zone" in line: timeZone = float(line.split(',')[0])
-            except:
-                checkData7 = False
-                warning = 'The connected _location is not a valid location from the "Ladybug_Import EWP" component or the "Ladybug_Construct Location" component.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(w, warning)
-        else:
-            checkData7 = False
-            print 'Connect a _location from the "Ladybug_Import EWP" component or the "Ladybug_Construct Location" component.'
-        
-        
-        #Check if everything is good.
-        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True and checkData9 == True:
-            checkData = True
-        else:
-            checkData = False
-        
-        return checkData, methodInit, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
+            mannequinMesh.append(mannequinMeshInit)
+    
+    #Create a ground mesh.
+    if methodInit != 2:
+        groundMesh = rc.Geometry.Mesh()
+        point1 = rc.Geometry.Point3d(-.5, -1, 0)
+        point2 = rc.Geometry.Point3d(-.5, -2, 0)
+        point3 = rc.Geometry.Point3d(.5, -2, 0)
+        point4 = rc.Geometry.Point3d(.5, -1, 0)
+        groundMesh.Vertices.Add(point1)
+        groundMesh.Vertices.Add(point2)
+        groundMesh.Vertices.Add(point3)
+        groundMesh.Vertices.Add(point4)
+        groundMesh.Faces.AddFace(0, 1, 2, 3)
+        if len(bodyLocation_) != 0:
+            groundMesh.Transform(moveTransform)
+        else: pass
     else:
+        groundMesh = None
+    
+    # Mesh the context.
+    if len(contextShading_)!=0:
+        ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
+        contextMesh, contextBrep = lb_preparation.cleanAndCoerceList(contextShading_)
+        
+        ## mesh Brep
+        contextMeshedBrep = lb_mesh.parallel_makeContextMesh(contextBrep)
+        
+        ## Flatten the list of surfaces
+        contextMeshedBrep = lb_preparation.flattenList(contextMeshedBrep)
+        contextSrfs = contextMesh + contextMeshedBrep
+    else: contextSrfs = []
+    
+    #Check the ground reflectivity.
+    if groundReflectivity_ != None:
+        if groundReflectivity_ < 1 and groundReflectivity_ > 0:
+            groundR = groundReflectivity_
+        else:
+            groundR = None
+            warning = 'groundReflectivity_ must be a value between 0 and 1.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    else:
+        groundR = 0.25
+        print 'No value found for groundReflectivity_.  The ground reflectivity will be set to 0.25 for grass or light bare soil.'
+    
+    #Check the clothing absorptivity.
+    checkData5 = True
+    if clothingAbsorptivity_ != None:
+        if clothingAbsorptivity_ < 1 and clothingAbsorptivity_ > 0:
+            cloA = clothingAbsorptivity_
+        else:
+            cloA = None
+            warning = 'clothingAbsorptivity_ must be a value between 0 and 1.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    else:
+        cloA = 0.7
+        print 'No value found for clothingAbsorptivity_.  The clothing absorptivity will be set to 0.7 for (average/brown) skin and average clothing.'
+    
+    #Check the windowTransmissivity_.
+    winTrans = []
+    if windowTransmissivity_ != []:
+        if len(windowTransmissivity_) == 8760:
+            allGood = True
+            for transVal in windowTransmissivity_:
+                transFloat = float(transVal)
+                if transFloat <= 1.0 and transFloat >= 0.0: winTrans.append(transFloat)
+                else: allGood = False
+            if allGood == False:
+                warning = 'windowTransmissivity_ must be a value between 0 and 1.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+        elif len(windowTransmissivity_) == 1:
+            if windowTransmissivity_[0] <= 1.0 and windowTransmissivity_[0] >= 0.0:
+                for count in range(8760):
+                    winTrans.append(windowTransmissivity_[0])
+            else:
+                warning = 'windowTransmissivity_ must be a value between 0 and 1.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+        else:
+            warning = 'windowTransmissivity_ must be either a list of 8760 values that correspond to hourly changing transmissivity over the year or a single constant value for the whole year.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    else:
+        for count in range(8760):
+            winTrans.append(1)
+        print 'No value found for windowTransmissivity_.  The window transmissivity will be set to 1.0 for a fully outdoor calculation.'
+    
+    #Set the default parallel to true.
+    if parallel_ == None: parallel = True
+    else: parallel = parallel_
+    
+    #Make the default analyisis period for the whole year if the user has not input one.
+    checkData9 = True
+    periodMethod = 0
+    if analysisPeriodOrHOY_ == []:
+        analysisPeriodOrHOY = 8508
+        periodMethod = 1
+    else:
+        #Check if the analysis period is an hour of the year or an HOY
+        try:
+            analysisPeriodOrHOY = int(analysisPeriodOrHOY_[0])
+            periodMethod = 1
+            if analysisPeriodOrHOY < 1 or analysisPeriodOrHOY > 8760:
+                checkData9 = False
+                warning = 'Hour of the year input for analysisPeriodOrHOY_ must be either a value between 1 and 8760.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        except:
+            analysisPeriodOrHOY = analysisPeriodOrHOY_
+    
+    #Set a north vector if there is not oe already.
+    if north_ != None:
+        northAngle, northVector = lb_preparation.angle2north(north_)
+    else:
+        northVector = rc.Geometry.Vector3d.YAxis
+        northAngle = 0.0
+    
+    #Set a default tempOrRad to false.
+    try:
+        if tempOrRad_ != None: tempOrRad = tempOrRad_
+        else: tempOrRad = False
+    except: tempOrRad = False
+    
+    #Set a default rotationAngle to 0.0.
+    try:
+        if rotationAngle_ != None: rotationAngle = rotationAngle_
+        else: rotationAngle = 0.0
+    except: rotationAngle = 0.0
+    
+    #Pull the location data from the inputs.
+    latitude = None
+    longitude = None
+    timeZone = None
+    try:
+        locList = _location.split('\n')
+        for line in locList:
+            if "Latitude" in line: latitude = float(line.split(',')[0])
+            elif "Longitude" in line: longitude = float(line.split(',')[0])
+            elif "Time Zone" in line: timeZone = float(line.split(',')[0])
+    except:
+        warning = 'The connected _location is not a valid location from the "Ladybug_Import EWP" component or the "Ladybug_Construct Location" component.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(w, warning)
         return -1
+    
+    
+    return methodInit, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
 
 
 def manageInputOutput(method):
@@ -1149,26 +1119,6 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
             newRadTemp.append(radTemp[hour-1])
         radTemp = newRadTemp
     
-    #Calculate the skyview factor of the occupant.
-    if bodyPosture_ == None or bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2: middlePt = mannequinMesh[4]
-    else: middlePt = mannequinMesh[1]
-    
-    if len(context) > 0:
-        viewVectors = []
-        viewTuples = lb_preparation.TregenzaPatchesNormalVectors
-        for tuple in viewTuples:
-            viewVectors.append(rc.Geometry.Vector3d(tuple[0], tuple[1], tuple[2]))
-        totalVecNum = len(viewVectors)
-        vecBlockedList = []
-        for viewVec in viewVectors:
-            viewRay = rc.Geometry.Ray3d(middlePt, viewVec)
-            viewBlocked = False
-            for mesh in context:
-                rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, viewRay)
-                if rayIntersect > 0: viewBlocked = True
-            if viewBlocked == True: vecBlockedList.append(1)
-        skyViewFac = 1 - sum(vecBlockedList)/totalVecNum
-    else: skyViewFac = 1
     
     #Calculate the sun-up hours of the year in order to understand whether the context geometry will block the sun.
     lb_sunpath.initTheClass(float(latitude), northAngle, rc.Geometry.Point3d.Origin, 100, float(longitude), float(timeZone))
@@ -1186,18 +1136,131 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
             sunVectors.append(sunVec)
         else: sunVectors.append(None)
     
-    #Compute all of the outputs.
-    def nonParallelMRTCalc():
-        try:
-            for count, hour in enumerate(HOYS):
-                if gh.GH_Document.IsEscapeKeyDown(): assert False
-                
+    for ptCount, manMeshPt in enumerate(mannequinMesh):
+        ERF.append([])
+        MRTDelta.append([])
+        solarAdjustedMRT.append([])
+        hourOrder.append([])
+        
+        #Calculate the skyview factor of the occupant.
+        if bodyPosture_ == None or bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2: middlePt = manMeshPt[4]
+        else: middlePt = manMeshPt[1]
+        
+        if len(context) > 0:
+            viewVectors = []
+            viewTuples = lb_preparation.TregenzaPatchesNormalVectors
+            for tuple in viewTuples:
+                viewVectors.append(rc.Geometry.Vector3d(tuple[0], tuple[1], tuple[2]))
+            totalVecNum = len(viewVectors)
+            vecBlockedList = []
+            for viewVec in viewVectors:
+                viewRay = rc.Geometry.Ray3d(middlePt, viewVec)
+                viewBlocked = False
+                for mesh in context:
+                    rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, viewRay)
+                    if rayIntersect > 0: viewBlocked = True
+                if viewBlocked == True: vecBlockedList.append(1)
+            skyViewFac = 1 - sum(vecBlockedList)/totalVecNum
+        else: skyViewFac = 1
+        
+        
+        #Compute all of the outputs.
+        def nonParallelMRTCalc():
+            try:
+                for count, hour in enumerate(HOYS):
+                    if gh.GH_Document.IsEscapeKeyDown(): assert False
+                    
+                    if altitudes[count] > 0:
+                        #Calculate fBes, the fraction of the body that is visible to the sun and is not blocked by the context.
+                        if len(context) > 0:
+                            #First get the sunRays.
+                            sunRays = []
+                            for point in manMeshPt:
+                                sunRay = rc.Geometry.Ray3d(point, sunVectors[count])
+                                sunRays.append(sunRay)
+                            
+                            #Next check how many of the sunrays are blocked.
+                            fBesList = []
+                            for ray in sunRays:
+                                sunBlocked = False
+                                for mesh in context:
+                                    rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, ray)
+                                    if rayIntersect > 0: sunBlocked = True
+                                if sunBlocked == False:fBesList.append(1)
+                                else: fBesList.append(0)
+                            
+                            #Finally, calculate Fbes from that which was blocked.
+                            fBes = sum(fBesList)/len(fBesList)
+                        else:
+                            fBes = 1
+                        
+                        if fBes > 0.0:
+                            #Calculate the diffuse, direct, and global horizontal components of the solar radiation.
+                            diffRad = diffSolarRad[hour-1]
+                            dirNormRad = directSolarRad[hour-1]
+                            globHorizRad = float(dirNormRad)*(math.sin(altitudes[count])) + diffRad
+                            
+                            #Define the Azimuth as the SolarCal function understands it.
+                            azInit = math.degrees(azimuths[count])
+                            #Change the azimuth based on the north angle and the rotation angle of the mannequin.
+                            if northAngle != 0.0: azInit = azInit + northAngle
+                            if rotationAngle != 0.0: azInit = azInit + rotationAngle
+                            
+                            #Compute a final Azimuth that can be put through the spline function.
+                            azFinal = azInit
+                            if azInit > 180:
+                                while azFinal > 180:
+                                    azFinal = azFinal-180
+                            elif azInit < 0:
+                                while azFinal < 0:
+                                    azFinal = azFinal+180
+                            azFinal = int(azFinal)
+                            
+                            #Define the Altitude as the SolarCal function understands it.
+                            altInit = int(math.degrees(altitudes[count]))
+                            if altInit > 90: altFinal = altInit-90
+                            else: altFinal = altInit
+                            
+                            #Calculate the projected area factor from the altitude and azimuth.
+                            if bodyPosture_ == 0 or bodyPosture_ == 3:
+                                ProjAreaFac = lb_comfortModels.splineStand(azFinal, altFinal)
+                            elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
+                                ProjAreaFac = lb_comfortModels.splineSit(azFinal, altFinal)
+                            else:
+                                ProjAreaFac = lb_comfortModels.splineStand(azFinal, 90-altFinal)
+                            
+                            # Calculate the ERF of the occupant
+                            hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*float(dirNormRad)))*winTrans[hour-1])*(cloA/0.95)
+                            
+                            ERF[ptCount].append(hourERF)
+                            #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
+                            mrtDelt = (hourERF/(fracEff*radTransCoeff))
+                            MRTDelta[ptCount].append(mrtDelt)
+                            hourMRT = mrtDelt + (radTemp[count])
+                            solarAdjustedMRT[ptCount].append(hourMRT)
+                        else:
+                            ERF[ptCount].append(0)
+                            solarAdjustedMRT[ptCount].append(radTemp[count])
+                            MRTDelta[ptCount].append(0)
+                    else:
+                        ERF[ptCount].append(0)
+                        solarAdjustedMRT[ptCount].append(radTemp[count])
+                        MRTDelta[ptCount].append(0)
+                return True
+            except:
+                print "The calculation has been terminated by the user!"
+                e = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
+                return False
+        
+        def parallelMRTCalc():
+            def MRTCalc(count):
                 if altitudes[count] > 0:
                     #Calculate fBes, the fraction of the body that is visible to the sun and is not blocked by the context.
                     if len(context) > 0:
                         #First get the sunRays.
                         sunRays = []
-                        for point in mannequinMesh:
+                        for point in manMeshPt:
                             sunRay = rc.Geometry.Ray3d(point, sunVectors[count])
                             sunRays.append(sunRay)
                         
@@ -1218,9 +1281,9 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                     
                     if fBes > 0.0:
                         #Calculate the diffuse, direct, and global horizontal components of the solar radiation.
-                        diffRad = diffSolarRad[hour-1]
-                        dirNormRad = directSolarRad[hour-1]
-                        globHorizRad = float(dirNormRad)*(math.sin(altitudes[count])) + diffRad
+                        diffRad = diffSolarRad[HOYS[count]-1]
+                        dirNormRad = directSolarRad[HOYS[count]-1]
+                        globHorizRad = dirNormRad*(math.sin(altitudes[count])) + diffRad
                         
                         #Define the Azimuth as the SolarCal function understands it.
                         azInit = math.degrees(azimuths[count])
@@ -1252,127 +1315,38 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                             ProjAreaFac = lb_comfortModels.splineStand(azFinal, 90-altFinal)
                         
                         # Calculate the ERF of the occupant
-                        hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*float(dirNormRad)))*winTrans[hour-1])*(cloA/0.95)
+                        hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*dirNormRad))*winTrans[HOYS[count]-1])*(cloA/0.95)
                         
-                        ERF.append(hourERF)
+                        ERF[ptCount].append(hourERF)
                         #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
                         mrtDelt = (hourERF/(fracEff*radTransCoeff))
-                        MRTDelta.append(mrtDelt)
+                        MRTDelta[ptCount].append(mrtDelt)
                         hourMRT = mrtDelt + (radTemp[count])
-                        solarAdjustedMRT.append(hourMRT)
+                        solarAdjustedMRT[ptCount].append(hourMRT)
                     else:
-                        ERF.append(0)
-                        solarAdjustedMRT.append(radTemp[count])
-                        MRTDelta.append(0)
+                        ERF[ptCount].append(0)
+                        solarAdjustedMRT[ptCount].append(radTemp[count])
+                        MRTDelta[ptCount].append(0)
                 else:
-                        ERF.append(0)
-                        solarAdjustedMRT.append(radTemp[count])
-                        MRTDelta.append(0)
-            return True
-        except:
-            print "The calculation has been terminated by the user!"
-            e = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
-            return False
-    
-    def parallelMRTCalc():
-        def MRTCalc(count):
-            if altitudes[count] > 0:
-                #Calculate fBes, the fraction of the body that is visible to the sun and is not blocked by the context.
-                if len(context) > 0:
-                    #First get the sunRays.
-                    sunRays = []
-                    for point in mannequinMesh:
-                        sunRay = rc.Geometry.Ray3d(point, sunVectors[count])
-                        sunRays.append(sunRay)
-                    
-                    #Next check how many of the sunrays are blocked.
-                    fBesList = []
-                    for ray in sunRays:
-                        sunBlocked = False
-                        for mesh in context:
-                            rayIntersect = rc.Geometry.Intersect.Intersection.MeshRay(mesh, ray)
-                            if rayIntersect > 0: sunBlocked = True
-                        if sunBlocked == False:fBesList.append(1)
-                        else: fBesList.append(0)
-                    
-                    #Finally, calculate Fbes from that which was blocked.
-                    fBes = sum(fBesList)/len(fBesList)
-                else:
-                    fBes = 1
+                        ERF[ptCount].append(0)
+                        solarAdjustedMRT[ptCount].append(radTemp[count])
+                        MRTDelta[ptCount].append(0)
                 
-                if fBes > 0.0:
-                    #Calculate the diffuse, direct, and global horizontal components of the solar radiation.
-                    diffRad = diffSolarRad[HOYS[count]-1]
-                    dirNormRad = directSolarRad[HOYS[count]-1]
-                    globHorizRad = dirNormRad*(math.sin(altitudes[count])) + diffRad
-                    
-                    #Define the Azimuth as the SolarCal function understands it.
-                    azInit = math.degrees(azimuths[count])
-                    #Change the azimuth based on the north angle and the rotation angle of the mannequin.
-                    if northAngle != 0.0: azInit = azInit + northAngle
-                    if rotationAngle != 0.0: azInit = azInit + rotationAngle
-                    
-                    #Compute a final Azimuth that can be put through the spline function.
-                    azFinal = azInit
-                    if azInit > 180:
-                        while azFinal > 180:
-                            azFinal = azFinal-180
-                    elif azInit < 0:
-                        while azFinal < 0:
-                            azFinal = azFinal+180
-                    azFinal = int(azFinal)
-                    
-                    #Define the Altitude as the SolarCal function understands it.
-                    altInit = int(math.degrees(altitudes[count]))
-                    if altInit > 90: altFinal = altInit-90
-                    else: altFinal = altInit
-                    
-                    #Calculate the projected area factor from the altitude and azimuth.
-                    if bodyPosture_ == 0 or bodyPosture_ == 3:
-                        ProjAreaFac = lb_comfortModels.splineStand(azFinal, altFinal)
-                    elif bodyPosture_ == 1 or bodyPosture_ == 4 or bodyPosture_ == None:
-                        ProjAreaFac = lb_comfortModels.splineSit(azFinal, altFinal)
-                    else:
-                        ProjAreaFac = lb_comfortModels.splineStand(azFinal, 90-altFinal)
-                    
-                    # Calculate the ERF of the occupant
-                    hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*dirNormRad))*winTrans[HOYS[count]-1])*(cloA/0.95)
-                    
-                    ERF.append(hourERF)
-                    #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
-                    mrtDelt = (hourERF/(fracEff*radTransCoeff))
-                    MRTDelta.append(mrtDelt)
-                    hourMRT = mrtDelt + (radTemp[count])
-                    solarAdjustedMRT.append(hourMRT)
-                else:
-                    ERF.append(0)
-                    solarAdjustedMRT.append(radTemp[count])
-                    MRTDelta.append(0)
-            else:
-                    ERF.append(0)
-                    solarAdjustedMRT.append(radTemp[count])
-                    MRTDelta.append(0)
+                hourOrder[ptCount].append(count)
             
-            hourOrder.append(count)
+            tasks.Parallel.ForEach(range(len(HOYS)), MRTCalc)
         
-        tasks.Parallel.ForEach(range(len(HOYS)), MRTCalc)
+        # Compute the radiation for each hour of the year.
+        if parallel == False:
+            nonParallelMRTCalc()
+        else:
+            parallelMRTCalc()
         
-        return True
-    
-    # Compute the radiation for each hour of the year.
-    runSuccess = False
-    if parallel == False:
-        runSuccess = nonParallelMRTCalc()
-    else:
-        runSuccess = parallelMRTCalc()
-    
-    if runSuccess == True:
         #If the process above was run in parallel, re-order the numbers correctly (instead of by when they finished calculating).
         if parallel == True:
-            ERF = [x for (y,x) in sorted(zip(hourOrder, ERF))]
-            MRTDelta = [x for (y,x) in sorted(zip(hourOrder, MRTDelta))]
-            solarAdjustedMRT = [x for (y,x) in sorted(zip(hourOrder, solarAdjustedMRT))]
+            ERF[ptCount] = [x for (y,x) in sorted(zip(hourOrder[ptCount], ERF[ptCount]))]
+            MRTDelta[ptCount] = [x for (y,x) in sorted(zip(hourOrder[ptCount], MRTDelta[ptCount]))]
+            solarAdjustedMRT[ptCount] = [x for (y,x) in sorted(zip(hourOrder[ptCount], solarAdjustedMRT[ptCount]))]
         
         
         #Add the headers to the computed lists.
@@ -1384,56 +1358,76 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
             analysisStart = stDate
             analysisEnd = stDate
         
-        ERF.insert(0,analysisEnd)
-        ERF.insert(0,analysisStart)
-        ERF.insert(0,'Hourly')
-        ERF.insert(0,'kWh/m2')
-        ERF.insert(0,'Effective Radiant Field')
-        ERF.insert(0,str(location))
-        ERF.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
+        ERF[ptCount].insert(0,analysisEnd)
+        ERF[ptCount].insert(0,analysisStart)
+        ERF[ptCount].insert(0,'Hourly')
+        ERF[ptCount].insert(0,'kWh/m2')
+        ERF[ptCount].insert(0,'Effective Radiant Field')
+        ERF[ptCount].insert(0,str(location))
+        ERF[ptCount].insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
         
-        MRTDelta.insert(0,analysisEnd)
-        MRTDelta.insert(0,analysisStart)
-        MRTDelta.insert(0,'Hourly')
-        MRTDelta.insert(0,'C')
-        MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
-        MRTDelta.insert(0,str(location))
-        MRTDelta.insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
+        MRTDelta[ptCount].insert(0,analysisEnd)
+        MRTDelta[ptCount].insert(0,analysisStart)
+        MRTDelta[ptCount].insert(0,'Hourly')
+        MRTDelta[ptCount].insert(0,'C')
+        MRTDelta[ptCount].insert(0,'Solar Mean Radiant Temp Delta')
+        MRTDelta[ptCount].insert(0,str(location))
+        MRTDelta[ptCount].insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
         
-        solarAdjustedMRT.insert(0,analysisEnd)
-        solarAdjustedMRT.insert(0,analysisStart)
-        solarAdjustedMRT.insert(0,'Hourly')
-        solarAdjustedMRT.insert(0,'C')
-        solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
-        solarAdjustedMRT.insert(0,str(location))
-        solarAdjustedMRT.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
+        solarAdjustedMRT[ptCount].insert(0,analysisEnd)
+        solarAdjustedMRT[ptCount].insert(0,analysisStart)
+        solarAdjustedMRT[ptCount].insert(0,'Hourly')
+        solarAdjustedMRT[ptCount].insert(0,'C')
+        solarAdjustedMRT[ptCount].insert(0,'Solar-Adjusted Mean Radiant Temperature')
+        solarAdjustedMRT[ptCount].insert(0,str(location))
+        solarAdjustedMRT[ptCount].insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
         
-        
-        return ERF, MRTDelta, solarAdjustedMRT
-    else:
-        return -1
+    
+    return ERF, MRTDelta, solarAdjustedMRT
 
 
 
 
-#Check the inputs
-checkData = False
-results = checkTheInputs()
 
-if results!= -1:
-    checkData, method, radTemp, mannequinMesh, groundMesh, context, groundR, \
-    cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, \
-    lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels,\
-    lb_sunpath = results
-
-#Change the inputs or outputs based on what is connected.
+#If Ladybug is not flying or is an older version, give a warning.
+initCheck = True
 checkInputOutput = False
-if checkData == True and results!= -1:
-    checkInputOutput = manageInputOutput(method)
-else: restoreInputOutput()
 
-#Run the analysis.
-if _runIt == True and checkData == True and checkInputOutput == True:
+#Ladybug check.
+if not sc.sticky.has_key('ladybug_release') == True:
+    initCheck = False
+    print "You should first let Ladybug fly..."
+    ghenv.Component.AddRuntimeMessage(w, "You should first let Ladybug fly...")
+else:
+    try:
+        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = False
+    except:
+        initCheck = False
+        warning = "You need a newer version of Ladybug to use this compoent." + \
+        "Use updateLadybug component to update userObjects.\n" + \
+        "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+        "into canvas and try again."
+        ghenv.Component.AddRuntimeMessage(w, warning)
+
+
+
+if initCheck == True:
+    #Check the inputs
+    results = checkTheInputs()
+    if results!= -1:
+        method, radTemp, mannequinMesh, groundMesh, context, groundR, \
+        cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, \
+        lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels,\
+        lb_sunpath = results
+    #Change the inputs or outputs based on what is connected.
+    
+    if results!= -1:
+        checkInputOutput = manageInputOutput(method)
+    else: restoreInputOutput()
+    if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): checkInputOutput = False
+
+
+if _runIt == True and checkInputOutput == True:
     if method == 0 or method == 1:
         result = main(method, radTemp, mannequinMesh, \
         groundMesh, context, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, \
@@ -1444,7 +1438,22 @@ if _runIt == True and checkData == True and checkInputOutput == True:
     else:
         result = mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath)
         if result != -1:
-            effectiveRadiantField, MRTDelta, solarAdjustedMRT = result
+            effectiveRadiantFieldInit, MRTDeltaInit, solarAdjustedMRTInit = result
+            #Unpack the Data Trees of values.
+            effectiveRadiantField = DataTree[Object]()
+            MRTDelta = DataTree[Object]()
+            solarAdjustedMRT = DataTree[Object]()
+            mannequinMeshInit = mannequinMesh[:]
+            mannequinMesh = DataTree[Object]()
+            
+            for pCount, point in enumerate(effectiveRadiantFieldInit):
+                for iCount, item in enumerate(point):
+                    effectiveRadiantField.Add(item, GH_Path(pCount))
+                    MRTDelta.Add(MRTDeltaInit[pCount][iCount], GH_Path(pCount))
+                    solarAdjustedMRT.Add(solarAdjustedMRTInit[pCount][iCount], GH_Path(pCount))
+                    try:
+                        mannequinMesh.Add(mannequinMeshInit[pCount][iCount], GH_Path(pCount))
+                    except: pass
 
 #Hide the legend base point.
 ghenv.Component.Params.Output[8].Hidden = True
