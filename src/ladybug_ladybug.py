@@ -11,7 +11,6 @@
 # or (at your option) any later version. 
 # 
 # Ladybug is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of 
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
 # GNU General Public License for more details.
 # 
@@ -46,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_21_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_22_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -3507,7 +3506,7 @@ class ComfortModels(object):
                 # when top > 25 degC.
                 if vel < 0.9: coolingEffect = 1.2
                 elif  vel < 1.2: coolingEffect = 1.8
-                elif vel > 1.2: coolingEffect = 2.2
+                elif vel >= 1.2: coolingEffect = 2.2
                 else: pass
             
             #Figure out the relation between comfort and outdoor temperature depending on the level of conditioning.
@@ -3558,7 +3557,7 @@ class ComfortModels(object):
             if (vel >= 0.6 and to >= 25):
                 if vel < 0.9: coolingEffect = 1.2
                 elif  vel < 1.2: coolingEffect = 1.8
-                elif vel > 1.2: coolingEffect = 2.2
+                elif vel >= 1.2: coolingEffect = 2.2
                 else: pass
             if levelOfConditioning == 0: tComf = 0.31 * 33.5 + 17.8
             else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 33.5 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
