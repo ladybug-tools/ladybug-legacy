@@ -330,8 +330,9 @@ def checkTheInputs():
         #Change the location of the mannequin as the user wants.
         if len(bodyLocation_) != 0:
             if len(bodyLocation_) == 1:
-                moveTransform = rc.Geometry.Transform.Translation(bodyLocation_.X, bodyLocation_.Y, bodyLocation_.Z)
-                mannequinMesh.Transform(moveTransform)
+                for item in bodyLocation_:
+                    moveTransform = rc.Geometry.Transform.Translation(item.X, item.Y, item.Z)
+                    mannequinMesh.Transform(moveTransform)
             else:
                 warning = 'Input for bodyLocation_ can only be a single point if using a detailed mannequin radiation mesh and a cumSkyMtx. \n Switch the analysis to dirNormRad to run this component for multiple points.'
                 print warning
