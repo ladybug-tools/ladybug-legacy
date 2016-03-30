@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_22_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_29_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -3246,7 +3246,7 @@ class ComfortModels(object):
         CSTR = 0.5
         
         TempSkinNeutral = 33.7 #setpoint (neutral) value for Tsk
-        TempCoreNeutral = 36.49 #setpoint value for Tcr
+        TempCoreNeutral = 36.8 #setpoint value for Tcr
         TempBodyNeutral = 36.49 #setpoint for Tb (.1*TempSkinNeutral + .9*TempCoreNeutral)
         SkinBloodFlowNeutral = 6.3 #neutral value for SkinBloodFlow
     
