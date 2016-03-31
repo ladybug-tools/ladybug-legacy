@@ -79,7 +79,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -141,7 +141,7 @@ def checkTheInputs():
             checkData6 = False
             warning = 'The connected comfortPar_ are not valid comfort parameters from the "Ladybug_Adaptive Comfort Parameters" component.'
             print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Error, warning)
     
     #Define a function to duplicate data
     def duplicateData(data, calcLength):
@@ -179,7 +179,7 @@ def checkTheInputs():
         if checkData1 == False:
             warning = '_dryBulbTemperature input does not contain valid temperature values in degrees Celcius.'
             print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Error, warning)
     else:
         print 'Connect a temperature in degrees celcius for _dryBulbTemperature'
     
@@ -219,7 +219,7 @@ def checkTheInputs():
         if checkData2 == False:
             warning = 'meanRadiantTemperature_ input does not contain valid temperature values.'
             print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Error, warning)
     else:
         checkData2 = True
         radTemp = airTemp
@@ -290,7 +290,7 @@ def checkTheInputs():
         if checkData3 == False:
             warning = '_prevailingOutdoorTemp input does not contain valid temperature values.'
             print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Error, warning)
     else:
         print 'Connect a temperature in degrees celcius for _prevailingOutdoorTemp'
     
@@ -301,10 +301,7 @@ def checkTheInputs():
     if len(windSpeed_) != 0:
         try:
             if windSpeed_[2] == 'Wind Speed':
-                windSpeedInit = windSpeed_[7:]
-                windSpeedInit.sort()
-                windSpeed.append(windSpeedInit[0])
-                windSpeed.append(windSpeedInit[-1])
+                windSpeed = windSpeed_[7:]
                 checkData4 = True
                 epwData = True
                 if epwStr == []:
@@ -323,7 +320,7 @@ def checkTheInputs():
         if checkData4 == False:
             warning = 'windSpeed_ input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
             print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Error, warning)
     else:
         checkData4 = True
         windSpeed = [0.0]
@@ -350,7 +347,7 @@ def checkTheInputs():
                 calcLength = None
                 warning = 'If you have put in lists with multiple values, the lengths of these lists must match across the parameters or you have a single value for a given parameter to be applied to all values in the list.'
                 print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Error, warning)
         else:
             checkData5 = True
             calcLength = 1
@@ -367,7 +364,6 @@ def checkTheInputs():
     else:
         titleStatement = None
         patternList = []
-    
     
     #Set the default to automatically include cold times in the chart if thre are any.
     if includeColdTime_ == None: includeColdTimes = True
@@ -391,7 +387,7 @@ def outlineCurve(curve):
             finalBrep = curve
     except:
         finalBrep = curve
-        warning = "Creating an outline of one of the comfort or strategy curves failed.  Component will return a solid brep."
+        warning = "Creating an outline of one of the comfort or strategy curves failed.  Component will return a single polyline."
         print warning
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, warning)
@@ -728,14 +724,14 @@ def drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBol
     allTextPt.extend(xAxisPt)
     
     yAxisLabels = []
-    if IPTrigger == False: yAxisTxt = ["Desired Indoor Operative Temperature (C)"]
-    else: yAxisTxt = ["Desired Indoor Operative Temperature (F)"]
+    if IPTrigger == False: yAxisTxt = ["Indoor Operative Temperature (C)"]
+    else: yAxisTxt = ["Indoor Operative Temperature (F)"]
     if IPTrigger == False:
-        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(7, 14, 0)]
-        else: yAxisPt = [rc.Geometry.Point3d(-23, 9, 0)]
+        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(7, 17, 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(-23, 11, 0)]
     else:
-        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(45, 60, 0)]
-        else: yAxisPt = [rc.Geometry.Point3d(-8, 50, 0)]
+        if belowTen == False or includeColdTimes == False:  yAxisPt = [rc.Geometry.Point3d(45, 67, 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(-8, 56, 0)]
     yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, yAxisPt[0])
     for geo in yAxisLabels:
@@ -1049,11 +1045,9 @@ def colorMesh(airTemp, radTemp, prevailTemp, lb_preparation, lb_comfortModels, l
     if tooHotVals != []:
         comment = "There were " + str(len(tooHotVals)) + " cases where the prevaling outdoor temperature was so hot that it could not fit on the chart. \nThese values are still taken into account in the non-visual outputs."
         print comment
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, comment)
     if tooColdVals != []:
         comment = "There were " + str(len(tooColdVals)) + " cases where the prevaling outdoor temperature was so cold that it could not fit on the chart. \nThese values are still taken into account in the non-visual outputs."
         print comment
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, comment)
     
     #Sum all of the lists together to get the frequency.
     finalMeshFrequency = []
@@ -1143,6 +1137,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
     legend = []
     legendBasePt = None
     
+    
     # Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
@@ -1166,6 +1161,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = lb_preparation.selectHourlyData(airTemp, analysisPeriod_)[7:]
         radTemp = lb_preparation.selectHourlyData(radTemp, analysisPeriod_)[7:]
         prevailTemp = lb_preparation.selectHourlyData(prevailTemp, analysisPeriod_)[7:]
+        if len(windSpeed) == calcLength: windSpeed = lb_preparation.selectHourlyData(windSpeed, analysisPeriod_)[7:]
         if IPTrigger == True:
             farenheitAirVals = lb_preparation.selectHourlyData(farenheitAirVals, analysisPeriod_)[7:]
             farenheitRadVals = lb_preparation.selectHourlyData(farenheitRadVals, analysisPeriod_)[7:]
@@ -1204,6 +1200,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         newAirTemp = []
         newRadTemp = []
         newPrevailTemp = []
+        newWindSpeed = []
         newfarenheitAirVals = []
         newfarenheitRadVals = []
         newfarenheitPrevailVals = []
@@ -1215,6 +1212,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 newAirTemp.append(airTemp[count])
                 newRadTemp.append(radTemp[count])
                 newPrevailTemp.append(prevailTemp[count])
+                if len(windSpeed) == calcLength: newWindSpeed.append(windSpeed[count])
                 if IPTrigger == True:
                     newfarenheitAirVals.append(farenheitAirVals[count])
                     newfarenheitRadVals.append(farenheitRadVals[count])
@@ -1224,6 +1222,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = newAirTemp
         radTemp = newRadTemp
         prevailTemp = newPrevailTemp
+        if len(windSpeed) == calcLength: windSpeed = newWindSpeed
         annualHourlyDataSplit = newAnnualHourlyDataSplit
         if IPTrigger == True:
             newfarenheitAirVals = farenheitAirVals
@@ -1246,7 +1245,6 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                     coldMsg += monthNames[month-1]
             if coldThere == True:
                 print coldMsg
-                if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
         else:
             totalColdInPeriod = []
             for day in dayNums:
@@ -1255,7 +1253,6 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 if includeColdTimes == True: coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
                 else: coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + " standard. \n These cases have been removed from the analysis."
                 print coldMsg
-                if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
     else:
         totalColdInPeriod = []
         for temp in prevailTemp:
@@ -1264,11 +1261,11 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             if includeColdTimes == True: coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
             else: coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + " standard. \n These cases have been removed from the analysis."
             print coldMsg
-            if includeColdTimes == True: ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
     if includeColdTimes == False:
         newAirTemp = []
         newRadTemp = []
         newPrevailTemp = []
+        newWindSpeed = []
         newfarenheitAirVals = []
         newfarenheitRadVals = []
         newfarenheitPrevailVals = []
@@ -1280,6 +1277,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 newPrevailTemp.append(preTemp)
                 newRadTemp.append(radTemp[count])
                 newAirTemp.append(airTemp[count])
+                if len(windSpeed) == calcLength: newWindSpeed.append(windSpeed[count])
                 if IPTrigger == True:
                     newfarenheitAirVals.append(farenheitAirVals[count])
                     newfarenheitRadVals.append(farenheitRadVals[count])
@@ -1290,14 +1288,23 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = newAirTemp
         radTemp = newRadTemp
         prevailTemp = newPrevailTemp
+        windSpeed = newWindSpeed
         if IPTrigger == True:
             newfarenheitAirVals = farenheitAirVals
             newfarenheitRadVals = farenheitRadVals
             newfarenheitPrevailVals = farenheitPrevailVals
         if patternList != []: annualHourlyDataSplit = newAnnualHourlyDataSplit
     
+    windSpeedForChart = []
+    if len(windSpeed)== calcLength:
+        windSpeedInit = windSpeed[:]
+        windSpeedInit.sort()
+        windSpeedForChart.append(windSpeedInit[0])
+        windSpeedForChart.append(windSpeedInit[-1])
+    else: windSpeedForChart = windSpeed
+    
     # Generate the chart curves.
-    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound, allCurves, allText, allTextPt = drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels)
+    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound, allCurves, allText, allTextPt = drawAdaptChart(prevailTemp, windSpeedForChart, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels)
     
     #Generate the colored mesh.
     #As long as the calculation length is more than 1, make a colored mesh and get chart points for the input data.
@@ -1331,13 +1338,12 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         allText.extend(finalLegNum)
         allTextPt.extend(textPt)
     else:
-        chartHourPoints = [rc.Geometry.Point3d((airTemp[0]+radTemp[0])/2, prevailTemp[0], 0)]
+        chartHourPoints = [rc.Geometry.Point3d(prevailTemp[0], (airTemp[0]+radTemp[0])/2, 0)]
         adaptiveChartMesh = None
         meshFaceValues = []
         legendBasePoint = None
     
-    #Run each of the cases through the model to get a percentage of time comfortable.
-    for winSpd in windSpeed:
+    def runComfortModel(airTemp, radTemp, prevailTemp, winSpd, comfClass, levelOfConditioning):
         comfOr = []
         conditPer = []
         degTar = []
@@ -1352,8 +1358,8 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             conditPer.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Cold, 0 = Comfortable, 1 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
         
         for count, atemp in enumerate(airTemp):
-            if ASHRAEorEN == True: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(atemp, radTemp[count], prevailTemp[count], winSpd, comfClass, levelOfConditioning)
-            else: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortEN15251(atemp, radTemp[count], prevailTemp[count], winSpd, comfClass, levelOfConditioning)
+            if ASHRAEorEN == True: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(atemp, radTemp[count], prevailTemp[count], winSpd[count], comfClass, levelOfConditioning)
+            else: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortEN15251(atemp, radTemp[count], prevailTemp[count], winSpd[count], comfClass, levelOfConditioning)
             comfOr.append(int(comf))
             conditPer.append(condition)
             if condition == 1:
@@ -1365,10 +1371,23 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 perComf.append(0)
             degTar.append(distFromTarget)
         
+        return comfOr, conditPer, degTar, percHot, perComf, percCol
+    
+    #Run each of the cases through the model to get a percentage of time comfortable.
+    if len(windSpeed) != calcLength:
+        for winSpd in windSpeed:
+            winSpdList = [winSpd] * calcLength
+            comfOr, conditPer, degTar, percHot, perComf, percCol = runComfortModel(airTemp, radTemp, prevailTemp, winSpdList, comfClass, levelOfConditioning)
+            comfortableOrNotInit.append(comfOr)
+            conditionOfPersonInit.append(conditPer)
+            degreesFromTargetInit.append(degTar)
+            comfPercentOfTimeInit.append(sum(perComf)*100/len(airTemp))
+            percentHotColdInit.append([sum(percHot)*100/len(airTemp), sum(percCol)*100/len(airTemp)])
+    else:
+        comfOr, conditPer, degTar, percHot, perComf, percCol = runComfortModel(airTemp, radTemp, prevailTemp, windSpeed, comfClass, levelOfConditioning)
         comfortableOrNotInit.append(comfOr)
         conditionOfPersonInit.append(conditPer)
         degreesFromTargetInit.append(degTar)
-        
         comfPercentOfTimeInit.append(sum(perComf)*100/len(airTemp))
         percentHotColdInit.append([sum(percHot)*100/len(airTemp), sum(percCol)*100/len(airTemp)])
     
