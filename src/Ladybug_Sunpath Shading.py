@@ -197,7 +197,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_31_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -237,7 +237,7 @@ def getEpwData(epwFile):
         
         except Exception, e:
             # something is wrong with "_epwFile" input
-            locationName = latitude = longitude = timeZone = yearsHOY = None
+            locationName = latitude = longitude = timeZone = dryBulbTemperatureData = directNormalRadiationData = diffuseHorizontalRadiationData = yearsHOY = None
             validEpwData = False
             printMsg = "Something is wrong with \"_epwFile\" input."
     else:
@@ -409,7 +409,7 @@ def checkInputData(analysisGeometry, ACenergyPerHour, context, coniferousTrees, 
     validContextCategories = [index for index in [validContext1, validContext2, validContext3] if index > 0]
     
     # default transmission indices based on: Planning and Installing Photovoltaic Systems: A Guide for Installers, Architects and Engineers,
-    # Deutsche Gesellschaft Fr Sonnenenergie (Dgs), Dec 2007.
+    # Deutsche Gesellschaft Für Sonnenenergie (Dgs), Dec 2007.
     if (coniferousAllyearIndex == None) or (coniferousAllyearIndex < 0) or (coniferousAllyearIndex > 1):
         coniferousAllyearIndex = 0.30
     if (deciduousInleafIndex == None) or (deciduousInleafIndex < 0) or (deciduousInleafIndex > 1):
@@ -1223,9 +1223,9 @@ def printOutput(locationName, latitude, longitude, northRad, srfAreaL, ACenergyP
 Input data:
 
 Location: %s
-Latitude (): %s
-Longitude (): %s
-North (): %s
+Latitude (deg.): %s
+Longitude (deg.): %s
+North (deg.): %s
 
 Surface area (m2): %s
 
