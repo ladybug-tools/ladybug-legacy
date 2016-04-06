@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_05_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -283,16 +283,27 @@ def main():
         checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid = checkTheInputs()
         
         #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
-        if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+        if calcLength == 8760 and len(analysisPeriod_)!=0:
+            ##HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+            HOYSInit, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+            HOYS = []
+            for hour in HOYSInit: HOYS.append(hour-1)
             runPeriod = analysisPeriod_
             calcLength = len(HOYS)
-        elif len(analysisPeriod_)==0 and epwData == True:
+        elif epwData == True:
             HOYS = range(calcLength)
             runPeriod = [epwStr[5], epwStr[6]]
+            if calcLength != 8760 and len(analysisPeriod_) != 0:
+                periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+                print periodMsg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
         else:
             HOYS = range(calcLength)
             runPeriod = [(1,1,1), (12,31,24)]
+            if calcLength != 8760 and len(analysisPeriod_) != 0:
+                periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+                print periodMsg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
         
         #If things are good, run it through the comfort model.
         universalThermalClimateIndex = []
@@ -361,6 +372,7 @@ def main():
                 thermalStressType.extend(thermalStr)
                 coldStressComfortableHeatStress.extend(coldComfHot)
             except:
+                print 'EXCEPT'
                 universalThermalClimateIndex = []
                 comfortableOrNot = []
                 thermalStressType = []
@@ -369,7 +381,7 @@ def main():
                 percentComfForShortPeriod = None
                 percentHeatStress = None
                 percentColdStress = None
-                print "The calculation has been terminated by the user!"
+                print "The calculation has been terminated by the user!AA"
                 e = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
         
