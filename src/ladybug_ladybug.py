@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_29_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_11_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -119,10 +119,10 @@ class CheckIn():
                 sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
             else:
                 # let's use the user folder
-                username = os.getenv("USERNAME")
-                # make sure username doesn't have space
-                if (" " in username):
-                    msg = "User name on this system: " + username + " has white space." + \
+                appdata = os.getenv("APPDATA")
+                # make sure appdata doesn't have space
+                if (" " in appdata):
+                    msg = "User name on this system: " + appdata + " has white space." + \
                           " Default fodelr cannot be set.\nUse defaultFolder_ to set the path to another folder and try again!" + \
                           "\nLadybug failed to fly! :("
                     print msg
@@ -131,7 +131,7 @@ class CheckIn():
                     self.letItFly = False
                     return
                 
-                sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
+                sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
         
         self.updateCategoryIcon()
     
