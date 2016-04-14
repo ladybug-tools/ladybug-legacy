@@ -81,7 +81,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.62\nAPR_12_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_13_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1126,15 +1126,19 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, 
                     arrowMesh = rc.Geometry.Mesh()
                     use1meterArrowHeadSize = True
                     for count, point in enumerate(anchorPts[1:]):
-                        mesh = createColoredArrowMesh(count, point, colors, windVec, heightsAboveGround, use1meterArrowHeadSize, scaleFactor)
-                        arrowMesh.Append(mesh)
+                        try:
+                            mesh = createColoredArrowMesh(count, point, colors, windVec, heightsAboveGround, use1meterArrowHeadSize, scaleFactor)
+                            arrowMesh.Append(mesh)
+                        except: pass
                     windVecMesh.append(arrowMesh)
                 #Create high-res colored 3D meshes
                 elif windArrowStyle == 2:
                     arrowMesh = rc.Geometry.Mesh()
                     for count, point in enumerate(anchorPts[1:]):
-                        mesh = createHighResColoredArrows(count, point, colors, windVec, heightsAboveGround, windDir)
-                        arrowMesh.Append(mesh)
+                        try:
+                            mesh = createHighResColoredArrows(count, point, colors, windVec, heightsAboveGround, windDir)
+                            arrowMesh.Append(mesh)
+                        except:pass
                     windVecMesh.append(arrowMesh)
                 #Create line arrows (colored)
                 elif windArrowStyle == 3:
