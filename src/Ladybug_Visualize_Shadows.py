@@ -24,20 +24,20 @@ Use this component to link Rhino solar system to grasshopper and create sun posi
 -
 Provided by Ladybug 0.0.61
     Args:
-        Location: get location from Ladybug_Import epw component. This will update rhino solar system to the correct coordinates and timezone
-        North: North direction of the model. This can be either an number representing angle, or a vector. (by default North is set on the y axis)
-        Month: A number that represents the month you want to visualize
-        Day: A number that represents the Day you want to visualize
-        Hour: A number that represents the Hour you want to visualize
-        analysisPeriod: An optional analysis period from the Analysis Period component.  Inputs here will override the hour, day, and month inputs above. (this is to visualize up to a full)
+        _location: get location from Ladybug_Import epw component. This will update rhino solar system to the correct coordinates and timezone
+        North_: North direction of the model. This can be either an number representing angle, or a vector. (by default North is set on the y axis)
+        _Month_: A number that represents the month you want to visualize
+        _Day_: A number that represents the Day you want to visualize
+        _Hour_: A number that represents the Hour you want to visualize
+        analysisPeriod_: An optional analysis period from the Analysis Period component.  Inputs here will override the hour, day, and month inputs above. (this is to visualize up to a full)
         timeStep: if analysisPeriod is used, this will divide the hour into steps (2 = 30 minutes, 4 = 15 minutes..)
-        Geound: enable if you want to create a generic floor at 0.0 in order to visualize shadows in case there is no floor in the model.
+        Ground_: enable if you want to create a generic floor at 0.0 in order to visualize shadows in case there is no floor in the model.
         --------------- : ....
-        workingDir_: A folder path where your images or renders will be saved. Each image will be named according to the time of day that it represents
-        _render: Enable to render the active viewport. (current rendered will be used, set up the render setting according to your need)
-        _save: Enable to save a print of the active viewport. If _render is also active, this will save a copy of the rendered image in your folder
-        viewWidth: A number that represents the image width in pixels
-        viewHeight: A number that represents the image height in pixels
+        _workingDir_: A folder path where your images or renders will be saved. Each image will be named according to the time of day that it represents
+        _render_: Enable to render the active viewport. (current rendered will be used, set up the render setting according to your need)
+        _save_: Enable to save a print of the active viewport. If _render_ is also active, this will save a copy of the rendered image in your folder
+        viewWidth_: A number that represents the image width in pixels
+        viewHeight_: A number that represents the image height in pixels
     Returns:
         readMe!: ...
         imagePath: A path that represents the last saved image
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Visualize_Shadows"
 ghenv.Component.NickName = 'Visualize_Shadows'
-ghenv.Component.Message = 'VER 0.0.61\nNOV_05_2015' #Change this date to be that of your commit or pull request.
+ghenv.Component.Message = 'VER 0.0.61\nApr_15_2016' #Change this date to be that of your commit or pull request.
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:
@@ -57,24 +57,15 @@ except: pass
 
 import Grasshopper.Kernel as gh
 import scriptcontext as sc
+import Rhino
+import rhinoscriptsyntax as rs
+import Rhino.Render.Sun as sun
+import ghpythonlib.components as ghp
+import scriptcontext as sc
+import math
+import os
 
 w = gh.GH_RuntimeMessageLevel.Warning
-
-#imagePath = "" 
-
-
-#def checkTheInputs():
-#    #....(INSERT INPUT CHECKING FUNCTIONS HERE)....
-#
-#    return False
-
-
-#def main():
-#    #....(INSERT MAIN COMPONENTS FUNCTIONS HERE)....
-#
-#    return -1
-
-
 
 
 #If Honeybee or Ladybug is not flying or is an older version, give a warning.
@@ -117,21 +108,21 @@ else:
 
 
 
-#If the intital check is good, run the component.
-if initCheck:
-    checkData = checkTheInputs()
-    if checkData:
-        result = main()
-        if result != -1:
-            output = result
 
-import Rhino
-import rhinoscriptsyntax as rs
-import Rhino.Render.Sun as sun
-import ghpythonlib.components as ghp
-import scriptcontext as sc
-import math
-import os
+def checkTheInputs():
+    if _Month_ > 12 or _Month_ <1:
+        ghenv.Component.AddRuntimeMessage(w, "_Month_ has to be a number between 1 and 12")
+    else:
+        if _Day_ >31 or _Day_ <1:
+            ghenv.Component.AddRuntimeMessage(w, "_Day_ has to be a number between 1 and 31")
+        else:
+            if _Hour_ >24 or _Hour_ <1:
+                ghenv.Component.AddRuntimeMessage(w, "_Hour_ has to be a number between 1 and 24")
+            else:
+                return True
+    return False
+
+
 
 
 #Set display mode to "Rendered" in Rhino
@@ -139,8 +130,8 @@ rendered = Rhino.Display.DisplayModeDescription.FindByName("Rendered")
 Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.ActiveViewport.DisplayMode = rendered
 
 
-#from Location split and referense Latitude, Longitude and Timezone
-change = str(Location)
+#from _location split and referense Latitude, Longitude and Timezone
+change = str(_location)
 Lat = (change.split("\n"))[2]
 Latitude = Lat.split(",")[0]
 Long = (change.split("\n"))[3]
@@ -151,111 +142,122 @@ offset = int(math.ceil(float(Offset)))
 
 #Enable Ground if needed to show shadows
 ground = Rhino.RhinoDoc.ActiveDoc.GroundPlane #Link to Rhino GrounPlance system 
-Rhino.Render.GroundPlane.Enabled.SetValue(ground,Ground) #Enable ground
+Rhino.Render.GroundPlane.Enabled.SetValue(ground,Ground_) #Enable ground
 
-if analysisPeriod == []:
-    analysisPeriod = None
-
-
-
-if workingDir_ == None:
-    dir = sc.sticky["Ladybug_DefaultFolder"]
-else:
-    dir = str(workingDir_)#Define the path, if path does not exist, create, otherwise use existing one
-if os.path.exists(dir) == False:
-    os.mkdir(dir)
-print(str(dir))
-
-#Define time-steps if need to make the transition smoother
-if timeStep == None:
-    timeStep = 1
-
-#Change view width and heights by pixel
-if viewWidth == None:
-    viewWidth = 800
-if viewHeight == None:
-    viewHeight = 800
-
-#Change the int(Month) into a 3 letter string to save the month name for the image file
+#Change the int(_Month_) into a 3 letter string to save the month name for the image file
 StrMonth = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 
-#Give priority to analysisPeriod over Month/Day/Hour.
-if analysisPeriod != None:
-    Months = int((analysisPeriod)[0][0])
-    Days = int((analysisPeriod)[0][1])
-    for hourRange in range((int((analysisPeriod)[0][2])*100),(int((analysisPeriod)[1][2])*100),int((1/timeStep)*100)):
-        H = int(math.modf(hourRange/100)[1])
-        M = int(60*(math.modf(hourRange/100)[0]))
-        Date = ghp.ConstructDate(2015,Months,Days,H,M,0) #Date = ghp.ConstructDate(2015,Months,Days,H,M,0)
-        Sunposition = Rhino.RhinoDoc.ActiveDoc.Lights.Sun #Link grasshopper definition to Rhino Sun system
-        sun.Enabled.SetValue(Sunposition,True)
-        sun.TimeZone.SetValue(Sunposition,offset)
-        sun.SetPosition(Sunposition, Date, float(Latitude), float(Longitude)) #Adjust Location and Date of Rhino Sun
-        if sun.Altitude.Info.GetValue(Sunposition) > 10:
-            #set Orientation
-            if North == None:
-                sun.North.SetValue(Sunposition, 90)
-            else:
-                if type(North) is float:
-                    sun.North.SetValue(Sunposition, (90-North))
-                else:
-                    #Set North
-                    zero = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
-                    Xaxis = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
-                    Origin = Rhino.Geometry.Point3d(0.0,0.0,0.0)
-                    Plane = Rhino.Geometry.Plane(Origin,Xaxis)
-                    angle = Rhino.Geometry.Vector3d.VectorAngle(zero,North,Plane)
-                    sun.North.SetValue(Sunposition, math.degrees(angle))
-            if _render == True:
-                rs.Command("!_render") #send the command to render on your active renderer
-                if _save == True: #Enable to save the view as a .png
-                    rs.Command("_-SaveRenderWindowAs \"" + (dir) + "\\" + str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"")
-                    rs.Command ("_-CloseRenderWindow") #close the rendered window when in saving mode to avoid stacking a series of renderWindows when running on Rhino renderer.
-                    imagePath = (dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png")
-            else:
-                if _save == True:
-                    rs.Command("_-ViewCaptureToFile \""+dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"" + " w " +str(viewWidth)+" "+"h "+str(viewHeight)+" "+ " enter")
-                    imagePath = (dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png")
-        else:
-            DarkHours = (str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M)+" is Nighttime")
+if analysisPeriod_ == []: 
+    analysisPeriod_ = None
+
+if _timeStep_ == None: #If there is no timeStep input, the default will be 1
+    _timeStep_ = 1
+
+if _workingDir_ == None:
+    dir = sc.sticky["Ladybug_DefaultFolder"] #If no path is defined, the default Ladybug folder will be used. 
 else:
-    Hours = Hour
-    Months = Month
-    Days = Day
-    H = int(math.modf(Hours)[1])
-    M = int(60*(math.modf(Hours)[0]))
-    Date = ghp.ConstructDate(2015,Months,Days,H,M,0) #Date = ghp.ConstructDate(2015,Months,Days,H,M,0)
-    Sunposition = Rhino.RhinoDoc.ActiveDoc.Lights.Sun #Link grasshopper definition to Rhino Sun system
-    sun.Enabled.SetValue(Sunposition,True)
-    sun.TimeZone.SetValue(Sunposition,offset)
-    sun.SetPosition(Sunposition, Date, float(Latitude), float(Longitude)) #Adjust Location and Date of Rhino Sun
-    if sun.Altitude.Info.GetValue(Sunposition) > 10:
-        #set Orientation
-        if North == None:
-            sun.North.SetValue(Sunposition, 90)
+    dir = str(_workingDir_)#Define the path, if path does not exist, create, otherwise use existing one
+if os.path.exists(dir) == False:
+    os.mkdir(dir)
+
+if viewWidth_ == None:#Change view width and heights by pixel
+    viewWidth_ = 800
+if viewHeight_ == None:
+    viewHeight_ = 800
+
+def main():
+    if _runIt == True:
+        #Give priority to analysisPeriod over Month/Day/Hour.
+        if analysisPeriod_ != None:
+            Months = int((analysisPeriod_)[0][0])
+            Days = int((analysisPeriod_)[0][1])
+            for hourRange in range((int((analysisPeriod_)[0][2])*100),(int((analysisPeriod_)[1][2])*100),int((1/_timeStep_)*100)):
+                H = int(math.modf(hourRange/100)[1])
+                M = int(60*(math.modf(hourRange/100)[0]))
+                Date = ghp.ConstructDate(2015,Months,Days,H,M,0) #Date = ghp.ConstructDate(2015,Months,Days,H,M,0)
+                Sunposition = Rhino.RhinoDoc.ActiveDoc.Lights.Sun #Link grasshopper definition to Rhino Sun system
+                sun.Enabled.SetValue(Sunposition,True)
+                sun.TimeZone.SetValue(Sunposition,offset)
+                sun.SetPosition(Sunposition, Date, float(Latitude), float(Longitude)) #Adjust _location and Date of Rhino Sun
+                if sun.Altitude.Info.GetValue(Sunposition) > 10:
+                    #set Orientation
+                    if North_ == None:
+                        sun.North.SetValue(Sunposition, 90)
+                    else:
+                        if type(North_) is float:
+                            sun.North.SetValue(Sunposition, (90-North_))
+                        else:
+                            #Set North
+                            zero = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
+                            Xaxis = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
+                            Origin = Rhino.Geometry.Point3d(0.0,0.0,0.0)
+                            Plane = Rhino.Geometry.Plane(Origin,Xaxis)
+                            angle = Rhino.Geometry.Vector3d.VectorAngle(zero,North_,Plane)
+                            sun.North.SetValue(Sunposition, math.degrees(angle))
+                    if _render_ == True:
+                        rs.Command("!_render") #send the command to render on your active renderer
+                        if _save_ == True: #Enable to save the view as a .png
+                            dir = str(_workingDir_) #Define the path, if path does not exist, create, otherwise use existing one
+                            rs.Command("_-SaveRenderWindowAs \"" + (dir) + "\\" + str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"")
+                            rs.Command ("_-CloseRenderWindow") #close the rendered window when in saving mode to avoid stacking a series of renderWindows when running on Rhino renderer.
+                    else:
+                        if _save_ == True:
+                            dir = str(_workingDir_) #Define the path, if path does not exist, create, otherwise use existing one
+                            rs.Command("_-ViewCaptureToFile \""+dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"" + " w " +str(viewWidth_)+" "+"h "+str(viewHeight_)+" "+ " enter")
+                else:
+                    DarkHours = (str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M)+" is Nighttime")
         else:
-            if type(North) is float:
-                sun.North.SetValue(Sunposition, (90-North))
+            Hours = _Hour_
+            Months = _Month_
+            Days = _Day_
+            H = int(math.modf(Hours)[1])
+            M = int(60*(math.modf(Hours)[0]))
+            Date = ghp.ConstructDate(2015,Months,Days,H,M,0) #Date = ghp.ConstructDate(2015,Months,Days,H,M,0)
+            Sunposition = Rhino.RhinoDoc.ActiveDoc.Lights.Sun #Link grasshopper definition to Rhino Sun system
+            sun.Enabled.SetValue(Sunposition,True)
+            sun.TimeZone.SetValue(Sunposition,offset)
+            sun.SetPosition(Sunposition, Date, float(Latitude), float(Longitude)) #Adjust _location and Date of Rhino Sun
+            if sun.Altitude.Info.GetValue(Sunposition) > 10:
+                #set Orientation
+                if North_ == None:
+                    sun.North.SetValue(Sunposition, 90)
+                else:
+                    if type(North_) is float:
+                        sun.North.SetValue(Sunposition, (90-North_))
+                    else:
+                        #Set North
+                        zero = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
+                        Xaxis = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
+                        Origin = Rhino.Geometry.Point3d(0.0,0.0,0.0)
+                        Plane = Rhino.Geometry.Plane(Origin,Xaxis)
+                        angle = Rhino.Geometry.Vector3d.VectorAngle(zero,North_,Plane)
+                        sun.North.SetValue(Sunposition, math.degrees(angle))
+                if _render_ == True:
+                    rs.Command("!_render") #send the command to render on your active renderer
+                    if _save_ == True: #Enable to save the view as a .png
+                        dir = str(_workingDir_) #Define the path, if path does not exist, create, otherwise use existing one
+                        if os.path.exists(dir) == False:
+                            os.mkdir(dir)
+                        rs.Command("_-SaveRenderWindowAs \"" + (dir) + "\\" + str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"")
+                        rs.Command ("_-CloseRenderWindow") #close the rendered window when in saving mode to avoid stacking a series of renderWindows when running on Rhino renderer.
+                        imagePath = (dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png")
+                        return imagePath
+                else:
+                    if _save_ == True:
+                        dir = str(_workingDir_) #Define the path, if path does not exist, create, otherwise use existing one
+                        rs.Command("_-ViewCaptureToFile \""+ (dir) +"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"" + " w " +str(viewWidth_)+" "+"h "+str(viewHeight_)+" "+ " enter")
+                        imagePath = (dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png")
+                        return imagePath
             else:
-                #Set North
-                zero = Rhino.Geometry.Vector3d(1.0,0.0,0.0)
-                Xaxis = Rhino.Geometry.Vector3d(0.0,0.0,1.0)
-                Origin = Rhino.Geometry.Point3d(0.0,0.0,0.0)
-                Plane = Rhino.Geometry.Plane(Origin,Xaxis)
-                angle = Rhino.Geometry.Vector3d.VectorAngle(zero,North,Plane)
-                sun.North.SetValue(Sunposition, math.degrees(angle))
-        if _render == True:
-            rs.Command("!_render") #send the command to render on your active renderer
-            if _save == True: #Enable to save the view as a .png
-                dir = str(_workingDir_) #Define the path, if path does not exist, create, otherwise use existing one
-                if os.path.exists(dir) == False:
-                    os.mkdir(dir)
-                rs.Command("_-SaveRenderWindowAs \"" + (dir) + "\\" + str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"")
-                rs.Command ("_-CloseRenderWindow") #close the rendered window when in saving mode to avoid stacking a series of renderWindows when running on Rhino renderer.
-                imagePath = (dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png")
-        else:
-            if _save == True:
-                rs.Command("_-ViewCaptureToFile \""+dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png\"" + " w " +str(viewWidth)+" "+"h "+str(viewHeight)+" "+ " enter")
-                imagePath = (dir+"\\" +str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M) + ".png")
+                pass
     else:
-        DarkHours = (str(StrMonth[int(Months)-1])+"_"+str(H)+"_"+str(M)+" is Nighttime")
+        return -1
+
+#If the intital check is good, run the component.
+if initCheck:
+    checkData = checkTheInputs()
+    if checkData:
+        imagePath = main()
+        if imagePath != -1:
+            pass
+
