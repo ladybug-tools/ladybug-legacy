@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Radiant Asymmetry Discomfort"
 ghenv.Component.NickName = 'radAsymmetry'
-ghenv.Component.Message = 'VER 0.0.61\nAPR_06_2016'
+ghenv.Component.Message = 'VER 0.0.61\nAPR_16_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -58,7 +58,7 @@ w = gh.GH_RuntimeMessageLevel.Warning
 def giveWarning():
     warning = "You have enetered a radiant temperature difference that is beyond the \n" + \
     "range of the original equations derived from logistic regression analysis. \n" + \
-    "A null value will be returned."
+    "The maximum radiant asymmetry value will be returned."
     print warning
     ghenv.Component.AddRuntimeMessage(w, warning)
 
@@ -73,25 +73,29 @@ def clacRadAsymmDiscomf(radTempDif, asymmType, PPDThresh = 5):
     
     for temp in radTempDif:
         if asymmType == 0:
-            if temp < 23: ppd = 100 / (1 + math.exp(2.84 - 0.174 * temp)) - 5.5
-            else:
-                ppd = None
+            if temp > 23:
+                ppd = 100 / (1 + math.exp(2.84 - 0.174 * 23)) - 5.5
                 giveWarning()
+            else:
+                ppd = 100 / (1 + math.exp(2.84 - 0.174 * temp)) - 5.5
         elif asymmType == 1:
-            if temp < 15: ppd = 100 / (1 + math.exp(6.61 - 0.345 * temp))
-            else:
-                ppd = None
+            if temp > 15:
+                ppd = 100 / (1 + math.exp(6.61 - 0.345 * 15))
                 giveWarning()
+            else:
+                ppd = 100 / (1 + math.exp(6.61 - 0.345 * temp))
         elif asymmType == 2:
-            if temp < 15: ppd = 100 / (1 + math.exp(9.93 - 0.50 * temp))
-            else:
-                ppd = None
+            if temp > 15:
+                ppd = 100 / (1 + math.exp(9.93 - 0.50 * 15))
                 giveWarning()
+            else:
+                ppd = 100 / (1 + math.exp(9.93 - 0.50 * temp))
         elif asymmType == 3:
-            if temp < 35: ppd = 100 / (1 + math.exp(3.72 - 0.052 * temp)) - 3.5
-            else:
-                ppd = None
+            if temp > 35:
+                ppd = 100 / (1 + math.exp(3.72 - 0.052 * 35)) - 3.5
                 giveWarning()
+            else:
+                ppd = 100 / (1 + math.exp(3.72 - 0.052 * temp)) - 3.5
         else:
             ppd = None
         
