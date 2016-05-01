@@ -79,7 +79,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_22_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAR_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -301,10 +301,7 @@ def checkTheInputs():
     if len(windSpeed_) != 0:
         try:
             if windSpeed_[2] == 'Wind Speed':
-                windSpeedInit = windSpeed_[7:]
-                windSpeedInit.sort()
-                windSpeed.append(windSpeedInit[0])
-                windSpeed.append(windSpeedInit[-1])
+                windSpeed = windSpeed_[7:]
                 checkData4 = True
                 epwData = True
                 if epwStr == []:
@@ -367,7 +364,6 @@ def checkTheInputs():
     else:
         titleStatement = None
         patternList = []
-    
     
     #Set the default to automatically include cold times in the chart if thre are any.
     if includeColdTime_ == None: includeColdTimes = True
@@ -1141,6 +1137,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
     legend = []
     legendBasePt = None
     
+    
     # Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
@@ -1164,6 +1161,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = lb_preparation.selectHourlyData(airTemp, analysisPeriod_)[7:]
         radTemp = lb_preparation.selectHourlyData(radTemp, analysisPeriod_)[7:]
         prevailTemp = lb_preparation.selectHourlyData(prevailTemp, analysisPeriod_)[7:]
+        if len(windSpeed) == calcLength: windSpeed = lb_preparation.selectHourlyData(windSpeed, analysisPeriod_)[7:]
         if IPTrigger == True:
             farenheitAirVals = lb_preparation.selectHourlyData(farenheitAirVals, analysisPeriod_)[7:]
             farenheitRadVals = lb_preparation.selectHourlyData(farenheitRadVals, analysisPeriod_)[7:]
@@ -1202,6 +1200,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         newAirTemp = []
         newRadTemp = []
         newPrevailTemp = []
+        newWindSpeed = []
         newfarenheitAirVals = []
         newfarenheitRadVals = []
         newfarenheitPrevailVals = []
@@ -1213,6 +1212,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 newAirTemp.append(airTemp[count])
                 newRadTemp.append(radTemp[count])
                 newPrevailTemp.append(prevailTemp[count])
+                if len(windSpeed) == calcLength: newWindSpeed.append(windSpeed[count])
                 if IPTrigger == True:
                     newfarenheitAirVals.append(farenheitAirVals[count])
                     newfarenheitRadVals.append(farenheitRadVals[count])
@@ -1222,6 +1222,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = newAirTemp
         radTemp = newRadTemp
         prevailTemp = newPrevailTemp
+        if len(windSpeed) == calcLength: windSpeed = newWindSpeed
         annualHourlyDataSplit = newAnnualHourlyDataSplit
         if IPTrigger == True:
             newfarenheitAirVals = farenheitAirVals
@@ -1264,6 +1265,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         newAirTemp = []
         newRadTemp = []
         newPrevailTemp = []
+        newWindSpeed = []
         newfarenheitAirVals = []
         newfarenheitRadVals = []
         newfarenheitPrevailVals = []
@@ -1275,6 +1277,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 newPrevailTemp.append(preTemp)
                 newRadTemp.append(radTemp[count])
                 newAirTemp.append(airTemp[count])
+                if len(windSpeed) == calcLength: newWindSpeed.append(windSpeed[count])
                 if IPTrigger == True:
                     newfarenheitAirVals.append(farenheitAirVals[count])
                     newfarenheitRadVals.append(farenheitRadVals[count])
@@ -1285,14 +1288,23 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = newAirTemp
         radTemp = newRadTemp
         prevailTemp = newPrevailTemp
+        windSpeed = newWindSpeed
         if IPTrigger == True:
             newfarenheitAirVals = farenheitAirVals
             newfarenheitRadVals = farenheitRadVals
             newfarenheitPrevailVals = farenheitPrevailVals
         if patternList != []: annualHourlyDataSplit = newAnnualHourlyDataSplit
     
+    windSpeedForChart = []
+    if len(windSpeed)== calcLength:
+        windSpeedInit = windSpeed[:]
+        windSpeedInit.sort()
+        windSpeedForChart.append(windSpeedInit[0])
+        windSpeedForChart.append(windSpeedInit[-1])
+    else: windSpeedForChart = windSpeed
+    
     # Generate the chart curves.
-    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound, allCurves, allText, allTextPt = drawAdaptChart(prevailTemp, windSpeed, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels)
+    chartCurvesAndTxt, finalComfortPolygons, belowTen, bound, allCurves, allText, allTextPt = drawAdaptChart(prevailTemp, windSpeedForChart, legendFont, legendFontSize, legendBold, epwData, epwStr, ASHRAEorEN, comfClass, levelOfConditioning, includeColdTimes, IPTrigger, lb_visualization, lb_comfortModels)
     
     #Generate the colored mesh.
     #As long as the calculation length is more than 1, make a colored mesh and get chart points for the input data.
@@ -1331,8 +1343,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         meshFaceValues = []
         legendBasePoint = None
     
-    #Run each of the cases through the model to get a percentage of time comfortable.
-    for winSpd in windSpeed:
+    def runComfortModel(airTemp, radTemp, prevailTemp, winSpd, comfClass, levelOfConditioning):
         comfOr = []
         conditPer = []
         degTar = []
@@ -1347,8 +1358,8 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             conditPer.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Cold, 0 = Comfortable, 1 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
         
         for count, atemp in enumerate(airTemp):
-            if ASHRAEorEN == True: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(atemp, radTemp[count], prevailTemp[count], winSpd, comfClass, levelOfConditioning)
-            else: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortEN15251(atemp, radTemp[count], prevailTemp[count], winSpd, comfClass, levelOfConditioning)
+            if ASHRAEorEN == True: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(atemp, radTemp[count], prevailTemp[count], winSpd[count], comfClass, levelOfConditioning)
+            else: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortEN15251(atemp, radTemp[count], prevailTemp[count], winSpd[count], comfClass, levelOfConditioning)
             comfOr.append(int(comf))
             conditPer.append(condition)
             if condition == 1:
@@ -1360,10 +1371,23 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
                 perComf.append(0)
             degTar.append(distFromTarget)
         
+        return comfOr, conditPer, degTar, percHot, perComf, percCol
+    
+    #Run each of the cases through the model to get a percentage of time comfortable.
+    if len(windSpeed) != calcLength:
+        for winSpd in windSpeed:
+            winSpdList = [winSpd] * calcLength
+            comfOr, conditPer, degTar, percHot, perComf, percCol = runComfortModel(airTemp, radTemp, prevailTemp, winSpdList, comfClass, levelOfConditioning)
+            comfortableOrNotInit.append(comfOr)
+            conditionOfPersonInit.append(conditPer)
+            degreesFromTargetInit.append(degTar)
+            comfPercentOfTimeInit.append(sum(perComf)*100/len(airTemp))
+            percentHotColdInit.append([sum(percHot)*100/len(airTemp), sum(percCol)*100/len(airTemp)])
+    else:
+        comfOr, conditPer, degTar, percHot, perComf, percCol = runComfortModel(airTemp, radTemp, prevailTemp, windSpeed, comfClass, levelOfConditioning)
         comfortableOrNotInit.append(comfOr)
         conditionOfPersonInit.append(conditPer)
         degreesFromTargetInit.append(degTar)
-        
         comfPercentOfTimeInit.append(sum(perComf)*100/len(airTemp))
         percentHotColdInit.append([sum(percHot)*100/len(airTemp), sum(percCol)*100/len(airTemp)])
     
