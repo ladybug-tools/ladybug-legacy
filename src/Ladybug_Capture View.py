@@ -37,6 +37,7 @@ Provided by Ladybug 0.0.62
         imageHeight_: The height of the image that you would like to take in pixels.  If no value is provided here, the component will set the height to that of the active Rhino viewport on your screen.
         displayMode_: The display mode of the viewport that you would like to take an image of. Acceptable inputs include "Wireframe", "Shaded", "Rendered", "Ghosted", "X-Ray", "Technical", "Atristic", and "Pen".  If no text is input here, the default will be the displaymode of the active viewport (or the last viewport in which you navigated).
         keepAspectR_: Set to "True" to keep the aspect ratio of the viewport in the images that you save.  By default, this is set to "False" if you have connected an imageHeight_ but will override this input to ensure correct aspect ratio if set to "True".
+        transparBack_: Set to "True" to have a transparent background for the image and set to "False" to save a picture using the Rhino viewport background color.  The default is set to "True" for a transparent background.
         _capture: Set to "True" to capture the image of the Rhino viewport and save it to your hard drive.
     Returns:
         imagePath: The filepath of the image taken with this component.
@@ -44,7 +45,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Capture View"
 ghenv.Component.NickName = 'captureView'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_11_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
@@ -66,7 +67,7 @@ def mdPath(workDir):
     if not os.path.exists(workDir):os.makedirs(workDir)
     return workDir
 
-def viewCapture(fileName, directory, viewNames, image_width, image_height, dispModeStr, keepAspectRatio):
+def viewCapture(fileName, directory, viewNames, image_width, image_height, dispModeStr, keepAspectRatio, transparent):
     
     for viewName in viewNames:
         
@@ -106,11 +107,14 @@ def viewCapture(fileName, directory, viewNames, image_width, image_height, dispM
                 image_h = image_h * (image_w/viewtoCapture.ActiveViewport.Size.Width)
             elif image_height != None and image_width == None:
                 image_w = image_w * (image_h/viewtoCapture.ActiveViewport.Size.Height)
-                
         
         viewSize = System.Drawing.Size(int(image_w), int(image_h))
         
         pic = rc.Display.RhinoView.CaptureToBitmap(viewtoCapture , viewSize)
+        if transparent == True or transparent == None:
+            if sc.doc.Views.ActiveView.ActiveViewport.DisplayMode.EnglishName == 'Rendered': rhBackColor = sc.doc.Views.Document.RenderSettings.BackgroundColorTop
+            else: rhBackColor = rc.ApplicationSettings.AppearanceSettings.ViewportBackgroundColor
+            pic.MakeTransparent(rhBackColor)
         
         fullPath = os.path.join(directory, fileName +'_'+ viewName + '.png')
         
@@ -134,6 +138,6 @@ if _capture and _fileName!=None:
     # check input
     if len(viewNames_)==0: viewNames_ = [sc.doc.Views.ActiveView.ActiveViewport.Name]
     
-    fullPath = viewCapture(_fileName, directory, viewNames_, imageWidth_, imageHeight_, displayMode_, keepAspectR_)
+    fullPath = viewCapture(_fileName, directory, viewNames_, imageWidth_, imageHeight_, displayMode_, keepAspectR_, transparBack_)
     if fullPath:
         print fullPath

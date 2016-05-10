@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com>, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com>, and Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_01_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -73,7 +73,7 @@ import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
-
+from collections import deque
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -289,9 +289,13 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     endHour = analysisEnd[2]
     
     # Make a list of days in ech month of the analysis period.
+    months = [1,2,3,4,5,6,7,8,9,10,11,12]
+    d = deque(months)
+    d.rotate(-startMonth+1)
     monthsList = []
-    for month in range(startMonth, endMonth+1, 1):
+    for month in d:
         monthsList.append(month)
+    monthsList = monthsList[:monthsList.index(endMonth)+1]
     
     daysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]

@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -208,7 +208,7 @@ def main(epwFile, skyType, workingDir, useOldRes):
                           workingDir + "\\gendaymtx -m " + str(n) + " -d -O1 " + weaFile + "> " + outputFileDir
                       
                 file = open(batchFile, 'w')
-                file.write(command)
+                file.write(command.encode('utf-8'))
                 file.close()
         
                 os.system(batchFile)

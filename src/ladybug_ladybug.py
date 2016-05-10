@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_29_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -119,10 +119,10 @@ class CheckIn():
                 sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
             else:
                 # let's use the user folder
-                username = os.getenv("USERNAME")
-                # make sure username doesn't have space
-                if (" " in username):
-                    msg = "User name on this system: " + username + " has white space." + \
+                appdata = os.getenv("APPDATA")
+                # make sure appdata doesn't have space
+                if (" " in appdata):
+                    msg = "User name on this system: " + appdata + " has white space." + \
                           " Default fodelr cannot be set.\nUse defaultFolder_ to set the path to another folder and try again!" + \
                           "\nLadybug failed to fly! :("
                     print msg
@@ -131,7 +131,7 @@ class CheckIn():
                     self.letItFly = False
                     return
                 
-                sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
+                sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
         
         self.updateCategoryIcon()
     
@@ -5173,97 +5173,65 @@ class ComfortModels(object):
 
 
 class WindSpeed(object):
-    
-    def terrain(self, terrainType):
-        # Atmospheric boundary layer parameters based on terrain type
-        if terrainType == None:
-            # Default terrain value
-            terrainType = "City Terrain"
-            gradientHeightDiv = 921
-            gradientHeight = 460
-            a = 0.33
-            yValues = [str(yLabel) for yLabel in range(0,500,50)]
-            yAxisMaxRhinoHeight = 92
-            nArrows = 10
-            validTerrain = True
-            printMsg = "Terrain has been set to a default of (0 = city)."
-        else:
-            if terrainType == "city" or int(terrainType) == 0:
+    def readTerrainType(self, terrainType, powerOrLog = 0):
+        # Function that reads terrain type and returns the following paremeters used to calculate wind speed above the ground:
+        # d = Boundary layer height.  The height above the ground at which wind speeds become stable (or wind is at 95% of the max speed). Used in power-law wind speed calculations.
+        # a = Power-law exponent.
+        # rl = Roughness length. The height above the ground at which wind speed has dropped to 0.  Used in log-law wind speed calculations.
+        validTerrain = True
+        
+        try:
+            if terrainType == None or terrainType == "city" or int(terrainType) == 0:
                 terrainType = "City Terrain"
-                gradientHeightDiv = 921
-                gradientHeight = 460
+                d = 460
                 a = 0.33
-                yValues = [str(yLabel) for yLabel in range(0,500,50)]
-                yAxisMaxRhinoHeight = 92
-                nArrows = 10
-                validTerrain = True
-                printMsg = "Terrain set to (0 = city)"
+                rl = 1.0
             elif terrainType == "suburban" or int(terrainType) == 1:
                 terrainType = "Suburban Terrain"
-                gradientHeightDiv = 741
-                gradientHeight = 370
+                d = 370
                 a = 0.22
-                yValues = [str(yLabel) for yLabel in range(0,400,50)]
-                yAxisMaxRhinoHeight = 72
-                nArrows = 8
-                validTerrain = True
-                printMsg = "Terrain set to (1 = suburban)"
+                rl = 0.5
             elif terrainType == "country" or int(terrainType) == 2:
                 terrainType = "Country Terrain"
-                gradientHeightDiv = 541
-                gradientHeight = 270
+                d = 270
                 a = 0.14
-                yValues = [str(yLabel) for yLabel in range(0,300,50)]
-                yAxisMaxRhinoHeight = 52
-                nArrows = 6
-                validTerrain = True
-                printMsg = "Terrain set to (2 = country)"
+                rl = 0.1
             elif terrainType == "water" or int(terrainType) == 3:
                 terrainType = "Water Terrain"
-                gradientHeightDiv = 421
-                gradientHeight = 210
+                d = 210
                 a = 0.10
-                yValues = [str(yLabel) for yLabel in range(0,250,50)]
-                yAxisMaxRhinoHeight = 42
-                nArrows = 5
-                validTerrain = True
-                printMsg = "Terrain set to (3 = water)"
+                rl = 0.03
             else:
-                terrainType = gradientHeightDiv = gradientHeight = a = yValues = yAxisMaxRhinoHeight = nArrows = None
+                terrainType = None
+                d = None
+                a = None
+                rl = None
                 validTerrain = False
-                printMsg = "Please choose one of three terrain types: 0=city, 1=urban, 2=country 3=water"
-        
-        return validTerrain, terrainType, gradientHeightDiv, gradientHeight, a, yValues, yAxisMaxRhinoHeight, nArrows, printMsg
-    
-    
-    
-    def readTerrainType(self, terrainType):
-        checkData = True
-        roughLength = None
-        
-        if round(terrainType, 1) == 3.0 or terrainType == "water":
-            d = 210
-            a = 0.10
-        elif round(terrainType, 1) == 2.0 or terrainType == "country":
-            d = 270
-            a = 0.14
-        elif round(terrainType, 1) == 1.0 or terrainType == "suburban":
-            d = 370
-            a = 0.22
-        elif round(terrainType, 1) == 0.0 or terrainType == "urban":
-            d = 460
-            a = 0.33
-        else:
+        except:
+            terrainType = None
             d = None
             a = None
-            checkData = False
+            rl = None
+            validTerrain = False
         
-        return checkData, d, a
+        #Return the information.
+        if powerOrLog == 0:
+            return validTerrain, terrainType, d, a
+        elif powerOrLog == 1:
+            return validTerrain, terrainType, rl
+        else:
+            return validTerrain, terrainType, d, a, rl
     
-    def calcWindSpeedBasedOnHeight(self, vMet, height, d, a, metD, metA):
-        #Calculate the wind speed.
-        vHeight = ((height / d) ** a) * (vMet * (metD / 10) ** metA)
-        
+    
+    def powerLawWind(self, vMet, height, d, a, metD, metA, refH=10):
+        #Calculate the wind speed using a power law.
+        vHeight = ((height / d) ** a) * (vMet * (metD / refH) ** metA)
+        return vHeight
+    
+    def logLawWind(self, vMet, height, rl, metrl, refH=10):
+        #Calculate the wind speed using a power law.
+        if height > rl: vHeight = vMet * ((math.log(height/rl)) / (math.log(refH/metrl)))
+        else: vHeight = 0
         return vHeight
 
 
@@ -6418,3 +6386,9 @@ if checkIn.letItFly:
         print "Hi " + os.getenv("USERNAME")+ "!\n" + \
               "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
               "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+        
+        # push ladybug component to back
+        ghenv.Component.OnPingDocument().SelectAll()
+        ghenv.Component.Attributes.Selected = False
+        ghenv.Component.OnPingDocument().BringSelectionToTop()
+        ghenv.Component.OnPingDocument().DeselectAll()
