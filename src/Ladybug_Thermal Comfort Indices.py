@@ -90,20 +90,20 @@ Provided by Ladybug 0.0.62
                            If not supplied 50% will be used as a default (indoor conditions).
                            -
                            In percent (from 0% to 110%).
-        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing persons gravity center). It can be a single value or a list of values.
+        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing person’s gravity center). It can be a single value or a list of values.
                     Take the "windSpeed" output from "Import epw" component and plug it to "Wind Speed Calculator" component's "_windSpeed_tenMeters" input. Set the "heightAboveGround_" input to "1.1". Then plug in the data from "Wind Speed Calculator" component's "windSpeedAtHeight" output to this component's "windSpeed_" input.
                     In this way we converted the 10 meter wind speed from the .epw file to required 1.1m.
                     -
                     If not supplied, default value of 0.3 m/s is used (meaning: the analysis is conducted in outdoor no wind conditions, or indoor conditions).
                     -
                     In meters/second.
-        globalHorizontalRadiation_:  Total amount of direct and diffuse solar radiation that an analysis person received.
-                                     Use the "globalHorizontalRadiation" data from Ladybug's "Import epw" component for analysis without shading.
-                                     For analysis with shading included, use the "shadedSolarRadiationPerHour" output from "Sunpath shading" component instead.
-                                     -
-                                     If not supplied, default value of 0 Wh/m2 will be used (meaning: the analysis is conducted in outdoor in shade conditions, or indoor conditions).
-                                     -
-                                     In Wh/m2.
+        solarRadiationPerHour_:  Amount of solar radiation that an analysis person received.
+                                 If you would like to do an analysis accounted for shading (more precise) use the "Sunpath shading" component and its "shadedSolarRadiationPerHour" output.
+                                 If you would not like to do an analysis accounted for shading (because it's quicker that way), then you can simply supply the data from "Import epw" component's "diffuseHorizontalRadiation" output. In this way it will be assumed that an analysis is being conducted in outdoor in-shade conditions, or indoor conditions.
+                                 -
+                                 If nothing supplied, default value of 0 Wh/m2 will be used (no solar radiation at all).
+                                 -
+                                 In Wh/m2.
         totalSkyCover_: Amount of sky dome covered by clouds.
                         Input a single value or a whole list from "Import epw" component's "totalSkyCover" output.
                         It ranges from from 1 to 10. For example: 1 is 1/10 covered. 10 is total coverage (10/10).
@@ -147,7 +147,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_09_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -275,23 +275,6 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
     
     
-    if (len(SR) == 0) or (SR[0] is ""):
-        SRL = [0 for i in range(8760)]  # default 0 Wh/m2: inshade, or indoor condition
-    elif (len(SR) == 8767):
-        SRL = SR[7:]
-    elif (len(SR) == 8760):
-        SRL = SR
-    elif (len(SR) == 1):
-        SRL = [float(SR[0]) for i in range(8760)]
-    else:
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "globalHorizontalRadiation_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo either input a single value, or:\n" + \
-                   "For unshaded analysis (a person is standing in the full sunlight): \"globalHorizontalRadiation\" list from \"Import EPW\" component." + \
-                   "For shaded analysis (buildings or trees around the person can shade the sun): \"shadedSolarRadiationPerHour\" output from \"Sunpath Shading\" component."
-        validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
-    
-    
     if (len(N) == 0) or (N[0] is ""):
         NL = [6 for i in range(8760)]  # default 6 tens, continental humid climate
     elif (len(N) == 8767):
@@ -303,6 +286,26 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
     else:
         TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
         printMsg = "totalSkyCover_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo input a single value, or the \"totalSkyCover\" list from \"Import EPW\" component."
+        validWeatherData = False
+        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    
+    
+    if (len(SR) == 0) or (SR[0] is ""):
+        SRL = [0 for i in range(8760)]  # default 0 Wh/m2: no solar radiation
+    elif (len(SR) == 8767):
+        SRL = SR[7:]
+    elif (len(SR) == 8760):
+        SRL = SR
+    elif (len(SR) == 1):
+        SRL = [float(SR[0]) for i in range(8760)]
+    else:
+        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
+        printMsg = "solarRadiationPerHour_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo either input a single value, or:\n" + \
+                   " \n" + \
+                   "1) If you would like to do an analysis accounted for shading (more precise) use the \"Sunpath shading\" component and its \"shadedSolarRadiationPerHour\" output.\n" + \
+                   " \n" + \
+                   "2) If you would not like to do an analysis accounted for shading (because it's quicker that way), then you can supply the data from \"Import epw\" component's \"diffuseHorizontalRadiation\" output.\n" + \
+                   "In this simplified way it will be assumed that an analysis is being conducted in outdoor in-shade conditions, or indoor conditions."
         validWeatherData = False
         return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
     
@@ -1553,21 +1556,21 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     ] # outputNames = outputNickNames
     
     outputDescriptions = [
-    ["Heat Index (C) - the human-perceived increase in air temperature due to humidity increase. It is used by National Weather Service (NSW).\nHeat Index is calculated for shade values. Exposure to full sunshine can increase heat index values by up to 8C (14F)",  #comfortIndexValues
+    ["Heat Index (C) - the human-perceived increase in air temperature due to humidity increase. It is used by National Weather Service (NSW).\nHeat Index is calculated for shade values. Exposure to full sunshine can increase heat index values by up to 8 C (14 F)",  #comfortIndexValues
     
     "Each number (from 0 to 4) represents a certain HI thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<26.6C): Satisfactory temperature. Can continue with activity.\n" + \
-    "- category 1 (26.6-32.2C): Caution: fatigue is possible with prolonged exposure and activity. Continuing activity could result in heat cramps.\n" + \
-    "- category 2 (32.2-40.5C): Extreme caution: heat cramps and heat exhaustion are possible. Continuing activity could result in heat stroke.\n" + \
-    "- category 3 (40.5-54.4C): Danger: heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.\n" + \
-    "- category 4 (>54.4C): Extreme danger: heat stroke is imminent.",  # comfortIndexCategory
+    "- category 0 (<26.6 C): Satisfactory temperature. Can continue with activity.\n" + \
+    "- category 1 (26.6-32.2 C): Caution: fatigue is possible with prolonged exposure and activity. Continuing activity could result in heat cramps.\n" + \
+    "- category 2 (32.2-40.5 C): Extreme caution: heat cramps and heat exhaustion are possible. Continuing activity could result in heat stroke.\n" + \
+    "- category 3 (40.5-54.4 C): Danger: heat cramps and heat exhaustion are likely; heat stroke is probable with continued activity.\n" + \
+    "- category 4 (>54.4 C): Extreme danger: heat stroke is imminent.",  # comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning HI temperature is < 26.6C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning HI temperature is < 26.6 C)",  #comfortableOrNot
     
-    "Percentage of time, during which HI is < 26.6C",  #percentComfortable
+    "Percentage of time, during which HI is < 26.6 C",  #percentComfortable
     
-    "Percentage of time, during which HI is > 54.4C",  #percentHotExtreme
+    "Percentage of time, during which HI is > 54.4 C",  #percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
@@ -1576,18 +1579,18 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     "Each number (from 0 to 5) represents a certain humidex thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<30C): Little or no discomfort\n" + \
-    "- category 1 (30-35C): Noticeable discomfort\n" + \
-    "- category 2 (35-40C): Evident discomfort\n" + \
-    "- category 3 (40-45C): Intense discomfort; avoid exertion\n" + \
-    "- category 4 (45-54C): Dangerous discomfort\n" + \
-    "- category 5 (>54C): Heat stroke probable",  #comfortIndexCategory
+    "- category 0 (<30 C): Little or no discomfort\n" + \
+    "- category 1 (30-35 C): Noticeable discomfort\n" + \
+    "- category 2 (35-40 C): Evident discomfort\n" + \
+    "- category 3 (40-45 C): Intense discomfort; avoid exertion\n" + \
+    "- category 4 (45-54 C): Dangerous discomfort\n" + \
+    "- category 5 (>54 C): Heat stroke probable",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning humidex is < 30C)",  # comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning humidex is < 30 C)",  # comfortableOrNot
     
-    "Percentage of time chosen for analysis period, during which humidex is < 26.6C",  # percentComfortable
+    "Percentage of time chosen for analysis period, during which humidex is < 26.6 C",  # percentComfortable
     
-    "Percentage of time chosen for analysis period, during which humidex is > 54.4C", # percentHotExtreme
+    "Percentage of time chosen for analysis period, during which humidex is > 54.4 C", # percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
@@ -1596,24 +1599,24 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     "Each number (from -6 to 3) represents a certain DI thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category -6 (<-40C) Hyper-glacial\n" + \
-    "- category -5 (-40-(-20)C) Glacial\n" + \
-    "- category -4 (-20-(-10)C) Extremely cold\n" + \
-    "- category -3 (-10-(-1.8)C) Very cold\n" + \
-    "- category -2 (-1.8-(13)C): Cold\n" + \
-    "- category -1 (13-15C): Cool\n" + \
-    "- category 0 (15-20C): Comfortable\n" + \
-    "- category 1 (20-26.5C): Hot\n" + \
-    "- category 2 (26.5-30C): Very hot\n" + \
-    "- category 3 (>30C): Torrid",  #comfortIndexCategory
+    "- category -6 (<-40 C) Hyper-glacial\n" + \
+    "- category -5 (-40-(-20) C) Glacial\n" + \
+    "- category -4 (-20-(-10) C) Extremely cold\n" + \
+    "- category -3 (-10-(-1.8) C) Very cold\n" + \
+    "- category -2 (-1.8-(13) C): Cold\n" + \
+    "- category -1 (13-15 C): Cool\n" + \
+    "- category 0 (15-20 C): Comfortable\n" + \
+    "- category 1 (20-26.5 C): Hot\n" + \
+    "- category 2 (26.5-30 C): Very hot\n" + \
+    "- category 3 (>30 C): Torrid",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning DI temperature is 15-20C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning DI temperature is 15-20 C)",  #comfortableOrNot
     
-    "Percentage of time chosen for analysis period, during which DI is 15-20C",  #percentComfortable
+    "Percentage of time chosen for analysis period, during which DI is 15-20 C",  #percentComfortable
     
-    "Percentage of time chosen for analysis period, during which DI is > 30C",  #percentHotExtreme
+    "Percentage of time chosen for analysis period, during which DI is > 30 C",  #percentHotExtreme
     
-    "Percentage of time chosen for analysis period, during which DI is < -40C"]  #percentColdExtreme
+    "Percentage of time chosen for analysis period, during which DI is < -40 C"]  #percentColdExtreme
     
     ,
     
@@ -1644,20 +1647,20 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     "Each number (from -6 to 0) represents a certain WCT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (>0C) No discomfort. No risk of frostbite for most people\n" + \
-    "- category -1 (0-(-9)C) Slight increase in discomfort. Low risk of frostbite for most people\n" + \
-    "- category -2 (-9-(-27)C) Risk of hypothermia if outside for long periods without adequate protection. Low risk of frostbite for most people\n" + \
-    "- category -3 (-27-(-39)C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. Increasing risk of frostbite for most people in 10 to 30 minutes of exposure\n" + \
-    "- category -4 (-39-(-47)C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 5 to 10 minutes of exposure\n" + \
-    "- category -5 (-47-(-54)C) Serious risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 2 to 5 minutes of exposure\n" + \
-    "- category -6 (<-54C) Danger! Outdoor conditions are hazardous. High risk of frostbite for most people in 2 minutes of exposure or less",  #comfortIndexCategory
+    "- category 0 (>0 C) No discomfort. No risk of frostbite for most people\n" + \
+    "- category -1 (0-(-9) C) Slight increase in discomfort. Low risk of frostbite for most people\n" + \
+    "- category -2 (-9-(-27) C) Risk of hypothermia if outside for long periods without adequate protection. Low risk of frostbite for most people\n" + \
+    "- category -3 (-27-(-39) C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. Increasing risk of frostbite for most people in 10 to 30 minutes of exposure\n" + \
+    "- category -4 (-39-(-47) C) Risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 5 to 10 minutes of exposure\n" + \
+    "- category -5 (-47-(-54) C) Serious risk of hypothermia if outside for long periods without adequate clothing or shelter from wind and cold. High risk of frostbite for most people in 2 to 5 minutes of exposure\n" + \
+    "- category -6 (<-54 C) Danger! Outdoor conditions are hazardous. High risk of frostbite for most people in 2 minutes of exposure or less",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that there is danger of frostbite, 1 there is not danger of frostbite at that hour (meaning WCT temperature is in range: >-27C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that there is danger of frostbite, 1 there is not danger of frostbite at that hour (meaning WCT temperature is in range: >-27 C)",  #comfortableOrNot
     
-    "Percentage of time, during which there is low risk of frostbite (DI is > -27C)",  #percentComfortable
+    "Percentage of time, during which there is low risk of frostbite (DI is > -27 C)",  #percentComfortable
     " ",  #percentHotExtreme
     
-    "Percentage of time, during which there is high risk of frostbite (DI is < -54C)"]  #percentColdExtreme
+    "Percentage of time, during which there is high risk of frostbite (DI is < -54 C)"]  #percentColdExtreme
     
     ,
     
@@ -1665,18 +1668,18 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     "Each number (from 0 to 5) represents a certain WBGT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<26C): No change in activity is required.\n" + \
-    "- category 1 (26-27.7C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
-    "- category 2 (27.7-29.4C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 3 (29.4-31.1C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 4 (31.1-32.2C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 5 (>32.2C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
+    "- category 0 (<26 C): No change in activity is required.\n" + \
+    "- category 1 (26-27.7 C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
+    "- category 2 (27.7-29.4 C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 3 (29.4-31.1 C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 4 (31.1-32.2 C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 5 (>32.2 C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1 C)",  #comfortableOrNot
     
-    "Percentage of time, during which WBGT is < 26C",  #percentComfortable
+    "Percentage of time, during which WBGT is < 26 C",  #percentComfortable
     
-    "Percentage of time, during which WBGT is > 32.2C",  #percentHotExtreme
+    "Percentage of time, during which WBGT is > 32.2 C",  #percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
@@ -1685,18 +1688,18 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     "Each number (from 0 to 5) represents a certain WBGT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category 0 (<26C): No change in activity is required.\n" + \
-    "- category 1 (26-27.7C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
-    "- category 2 (27.7-29.4C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 3 (29.4-31.1C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 4 (31.1-32.2C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
-    "- category 5 (>32.2C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
+    "- category 0 (<26 C): No change in activity is required.\n" + \
+    "- category 1 (26-27.7 C): No change in activity is required. Use discretion when planning heavy activities for unacclimated person.\n" + \
+    "- category 2 (27.7-29.4 C): Outdoor physical activities and strenuous exercise should be limited to 50 minutes per hour. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 3 (29.4-31.1 C): Outdoor physical activities and strenuous exercise should be limited to 40 minutes per hour. You should unblouse trouser legs. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 4 (31.1-32.2 C): Outdoor physical activities and strenuous exercise should be limited to 30 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.\n" + \
+    "- category 5 (>32.2 C): Outdoor physical activities and strenuous exercise should be limited to 20 minutes per hour. You should unblouse trouser legs and top down to t-shirt. This recommendation applies to the average acclimated person and conducting moderate work outdoors. Use discretion when planning heavy exercises for unacclimated person.",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning WBGT temperature is in range: 29.4 to 31.1 C)",  #comfortableOrNot
     
-    "Percentage of time, during which WBGT is < 26C",  #percentComfortable
+    "Percentage of time, during which WBGT is < 26 C",  #percentComfortable
     
-    "Percentage of time, during which WBGT is > 32.2C",  #percentHotExtreme
+    "Percentage of time, during which WBGT is > 32.2 C",  #percentHotExtreme
     " "]  #percentColdExtreme
     
     ,
@@ -1705,21 +1708,21 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     "Each number (from -4 to 2) represents a certain TE thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
-    "- category -4 (<1C): Very cold\n" + \
-    "- category -3 (1-9C): Cold\n" + \
-    "- category -2 (9-17C): Cool\n" + \
-    "- category -1 (17-21C): Fresh\n" + \
-    "- category 0 (21-23C): Comfortable\n" + \
-    "- category 1 (23-27C): Warm\n" + \
-    "- category 2 (>27C): Hot",  #comfortIndexCategory
+    "- category -4 (<1 C): Very cold\n" + \
+    "- category -3 (1-9 C): Cold\n" + \
+    "- category -2 (9-17 C): Cool\n" + \
+    "- category -1 (17-21 C): Fresh\n" + \
+    "- category 0 (21-23 C): Comfortable\n" + \
+    "- category 1 (23-27 C): Warm\n" + \
+    "- category 2 (>27 C): Hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning TE temperature is in range: 21 to 23C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning TE temperature is in range: 21 to 23 C)",  #comfortableOrNot
     
-    "Percentage of time, during which TE is < 21-23C",  #percentComfortable
+    "Percentage of time, during which TE is < 21-23 C",  #percentComfortable
     
-    "Percentage of time, during which TE is > 27C",  #percentHotExtreme
+    "Percentage of time, during which TE is > 27 C",  #percentHotExtreme
     
-    "Percentage of time, during which TE is < 1C"]  #percentColdExtreme
+    "Percentage of time, during which TE is < 1 C"]  #percentColdExtreme
     
     ,
     
@@ -1728,25 +1731,25 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     "Each number (from -6 to 4) represents a certain AT thermal sensation category. With categories being the following:\n" + \
     "--\n" + \
     "Appareal increments:\n" + \
-    "- category 4 (>40C): Minimal; sun protection required\n" + \
-    "- category 3 (35-40C): Minimal; sun protection as needed\n" + \
-    "- category 2 (30-35C): Short sleeve, shirt and shorts\n" + \
-    "- category 1 (25-30C): Light undershirt\n" + \
-    "- category 0 (20-25C): Cotton-type slacks (pants)\n" + \
-    "- category -1 (15-20C): Normal office wear\n" + \
-    "- category -2 (10-15C): Thin or sleeveless sweater\n" + \
-    "- category -3 (5-10C): Sweater. Thicker underwear\n" + \
-    "- category -4 (0-5C): Coat and sweater\n" + \
-    "- category -5 (-5-0C): Overcoat. Wind protection as needed\n" + \
-    "- category -6 (<-5C): Overcoat. Head insulation. Heavier footwear",  #comfortIndexCategory
+    "- category 4 (>40 C): Minimal; sun protection required\n" + \
+    "- category 3 (35-40 C): Minimal; sun protection as needed\n" + \
+    "- category 2 (30-35 C): Short sleeve, shirt and shorts\n" + \
+    "- category 1 (25-30 C): Light undershirt\n" + \
+    "- category 0 (20-25 C): Cotton-type slacks (pants)\n" + \
+    "- category -1 (15-20 C): Normal office wear\n" + \
+    "- category -2 (10-15 C): Thin or sleeveless sweater\n" + \
+    "- category -3 (5-10 C): Sweater. Thicker underwear\n" + \
+    "- category -4 (0-5 C): Coat and sweater\n" + \
+    "- category -5 (-5-0 C): Overcoat. Wind protection as needed\n" + \
+    "- category -6 (<-5 C): Overcoat. Head insulation. Heavier footwear",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning AT temperature is in range: 20 to 25C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning AT temperature is in range: 20 to 25 C)",  #comfortableOrNot
     
-    "Percentage of time, during which AT is < 20-25C",  #percentComfortable
+    "Percentage of time, during which AT is < 20-25 C",  #percentComfortable
     
-    "Percentage of time, during which AT is > 40C",  #percentHotExtreme
+    "Percentage of time, during which AT is > 40 C",  #percentHotExtreme
     
-    "Percentage of time, during which AT is < -5C"]  #percentColdExtreme
+    "Percentage of time, during which AT is < -5 C"]  #percentColdExtreme
     
     ,
     
@@ -1872,13 +1875,13 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     "- category 2 (35-41 C) Hot\n" + \
     "- category 4 (>4 C) Very hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23 C)",  #comfortableOrNot
     
-    "Percentage of time, during which PET is 18-23C",  #percentComfortable
+    "Percentage of time, during which PET is 18-23 C",  #percentComfortable
     
-    "Percentage of time, during which PET is > 41C",  #percentHotExtreme
+    "Percentage of time, during which PET is > 41 C",  #percentHotExtreme
     
-    "Percentage of time, during which PET is < 4C"]  #percentColdExtreme
+    "Percentage of time, during which PET is < 4 C"]  #percentColdExtreme
     
     ,
     
@@ -1896,13 +1899,13 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     "- category 2 (38-42 C) Hot\n" + \
     "- category 4 (>42 C) Very hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning PET is in range: 18 to 23 C)",  #comfortableOrNot
     
-    "Percentage of time, during which PET is 26-30C",  #percentComfortable
+    "Percentage of time, during which PET is 26-30 C",  #percentComfortable
     
-    "Percentage of time, during which PET is > 42C",  #percentHotExtreme
+    "Percentage of time, during which PET is > 42 C",  #percentHotExtreme
     
-    "Percentage of time, during which PET is < 14C"]  #percentColdExtreme
+    "Percentage of time, during which PET is < 14 C"]  #percentColdExtreme
     
     ,
     
@@ -1917,13 +1920,13 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     "- category 1 (27-31 C) Hot\n" + \
     "- category 2 (>31 C) Extremely hot",  #comfortIndexCategory
     
-    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning THI is in range: 20 to 27C)",  #comfortableOrNot
+    "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour (meaning THI is in range: 20 to 27 C)",  #comfortableOrNot
     
-    "Percentage of time, during which THI is 20-27C",  #percentComfortable
+    "Percentage of time, during which THI is 20-27 C",  #percentComfortable
     
-    "Percentage of time, during which THI is > 31C",  #percentHotExtreme
+    "Percentage of time, during which THI is > 31 C",  #percentHotExtreme
     
-    "Percentage of time, during which THI is < 11C"]  #percentColdExtreme
+    "Percentage of time, during which THI is < 11 C"]  #percentColdExtreme
     
     ,
     
@@ -1933,35 +1936,35 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     "--\n" + \
     "- category 0:  Comfortable - no health risk\n" + \
     "  Excessive water loss happened at least %s minutes from the start of activity.\n" % activityDuration + \
-    "  or Central (rectal) temperature of 38C was exceeded at least %s minutes from the start of activity.\n" % activityDuration + \
+    "  or Central (rectal) temperature of 38 C was exceeded at least %s minutes from the start of activity.\n" % activityDuration + \
     " \n" + \
     "- category 1:  Discomfort without health risk\n" + \
     "  Excessive water loss happened during %s to %s minutes from the start of activity.\n" % ((activityDuration - activityDuration*0.015), activityDuration) + \
-    "  or Central (rectal) temperature of 38C was exceeded during %s to %s minutes from the start of activity.\n" % ((activityDuration - activityDuration*0.015), activityDuration) + \
+    "  or Central (rectal) temperature of 38 C was exceeded during %s to %s minutes from the start of activity.\n" % ((activityDuration - activityDuration*0.015), activityDuration) + \
     " \n" + \
     "- category 2:  Long-term constraint - discomfort and risk of dehydration after several hours of exposure\n" + \
     "  Excessive water loss happened during 120 to %s minutes from the start of activity.\n" % (activityDuration - activityDuration*0.015) + \
-    "  or Central (rectal) temperature of 38C was exceeded during 120 to %s minutes from the start of activity.\n" % (activityDuration - activityDuration*0.015) + \
+    "  or Central (rectal) temperature of 38 C was exceeded during 120 to %s minutes from the start of activity.\n" % (activityDuration - activityDuration*0.015) + \
     " \n" + \
     "- category 3:  Short-term constraint - health risk after 30 to 120 minutes of exposure\n" + \
     "  Excessive water loss happened during 30 to 120 minutes from the start of activity.\n" + \
-    "  or Central (rectal) temperature of 38C was exceeded during 30 to 120 minutes from the start of activity.\n" + \
+    "  or Central (rectal) temperature of 38 C was exceeded during 30 to 120 minutes from the start of activity.\n" + \
     " \n" + \
     "- category 4:  Immediate constraint - health risks even for exposures of very short durations (less than 30 minutes)\n"
     "  Excessive water loss happened 30 minutes or less from the start of activity.\n" + \
-    "  or Central (rectal) temperature of 38C was exceeded 30 minutes or less from the start of activity.\n",  #comfortIndexCategory
+    "  or Central (rectal) temperature of 38 C was exceeded 30 minutes or less from the start of activity.\n",  #comfortIndexCategory
     
     "Outputs 0 or 1. 0 indicates that a person is not comfortable, 1 that he/she is comfortable at that hour, meaning:\n" + \
     "  Excessive water loss happened at least %s minutes from the start of activity.\n" % activityDuration + \
-    "  or Central (rectal) temperature of 38C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #comfortableOrNot
+    "  or Central (rectal) temperature of 38 C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #comfortableOrNot
     
     "Percentage of time, during which:\n" + \
     "  Excessive water loss happened at least %s minutes from the start of activity.\n" % activityDuration + \
-    "  or Central (rectal) temperature of 38C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #percentComfortable
+    "  or Central (rectal) temperature of 38 C was exceeded at least %s minutes from the start of activity.\n" % activityDuration,  #percentComfortable
     
     "Percentage of time, during which:\n" + \
     "  Excessive water loss happened 30 minutes or less from the start of activity.\n" + \
-    "  or Central (rectal) temperature of 38C was exceeded 30 minutes or less from the start of activity.",  #percentHotExtreme
+    "  or Central (rectal) temperature of 38 C was exceeded 30 minutes or less from the start of activity.",  #percentHotExtreme
     
     " "]  #percentColdExtreme
     ]
@@ -1988,12 +1991,12 @@ if sc.sticky.has_key("ladybug_release"):
         if (_comfortIndex != None) and _comfortIndex in range(19):
             locationName, latitude, longitude, timeZone, validLocationData, printMsgLocation = getLocationData(_location)
             if validLocationData:
-                TaL, mrtL, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsgWeather = getWeatherData(latitude, longitude, timeZone, _dryBulbTemperature, meanRadiantTemperature_, dewPointTemperature_, relativeHumidity_, windSpeed_, globalHorizontalRadiation_, totalSkyCover_, bodyCharacteristics_, HOY_, analysisPeriod_)
+                TaL, mrtL, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsgWeather = getWeatherData(latitude, longitude, timeZone, _dryBulbTemperature, meanRadiantTemperature_, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, bodyCharacteristics_, HOY_, analysisPeriod_)
                 if validWeatherData:
                     if _runIt:
                         HRrates = heartRates(age, sex)
                         dehydrationRiskRates = DehydrationRiskRates(acclimated)
-                        comfortIndexValue, comfortIndexCategory, comfortableOrNot, outputNickNames, outputDescriptions = createHeaders(_comfortIndex, locationName, newAnalysisPeriod, _dryBulbTemperature, dewPointTemperature_, relativeHumidity_, windSpeed_, globalHorizontalRadiation_, totalSkyCover_, HRrates, dehydrationRiskRates, activityDuration)
+                        comfortIndexValue, comfortIndexCategory, comfortableOrNot, outputNickNames, outputDescriptions = createHeaders(_comfortIndex, locationName, newAnalysisPeriod, _dryBulbTemperature, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, HRrates, dehydrationRiskRates, activityDuration)
                         PETresults = None
                         for i,hoy in enumerate(HOYs):
                             listIndex = hoy - 1
@@ -2107,3 +2110,4 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
+    
