@@ -290,7 +290,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
     
     
-    if (len(SR) == 0) or (SR[0] is ""):
+    if (len(SR) == 0) or (SR[0] is "") or (SR[0] is None):
         SRL = [0 for i in range(8760)]  # default 0 Wh/m2: no solar radiation
     elif (len(SR) == 8767):
         SRL = SR[7:]
