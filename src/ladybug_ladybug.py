@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nAPR_12_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_09_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2115,14 +2115,14 @@ class MeshPreparation(object):
         # creates a mesh from grid of points
         mesh = rc.Geometry.Mesh()
         if (meshColors == None) or (len(meshColors) == 0):
-            for i,pt in enumerate(pts):
+            for pt in pts:
                 mesh.Vertices.Add(pt)
         else:
             for i,pt in enumerate(pts):
                 mesh.Vertices.Add(pt)
                 mesh.VertexColors.Add(meshColors[i])
-        for i in range(1,u):
-            for k in range(1,v):
+        for i in xrange(1,u):
+            for k in xrange(1,v):
                 mesh.Faces.AddFace(k-1+(i-1)*v, k-1+i*v, k-1+i*v+1, k-1+(i-1)*v+1)
         
         return mesh
@@ -6386,3 +6386,9 @@ if checkIn.letItFly:
         print "Hi " + os.getenv("USERNAME")+ "!\n" + \
               "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
               "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+        
+        # push ladybug component to back
+        ghenv.Component.OnPingDocument().SelectAll()
+        ghenv.Component.Attributes.Selected = False
+        ghenv.Component.OnPingDocument().BringSelectionToTop()
+        ghenv.Component.OnPingDocument().DeselectAll()

@@ -29,6 +29,7 @@ This component calculates the shading of:
 -
 Use "annualShading", "Sep21toMar21Shading" and "Mar21toSep21Shading" outputs for Photovoltaic modules shading. 
 Use "beamIndexPerHour" and "skyViewFactor" outputs for Solar Water Heating collectors shading, or any other purpose.
+Use "shadedSolarRadiationPerHour" data for "solarRadiationPerHour_" input of "Thermal Comfort Indices" component to account for shading.
 -
 "annualShading" output is based on "Using sun path charts to estimate the effects of shading on PV arrays", University of Oregon, Frank Vignola:
 http://solardat.uoregon.edu/download/Papers/UsingSunPathChartstoEstimatetheEffectofShadingonPVArrays.pdf
@@ -137,8 +138,9 @@ Provided by Ladybug 0.0.62
                           -
                           Unitless.
         shadedSolarRadiationPerHour: Total shaded incidence for each hour during a year.
+                                     Data from this output can be used for "solarRadiationPerHour_" input of "Thermal Comfort Indices" component to account for shading.
                                      -
-                                     In kW/m2.
+                                     In Wh/m2.
         sunWindowShadedAreaPer: Percent of the overall sun window shaded area. It is calculated for analysisGeometry area centroid. It ranges from 0-100(%).
                                 -
                                 In percent(%).
@@ -167,7 +169,7 @@ Provided by Ladybug 0.0.62
         sunWindowCenPt: The center point of the "sunWindowCrvs" and "sunWindowMesh" geometry. It is calculated for analysisGeometry area centroid.
                         Use this point to move "sunWindowCrvs" and "sunWindowMesh" geometry around in the Rhino scene with the grasshopper's "Move" component.
                         -
-                        Connect this output to a Grasshopper's "Point" parameter in order to preview the "annalysisPts" geometry in the Rhino scene.
+                        Connect this output to a Grasshopper's "Point" parameter in order to preview the "sunWindowCenPt" point in the Rhino scene.
         sunWindowCrvs: Geometry of the sun window based on 3D polar sun path diagram. Perpendical curves represent solar time hours. Horizontal arc curves represent sun paths for: 21st December, 21st November/January, 21st October/February, 21st September/March, 21st August/April, 21st July/May, 21st June.
                        The whole sunWindowCrvs geometry output is calculated for analysisGeometry area centroid.
         sunWindowMesh: Sun window mesh based on 3D polar sun path diagram. It is calculated for analysisGeometry area centroid.
@@ -197,7 +199,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = 'VER 0.0.62\nMAR_31_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_09_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -475,7 +477,6 @@ def checkInputData(analysisGeometry, ACenergyPerHour, context, coniferousTrees, 
         precision = 2  # default
     
     if (len(legendPar) == 0):
-        #legendPar = [None, None, None, [System.Drawing.Color.White, System.Drawing.Color.FromArgb(255,220,0), System.Drawing.Color.Red], None, None, None, None, None, None]
         lowB = None; highB = None; numSeg = None; customColors = [System.Drawing.Color.White, System.Drawing.Color.FromArgb(255,220,0), System.Drawing.Color.Red]; legendBasePoint = None; legendScale = None; legendFont = None; legendFontSize = None; legendBold = None; decimalPlaces = 2; removeLessThan = False
         legendPar = [lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan]
     
@@ -670,7 +671,6 @@ def legendGeometry(legendPar, scale, testPt, eachQuadrantACpercent, validContext
     outerBaseCrv = Rhino.Geometry.Circle(testPt, 1.08*scale).ToNurbsCurve()
     
     # legend 1
-    #lowB, highB, numSeg, customColors, legend1BasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
     lowB, highB, numSeg, customColors, legend1BasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     lb_visualization.calculateBB([outerBaseCrv])
     if legend1BasePoint == None:
@@ -1027,6 +1027,40 @@ def diffuseShading(testPt, contextMeshes, treesTransmissionIndices, leaflessStar
     return skyViewFactor
 
 
+def noaaSolarCalculator(latitude, longitude, timeZone, month, day, hour):
+    # by NOAA Earth System Research Laboratory
+    # NOAA defines longitude and time zone as positive to the west:
+    timeZone = -timeZone
+    longitude = -longitude
+    DOY = int(lb_preparation.getJD(month, day))
+    minute = 0  # default
+    second = 0  # default
+    gamma = (2*math.pi)/365*(DOY-1+((hour-12)/24))
+    eqtime = 229.18*(0.000075 + 0.001868*math.cos(gamma) - 0.032077*math.sin(gamma) - 0.014615*math.cos(2*gamma) - 0.040849*math.sin(2*gamma))
+    declAngle = 0.006918 - 0.399912*math.cos(gamma) + 0.070257*math.sin(gamma) - 0.006758*math.cos(2*gamma) + 0.000907*math.sin(2*gamma) - 0.002697*math.cos(3*gamma) + 0.00148*math.sin(3*gamma)
+    time_offset = eqtime-4*longitude+60*timeZone
+    tst = hour *60 + minute + second / 60 + time_offset
+    solarHangle = (tst / 4) - 180
+    
+    # solar zenith angle
+    solarZenithR = math.acos(math.sin(math.radians(latitude)) * math.sin(declAngle) + math.cos(math.radians(latitude)) * math.cos(declAngle) * math.cos(math.radians(solarHangle)))
+    solarZenithD = math.degrees(solarZenithR)
+    if solarZenithD > 90:
+        solarZenithD = 90
+    elif solarZenithD < 0:
+        solarZenithD = 0
+    
+    # solar altitude angle
+    solarAltitudeD = 90 - solarZenithD
+    
+    # solar azimuth angle
+    solarAzimuthR = - (math.sin(math.radians(latitude)) * math.cos(solarZenithR) - math.sin(declAngle)) / (math.cos(math.radians(latitude)) * math.sin(solarZenithR))
+    solarAzimuthR = math.acos(solarAzimuthR)
+    solarAzimuthD = math.degrees(solarAzimuthR)
+    
+    return solarZenithD, solarAzimuthD, solarAltitudeD
+
+
 def beamShadingPerEachHour(testPt, srfTiltD, correctedSrfAzimuthD, SVF, contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY):
     
     # lifting up the testPt due to MeshRay intersection
@@ -1035,7 +1069,7 @@ def beamShadingPerEachHour(testPt, srfTiltD, correctedSrfAzimuthD, SVF, contextM
     
     beamIndexPerHourL = []
     for i in range(8760):
-        sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, yearsHOY[i], monthsHOY[i], daysHOY[i], hoursHOY[i]-1)
+        sunZenithD, sunAzimuthD, sunAltitudeD = noaaSolarCalculator(latitude, longitude, timeZone, monthsHOY[i], daysHOY[i], hoursHOY[i])
         if sunZenithD <= 90:  # above the horizon
             sunAzimuthR = math.radians(sunAzimuthD)
             rotationAxis = Rhino.Geometry.Vector3d(0, 0, 1)
@@ -1071,9 +1105,8 @@ def beamShadingPerEachHour(testPt, srfTiltD, correctedSrfAzimuthD, SVF, contextM
     # totalRadiationPerHour
     totalRadiationPerHourL = []
     for i in range(8760):
-        sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, yearsHOY[i], monthsHOY[i], daysHOY[i], hoursHOY[i]-1)
+        sunZenithD, sunAzimuthD, sunAltitudeD = noaaSolarCalculator(latitude, longitude, timeZone, monthsHOY[i], daysHOY[i], hoursHOY[i])
         Epoa_shaded, Eb_shaded, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltD, correctedSrfAzimuthD, directNormalRadiationData[i], diffuseHorizontalRadiationData[i], albedoL[i], beamIndexPerHourL[i], SVF)
-        Epoa_shaded = Epoa_shaded/1000 # to kWh/m2
         totalRadiationPerHourL.append(Epoa_shaded)
     
     return beamIndexPerHourL, totalRadiationPerHourL
@@ -1375,3 +1408,4 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
+    
