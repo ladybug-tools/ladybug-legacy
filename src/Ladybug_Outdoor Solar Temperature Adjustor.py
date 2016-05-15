@@ -856,7 +856,6 @@ def main(method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, con
     ERF = []
     MRTDelta = []
     solarAdjustedMRT = []
-    hourOrder = []
     
     #Define the fraction of the body visible to radiation.
     if bodyPosture_ == 0 or bodyPosture_ == 3:
@@ -986,6 +985,38 @@ def main(method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, con
             
             intDict = intersectionMtx
             
+            #Add the headers to the computed lists.
+            if periodMethod == 0:
+                analysisStart = analysisPeriodOrHOY[0]
+                analysisEnd = analysisPeriodOrHOY[1]
+            else:
+                stDate = lb_preparation.hour2Date(analysisPeriodOrHOY)
+                analysisStart = stDate
+                analysisEnd = stDate
+            ERF.append('key:location/dataType/units/frequency/startsAt/endsAt')
+            ERF.append(str(location))
+            ERF.append('Effective Radiant Field')
+            ERF.append('kWh/m2')
+            ERF.append('Hourly')
+            ERF.append(analysisStart)
+            ERF.append(analysisEnd)
+            
+            MRTDelta.append('key:location/dataType/units/frequency/startsAt/endsAt')
+            MRTDelta.append(str(location))
+            MRTDelta.append('Short Wave MRT Delta')
+            MRTDelta.append('C')
+            MRTDelta.append('Hourly')
+            MRTDelta.append(analysisStart)
+            MRTDelta.append(analysisEnd)
+            
+            solarAdjustedMRT.append('key:location/dataType/units/frequency/startsAt/endsAt')
+            solarAdjustedMRT.append(str(location))
+            solarAdjustedMRT.append('Solar-Adjusted Mean Radiant Temperature')
+            solarAdjustedMRT.append('C')
+            solarAdjustedMRT.append('Hourly')
+            solarAdjustedMRT.append(analysisStart)
+            solarAdjustedMRT.append(analysisEnd)
+            
             #Define functions for computing the radiation for each hour, which is in parallal and not in parallel.
             def nonParallelRadCalc():
                 try:
@@ -1099,25 +1130,24 @@ def main(method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, con
                         totalPersonRad = totalPersonBeamDiffRad + groundRefRad
                         radiantFlux = totalPersonRad/totalPersonArea
                         hourERF = (radiantFlux * cloA)/0.95
-                        ERF.append(hourERF/1000)
+                        ERF[count+7] = hourERF/1000
                         
                         #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
                         mrtDelt = (hourERF/(fracEff*radTransCoeff))
-                        MRTDelta.append(mrtDelt)
+                        MRTDelta[count+7] = mrtDelt
                         if baseTempType == False:
                             hourMRT = mrtDelt + (radTemp[count])
                         else:
                             hourMRT = mrtDelt + (skyTemp[count]*(skyViewFac) + radTemp[count]*(1-(skyViewFac)))
-                        solarAdjustedMRT.append(hourMRT)
+                        solarAdjustedMRT[count+7] = hourMRT
                     else:
-                        ERF.append(0)
-                        MRTDelta.append(0)
+                        ERF[count+7] = 0
+                        MRTDelta[count+7] = 0
                         if baseTempType == False:
                             hourMRT = radTemp[count]
                         else:
                             hourMRT = (skyTemp[count]*(skyViewFac) + radTemp[count]*(1-(skyViewFac)))
-                        solarAdjustedMRT.append(hourMRT)
-                    hourOrder.append(count)
+                        solarAdjustedMRT[count+7] = hourMRT
                 
                 
                 tasks.Parallel.ForEach(range(len(HOYS)), radCalc)
@@ -1129,48 +1159,13 @@ def main(method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, con
             if parallel == False:
                 runSuccess = nonParallelRadCalc()
             else:
+                for count, hour in enumerate(HOYS):
+                    ERF.append(0)
+                    MRTDelta.append(0)
+                    solarAdjustedMRT.append(0)
                 runSuccess = parallelRadCalc()
             
             if runSuccess == True:
-                #If the process above was run in parallel, re-order the numbers correctly (instead of by when they finished calculating).
-                if parallel == True:
-                    ERF = [x for (y,x) in sorted(zip(hourOrder, ERF))]
-                    MRTDelta = [x for (y,x) in sorted(zip(hourOrder, MRTDelta))]
-                    solarAdjustedMRT = [x for (y,x) in sorted(zip(hourOrder, solarAdjustedMRT))]
-                
-                
-                #Add the headers to the computed lists.
-                if periodMethod == 0:
-                    analysisStart = analysisPeriodOrHOY[0]
-                    analysisEnd = analysisPeriodOrHOY[1]
-                else:
-                    analysisStart = analysisPeriodTxt[0]
-                    analysisEnd = analysisPeriodTxt[1]
-                
-                ERF.insert(0,analysisEnd)
-                ERF.insert(0,analysisStart)
-                ERF.insert(0,'Hourly')
-                ERF.insert(0,'kWh/m2')
-                ERF.insert(0,'Effective Radiant Field')
-                ERF.insert(0,str(location))
-                ERF.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
-                
-                MRTDelta.insert(0,analysisEnd)
-                MRTDelta.insert(0,analysisStart)
-                MRTDelta.insert(0,'Hourly')
-                MRTDelta.insert(0,'C')
-                MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
-                MRTDelta.insert(0,str(location))
-                MRTDelta.insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
-                
-                solarAdjustedMRT.insert(0,analysisEnd)
-                solarAdjustedMRT.insert(0,analysisStart)
-                solarAdjustedMRT.insert(0,'Hourly')
-                solarAdjustedMRT.insert(0,'C')
-                solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
-                solarAdjustedMRT.insert(0,str(location))
-                solarAdjustedMRT.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
-                
                 #If the user has requested to bake the results, then bake them.
                 if bakeIt_ > 0:
                     #Set up the new layer.
@@ -1273,7 +1268,7 @@ def mainSimple(baseTempType, radTemp, relHumid, mannequinMesh, context, groundR,
         MRTDelta[ptCount].append('key:location/dataType/units/frequency/startsAt/endsAt')
         MRTDelta[ptCount].append(str(location))
         MRTDelta[ptCount].append('Short Wave MRT Delta')
-        MRTDelta[ptCount].append('kWh/m2')
+        MRTDelta[ptCount].append('C')
         MRTDelta[ptCount].append('Hourly')
         MRTDelta[ptCount].append(analysisStart)
         MRTDelta[ptCount].append(analysisEnd)
@@ -1281,7 +1276,7 @@ def mainSimple(baseTempType, radTemp, relHumid, mannequinMesh, context, groundR,
         solarAdjustedMRT[ptCount].append('key:location/dataType/units/frequency/startsAt/endsAt')
         solarAdjustedMRT[ptCount].append(str(location))
         solarAdjustedMRT[ptCount].append('Solar-Adjusted Mean Radiant Temperature')
-        solarAdjustedMRT[ptCount].append('kWh/m2')
+        solarAdjustedMRT[ptCount].append('C')
         solarAdjustedMRT[ptCount].append('Hourly')
         solarAdjustedMRT[ptCount].append(analysisStart)
         solarAdjustedMRT[ptCount].append(analysisEnd)
