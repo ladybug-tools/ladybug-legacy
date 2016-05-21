@@ -28,7 +28,7 @@ This component calculates the shading of:
 - any other purpose (shading of points)
 -
 Use "annualShading", "Sep21toMar21Shading" and "Mar21toSep21Shading" outputs for Photovoltaic modules shading. 
-Use "beamIndexPerHour" and "skyViewFactor" outputs for Solar Water Heating collectors shading, or any other purpose.
+Use "beamIndexPerHour" and "skyExposureFactor" outputs for Solar Water Heating collectors shading, or any other purpose.
 Use "shadedSolarRadiationPerHour" data for "solarRadiationPerHour_" input of "Thermal Comfort Indices" component to account for shading.
 -
 "annualShading" output is based on "Using sun path charts to estimate the effects of shading on PV arrays", University of Oregon, Frank Vignola:
@@ -78,7 +78,7 @@ Provided by Ladybug 0.0.62
                                 -
                                 Unitless.
         leaflessPeriod_: Define the leafless period for deciduous trees using Ladybug's "Analysis Period" component.
-                         IMPORTANT! This input affects only the skyViewFactor, beamIndexPerHour, shadedSolarRadiationPerHour output. Due to limitations of the used sunpath diagram, it does not affect the Sep21toMar21Shading, Mar21toSep21Shading, annualShading outputs, where default leafless periods (see the line bellow) will always be used.
+                         IMPORTANT! This input affects only the skyExposureFactor, beamIndexPerHour, shadedSolarRadiationPerHour output. Due to limitations of the used sunpath diagram, it does not affect the Sep21toMar21Shading, Mar21toSep21Shading, annualShading outputs, where default leafless periods (see the line bellow) will always be used.
                          -
                          If not supplied the following default periods will be used: from 21st September to 21st March in the northern hemisphere, and from 21st March to 21st September in the in the southern hemisphere.
         ACenergyPerHour_: This input is necessaty only if you are calculating the shading of the PV modules. If that is so, input the "ACenergyPerHour" output data from "Photovoltaics surface" component.
@@ -122,14 +122,14 @@ Provided by Ladybug 0.0.62
         
     output:
         readMe!: ...
-        skyViewFactor: Continuous Sky View Factor - portion of the visible sky (dome). It defines the shading of the parts of diffuse irradiance. It ranges from 0 to 1.
-                       0 means that the sky dome is competely obstructed by obstacles and all incoming diffuse sky irradiance is blocked (100% shading). 1 means that sky dome is competely free of obstacles (0% shading).
-                       -
-                       This output is similar to "skyView" output of Ladybug's "Shading Mask" component. Unlike "skyView" it takes into account transparency of trees. But it does not visually present the shading, which is what "Shading Mask" component does.
-                       -
-                       Use it as an input for Ladybug "Solar Water Heating System" or "Solar Water Heating System Detailed" component's "skyViewFactor_" input to account for diffuse irradiance shading of SWHsurface.
-                       -
-                       Unitless.
+        skyExposureFactor: Continuous Sky Exposure Factor - portion of the visible sky (dome). It defines the shading of the diffuse irradiance components. It ranges from 0 to 1.
+                           0 means that the sky dome is competely obstructed by obstacles and all incoming diffuse sky irradiance is blocked (100% shading). 1 means that sky dome is competely free of obstacles (0% shading).
+                           -
+                           This output is similar to "skyView" output of Ladybug's "Shading Mask" component. Unlike "skyView" it takes into account transparency of trees. But it does not visually present the shading, which is what "Shading Mask" component does.
+                           -
+                           Use it for Ladybug "Solar Water Heating System" or "Solar Water Heating System Detailed" component's "skyExposureFactor_" input to account for diffuse irradiance shading of SWHsurface.
+                           -
+                           Unitless.
         beamIndexPerHour: Transmission index of beam (direct) irradiance for each hour during a year. It ranges from 0-1.
                           Transmission index of 0 means 100% shading. Transmission index of 1 means 0% shading.
                           It is calculated for each analysisGeometry vertex and then averaged.
@@ -199,7 +199,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = 'VER 0.0.62\nMAY_09_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_21_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -651,13 +651,11 @@ def ACenergyQuadrantPercents(ACenergyPerHourData):
     
     eachQuadrantPac = []  # each quadrant sum Pac, flattened
     tol = Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+    
     for twoMonthStrip in PacPerHourPerTwoMonthStrip:
         quadrantSum = []
         for PacPerHour in twoMonthStrip:
             quadrantSum.append(sum(PacPerHour))
-        # filtering tolerance values
-        if (abs(0 - sum(quadrantSum)) < tol):
-            quadrantSum = [0]
         eachQuadrantPac.extend(quadrantSum)
     
     sunWindowACenergySum = sum(eachQuadrantPac)  # instead of: ACenergyPerYear = sum(ACenergyPerHourData), use: sunWindowACenergySum
@@ -964,6 +962,24 @@ def shadingAndQuadrantPercentages(testPt, createSunWindowMesh, contextMeshes, tr
             return sunWindowShadedAreaPer, quadrantCentroidsFiltered, quadrantShadingPercentRoundedFiltered, quadrantACPercentUnshadedRoundedFiltered, sunWindowMesh
 
 
+def calcQuadranglesMeshFaceArea(A,B,C,D):
+    # Heron's formula
+    # face vertices start at the left bottom counter-clockwise
+    a = A.DistanceTo(B)  # bottom
+    b = B.DistanceTo(C)  # right
+    diag = A.DistanceTo(C)  # diagonal
+    c = C.DistanceTo(D)  # left
+    d = D.DistanceTo(A)
+    
+    s1 = (a+b+diag)/2  # triangleSemiperimeter2
+    triangleMeshFaceArea1 = math.sqrt(s1 * (s1 - a) * (s1 - b) * (s1 - diag))
+    
+    s2 = (diag+c+d)/2  # triangleSemiperimeter2
+    triangleMeshFaceArea2 = math.sqrt(s2 * (s2 - diag) * (s2 - c) * (s2 - d))
+    
+    return triangleMeshFaceArea1 + triangleMeshFaceArea2
+
+
 def diffuseShading(testPt, contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, scale, precision):
     
     # lifting up the testPt due to MeshRay intersection
@@ -976,55 +992,64 @@ def diffuseShading(testPt, contextMeshes, treesTransmissionIndices, leaflessStar
     skyDomeHalfSphere = Rhino.Geometry.Sphere(Rhino.Geometry.Plane(Rhino.Geometry.Point3d(testPtLifted),Rhino.Geometry.Vector3d(0,0,1)),scale)
     splittedSkyDomeDomainUmin, splittedSkyDomeDomainUmax = [0, 2*math.pi]  # sphere diameter
     splittedSkyDomeDomainVmin, splittedSkyDomeDomainVmax = [0, 0.5*math.pi]  # sphere vertical arc
-    splittedSkyDomeDomainVmax = 0.9*splittedSkyDomeDomainVmax
+    splittedSkyDomeDomainVmax = 0.995*splittedSkyDomeDomainVmax
     
     stepU = (splittedSkyDomeDomainUmax - splittedSkyDomeDomainUmin)/precisionU
     stepV = (splittedSkyDomeDomainVmax - splittedSkyDomeDomainVmin)/precisionV
     
-    hittedRaysIntensities = 0
-    for i in range(0,precisionU):
-        for k in range(0,precisionV):
+    skyDomePts = []
+    for i in xrange(0,precisionU):
+        for k in xrange(0,precisionV):
             u = splittedSkyDomeDomainUmin + stepU*i
             v = splittedSkyDomeDomainVmin + stepV*k
             skyDomePt = skyDomeHalfSphere.PointAt(u,v)
-            vector = Rhino.Geometry.Vector3d(skyDomePt)-Rhino.Geometry.Vector3d(testPtLifted)
-            ray = Rhino.Geometry.Ray3d(testPtLifted, vector)
-            for meshIndex,mesh in enumerate(contextMeshes):
-                intersectParam = Rhino.Geometry.Intersect.Intersection.MeshRay(mesh,ray)
-                # ray hitted something
-                if intersectParam >= 0:
-                    seasonIndex = noLeavesPeriod("perHoy", latitude, i, leaflessStartHOY, leaflessEndHOY)
-                    if meshIndex == 0:  # context mesh hitted
-                        treesTransmissionIndex = 0
-                    elif meshIndex == 1:  # coniferousTrees mesh hitted
-                        treesTransmissionIndex = treesTransmissionIndices[0]
-                    elif meshIndex == 2:  # deciduousTrees mesh hitted
-                        treesTransmissionIndex = treesTransmissionIndices[1][seasonIndex]
-                    hittedRaysIntensities += treesTransmissionIndex
-                    break
-            # no hitting, the ray only hits the sky dome
-            else:
-                hittedRaysIntensities += 1
+            skyDomePts.append(skyDomePt)
+    skyDomeMeshPts = skyDomePts + skyDomePts[:precisionV]  # increases precisionU for 1
+    skyDomeMesh = lb_meshpreparation.meshFromPoints(precisionU+1, precisionV, skyDomeMeshPts)
+    meshFacesCentroids = [skyDomeMesh.Faces.GetFaceCenter(i) for i in xrange(skyDomeMesh.Faces.Count)]
+    meshFaces = skyDomeMesh.Faces
+    meshVertices = skyDomeMesh.Vertices
     
-    # top sky dome part
-    verticalRay = Rhino.Geometry.Ray3d(testPtLifted, Rhino.Geometry.Vector3d(0,0,1))
-    for meshIndex,mesh in enumerate(contextMeshes):
-        intersectParam = Rhino.Geometry.Intersect.Intersection.MeshRay(mesh,ray)
-        # ray hitted something
-        if intersectParam >= 0:
-            seasonIndex = noLeavesPeriod("perHoy", latitude, i, leaflessStartHOY, leaflessEndHOY)
-            if meshIndex == 0:  # context mesh hitted
-                treesTransmissionIndex = 0
-            elif meshIndex == 1:  # coniferousTrees mesh hitted
-                treesTransmissionIndex = treesTransmissionIndices[0]
-            elif meshIndex == 2:  # deciduousTrees mesh hitted
-                treesTransmissionIndex = treesTransmissionIndices[1][seasonIndex]
-    # no hitting, the ray only hits the sky dome
-    else:
-        hittedRaysIntensities += 1
-    skyViewFactor = hittedRaysIntensities/(precisionU*precisionV+1)
+    skyDomeMeshArea2 = 0
+    meshFacesAreas = []
+    for mFace in meshFaces:
+        quadrangleMeshFaceArea = calcQuadranglesMeshFaceArea(meshVertices[mFace.A], meshVertices[mFace.B], meshVertices[mFace.C], meshVertices[mFace.D])
+        meshFacesAreas.append(quadrangleMeshFaceArea)
+        skyDomeMeshArea2 += quadrangleMeshFaceArea
     
-    return skyViewFactor
+    skyDomeMeshArea = Rhino.Geometry.AreaMassProperties.Compute(skyDomeMesh).Area
+    
+    del skyDomeMeshPts
+    del meshVertices
+    del meshFaces
+    del skyDomeMesh
+    
+    skyExposureFactor = 0  # 0 equals to 100% shading, 1 equals to 0% shading
+    for i,centroid in enumerate(meshFacesCentroids):
+        raysIntensityWithoutTransmissionIndex = meshFacesAreas[i]/skyDomeMeshArea
+        vector = Rhino.Geometry.Vector3d(centroid)-Rhino.Geometry.Vector3d(testPtLifted)
+        ray = Rhino.Geometry.Ray3d(testPtLifted, vector)
+        for meshIndex,mesh in enumerate(contextMeshes):
+            intersectParam = Rhino.Geometry.Intersect.Intersection.MeshRay(mesh,ray)
+            # ray hitted something
+            if intersectParam >= 0:
+                seasonIndex = noLeavesPeriod("perHoy", latitude, i, leaflessStartHOY, leaflessEndHOY)
+                if meshIndex == 0:  # context mesh hitted
+                    treesTransmissionIndex = 0
+                elif meshIndex == 1:  # coniferousTrees mesh hitted
+                    treesTransmissionIndex = treesTransmissionIndices[0]
+                elif meshIndex == 2:  # deciduousTrees mesh hitted
+                    treesTransmissionIndex = treesTransmissionIndices[1][seasonIndex]
+                skyExposureFactor += raysIntensityWithoutTransmissionIndex*treesTransmissionIndex
+                break
+        # no hitting, the ray only hits the sky dome
+        else:
+            treesTransmissionIndex = 1
+            skyExposureFactor += raysIntensityWithoutTransmissionIndex * treesTransmissionIndex
+    
+    del meshFacesCentroids
+    
+    return skyExposureFactor
 
 
 def noaaSolarCalculator(latitude, longitude, timeZone, month, day, hour):
@@ -1147,18 +1172,18 @@ def main(srfCornerPts, srfCentroid, contextMeshes, treesTransmissionIndices, eac
 
 def swhshading(srfCornerPts, srfTiltD, correctedSrfAzimuthD, contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY):
     
-    skyViewFactorL = []
+    skyExposureFactorL = []
     beamIndexPerHourLL = []
     totalRadiationPerHourLL = []
     for cornerPt in srfCornerPts:
-        skyViewFactor = diffuseShading(cornerPt, contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, scale, precision)
-        beamIndexPerHourL, totalRadiationPerHourL = beamShadingPerEachHour(cornerPt, srfTiltD, correctedSrfAzimuthD, skyViewFactor, contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY)
-        skyViewFactorL.append(skyViewFactor)
+        skyExposureFactor = diffuseShading(cornerPt, contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, scale, precision)
+        beamIndexPerHourL, totalRadiationPerHourL = beamShadingPerEachHour(cornerPt, srfTiltD, correctedSrfAzimuthD, skyExposureFactor, contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY)
+        skyExposureFactorL.append(skyExposureFactor)
         beamIndexPerHourLL.append(beamIndexPerHourL)
         totalRadiationPerHourLL.append(totalRadiationPerHourL)
     
-    # averaging the skyViewFactor
-    skyViewFactor = round(sum(skyViewFactorL)/len(skyViewFactorL), 2)
+    # averaging the skyExposureFactor
+    skyExposureFactor = round(sum(skyExposureFactorL)/len(skyExposureFactorL), 2)
     
     # averaging the beamIndexPerHour, totalRadiationPerHour
     beamIndexPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Beam irradiance transmission index", "unitless", "Hourly", (1, 1, 1), (12, 31, 24)]
@@ -1178,11 +1203,11 @@ def swhshading(srfCornerPts, srfTiltD, correctedSrfAzimuthD, contextMeshes, tree
     # nothing inputted into "ACenergyPerHour_", or data inputted, but data comming from "Photovoltaics surface" component's "ACenergyPerHour" output is "None" ("Photovoltaics surface" component not ran)
     if (len(branchLists) == 0) or (sum(branchLists) == (len(list(ACenergyPerHour_.Paths)))):
         annualShading = Sep21toMar21Shading = Mar21toSep21Shading = unweightedAnnualShading = sunWindowShadedAreaPer = sunWindowCrvs = sunWindowMesh = legend = legendBasePt = quadrantCentroids = quadrantShadingPercents = quadrantACenergyPercents = hoursPositions = hours = "Please input \"ACenergyPerHour_\" to calculate this output."
-        return skyViewFactor, beamIndexPerHour, totalRadiationPerHour, annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading, sunWindowShadedAreaPer, sunWindowCrvs, sunWindowMesh, legend, legendBasePt, quadrantCentroids, quadrantShadingPercents, quadrantACenergyPercents, hoursPositions, hours
+        return skyExposureFactor, beamIndexPerHour, totalRadiationPerHour, annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading, sunWindowShadedAreaPer, sunWindowCrvs, sunWindowMesh, legend, legendBasePt, quadrantCentroids, quadrantShadingPercents, quadrantACenergyPercents, hoursPositions, hours
     else:
-        # dummy values except for skyViewFactor and beamIndexPerHour
+        # dummy values except for skyExposureFactor and beamIndexPerHour
         annualShading = Sep21toMar21Shading = Mar21toSep21Shading = unweightedAnnualShading = sunWindowShadedAreaPer = sunWindowCrvs = sunWindowMesh = legend = legendBasePt = quadrantCentroids = quadrantShadingPercents = quadrantACenergyPercents = hoursPositions = hours = None
-        return skyViewFactor, beamIndexPerHour, totalRadiationPerHour, annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading, sunWindowShadedAreaPer, sunWindowCrvs, sunWindowMesh, legend, legendBasePt, quadrantCentroids, quadrantShadingPercents, quadrantACenergyPercents, hoursPositions, hours
+        return skyExposureFactor, beamIndexPerHour, totalRadiationPerHour, annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading, sunWindowShadedAreaPer, sunWindowCrvs, sunWindowMesh, legend, legendBasePt, quadrantCentroids, quadrantShadingPercents, quadrantACenergyPercents, hoursPositions, hours
 
 
 def bakingGrouping(locationName, sunWindowCrvs, sunWindowMesh, legend, quadrantCentroidsFiltered, quadrantShadingPercentRoundedFiltered, srfCornerPts, sunWindowCenPt, annualShading, hoursPositions, hours):
@@ -1252,7 +1277,6 @@ def bakingGrouping(locationName, sunWindowCrvs, sunWindowMesh, legend, quadrantC
 def printOutput(locationName, latitude, longitude, northRad, srfAreaL, ACenergyPerHourDataLL, treesTransmissionIndices, leaflessPeriod, albedoL, scale, hoursPositionScale, precision, srfCornerPtsLL):
     printOutputMsg = \
     """
-
 Input data:
 
 Location: %s
@@ -1264,8 +1288,8 @@ Surface area (m2): %s
 
 Coniferous context trees transmission index for all year : %s
 Deciduous context trees transmission index for in-leaf period: %s
-Deciduous context trees transmission index for leaf-less period: %s 
-Leafless period: %s, %s
+Deciduous context trees transmission index for leaf-less period: %s
+Leafless period: %s, %s;
 ACenergyPerYear (kWh): %s
 Average annual albedo(-): %0.2f
 
@@ -1317,21 +1341,21 @@ if sc.sticky.has_key("ladybug_release"):
                                 if (len(branchLists2) != 0) or (sum(branchLists2) != (len(list(ACenergyPerHour_.Paths)))):
                                     # valid "ACenergyPerHour_" inputted
                                     if len(srfCornerPts) > 0:
-                                        skyViewFactor, beamIndexPerHour, shadedSolarRadiationPerHour, annualShadingDummy, Sep21toMar21ShadingDummy, Mar21toSep21ShadingDummy, unweightedAnnualShadingDummy, sunWindowShadedAreaPerDummy, sunWindowCrvsDummy, sunWindowMeshDummy, legendDummy, legendBasePtDummy, quadrantCentroidsDummy, quadrantShadingPercentsDummy, quadrantACenergyPercentsDummy, hoursPositionsDummy, hoursDummy = swhshading(srfCornerPtsLL[branchIndex], srfTiltDL[branchIndex], correctedSrfAzimuthDL[branchIndex], contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY)
+                                        skyExposureFactor, beamIndexPerHour, shadedSolarRadiationPerHour, annualShadingDummy, Sep21toMar21ShadingDummy, Mar21toSep21ShadingDummy, unweightedAnnualShadingDummy, sunWindowShadedAreaPerDummy, sunWindowCrvsDummy, sunWindowMeshDummy, legendDummy, legendBasePtDummy, quadrantCentroidsDummy, quadrantShadingPercentsDummy, quadrantACenergyPercentsDummy, hoursPositionsDummy, hoursDummy = swhshading(srfCornerPtsLL[branchIndex], srfTiltDL[branchIndex], correctedSrfAzimuthDL[branchIndex], contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY)
                                         eachQuadrantACpercent = ACenergyQuadrantPercents(ACenergyPerHourDataLL[branchIndex])
                                         annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading, sunWindowShadedAreaPer, sunWindowCrvs, sunWindowMesh, legend, legendBasePt, quadrantCentroids, quadrantShadingPercents, quadrantACenergyPercents, hoursPositions, hours = main(srfCornerPtsLL[branchIndex], srfCentroidL[branchIndex], contextMeshes, treesTransmissionIndices, eachQuadrantACpercent, latitude, northRad, northVec, scale, hoursPositionScale, precision, yearsHOY, monthsHOY, daysHOY, hoursHOY)
                                     else:
-                                        skyViewFactor = Sep21toMar21Shading = Mar21toSep21Shading = annualShading = None
+                                        skyExposureFactor = Sep21toMar21Shading = Mar21toSep21Shading = annualShading = None
                                         beamIndexPerHour = shadedSolarRadiationPerHour = []
                                 else:
                                     # nothing inputted into "ACenergyPerHour_", or data inputted, but data comming from "Photovoltaics surface" component's "ACenergyPerHour" output is "None" ("Photovoltaics surface" component not ran)
                                     if len(srfCornerPts) > 0:
-                                        skyViewFactor, beamIndexPerHour, shadedSolarRadiationPerHour, annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading, sunWindowShadedAreaPer, sunWindowCrvs, sunWindowMesh, legend, legendBasePt, quadrantCentroids, quadrantShadingPercents, quadrantACenergyPercents, hoursPositions, hours = swhshading(srfCornerPtsLL[branchIndex], srfTiltDL[branchIndex], correctedSrfAzimuthDL[branchIndex], contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY)
+                                        skyExposureFactor, beamIndexPerHour, shadedSolarRadiationPerHour, annualShading, Sep21toMar21Shading, Mar21toSep21Shading, unweightedAnnualShading, sunWindowShadedAreaPer, sunWindowCrvs, sunWindowMesh, legend, legendBasePt, quadrantCentroids, quadrantShadingPercents, quadrantACenergyPercents, hoursPositions, hours = swhshading(srfCornerPtsLL[branchIndex], srfTiltDL[branchIndex], correctedSrfAzimuthDL[branchIndex], contextMeshes, treesTransmissionIndices, leaflessStartHOY, leaflessEndHOY, albedoL, scale, latitude, longitude, timeZone, directNormalRadiationData, diffuseHorizontalRadiationData, yearsHOY, monthsHOY, daysHOY, hoursHOY)
                                     else:
-                                        skyViewFactor = Sep21toMar21Shading = Mar21toSep21Shading = annualShading = None
+                                        skyExposureFactor = Sep21toMar21Shading = Mar21toSep21Shading = annualShading = None
                                         beamIndexPerHour = shadedSolarRadiationPerHour = []
                                 
-                                newTree.AddRange([skyViewFactor], pathsAnalysisGeometry[branchIndex])
+                                newTree.AddRange([skyExposureFactor], pathsAnalysisGeometry[branchIndex])
                                 newTree2.AddRange(beamIndexPerHour, pathsAnalysisGeometry[branchIndex])
                                 newTree3.AddRange(shadedSolarRadiationPerHour, pathsAnalysisGeometry[branchIndex])
                                 newTree4.AddRange([Sep21toMar21Shading], pathsAnalysisGeometry[branchIndex])
@@ -1348,7 +1372,7 @@ if sc.sticky.has_key("ladybug_release"):
                                 hoursPositionsLL.append(hoursPositions)
                                 hoursLL.append(hours)
                             
-                            skyViewFactor = newTree
+                            skyExposureFactor = newTree
                             beamIndexPerHour = newTree2
                             shadedSolarRadiationPerHour = newTree3
                             Sep21toMar21Shading = newTree4
@@ -1408,4 +1432,3 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
-    
