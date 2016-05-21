@@ -97,13 +97,6 @@ Provided by Ladybug 0.0.62
                     If not supplied, default value of 0.3 m/s is used (meaning: the analysis is conducted in outdoor no wind conditions, or indoor conditions).
                     -
                     In meters/second.
-        solarRadiationPerHour_:  Amount of solar radiation that an analysis person received.
-                                 If you would like to do an analysis accounted for shading (more precise) use the "Sunpath shading" component and its "shadedSolarRadiationPerHour" output.
-                                 If you would not like to do an analysis accounted for shading (because it's quicker that way), then you can simply supply the data from "Import epw" component's "diffuseHorizontalRadiation" output. In this way it will be assumed that an analysis is being conducted in outdoor in-shade conditions, or indoor conditions.
-                                 -
-                                 If nothing supplied, default value of 0 Wh/m2 will be used (no solar radiation at all).
-                                 -
-                                 In Wh/m2.
         totalSkyCover_: Amount of sky dome covered by clouds.
                         Input a single value or a whole list from "Import epw" component's "totalSkyCover" output.
                         It ranges from from 1 to 10. For example: 1 is 1/10 covered. 10 is total coverage (10/10).
@@ -111,6 +104,17 @@ Provided by Ladybug 0.0.62
                         If not supplied 6/10 will be used (cloud coverage of temperate humid climate).
                         -
                         In tenths of sky cover.
+        solarRadiationPerHour_:  Amount of solar radiation that an analysis person received.
+                                 -
+                                 1) If you would like to do an analysis accounted for shading (more precise) use the "Sunpath shading" component and its "shadedSolarRadiationPerHour" output.
+                                 Or use "Radiation Analysis" component's "radiationResult" output. Be sure to scale the "radiationResult" output data 1000 times (to convert it from kW/m2 to W/m2).
+                                 The "Sunpath shading" component will account for partial shading from the trees, while "Radiation Analysis" will not.
+                                 -
+                                 2) If you would not like to do an analysis accounted for shading (because it's quicker that way), then you can simply supply the data from "Import epw" component's "diffuseHorizontalRadiation" output. In this way it will be assumed that an analysis is being conducted in outdoor in-shade conditions, or indoor conditions.
+                                 -
+                                 If nothing supplied, default value of 0 Wh/m2 will be used (no solar radiation at all).
+                                 -
+                                 In Wh/m2.
         bodyCharacteristics_: A list of body characteristics in the following order: age, sex, height, weight, bodyPosition, clothingInsulation, acclimated, metabolicRate, activityDuration.
                               Use Ladybug's "Body Characteristics" component to generate it.
                               -
@@ -147,7 +151,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = 'VER 0.0.62\nMAY_09_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_21_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -382,7 +386,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         Rprim = solarRadiationNudeMan(SRL[i], solarAltitudeD, ac)  # in W/m2
         vapourPressure = VapourPressure(TaL[i], rhL[i])  # in hPa
         if mrtL[0] == "calculate_MRT":
-            mrt = meanRadiantTemperature(TaL[i], Tground, Rprim, vapourPressure)  # in C
+            mrt = meanRadiantTemperature(TaL[i], Tground, Rprim, vapourPressure, NL[i])  # in C
         else:
             mrt = mrtL[i]  # in C
         Ts = meanSkinTemperature(TaL[i], wsL[i], rhL[i], mrt, IclL[i], ML[i])  # in C
@@ -440,6 +444,7 @@ def heatIndex(Ta, rh):
         elif (Tf >= 80) and (Tf <= 87) and (rh > 85):
             adjust = ((rh-85)/10) * ((87-Tf)/5)
             HI_f = HI_f+adjust
+    
     if HI_f < 80:
         effectHI = 0
         comfortable = 1
@@ -831,10 +836,10 @@ def VapourPressure(Ta, rh):
     return es
 
 
-def meanRadiantTemperature(Ta, Tground, Rprim, e):
+def meanRadiantTemperature(Ta, Tground, Rprim, e, N):
     # formula by Man-ENvironment heat EXchange model (MENEX_2005)
     
-    La = 5.5*(10**(-8)) *((273 + Ta)**(4)) *(0.82 - 0.25*(10**(-0.094*0.75*e)))  # incoming long-wave radiation emitted from the sky hemisphere, in W/m2
+    La = 5.5*(10**(-8)) *((273 + Ta)**(4)) *(0.82 - 0.25*(10**(-0.094*0.75*e))) * (1 + 0.22*((N/10)**2.75))  # incoming long-wave radiation emitted from the sky hemisphere, in W/m2
     Lg = 5.5 *(10**(-8)) * ((273 + Tground)**(4))  # outgoing long-wave radiation emitted by the ground, in W/m2
     
     MRT = (((Rprim + 0.5*Lg + 0.5*La) / (0.95*5.667*(10**(-8))))**(0.25)) - 273  # in C
@@ -2040,7 +2045,7 @@ if sc.sticky.has_key("ladybug_release"):
                                 HotExtremeCategory = 2
                                 ColdExtremeCategory = -2
                             elif _comfortIndex == 11:
-                                mrt = meanRadiantTemperature(TaL[listIndex], TgroundL[listIndex], RprimL[listIndex], vapourPressureL[listIndex]);  comfortIndexValue.append(mrt)
+                                mrt = meanRadiantTemperature(TaL[listIndex], TgroundL[listIndex], RprimL[listIndex], vapourPressureL[listIndex], NL[listIndex]);  comfortIndexValue.append(mrt)
                             elif _comfortIndex == 12:
                                 iclp,cat,cnc = predictedInsulationIndexOfClothing(TaL[listIndex], wsL[listIndex], ML[listIndex]);  comfortIndexValue.append(iclp);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
                                 HotExtremeCategory = 2
@@ -2110,4 +2115,3 @@ else:
     printMsg = "First please let the Ladybug fly..."
     print printMsg
     ghenv.Component.AddRuntimeMessage(level, printMsg)
-    
