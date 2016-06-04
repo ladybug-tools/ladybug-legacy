@@ -411,7 +411,7 @@ def checkInputData(analysisGeometry, ACenergyPerHour, context, coniferousTrees, 
     validContextCategories = [index for index in [validContext1, validContext2, validContext3] if index > 0]
     
     # default transmission indices based on: Planning and Installing Photovoltaic Systems: A Guide for Installers, Architects and Engineers,
-    # Deutsche Gesellschaft Für Sonnenenergie (Dgs), Dec 2007.
+    # Deutsche Gesellschaft Fr Sonnenenergie (Dgs), Dec 2007.
     if (coniferousAllyearIndex == None) or (coniferousAllyearIndex < 0) or (coniferousAllyearIndex > 1):
         coniferousAllyearIndex = 0.30
     if (deciduousInleafIndex == None) or (deciduousInleafIndex < 0) or (deciduousInleafIndex > 1):

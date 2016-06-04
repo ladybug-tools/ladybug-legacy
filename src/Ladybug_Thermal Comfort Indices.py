@@ -90,7 +90,7 @@ Provided by Ladybug 0.0.62
                            If not supplied 50% will be used as a default (indoor conditions).
                            -
                            In percent (from 0% to 110%).
-        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing person’s gravity center). It can be a single value or a list of values.
+        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing persons gravity center). It can be a single value or a list of values.
                     Take the "windSpeed" output from "Import epw" component and plug it to "Wind Speed Calculator" component's "_windSpeed_tenMeters" input. Set the "heightAboveGround_" input to "1.1". Then plug in the data from "Wind Speed Calculator" component's "windSpeedAtHeight" output to this component's "windSpeed_" input.
                     In this way we converted the 10 meter wind speed from the .epw file to required 1.1m.
                     -
