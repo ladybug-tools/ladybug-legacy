@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAY_09_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_04_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2110,6 +2110,38 @@ class MeshPreparation(object):
                 srfPtCalculator(i)
     
         return testPoint, srfNormals, meshSrfArea
+    
+    def calculateMeshFaceAreas(self, mesh):
+        
+        def triangleMeshFaceArea(A,B,C):
+            # Heron's formula
+            a = A.DistanceTo(B)
+            b = B.DistanceTo(C)
+            c = A.DistanceTo(C)
+            s = (a+b+c)/2  # triangle semiperimeter
+            triangleMeshFaceArea = math.sqrt(s * (s - a) * (s - b) * (s - c))
+            
+            return triangleMeshFaceArea
+        
+        meshFaces = mesh.Faces
+        meshVertices = mesh.Vertices
+        meshFaceAreas = []
+        for mFace in meshFaces:
+            if mFace.IsTriangle:
+                triangleMeshFaceArea1 = triangleMeshFaceArea(meshVertices[mFace.A], meshVertices[mFace.B], meshVertices[mFace.C])
+                triangleMeshFaceArea2 = 0 
+            elif mFace.IsQuad:
+                d1 = meshVertices[mFace.A].DistanceTo(meshVertices[mFace.C])
+                d2 = meshVertices[mFace.B].DistanceTo(meshVertices[mFace.D])
+                if d1 > d2:
+                    triangleMeshFaceArea1 = triangleMeshFaceArea(meshVertices[mFace.D], meshVertices[mFace.A], meshVertices[mFace.B])
+                    triangleMeshFaceArea2 = triangleMeshFaceArea(meshVertices[mFace.D], meshVertices[mFace.B], meshVertices[mFace.C])
+                else:
+                    triangleMeshFaceArea1 = triangleMeshFaceArea(meshVertices[mFace.A], meshVertices[mFace.B], meshVertices[mFace.C])
+                    triangleMeshFaceArea2 = triangleMeshFaceArea(meshVertices[mFace.A], meshVertices[mFace.C], meshVertices[mFace.D])
+            meshFaceAreas.append(triangleMeshFaceArea1+triangleMeshFaceArea2)
+        
+        return meshFaceAreas
     
     def meshFromPoints(self, u, v, pts, meshColors=None):
         # creates a mesh from grid of points
@@ -5237,6 +5269,279 @@ class WindSpeed(object):
 
 class Photovoltaics(object):
     """ Set of methods for Photovoltaics and Solar Water Heating analysis """
+    def noLeavesPeriod(self, criteria, latitude, sunWindowQuadrantIndex, leaflessStartHOY=None, leaflessEndHOY=None):
+        if criteria == "perQuadrant":
+            if latitude > 0:  # northern hemisphere
+                if sunWindowQuadrantIndex < 72:
+                    seasonIndex = 0  # winter/autumn
+                elif sunWindowQuadrantIndex >= 72:
+                    seasonIndex = 1  # spring/summer
+            elif latitude < 0:  # southern hemisphere
+                if sunWindowQuadrantIndex < 72:
+                    seasonIndex = 1  # spring/summer
+                elif sunWindowQuadrantIndex >= 72:
+                    seasonIndex = 0  # winter/autumn
+        elif criteria == "perHoy":
+            if leaflessStartHOY < leaflessEndHOY:
+                if (sunWindowQuadrantIndex >= leaflessStartHOY) and (sunWindowQuadrantIndex <= leaflessEndHOY):
+                    seasonIndex = 0  # leafless period
+                else:
+                    seasonIndex = 1  # inleaf period
+            elif leaflessStartHOY > leaflessEndHOY:
+                if (sunWindowQuadrantIndex >= leaflessStartHOY) or (sunWindowQuadrantIndex <= leaflessEndHOY):
+                    seasonIndex = 0  # leafless period
+                else:
+                    seasonIndex = 1  # inleaf period
+        
+        return seasonIndex
+    
+    def calculateSkyExposureFactor(self, testPt, contextMeshes, latitude, radius, precision, treesTransmissionIndices=[0,[0,0]], leaflessStartHOY=None, leaflessEndHOY=None):
+        
+        # lifting up the testPt due to MeshRay intersection
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        testPtLifted = rc.Geometry.Point3d(testPt.X, testPt.Y, testPt.Z+tol)
+        lb_meshpreparation = MeshPreparation()
+        
+        precisionU = precision*5
+        precisionV = int(precisionU/3.5)
+        
+        skyDomeHalfSphere = rc.Geometry.Sphere(rc.Geometry.Plane(rc.Geometry.Point3d(testPtLifted),rc.Geometry.Vector3d(0,0,1)), radius)
+        splittedSkyDomeDomainUmin, splittedSkyDomeDomainUmax = [0, 2*math.pi]  # sphere diameter
+        splittedSkyDomeDomainVmin, splittedSkyDomeDomainVmax = [0, 0.5*math.pi]  # sphere vertical arc
+        splittedSkyDomeDomainVmax = 0.995*splittedSkyDomeDomainVmax
+        
+        stepU = (splittedSkyDomeDomainUmax - splittedSkyDomeDomainUmin)/precisionU
+        stepV = (splittedSkyDomeDomainVmax - splittedSkyDomeDomainVmin)/precisionV
+        
+        skyDomePts = []
+        for i in xrange(0,precisionU):
+            for k in xrange(0,precisionV):
+                u = splittedSkyDomeDomainUmin + stepU*i
+                v = splittedSkyDomeDomainVmin + stepV*k
+                skyDomePt = skyDomeHalfSphere.PointAt(u,v)
+                skyDomePts.append(skyDomePt)
+        skyDomeMeshPts = skyDomePts + skyDomePts[:precisionV]  # increases precisionU for 1
+        skyDomeMesh = lb_meshpreparation.meshFromPoints(precisionU+1, precisionV, skyDomeMeshPts)
+        meshFacesCentroids = [skyDomeMesh.Faces.GetFaceCenter(i) for i in xrange(skyDomeMesh.Faces.Count)]
+        meshFaces = skyDomeMesh.Faces
+        meshVertices = skyDomeMesh.Vertices
+        
+        meshFaceAreas = lb_meshpreparation.calculateMeshFaceAreas(skyDomeMesh)
+        skyDomeMeshArea = sum(meshFaceAreas)
+        skyDomeMeshArea2 = rc.Geometry.AreaMassProperties.Compute(skyDomeMesh).Area
+        #print "skyDomeMeshArea: ", skyDomeMeshArea
+        #print "skyDomeMeshArea2: ", skyDomeMeshArea2
+        
+        del skyDomeMeshPts
+        del meshVertices
+        del meshFaces
+        del skyDomeMesh
+        leaflessStartHOYdummy = 0; leaflessEndHOYdummy = 1
+        skyExposureFactor = 0  # 0 equals to 100% shading, 1 equals to 0% shading
+        for i,centroid in enumerate(meshFacesCentroids):
+            raysIntensityWithoutTransmissionIndex = meshFaceAreas[i]/skyDomeMeshArea
+            vector = rc.Geometry.Vector3d(centroid)-rc.Geometry.Vector3d(testPtLifted)
+            ray = rc.Geometry.Ray3d(testPtLifted, vector)
+            for meshIndex,mesh in enumerate(contextMeshes):
+                intersectParam = rc.Geometry.Intersect.Intersection.MeshRay(mesh,ray)
+                # ray hitted something
+                if intersectParam >= 0:
+                    seasonIndexDummy = self.noLeavesPeriod("perHoy", latitude, i, leaflessStartHOYdummy, leaflessEndHOYdummy)
+                    if meshIndex == 0:  # context mesh hitted
+                        treesTransmissionIndex = 0
+                    elif meshIndex == 1:  # coniferousTrees mesh hitted
+                        treesTransmissionIndex = treesTransmissionIndices[0]
+                    elif meshIndex == 2:  # deciduousTrees mesh hitted
+                        treesTransmissionIndex = treesTransmissionIndices[1][seasonIndexDummy]
+                    skyExposureFactor += raysIntensityWithoutTransmissionIndex*treesTransmissionIndex
+                    break
+            # no hitting, the ray only hits the sky dome
+            else:
+                treesTransmissionIndex = 1
+                skyExposureFactor += raysIntensityWithoutTransmissionIndex * treesTransmissionIndex
+        
+        del meshFacesCentroids
+        
+        return skyExposureFactor
+    
+    def calculateSrfAzimuthAngle(self, PVsurface):
+        # calculate PVsurface azimuth angle
+        obj = PVsurface.DuplicateBrep()
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        srfNormal = objSrf.NormalAt(0.5, 0.5)
+        srfNormal.Unitize()
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        
+        if (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (1-tol < srfNormal.Z < 1+tol):
+            # "_PVsurface" surface is parallel to the XY plane, faced upward
+            srfAzimuthD = 180
+            surfaceTiltD = 0
+        elif (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (-1-tol < srfNormal.Z < -1+tol):
+            # "_PVsurface" surface is parallel to the XY plane, faced downward
+            srfAzimuthD = 180
+            surfaceTiltD = 180
+        else:
+            # "_PVsurface" surface is not parallel to the XY plane
+            if (-tol < srfNormal.Z < tol):
+                # "_PVsurface" surface is perpendicular to the XY plane, faced downward
+                surfaceTiltD = 90
+            else:
+                # "_PVsurface" surface is not parallel nor perpendicular to XY plane
+                surfaceTiltD = None
+            # calculate the srfAzimuthD
+            xyPlane = rc.Geometry.Plane(rc.Geometry.Point3d(0,0,0), rc.Geometry.Vector3d(0,0,1))
+            
+            projNormalPt = xyPlane.ClosestPoint(rc.Geometry.Point3d(srfNormal))
+            projNormal = rc.Geometry.Vector3d(projNormalPt)
+            projNormal.Unitize()
+            
+            angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
+            srfAzimuthR = angleToYaxis
+            srfAzimuthD = math.degrees(srfAzimuthR)
+        
+        return srfAzimuthD, surfaceTiltD
+    
+    def srfAzimuthAngle(self, PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceAzimuthAngle != None):
+            if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+            else:
+                srfAzimuthD = PVsurfaceAzimuthAngle
+            surfaceTiltDCalculated = "needs to be calculated"
+        
+        # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceAzimuthAngle == None):
+            if PVsurfaceInputType == "brep":
+                srfAzimuthD, surfaceTiltDCalculated = self.calculateSrfAzimuthAngle(PVsurface)
+                if surfaceTiltDCalculated == None:
+                    surfaceTiltDCalculated = "needs to be calculated"
+            
+            # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
+            elif PVsurfaceInputType == "number":
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+                surfaceTiltDCalculated = "needs to be calculated"
+        
+        return srfAzimuthD, surfaceTiltDCalculated
+    
+    def calculateSrfTiltAngle(self, PVsurface):
+        # calculate PVsurface tilt angle
+        obj = PVsurface.DuplicateBrep()
+        zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
+        zAxis = rc.Geometry.Vector3d(0,0,1)
+        worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
+        boundingBox = rc.Geometry.Brep.GetBoundingBox(obj, worldXYplane)
+        boundingBoxBrep = boundingBox.ToBrep()
+        lowerFaceBB = boundingBoxBrep.Faces[4].DuplicateFace(False)
+        centroidLowerFaceBB = rc.Geometry.AreaMassProperties.Compute(lowerFaceBB).Centroid
+        lowerFaceBBPlane = rc.Geometry.Plane(centroidLowerFaceBB, zAxis)
+        transformMatrix = rc.Geometry.Transform.Translation(zeroZeroZeroPt-centroidLowerFaceBB)
+        obj.Transform(transformMatrix)
+        
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        centroidClosestPoint = objSrf.PointAt(0.5, 0.5)
+        orientedSrfNormal = objSrf.NormalAt(0.5, 0.5)
+        transformMatrix2 = rc.Geometry.Transform.PlanarProjection(worldXYplane)
+        projectedSrf = rc.Geometry.Brep.DuplicateBrep(obj)
+        projectedSrf.Transform(transformMatrix2)
+        
+        intersectPlane = rc.Geometry.Plane(centroidClosestPoint, zAxis, orientedSrfNormal)
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        brepPlaneInterCrv1 = rc.Geometry.Intersect.Intersection.BrepPlane(obj, intersectPlane, tol)[1][0]
+        brepPlaneInterCrv2 = rc.Geometry.Intersect.Intersection.BrepPlane(projectedSrf, intersectPlane, tol)[1][0]
+        brepPlaneInterVec1 = rc.Geometry.Vector3d(brepPlaneInterCrv1.PointAtEnd - brepPlaneInterCrv1.PointAtStart)
+        brepPlaneInterVec2 = rc.Geometry.Vector3d(brepPlaneInterCrv2.PointAtEnd - brepPlaneInterCrv2.PointAtStart)
+        srfTitlR = rc.Geometry.Vector3d.VectorAngle(brepPlaneInterVec1, brepPlaneInterVec2)
+    
+        if orientedSrfNormal.Z < 0:
+            srfTitlR = math.pi - srfTitlR
+        srfTiltD = math.degrees(srfTitlR)
+        
+        return srfTiltD
+    
+    def srfTiltAngle(self, PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceTiltAngle != None):
+            
+            if (PVsurfaceTiltAngle < 0):
+                srfTiltD = 0
+            elif (PVsurfaceTiltAngle > 180):
+                srfTiltD = 0
+            else:
+                srfTiltD = PVsurfaceTiltAngle
+        
+        # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceTiltAngle == None):
+            
+            # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
+            if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
+                srfTiltD = surfaceTiltDCalculated
+            elif surfaceTiltDCalculated == "needs to be calculated":
+                if PVsurfaceInputType == "brep":
+                    srfTiltD = self.calculateSrfTiltAngle(PVsurface)
+                # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
+                elif PVsurfaceInputType == "number":
+                    srfTiltD = abs(latitude)
+        
+        return srfTiltD
+    
+    def angle2northClockwise(self, north):
+        # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
+        try:
+            northVec = rc.Geometry.Vector3d.YAxis
+            northVec.Rotate(-math.radians(float(north)),rc.Geometry.Vector3d.ZAxis)
+            northVec.Unitize()
+            return 2*math.pi-math.radians(float(north)), northVec
+        except Exception, e:
+            try:
+                northVec =rc.Geometry.Vector3d(north)
+                northVec.Unitize()
+                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVec, rc.Geometry.Plane.WorldXY), northVec
+            except Exception, e:
+                return 0, rc.Geometry.Vector3d.YAxis
+    
+    def correctSrfAzimuthDforNorth(self, north, srfAzimuthD):
+        # nothing inputted in "north_" - use default value: 0
+        if north == None:
+            northDeg = 0  # default
+            correctedSrfAzimuthD = srfAzimuthD
+            validNorth = True
+            printMsg = "ok"
+        else:
+            try:  # check if it's a number
+                north = float(north)
+                if north < 0 or north > 360:
+                    correctedSrfAzimuthD = northDeg = None
+                    validNorth = False
+                    printMsg = "Please input north angle value from 0 to 360."
+                    return correctedSrfAzimuthD, validNorth, printMsg
+            except Exception, e:  # check if it's a vector
+                north.Unitize()
+            
+            northRad, northVec = self.angle2northClockwise(north)
+            northDeg = 360-math.degrees(northRad)
+            correctedSrfAzimuthD = northDeg + srfAzimuthD
+            if correctedSrfAzimuthD > 360:
+                correctedSrfAzimuthD = correctedSrfAzimuthD - 360
+            validNorth = True
+            printMsg = "ok"
+        
+        return correctedSrfAzimuthD, northDeg, validNorth, printMsg
+    
     def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
         # sunZenith, sunAzimuth, sunAltitude angles
         # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
@@ -5616,184 +5921,6 @@ class Photovoltaics(object):
         if Pac < 0: Pac = 0
         
         return Tm, Tcell, Pdc_, Pac
-    
-    def calculateSrfAzimuthAngle(self, PVsurface):
-        # calculate PVsurface azimuth angle
-        obj = PVsurface.DuplicateBrep()
-        objSrf = obj.Faces[0]
-        reparematizedDomain = rc.Geometry.Interval(0,1)
-        objSrf.SetDomain(0, reparematizedDomain)
-        objSrf.SetDomain(1, reparematizedDomain)
-        srfNormal = objSrf.NormalAt(0.5, 0.5)
-        srfNormal.Unitize()
-        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
-        
-        if (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (1-tol < srfNormal.Z < 1+tol):
-            # "_PVsurface" surface is parallel to the XY plane, faced upward
-            srfAzimuthD = 180
-            surfaceTiltD = 0
-        elif (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (-1-tol < srfNormal.Z < -1+tol):
-            # "_PVsurface" surface is parallel to the XY plane, faced downward
-            srfAzimuthD = 180
-            surfaceTiltD = 180
-        else:
-            # "_PVsurface" surface is not parallel to the XY plane
-            if (-tol < srfNormal.Z < tol):
-                # "_PVsurface" surface is perpendicular to the XY plane, faced downward
-                surfaceTiltD = 90
-            else:
-                # "_PVsurface" surface is not parallel nor perpendicular to XY plane
-                surfaceTiltD = None
-            # calculate the srfAzimuthD
-            xyPlane = rc.Geometry.Plane(rc.Geometry.Point3d(0,0,0), rc.Geometry.Vector3d(0,0,1))
-            
-            projNormalPt = xyPlane.ClosestPoint(rc.Geometry.Point3d(srfNormal))
-            projNormal = rc.Geometry.Vector3d(projNormalPt)
-            projNormal.Unitize()
-            
-            angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
-            srfAzimuthR = angleToYaxis
-            srfAzimuthD = math.degrees(srfAzimuthR)
-        
-        return srfAzimuthD, surfaceTiltD
-    
-    def srfAzimuthAngle(self, PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
-        
-        # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
-        if (PVsurfaceAzimuthAngle != None):
-            if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
-                if latitude >= 0:
-                    srfAzimuthD = 180  # equator facing for northern hemisphere
-                elif latitude < 0:
-                    srfAzimuthD = 0  # equator facing for southern hemisphere
-            else:
-                srfAzimuthD = PVsurfaceAzimuthAngle
-            surfaceTiltDCalculated = "needs to be calculated"
-        
-        # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
-        elif (PVsurfaceAzimuthAngle == None):
-            if PVsurfaceInputType == "brep":
-                srfAzimuthD, surfaceTiltDCalculated = self.calculateSrfAzimuthAngle(PVsurface)
-                if surfaceTiltDCalculated == None:
-                    surfaceTiltDCalculated = "needs to be calculated"
-            
-            # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
-            elif PVsurfaceInputType == "number":
-                if latitude >= 0:
-                    srfAzimuthD = 180  # equator facing for northern hemisphere
-                elif latitude < 0:
-                    srfAzimuthD = 0  # equator facing for southern hemisphere
-                surfaceTiltDCalculated = "needs to be calculated"
-        
-        return srfAzimuthD, surfaceTiltDCalculated
-    
-    def calculateSrfTiltAngle(self, PVsurface):
-        # calculate PVsurface tilt angle
-        obj = PVsurface.DuplicateBrep()
-        zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
-        zAxis = rc.Geometry.Vector3d(0,0,1)
-        worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
-        boundingBox = rc.Geometry.Brep.GetBoundingBox(obj, worldXYplane)
-        boundingBoxBrep = boundingBox.ToBrep()
-        lowerFaceBB = boundingBoxBrep.Faces[4].DuplicateFace(False)
-        centroidLowerFaceBB = rc.Geometry.AreaMassProperties.Compute(lowerFaceBB).Centroid
-        lowerFaceBBPlane = rc.Geometry.Plane(centroidLowerFaceBB, zAxis)
-        transformMatrix = rc.Geometry.Transform.Translation(zeroZeroZeroPt-centroidLowerFaceBB)
-        obj.Transform(transformMatrix)
-        
-        objSrf = obj.Faces[0]
-        reparematizedDomain = rc.Geometry.Interval(0,1)
-        objSrf.SetDomain(0, reparematizedDomain)
-        objSrf.SetDomain(1, reparematizedDomain)
-        centroidClosestPoint = objSrf.PointAt(0.5, 0.5)
-        orientedSrfNormal = objSrf.NormalAt(0.5, 0.5)
-        transformMatrix2 = rc.Geometry.Transform.PlanarProjection(worldXYplane)
-        projectedSrf = rc.Geometry.Brep.DuplicateBrep(obj)
-        projectedSrf.Transform(transformMatrix2)
-        
-        intersectPlane = rc.Geometry.Plane(centroidClosestPoint, zAxis, orientedSrfNormal)
-        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
-        brepPlaneInterCrv1 = rc.Geometry.Intersect.Intersection.BrepPlane(obj, intersectPlane, tol)[1][0]
-        brepPlaneInterCrv2 = rc.Geometry.Intersect.Intersection.BrepPlane(projectedSrf, intersectPlane, tol)[1][0]
-        brepPlaneInterVec1 = rc.Geometry.Vector3d(brepPlaneInterCrv1.PointAtEnd - brepPlaneInterCrv1.PointAtStart)
-        brepPlaneInterVec2 = rc.Geometry.Vector3d(brepPlaneInterCrv2.PointAtEnd - brepPlaneInterCrv2.PointAtStart)
-        srfTitlR = rc.Geometry.Vector3d.VectorAngle(brepPlaneInterVec1, brepPlaneInterVec2)
-    
-        if orientedSrfNormal.Z < 0:
-            srfTitlR = math.pi - srfTitlR
-        srfTiltD = math.degrees(srfTitlR)
-        
-        return srfTiltD
-    
-    def srfTiltAngle(self, PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
-        
-        # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
-        if (PVsurfaceTiltAngle != None):
-            
-            if (PVsurfaceTiltAngle < 0):
-                srfTiltD = 0
-            elif (PVsurfaceTiltAngle > 180):
-                srfTiltD = 0
-            else:
-                srfTiltD = PVsurfaceTiltAngle
-        
-        # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
-        elif (PVsurfaceTiltAngle == None):
-            
-            # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
-            if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
-                srfTiltD = surfaceTiltDCalculated
-            elif surfaceTiltDCalculated == "needs to be calculated":
-                if PVsurfaceInputType == "brep":
-                    srfTiltD = self.calculateSrfTiltAngle(PVsurface)
-                # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
-                elif PVsurfaceInputType == "number":
-                    srfTiltD = abs(latitude)
-        
-        return srfTiltD
-    
-    def angle2northClockwise(self, north):
-        # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
-        try:
-            northVec = rc.Geometry.Vector3d.YAxis
-            northVec.Rotate(-math.radians(float(north)),rc.Geometry.Vector3d.ZAxis)
-            northVec.Unitize()
-            return 2*math.pi-math.radians(float(north)), northVec
-        except Exception, e:
-            try:
-                northVec =rc.Geometry.Vector3d(north)
-                northVec.Unitize()
-                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVec, rc.Geometry.Plane.WorldXY), northVec
-            except Exception, e:
-                return 0, rc.Geometry.Vector3d.YAxis
-    
-    def correctSrfAzimuthDforNorth(self, north, srfAzimuthD):
-        # nothing inputted in "north_" - use default value: 0
-        if north == None:
-            northDeg = 0  # default
-            correctedSrfAzimuthD = srfAzimuthD
-            validNorth = True
-            printMsg = "ok"
-        else:
-            try:  # check if it's a number
-                north = float(north)
-                if north < 0 or north > 360:
-                    correctedSrfAzimuthD = northDeg = None
-                    validNorth = False
-                    printMsg = "Please input north angle value from 0 to 360."
-                    return correctedSrfAzimuthD, validNorth, printMsg
-            except Exception, e:  # check if it's a vector
-                north.Unitize()
-            
-            northRad, northVec = self.angle2northClockwise(north)
-            northDeg = 360-math.degrees(northRad)
-            correctedSrfAzimuthD = northDeg + srfAzimuthD
-            if correctedSrfAzimuthD > 360:
-                correctedSrfAzimuthD = correctedSrfAzimuthD - 360
-            validNorth = True
-            printMsg = "ok"
-        
-        return correctedSrfAzimuthD, northDeg, validNorth, printMsg
     
     def inletWaterTemperature(self, dryBulbTemperature_C, method=0, minimalTemperature_C=1, depth_m=2, soilThermalDiffusivity_m2_s=2.5):
         # calculate cold (inlet) water temperature
