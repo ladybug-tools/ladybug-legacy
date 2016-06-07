@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAY_09_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_07_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -939,11 +939,12 @@ class Preparation(object):
         dirRad = [self.strToBeFound, location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
         difRad = [self.strToBeFound, location, 'Diffuse Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
         glbRad = [self.strToBeFound, location, 'Global Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        infRad = [self.strToBeFound, location, 'Horizontal Infrared Radiation Intensity', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dirIll = [self.strToBeFound, location, 'Direct Normal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
         difIll = [self.strToBeFound, location, 'Diffuse Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
         glbIll = [self.strToBeFound, location, 'Global Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
         cloudCov = [self.strToBeFound, location, 'Total Cloud Cover', 'tenth', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        rainDepth = [self.strToBeFound, location, 'Liquid Precipitation Depth', 'mm', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        visibility = [self.strToBeFound, location, 'Visibility', 'km', 'Hourly', (1, 1, 1), (12, 31, 24)];
         barPress = [self.strToBeFound, location, 'Barometric Pressure', 'Pa', 'Hourly', (1, 1, 1), (12, 31, 24)];
         epwfile = open(epw_file,"r")
         lnum = 1 # line number
@@ -959,16 +960,13 @@ class Preparation(object):
                 dirRad.append(float(line.split(',')[14]))
                 difRad.append(float(line.split(',')[15]))
                 glbRad.append(float(line.split(',')[13]))
+                infRad.append(float(line.split(',')[12]))
                 dirIll.append(float(line.split(',')[17]))
                 difIll.append(float(line.split(',')[18]))
                 glbIll.append(float(line.split(',')[16]))
                 cloudCov.append(float(line.split(',')[22]))
-                try:
-                    if float(line.split(',')[33])!=999: rainDepth.append(float(line.split(',')[33]))
-                    else: rainDepth.append(0.0)
-                except: pass
             lnum += 1
-        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress, modelYear
+        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, infRad, barPress, modelYear
     
     ##### Start of Gencumulative Sky
     def removeBlank(self, str):
