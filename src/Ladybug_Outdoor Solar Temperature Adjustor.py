@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.62
         _diffuseHorizRad: If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the "Ladybug_Import epw" component here.  Otherwise, this input is not required.
         _baseTemperature: A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can be air temperature data from the 'Import_epw' component and will follow the assumption that the surrounding mean radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more "contextShading_" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.
         _baseDryBulbOrMRT_: Set to 'True' to have the _baseTemperature above understood as the outdoor dry bulb air temperature, in which case this component will attempt to account for long wave radiation by computing sky temperature and assuming all other surfaces are at the specified _baseTemperature.  Set to 'False' to have the input above interpreted as a starting long wave MRT, which will only be increased to account for short wave radiation.  The latter is useful for indoor conditions where you can compute a starting long wave MRT from the indoor surface temperatures.  The default is set to 'True' to interpret the input above as outdoor air temperature.
-        _relativeHumidity: A number or list of numbers representing relative humidity of the outdoor conditions.  This input is only necessary to calculate sky temperature if the input above is set to 'True.'
+        _horizInfraredRad: A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'
         -------------------------: ...
         bodyPosture_: An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting.
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.62\nMAY_15_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_07_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -107,7 +107,7 @@ inputsDict = {
 2: ["_diffuseHorizRad", "If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the 'Ladybug_Import epw' component here.  Otherwise, this input is not required."],
 3: ["_baseTemperature", "A number or list of numbers representing either the outdoor dry bulb air temperture (if the input below is set to 'True') or the long wave mean radiant temperature (MRT) of the surrounding surfaces in degrees Celcius (if the input below is set to 'False').  The former is useufl for computing outdoor MRT if you only have the air temperature while the latter is useful for indoor conditions when you can compute a starting long wave MRT from the indoor surface temperatures."],
 4: ["_baseDryBulbOrMRT_", "Set to 'True' to have the _baseTemperature above understood as the outdoor dry bulb air temperature, in which case this component will attempt to account for long wave radiation by computing sky temperature and assuming all other surfaces are at the specified _baseTemperature.  Set to 'False' to have the input above interpreted as a starting long wave MRT, which will only be increased to account for short wave radiation.  The latter is useful for indoor conditions where you can compute a starting long wave MRT from the indoor surface temperatures.  The default is set to 'True' to interpret the input above as outdoor air temperature."],
-5: ["_relativeHumidity", "A number or list of numbers representing relative humidity of the outdoor conditions.  This input is only necessary to calculate sky temperature if the input above is set to 'True.'"],
+5: ["_horizInfraredRad", "A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'"],
 6: ["-------------------------", "..."],
 7: ["bodyPosture_", "An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting."],
 8: ["rotationAngle_", "An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature."],
@@ -530,37 +530,37 @@ def checkTheInputs():
     
     #Check to see if the user has connected valid relative humidity data.
     checkData2 = False
-    relHumid = []
+    infraredRad = []
     try:
         try:
-            if "Humidity" in _relativeHumidity[2]:
-                relHumid = _relativeHumidity[7:]
+            if "Infrared Radiation" in _horizInfraredRad[2]:
+                infraredRad = _horizInfraredRad[7:]
                 checkData2 = True
                 epwData = True
-                epwStr = _relativeHumidity[0:7]
+                epwStr = _horizInfraredRad[0:7]
         except: pass
         if checkData2 == False:
-            for item in _relativeHumidity:
+            for item in _horizInfraredRad:
                 try:
-                    relHumid.append(float(item))
+                    infraredRad.append(float(item))
                     checkData2 = True
                 except: checkData2 = False
         if checkData2 == False:
-            warning = '_relativeHumidity input does not contain valid relative humidty values.'
+            warning = '_horizInfraredRad input does not contain valid long wave sky radiation values.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1
         
         
         #If there is only one value for MRT, duplicate it 8760 times.
-        if len(relHumid) < 8760 and len(relHumid) !=0:
-            if len(relHumid) == 1:
+        if len(infraredRad) < 8760 and len(infraredRad) !=0:
+            if len(infraredRad) == 1:
                 dupData = []
                 for count in range(8760):
-                    dupData.append(relHumid[0])
-                relHumid = dupData
+                    dupData.append(infraredRad[0])
+                infraredRad = dupData
             else:
-                warning = 'Input for _relativeHumidity must be either the output of the import EPW component, a list of 8760 values, or a single relative humidity to be applied for every hour of the year.'
+                warning = 'Input for _horizInfraredRad must be either the output of the import EPW component, a list of 8760 values, or a single relative humidity to be applied for every hour of the year.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1
@@ -583,7 +583,7 @@ def checkTheInputs():
         return -1
     
     
-    return methodInit, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
+    return methodInit, baseTempType, radTemp, infraredRad, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
 
 
 def manageInputOutput(method, baseTempType):
@@ -823,35 +823,14 @@ def convertFluxToTemp(radiantFlux, cloA, fracEff, radTransCoeff, currentRT, avgW
     
     return avgRT
 
-
-def VapourPressure(Ta, rh):
-    # formula by ITS-90 formulations for vapor pressure, frostpoint temperature, dewpoint temperature, and enhancement factors in the range 100 to +100 c, Thunder Scientific Corporation, Albuquerque, NM, Bob Hardy
-    TaK = Ta + 273.15   # convert to Kelvins
-    
-    TS90coefficients = [-2.8365744*(10**(3)), -6.028076559*(10**(3)), 1.954263612*(10**(1)), -2.737830188*(10**(-2)), 1.6261698*(10**(-5)), 7.0229056*(10**(-10)), -1.8680009*(10**(-13)), 2.7150305]
-    e_s = TS90coefficients[7]*math.log(TaK)
-    
-    for i in range(7):
-        e_s += TS90coefficients[i]*(TaK**(i-2))
-    
-    es = math.exp(e_s)  # in Pa
-    
-    es = (es*0.01*rh)/100  # convert to hPa
-    
-    return es
-
-def computeSkyTemp(Ta, rh):
-    e = VapourPressure(Ta, rh)
-    
+def computeSkyTemp(La):
     # formula by Man-ENvironment heat EXchange model (MENEX_2005)
     # incoming long-wave radiation emitted from the sky hemisphere, in W/m2
-    La = 5.5*(10**(-8)) *((273 + Ta)**(4)) *(0.82 - 0.25*(10**(-0.094*0.75*e)))
-    
     skyTemp = (((La) / (0.95*5.667*(10**(-8))))**(0.25)) - 273
     
     return skyTemp
 
-def main(method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
+def main(method, baseTempType, radTemp, infraredRad, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
@@ -878,7 +857,7 @@ def main(method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, con
     for hour in HOYS:
         newRadTemp.append(radTemp[hour-1])
         if baseTempType == True:
-            skyTemp.append(computeSkyTemp(radTemp[hour-1], relHumid[hour-1]))
+            skyTemp.append(computeSkyTemp(infraredRad[hour-1]))
     radTemp = newRadTemp
     
     #Calculate the sun-up hours of the year to help make things faster down the road.
@@ -1198,7 +1177,7 @@ def main(method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, con
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
 
 
-def mainSimple(baseTempType, radTemp, relHumid, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath):
+def mainSimple(baseTempType, radTemp, infraredRad, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
@@ -1225,7 +1204,7 @@ def mainSimple(baseTempType, radTemp, relHumid, mannequinMesh, context, groundR,
     for hour in HOYS:
         newRadTemp.append(radTemp[hour-1])
         if baseTempType == True:
-            skyTemp.append(computeSkyTemp(radTemp[hour-1], relHumid[hour-1]))
+            skyTemp.append(computeSkyTemp(infraredRad[hour-1]))
     radTemp = newRadTemp
     
     #Calculate the sun-up hours of the year in order to understand whether the context geometry will block the sun.
@@ -1534,7 +1513,7 @@ if initCheck == True:
     #Check the inputs
     results = checkTheInputs()
     if results!= -1:
-        method, baseTempType, radTemp, relHumid, mannequinMesh, groundMesh, context, groundR, \
+        method, baseTempType, radTemp, infraredRad, mannequinMesh, groundMesh, context, groundR, \
         cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, \
         timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, \
         directSolarRad, diffSolarRad, location, tempOrRad, \
@@ -1550,14 +1529,14 @@ if initCheck == True:
 
 if _runIt == True and checkInputOutput == True:
     if method == 0 or method == 1:
-        result = main(method, baseTempType, radTemp, relHumid, mannequinMesh, \
+        result = main(method, baseTempType, radTemp, infraredRad, mannequinMesh, \
         groundMesh, context, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, \
         northVector, epwStr, conversionFac, cumSkyMtx, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, \
         lb_runStudy_GH, lb_comfortModels, lb_sunpath)
         if result != -1:
             effectiveRadiantField, MRTDelta, solarAdjustedMRT, mannequinMesh, legend, legendBasePt, meshFaceResult, meshFaceArea = result
     else:
-        result = mainSimple(baseTempType, radTemp, relHumid, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath)
+        result = mainSimple(baseTempType, radTemp, infraredRad, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath)
         if result != -1:
             effectiveRadiantFieldInit, MRTDeltaInit, solarAdjustedMRTInit = result
             #Unpack the Data Trees of values.
