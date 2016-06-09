@@ -76,11 +76,11 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.62\nJUN_07_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_08_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJUN_07_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
