@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nJUN_07_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_26_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -867,55 +867,53 @@ class Preparation(object):
             ground temperature data corresponds to is the 2nd item in the list of all the ground temperature data.
         """
         
-        
-        epwfile = open(epw_file,"r")
-        
         groundtemp1st = [self.strToBeFoundgt, location, 'Depth', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         
-        lnum = 1 # Line number
-        
-        with epwfile as i:
-            for line in i: 
-                if lnum == 3:
+
+        with open(epw_file,"r") as i:
+            for lnum, line in enumerate(i): 
+                if lnum > 3:
+                    break
+                elif lnum == 3:
                     noData = False
-                    groundtemp = epwfile.readline().split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
+                    groundtemp = line.split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
                     
                     self.groundtemp = groundtemp
                     
                     def stringtoFloat(sequence): # stringtoFloattion that converts strings to floats, if not possible it passes
-                    	strings = []
-                    	seq = [] # line 18 - data = CSV.Branch(month_-1) creates grasshoppers own List[object] this does not contain a remove method'
-                    	# therefore in line 4 6 and 7 we must add the data to a python list to be able to use the function
-                    	for item in sequence:
-                    		seq.append(item)
-                    	for i in range(len(seq)):
-                    		try:
-                    			seq[i] = float(seq[i])
-                    		except:
-                    			strings.append(seq[i])
-                    	for x in strings:
-                    		seq.remove(x)
-                    	return seq
+                        strings = []
+                        seq = [] # line 18 - data = CSV.Branch(month_-1) creates grasshoppers own List[object] this does not contain a remove method'
+                        # therefore in line 4 6 and 7 we must add the data to a python list to be able to use the function
+                        for item in sequence:
+                            seq.append(item)
+                        for i in range(len(seq)):
+                            try:
+                                seq[i] = float(seq[i])
+                            except:
+                                strings.append(seq[i])
+                        for x in strings:
+                            seq.remove(x)
+                        return seq
                     
                     if noData == False:
-                        groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
-                        groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
-                        groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
-                        
-                        self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
-                        try: self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
-                        except: pass
-                        try: self.depthData(groundtemp3rd,float(groundtemp[34]))
-                        except: pass
-                    
-                else:
-                    pass
-                lnum += 1
-                
+                        try:
+                            groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
+                            groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
+                            groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
+                            
+                            self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
+                            try: self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
+                            except: pass
+                            try: self.depthData(groundtemp3rd,float(groundtemp[34]))
+                            except: pass
+                        except:
+                            print ">>> Failed to import ground temperatures from %s." % epw_file
+
         return groundtemp1st,groundtemp2nd,groundtemp3rd
-    
+
+
     def printgroundTempData(self,groundtemp):
                     
         try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st) ' + groundtemp[18]+ ' meters (2nd) '+ groundtemp[34]+' meters (3rd) respectively'
