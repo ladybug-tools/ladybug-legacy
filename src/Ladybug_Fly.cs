@@ -225,7 +225,7 @@ public class Script_Instance : GH_ScriptInstance
         popupMessage += "\n";
       }
       if (System.Windows.Forms.MessageBox.Show(sliders.Count + " slider(s) connected:\n" + popupMessage +
-        "\n" + totalLoops.ToString() + " iterations will be done. Continue?", "Start?", MessageBoxButtons.YesNo) == DialogResult.No)
+        "\n" + totalLoops.ToString() + " iterations will be done. Continue?"+ "\n\n (Press ESC to pause during progressing!)", "Start?", MessageBoxButtons.YesNo) == DialogResult.No)
       {
         SetBooleanToFalse(boolTrigger);
         Component.Message = "Release the fly!";
