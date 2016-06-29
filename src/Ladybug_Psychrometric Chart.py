@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_19_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_28_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -229,10 +229,8 @@ def checkTheInputs():
         if checkData3 == False:
             for item in barometricPressure_:
                 try:
-                    if 0 <= float(item) <= 100:
-                        barPress.append(float(item))
-                        checkData3 = True
-                    else: nonValue = False
+                    barPress.append(float(item))
+                    checkData3 = True
                 except:checkData3 = False
         if nonValue == False: checkData3 = False
         if len(barPress) > 1: pressMultVal = True
