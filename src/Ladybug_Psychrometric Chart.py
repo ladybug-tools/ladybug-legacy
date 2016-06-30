@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.62\nJUN_28_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_29_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1911,9 +1911,13 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if scale_ != None:
             transformMtx = rc.Geometry.Transform.Scale(basePoint, scale_)
             for geo in chartCurves: geo.Transform(transformMtx)
-            coloredMesh.Transform(transformMtx)
+            try:
+                coloredMesh.Transform(transformMtx)
+            except: pass
             for geo in legend: geo.Transform(transformMtx)
-            legendBasePoint.Transform(transformMtx)
+            try:
+                legendBasePoint.Transform(transformMtx)
+            except: pass
             for geo in comfortPolygon: geo.Transform(transformMtx)
             for geo in strategyPolygons: geo.Transform(transformMtx)
             for geo in hourPts: geo.Transform(transformMtx)
