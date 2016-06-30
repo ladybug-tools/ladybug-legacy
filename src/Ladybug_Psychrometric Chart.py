@@ -1885,7 +1885,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if mollierHX_ == True:
             for item in chartCurves:
                 if str(item.ObjectType) == 'Curve': mollierHXTransform(item)
-            mollierHXTransform(coloredMesh)
+            try:
+                mollierHXTransform(coloredMesh)
+            except: pass
             for geo in comfortPolygon: mollierHXTransform(geo)
             for geo in strategyPolygons: mollierHXTransform(geo)
             for geo in hourPts: mollierHXTransform(geo)
@@ -1895,9 +1897,13 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if basePoint_ != None:
             transformMtx = rc.Geometry.Transform.Translation(basePoint_.X, basePoint_.Y, basePoint_.Z)
             for geo in chartCurves: geo.Transform(transformMtx)
-            coloredMesh.Transform(transformMtx)
+            try:
+                coloredMesh.Transform(transformMtx)
+            except: pass
             for geo in legend: geo.Transform(transformMtx)
-            legendBasePoint.Transform(transformMtx)
+            try:
+                legendBasePoint.Transform(transformMtx)
+            except: pass
             for geo in comfortPolygon: geo.Transform(transformMtx)
             for geo in strategyPolygons: geo.Transform(transformMtx)
             for geo in hourPts: geo.Transform(transformMtx)
