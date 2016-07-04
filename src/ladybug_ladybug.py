@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nJUN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_28_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2366,9 +2366,13 @@ class RunAnalysisInsideGH(object):
         
         #Get the importance for view vectors.
         vecImportance = []
-        totalArea = sum(patchAreas)
-        for area in patchAreas:
-            vecImportance.append((area*100)/totalArea)
+        if viewType == 0:
+            for vec in viewPoints:
+                vecImportance.append(1)
+        else:
+            totalArea = sum(patchAreas)
+            for area in patchAreas:
+                vecImportance.append((area*100)/totalArea)
         
         
         #Create an empty list to be filled.
