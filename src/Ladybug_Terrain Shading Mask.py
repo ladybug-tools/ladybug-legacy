@@ -31,13 +31,15 @@ Also try saving your .gh definition before running this component!
 -
 Component requires that you are connected to the Internet, as it has to download topography data for each terrain shading mask.
 It also requires certain GDAL libraries to be downloaded manually. Component will provide instructions on where to download these libraries.
+Additionally you can find the instructions in here:
+For Rhino5 x86:  https://github.com/stgeorges/terrainShadingMask/blob/master/miscellaneous/Installation_instructions_Rhino5_x86.md
+For Rhino5 x64:  https://github.com/stgeorges/terrainShadingMask/blob/master/miscellaneous/Installation_instructions_Rhino5_x64.md
 -
 Component mainly based on:
 
 "Mathematical cartography", V. Jovanovic, VGI 1983.
 "Surveying and Levelling Second Edition", Tata McGraw-Hill Education Pvt. Ltd., 5.7 Corrections to be applied, N.N. Basak, 2004
 "Vincenty solutions of geodesics on the ellipsoid" article by Chris Veness
--
 https://books.google.rs/books/about/Matemati%C4%8Dka_kartografija.html?id=GcXEMgEACAAJ&redir_esc=y
 https://books.google.rs/books?id=fIvvAwAAQBAJ&printsec=frontcover#v=onepage&q&f=false
 http://www.movable-type.co.uk/scripts/latlong-vincenty.html
@@ -135,6 +137,11 @@ Provided by Ladybug 0.0.62
                   The originPt represent the center point of the inputted "context_" geometry. It's Z coordinate will always correspond to the Z coordinate of the lowest part of the "context_" geometry.
                   -
                   Use this point to move the "terrainShadingMask", "compassCrvs" and "title" geometry around in the Rhino scene with grasshopper's "Move" component.
+        librariesFolder: Folder path where GDAL libraries should be copied.
+                         -
+                         It is created as:
+                         Ladybug_Ladybug component's "defaultFolder_" + "terrain shading mask libraries 32-bit"  for Rhino5 x86,
+                         Ladybug_Ladybug component's "defaultFolder_" + "terrain shading mask libraries 64-bit"  for Rhino5 x64.
         contextRadius: The radius of the "context_" input
                        -
                        If nothing supplied to the "context_" input, the contextRadius will be equal to 0.
@@ -142,7 +149,8 @@ Provided by Ladybug 0.0.62
                        In Rhino document units.
         maskRadius: The radius of the "terrainShadingMask" output.
                     -
-                    If nothing supplied to the "context_" input, the maskRadius is equal to 200.
+                    If nothing supplied to the "context_" input, the maskRadius is set to 200 meters (655 feets).
+                    If something supplied to the "context_" input, the minimal maskRadius is set to 10000 meters (32786 feets).
                     -
                     In Rhino document units.
         elevation: Elevation of the viewpoint.
@@ -154,7 +162,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Terrain Shading Mask"
 ghenv.Component.NickName = "TerrainShadingMask"
-ghenv.Component.Message = "VER 0.0.62\nJUN_28_2016"
+ghenv.Component.Message = "VER 0.0.62\nJUL_04_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -230,23 +238,45 @@ def checkInputData(minVisibilityRadiusKM, maxVisibilityRadiusKM, north, maskStyl
         # 32 bit GDAL,OSR,OGR libraries
         GDAL_librariesFolderPath = os.path.join(ladybugFolderPath, "terrain shading mask libraries 32-bit")
         bitVersion = "win32"
-        zipFileNameWithoutExtension = "release-1800-gdal-1-11-3-mapserver-6-4-3"
-        zipFileNameWithExtension = "release-1800-gdal-1-11-3-mapserver-6-4-3.zip"
+        rhino5version = "x86"
+        zipFileNameWithoutExtension = "release-1800-gdal-1-11-4-mapserver-6-4-3"
+        zipFileNameWithExtension = "release-1800-gdal-1-11-4-mapserver-6-4-3.zip"
+        windowsXPtext = " \n" + \
+                        "Note: Windows XP operating system may need a different version of GDAL libraries not available from the gisinternals.com website.\n" + \
+                        "If you are using Windows XP, instead of following the step 1, download the appropriate XP GDAL libraries from: https://www.dropbox.com/s/08mt7r45l68s27v/release-1500-gdal-1-11-1-mapserver-6-4-1_windowsXP.zip?dl=0\n" + \
+                        "Then follow the steps 2, 3 and 4.\n" + \
+                        " "
     elif System.Environment.Is64BitProcess == True:
         # 64 bit GDAL,OSR,OGR libraries
         GDAL_librariesFolderPath = os.path.join(ladybugFolderPath, "terrain shading mask libraries 64-bit")
         bitVersion = "x64"
-        zipFileNameWithoutExtension = "release-1800-x64-gdal-1-11-3-mapserver-6-4-3"
-        zipFileNameWithExtension = "release-1800-x64-gdal-1-11-3-mapserver-6-4-3.zip"
+        rhino5version = "x64"
+        zipFileNameWithoutExtension = "release-1800-x64-gdal-1-11-4-mapserver-6-4-3"
+        zipFileNameWithExtension = "release-1800-x64-gdal-1-11-4-mapserver-6-4-3.zip"
+        windowsXPtext = " "
     
     folderCreated = createFolder(GDAL_librariesFolderPath)
     if folderCreated == False:
-        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = GDAL_librariesFolderPath = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
         validInputData = False
         printMsg = "\"defaultFolder_\" input you supplied to the \"Ladybug Ladybug\" component is invalid.\n" + \
                    "Input the string in the following format (example): C:\someFolder.\n" + \
                    "Or do not input anything, in which case the default Ladybug folder will be used instead."
         return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
+    
+    
+    unitSystem = Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem
+    if (unitSystem != Rhino.UnitSystem.Meters) and (unitSystem != Rhino.UnitSystem.Feet):
+        # only Meters and Feets Rhino Document units are allowed
+        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+        validInputData = False
+        printMsg = "The component allows the usage of either Meter or Feet Rhino Document units.\n" + \
+                   " \n" + \
+                   "A radius of the Terrain shading mask will be determined according to the context_ input. This radius may range to a couple of thousands of meters.\n" + \
+                   "Using such mask with %s unit can result in very high radius number when converted from meters to %s. Which means that the mask can be very distant from the 0,0,0 origin. Due to floating-point precision, such distant geometry can often experience inaccuracy problems.\n" % (unitSystem, unitSystem) + \
+                   "This is why Terrain shading mask component can only be used with either Meters and Feets Rhino document units. Choose one of these two, and then rerun the component."
+        return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
+    
     
     try:
         clr.AddReferenceToFileAndPath(os.path.join(GDAL_librariesFolderPath, "gdal_csharp.dll"))
@@ -271,36 +301,64 @@ def checkInputData(minVisibilityRadiusKM, maxVisibilityRadiusKM, north, maskStyl
         try:
             gdalc.Gdal.AllRegister()
         except System.Exception as e:
-            pass
+            # gdal_csharp, osr_csharp, ogr_csharp files are located in the "terrain shading mask libraries 32(64)-bit" folder, but some of the other files are not (for example: either step 4 was completed but step 3 wasn't)
+            heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+            validInputData = False
+            printMsg = "The GDAL libraries are not installed properly. Please make sure that you followed all of the previously mentioned four steps.\n" + \
+                       " \n" + \
+                       "Check this page for graphical preview of the steps: \n" + \
+                       "https://github.com/stgeorges/terrainShadingMask/blob/master/miscellaneous/Installation_instructions_Rhino5_%s.md\n" % rhino5version + \
+                       " \n" + \
+                       "If after this, you still get this same message (of GDAL libraries not installed properly) please post a question about this issue at:\n" + \
+                       "www.grasshopper3d.com/group/ladybug/forum/topics/terrain-shading-mask-component-released."
+            return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
         
         # set the folderpath for "gdal-data" folder (GDAL support files)
         gdal_data_folderPath = os.path.join(GDAL_librariesFolderPath, "gdal-data")
         gdalc.Gdal.PushFinderLocation(gdal_data_folderPath)  # necessary for 64 bit GDAL .dlls in order to identify gcs.csv file
     
     else:
-        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
-        validInputData = False
-        printMsg = "This component requires GDAL libraries in order to be able to work. To get them, just follow these four simple steps below:\n" + \
-                   " \n" + \
-                   "1) Go to: http://gisinternals.com/release.php\n" + \
-                   "Click on the latest \"MSVC 2013\" %s version (for example: %s) at the bottom of the page.\n" % (bitVersion,zipFileNameWithoutExtension) + \
-                   "Then click on the link at the very top (for example: %s). This will activate the .zip file download.\n" % zipFileNameWithExtension + \
-                   " \n" + \
-                   "2) Check if the downloaded .zip file has been blocked: right click on it, choose \"Properties\", and choose \"Unblock\" if it's enabled, then \"OK\". If \"Unblock\" is disabled, just click on \"OK\".\n" + \
-                   " \n" + \
-                   "3) Extract the downloaded .zip file content anywhere. Then copy the content from its \"bin\" folder to the \"%s\" folder.\n" % GDAL_librariesFolderPath + \
-                   " \n" + \
-                   "4) Copy the content from its \"bin\gdal\csharp\" folder to the same \"%s\" folder.\n" % GDAL_librariesFolderPath + \
-                   "That's it!\n" + \
-                   "Now run the component (set the \"_runIt\" to \"True\").\n" + \
-                   " \n" + \
-                   "If the component still isn't working after you followed all four steps, please post a question about this issue on: www.grasshopper3d.com/group/ladybug/forum.\n" + \
-                   "Note: Windows XP operating system may need a different version of GDAL libraries not available from the gisinternals.com website.\n" + \
-                   "If you are using Windows XP, instead of following the step 1, download the appropriate XP GDAL libraries from: https://www.dropbox.com/s/08mt7r45l68s27v/release-1500-gdal-1-11-1-mapserver-6-4-1_windowsXP.zip?dl=0\n" + \
-                   "Then follow the steps 2, 3 and 4."
-        GDAL_librariesFolderPath = None  # goes to the bottom so that it does not interfere with the "GDAL_librariesFolderPath" called in above "printMsg"
-        
-        return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
+        # check if the "terrain shading mask libraries 32(64)-bit" folder is not empty.
+        if os.listdir(GDAL_librariesFolderPath) != []:
+            # "terrain shading mask libraries 32(64)-bit" folder is not empty (for example: either step 3 was completed but step 4 wasn't or vice versa)
+            heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+            validInputData = False
+            printMsg = "The GDAL libraries are not installed properly. Please make sure that you followed all of the previously mentioned four steps.\n" + \
+                       " \n" + \
+                       "Check this page for graphical preview of the steps: \n" + \
+                       "https://github.com/stgeorges/terrainShadingMask/blob/master/miscellaneous/Installation_instructions_Rhino5_%s.md\n" % rhino5version + \
+                       " \n" + \
+                       "If after this, you still get this same message (of GDAL libraries not installed properly) please post a question about this issue at:\n" + \
+                       "www.grasshopper3d.com/group/ladybug/forum/topics/terrain-shading-mask-component-released."
+            return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
+        else:
+            # "terrain shading mask libraries 32(64)-bit" folder is EMPTY (neither step 3 nor step 4 have been performed)
+            heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+            validInputData = False
+            printMsg = "This component requires GDAL libraries in order to be able to work. To install them, follow the four simple steps below.\n" + \
+                       " \n" + \
+                       "Here is a page with graphical preview of the steps: \n" + \
+                       "https://github.com/stgeorges/terrainShadingMask/blob/master/miscellaneous/Installation_instructions_Rhino5_%s.md\n" % rhino5version + \
+                       " \n" + \
+                       "And this is the shortened explanation of the steps:\n" + \
+                       " \n" + \
+                       "1) Go to: http://gisinternals.com/release.php\n" + \
+                       "Click on the latest \"GDAL 1.x.x and MapServer 6.x.x\" \"MSVC 2013 %s\" version (at the moment that may be: %s).\n" % (bitVersion,zipFileNameWithoutExtension) + \
+                       "Then click on the link at the very top (at the moment that may be: %s). This will activate the .zip file download.\n" % zipFileNameWithExtension + \
+                       " \n" + \
+                       "2) Check if the downloaded .zip file has been blocked: right click on it, choose \"Properties\". If there is an \"Unblock\" button, click on it, then click on \"OK\". If there is no \"Unblock\" button, just click on \"OK\".\n" + \
+                       " \n" + \
+                       "3) Extract the downloaded .zip file content anywhere. Then copy the content from its \"bin\" folder to the \"%s\" folder.\n" % GDAL_librariesFolderPath + \
+                       "So copy the content of the \"bin\" folder, not the \"bin\" folder itself.\n" + \
+                       " \n" + \
+                       "4) Copy the content from the \"bin\gdal\csharp\" folder to the same \"%s\" folder.\n" % GDAL_librariesFolderPath + \
+                       "So copy the content of the \"bin\gdal\csharp\" folder, not the \"bin\gdal\csharp\" folder itself.\n" + \
+                       " \n" + \
+                       "That's it!\n" + \
+                       "Now run the component (set the \"_runIt\" to \"True\").\n" + \
+                       " \n" + \
+                       "%s" % windowsXPtext
+            return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
     
     
     
@@ -321,13 +379,13 @@ def checkInputData(minVisibilityRadiusKM, maxVisibilityRadiusKM, north, maskStyl
         print "minVisibilityRadius_ input only supports values equal or larger than 0 kilometer.\n" + \
               "minVisibilityRadius_ input set to 0 kilometer."
     elif (minVisibilityRadiusKM > 10):
-        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = GDAL_librariesFolderPath = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
         validInputData = False
         printMsg = "minVisibilityRadius_ values longer than 10 are not supported.\n" + \
                    "Please set the minVisibilityRadius_ to some value from 0 to 10 (0 being recommended unless you are doing an analysis of big parts of a city)."
         return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
     if (3 * minVisibilityRadiusKM > maxVisibilityRadiusKM):
-        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = GDAL_librariesFolderPath = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
         validInputData = False
         printMsg = "minVisibilityRadius_ value can not be longer than one third of maxVisibilityRadius_.\n" + \
                    "Please set the minVisibilityRadius_ to some value from 0 to 10 so that the minVisibilityRadius_ is equal or less than 0.3*maxVisibilityRadius_."
@@ -345,7 +403,7 @@ def checkInputData(minVisibilityRadiusKM, maxVisibilityRadiusKM, north, maskStyl
         print "maxVisibilityRadius_ input only supports values equal or larger than 1 kilometer.\n" + \
               "maxVisibilityRadius_ input set to 1 kilometer."
     elif (maxVisibilityRadiusKM > 400):
-        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = GDAL_librariesFolderPath = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
         validInputData = False
         printMsg = "Radii longer than 400 are not supported, due to the following reason:\n" + \
                    "The longest recorded horizontal visibility distance (which is the maxVisibilityRadius_ in our case) during daylight is 388 km.\n" + \
@@ -371,7 +429,7 @@ def checkInputData(minVisibilityRadiusKM, maxVisibilityRadiusKM, north, maskStyl
         try:  # check if it's a number
             north = float(north)
             if north < 0 or north > 360:
-                heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = GDAL_librariesFolderPath = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+                heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
                 validInputData = False
                 printMsg = "Please input north angle value from 0 to 360."
                 return heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg
@@ -402,7 +460,7 @@ def checkInputData(minVisibilityRadiusKM, maxVisibilityRadiusKM, north, maskStyl
         workingSubFolderPath = os.path.join(workingFolderPath, "terrain shading masks")
     folderCreated = createFolder(workingSubFolderPath)
     if folderCreated == False:
-        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = GDAL_librariesFolderPath = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
+        heightM = minVisibilityRadiusM = maxVisibilityRadiusM = northRad = northVec = maskStyle = maskStyleLabel = workingSubFolderPath = downloadTSVLink = unitConversionFactor = None
         validInputData = False
         printMsg = "workingFolder_ input is invalid.\n" + \
                    "Input the string in the following format (example): C:\someFolder.\n" + \
@@ -724,6 +782,7 @@ def checkObjRasterFile(fileNameIncomplete, workingSubFolderPath, downloadTSVLink
                 if "Elevation" in line:
                     splittedLine = line.split(" ")
                     elevationM = splittedLine[2]
+                    #elevationM = float(splittedLine[2])/0.305  # ovo mi ne treba. "elevation" output ce uvek da bude u meters
                     break
             else:
                 elevationM = None  # is somebody opened the .obj file and deleted the heading for some reason
@@ -1059,6 +1118,7 @@ def createTerrainShadingMask(GDAL_librariesFolderPath, objFilePath, rasterFilePa
     elevationM = locationPt.Z/scaleFactor  # in meters
     elevationM = round(elevationM,2)
     
+    
     minVisibilityRadiusScaled = minVisibilityRadiusM * scaleFactor
     if minVisibilityRadiusM > 0:
         # split the terrainMesh with a sphere to exclude the terrainMesh area minVisibilityRadiusKM around the locationPt
@@ -1173,10 +1233,11 @@ def scaleTerrainShadingMask(context, terrainShadingMaskUnscaledUnrotated, origin
     for filteredContextMesh in contextMeshesFiltered:
         contextMeshOnly.Append(filteredContextMesh)
     
+    unitConversionFactor2 = lb_preparation.checkUnits()
     if len(contextMeshesFiltered) == 0:
         # "context_" input is empty, or it contains the data but with "None" values
-        scale = 1
-        terrainShadingMaskScaled_radius = 200
+        scale = 1 / unitConversionFactor2
+        terrainShadingMaskScaled_radius = int(200 / unitConversionFactor2)
         contextRadius = 0
         contextCentroid = Rhino.Geometry.Point3d(0,0,0)
     
@@ -1186,15 +1247,26 @@ def scaleTerrainShadingMask(context, terrainShadingMaskUnscaledUnrotated, origin
         accurate = False
         bboxAroundContextMeshesOnly = contextMeshOnly.GetBoundingBox(accurate)
         contextBBoxBottom4points = bboxAroundContextMeshesOnly.GetCorners()[:4]  # pick four bottom points of the bounding box surrounding all of the "context_" input
-        contextRadius = int(contextBBoxBottom4points[0].DistanceTo(contextBBoxBottom4points[2])/2)
+        contextRadius = int(contextBBoxBottom4points[0].DistanceTo(contextBBoxBottom4points[2])/2)  # in Rhino document units
         # calculate contextCentroid
         startingSumPts = Rhino.Geometry.Point3d(0,0,0)
         for pt in contextBBoxBottom4points:
             startingSumPts += pt
         contextCentroid = startingSumPts/len(contextBBoxBottom4points)  # average point
-        diagonalDistance = contextBBoxBottom4points[0].DistanceTo(contextBBoxBottom4points[2])
-        terrainShadingMaskScaled_startingRadius = int(math.ceil((diagonalDistance/2)/100)*100)  # round the radius to 100
-        if terrainShadingMaskScaled_startingRadius < 200: terrainShadingMaskScaled_startingRadius = 200
+        
+        # check the distance between the 0,0,0 origin and the contextCentroid
+        if origin_0_0_0.DistanceTo(contextCentroid) > 500:  # the distance between the 0,0,0 point and originPt should not be larger than 500 Rhino document Units (not meters!)
+            scale = terrainShadingMaskScaled_radius = contextRadius = None
+            validContextCentroid = False
+            printMsg = "Radius of the terrain shading mask may range to a couple of kilometers. If not centered to the 0,0,0 point, such distant geometry can experience inaccuracy problems due to floating-point precision.\n" + \
+                       "To prevent this the center of the terrain shading mask (that's the \"originPt\" output) should not be more than 500 Rhino document units distant from the Rhino document's 0,0,0 origin.\n" + \
+                       "The \"originPt\" output is calculated as the centroid of the bottom face of the context_ bounding box. So to make the component work, just try to approximately center the \"originPt\" to the 0,0,0 point.\n" + \
+                       "Then rerun the component."
+            return scale, terrainShadingMaskScaled_radius, contextRadius, contextCentroid, validContextCentroid, printMsg
+        
+        diagonalDistance = contextBBoxBottom4points[0].DistanceTo(contextBBoxBottom4points[2])   # in Rhino document units
+        terrainShadingMaskScaled_startingRadius = int(math.ceil((diagonalDistance/2)/100)*100)  # round the radius to 100 (in Rhino document units)
+        if terrainShadingMaskScaled_startingRadius < (300/unitConversionFactor2): terrainShadingMaskScaled_startingRadius = int(300/unitConversionFactor2)  # minimal terrainShadingMaskScaled_startingRadius set to 300 meters
         
         # move the terrainShadingMaskUnscaledUnrotated from origin_0_0_0 to contextCentroid, and rotate it for the north_ input. This "terrainShadingMaskScaledRotated_forMesh" variable is only used for scaling not as the final "terrainShadingMask"
         terrainShadingMaskScaledRotated_forMesh = terrainShadingMaskUnscaledUnrotated.DuplicateBrep()
@@ -1213,12 +1285,12 @@ def scaleTerrainShadingMask(context, terrainShadingMaskUnscaledUnrotated, origin
         for meshMaskPart in shadingTerrainMaskMeshes:
             terrainShadingMaskMesh.Append(meshMaskPart)
         
-        skyDomeRadius = 200  # fixed to 200 always
+        skyDomeRadius = 200/unitConversionFactor2  # fixed to 200 meters always
         precision = 100  # low "precision" values can result in low "terrainShadingMaskScaled_radius" values
         skyDomeMeshes = []
         scaledTerrainShadingMaskMeshL = []
-        for terrainShadingMaskScaled_radius in range(terrainShadingMaskScaled_startingRadius,10100,200):  # iterrate terrainShadingMaskScaled_radius from 200 to 10000
-            scale = terrainShadingMaskScaled_radius/skyDomeRadius  # 200 is fixed skyDomeRadius
+        for terrainShadingMaskScaled_radius in rs.frange(terrainShadingMaskScaled_startingRadius, int(10100/unitConversionFactor2), int(300/unitConversionFactor2)):  # iterrate terrainShadingMaskScaled_radius from 300 to 10000
+            scale = terrainShadingMaskScaled_radius/skyDomeRadius
             
             transformMatrix = Rhino.Geometry.Transform.Scale(Rhino.Geometry.Plane(contextCentroid,Rhino.Geometry.Vector3d(0,0,1)), scale, scale, scale)
             scaledTerrainShadingMaskMesh = Rhino.Geometry.Mesh()  # always initialize new mesh
@@ -1246,14 +1318,19 @@ def scaleTerrainShadingMask(context, terrainShadingMaskUnscaledUnrotated, origin
             else:
                 conditionSum = 0
         
-        # once the scaling of the "scaledTerrainShadingMaskMesh" is over, check if its radius is lower than 5000
-        # (the 1% skyExposureFactorDifference may be fulfilled but annualShading might not)
-        if (terrainShadingMaskScaled_radius < 5000):
-            terrainShadingMaskScaled_radius = 5000
+        # the 1% skyExposureFactorDifference may be fulfilled, but annualShading might not. Increase the "terrainShadingMaskScaled_radius" 3 times
+        terrainShadingMaskScaled_radius = 3 * terrainShadingMaskScaled_radius
+        scale = 3 * scale
+        # check if terrainShadingMaskScaled_radius is smaller than 10000 meters (32786 feets)
+        if (terrainShadingMaskScaled_radius < 10000/unitConversionFactor2):
+            terrainShadingMaskScaled_radius = int(10000/unitConversionFactor2)  # minimal terrainShadingMaskScaled_radius set to 10000 meters (32786 feets)
             scale = terrainShadingMaskScaled_radius/skyDomeRadius
     
     
-    return scale, terrainShadingMaskScaled_radius, contextRadius, contextCentroid
+    validContextCentroid = True
+    printMsg = "ok"
+    
+    return scale, terrainShadingMaskScaled_radius, contextRadius, contextCentroid, validContextCentroid, printMsg
 
 
 def compassCrvs_title_scalingRotating(origin_0_0_0, contextCentroid, scale, northVec, terrainShadingMaskUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, heightM, elevationM, minVisibilityRadiusM, maxVisibilityRadiusM, unitConversionFactor):
@@ -1410,6 +1487,7 @@ if sc.sticky.has_key("ladybug_release"):
             locationLatitudeD, locationLongitudeD, locationName, fileNameIncomplete, validLocationData, printMsg = getLocationData(_location)
             if validLocationData:
                 heightM, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, northVec, maskStyle, maskStyleLabel, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, validInputData, printMsg = checkInputData(minVisibilityRadius_, maxVisibilityRadius_, north_, maskStyle_, workingFolder_, downloadUrl_)
+                librariesFolder = GDAL_librariesFolderPath
                 if validInputData:
                     if _runIt:
                         if validInputData:
@@ -1417,11 +1495,16 @@ if sc.sticky.has_key("ladybug_release"):
                             if valid_Obj_or_Raster_file:
                                 if (rasterFilePath != "needless") and (rasterFilePath != "download failed"):  # terrain shading mask NEEDS to be created
                                     terrainShadingMaskUnscaledUnrotated, origin_0_0_0, elevationM = createTerrainShadingMask(GDAL_librariesFolderPath, objFilePath, rasterFilePath, rasterFilePath_aeqd, rasterFileNamePlusExtension_aeqd, vrtFilePath, locationLatitudeD, locationLongitudeD, heightM, minVisibilityRadiusM, maxVisibilityRadiusM, maskStyle, context_, unitConversionFactor)
-                                scale, terrainShadingMaskScaled_radius, contextRadius, contextCentroid = scaleTerrainShadingMask(context_, terrainShadingMaskUnscaledUnrotated, origin_0_0_0, locationLatitudeD)
-                                terrainShadingMaskScaledRotated, compassCrvs, titleDescriptionLabelMeshes = compassCrvs_title_scalingRotating(origin_0_0_0, contextCentroid, scale, northVec, terrainShadingMaskUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, heightM, elevationM, minVisibilityRadiusM, maxVisibilityRadiusM, unitConversionFactor)
-                                if bakeIt_: bakingGrouping(locationName, locationLatitudeD, locationLongitudeD, heightM, minVisibilityRadiusM, maxVisibilityRadiusM, maskStyleLabel, contextCentroid, terrainShadingMaskScaledRotated, compassCrvs, titleDescriptionLabelMeshes)
-                                printOutput(northRad, locationLatitudeD, locationLongitudeD, locationName, heightM, minVisibilityRadiusM, maxVisibilityRadiusM, maskStyle, workingSubFolderPath, downloadTSVLink)
-                                terrainShadingMask = terrainShadingMaskScaledRotated; originPt = contextCentroid; title = titleDescriptionLabelMeshes; maskRadius = terrainShadingMaskScaled_radius; elevation = elevationM
+                                scale, terrainShadingMaskScaled_radius, contextRadius, contextCentroid, validContextCentroid, printMsg = scaleTerrainShadingMask(context_, terrainShadingMaskUnscaledUnrotated, origin_0_0_0, locationLatitudeD)
+                                originPt = contextCentroid
+                                if validContextCentroid:
+                                    terrainShadingMaskScaledRotated, compassCrvs, titleDescriptionLabelMeshes = compassCrvs_title_scalingRotating(origin_0_0_0, contextCentroid, scale, northVec, terrainShadingMaskUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, heightM, elevationM, minVisibilityRadiusM, maxVisibilityRadiusM, unitConversionFactor)
+                                    if bakeIt_: bakingGrouping(locationName, locationLatitudeD, locationLongitudeD, heightM, minVisibilityRadiusM, maxVisibilityRadiusM, maskStyleLabel, contextCentroid, terrainShadingMaskScaledRotated, compassCrvs, titleDescriptionLabelMeshes)
+                                    printOutput(northRad, locationLatitudeD, locationLongitudeD, locationName, heightM, minVisibilityRadiusM, maxVisibilityRadiusM, maskStyle, workingSubFolderPath, downloadTSVLink)
+                                    terrainShadingMask = terrainShadingMaskScaledRotated; title = titleDescriptionLabelMeshes; maskRadius = terrainShadingMaskScaled_radius; elevation = elevationM
+                                else:
+                                    print printMsg
+                                    ghenv.Component.AddRuntimeMessage(level, printMsg)
                             else:
                                 print printMsg
                                 ghenv.Component.AddRuntimeMessage(level, printMsg)
