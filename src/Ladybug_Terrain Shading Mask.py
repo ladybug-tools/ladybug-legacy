@@ -56,8 +56,9 @@ Provided by Ladybug 0.0.62
         context_: Input every kind of context to this input: buildings, houses, trees; and all the other objects: PV/SWHsurfaces or planar "_geometry" (surface) on which the future analysis (view, sunlight hours, radiation...) will be conducted.
                   -
                   This input is important for calculation of the final radius of the Terrain shading mask (that's "maskRadius" output). The larger the context_ input, the Terrain shading mask radius might be longer.
+                  For sunpath visualization purposes, you can make this input empty (not supply anything to it). In this way the "maskRadius" output will always be equal to 200 meters (655 feets) which corresponds to the _sunPathScale_ = 1 input of the Ladybug_Sunpath component.
                   -
-                  If nothing supplied to the context_ input, the default Terrain shading mask radius of 200 meters will be used.
+                  If nothing supplied to the context_ input, the default Terrain shading mask radius of 200 meters (655 feets) will be used.
         minVisibilityRadius_: Horizontal distance FROM which the surrounding terrain will be taken into account. Anything closer than that will not be considered for creation of a Terrain shading mask.
                               Unless you are doing an analysis of large areas, for example longer than 200 meters in radius (e.g. city's blocks) do not change this input's default value (0)!
                               -
@@ -162,7 +163,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Terrain Shading Mask"
 ghenv.Component.NickName = "TerrainShadingMask"
-ghenv.Component.Message = "VER 0.0.62\nJUL_04_2016"
+ghenv.Component.Message = "VER 0.0.62\nJUL_05_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -1286,11 +1287,12 @@ def scaleTerrainShadingMask(context, terrainShadingMaskUnscaledUnrotated, origin
             terrainShadingMaskMesh.Append(meshMaskPart)
         
         skyDomeRadius = 200/unitConversionFactor2  # fixed to 200 meters always
+        objFileRadius = 200  # in Rhino units
         precision = 100  # low "precision" values can result in low "terrainShadingMaskScaled_radius" values
         skyDomeMeshes = []
         scaledTerrainShadingMaskMeshL = []
         for terrainShadingMaskScaled_radius in rs.frange(terrainShadingMaskScaled_startingRadius, int(10100/unitConversionFactor2), int(300/unitConversionFactor2)):  # iterrate terrainShadingMaskScaled_radius from 300 to 10000
-            scale = terrainShadingMaskScaled_radius/skyDomeRadius
+            scale = terrainShadingMaskScaled_radius/objFileRadius
             
             transformMatrix = Rhino.Geometry.Transform.Scale(Rhino.Geometry.Plane(contextCentroid,Rhino.Geometry.Vector3d(0,0,1)), scale, scale, scale)
             scaledTerrainShadingMaskMesh = Rhino.Geometry.Mesh()  # always initialize new mesh
@@ -1321,11 +1323,11 @@ def scaleTerrainShadingMask(context, terrainShadingMaskUnscaledUnrotated, origin
         # the 1% skyExposureFactorDifference may be fulfilled, but annualShading might not. Increase the "terrainShadingMaskScaled_radius" 3 times
         terrainShadingMaskScaled_radius = 3 * terrainShadingMaskScaled_radius
         scale = 3 * scale
+        
         # check if terrainShadingMaskScaled_radius is smaller than 10000 meters (32786 feets)
         if (terrainShadingMaskScaled_radius < 10000/unitConversionFactor2):
             terrainShadingMaskScaled_radius = int(10000/unitConversionFactor2)  # minimal terrainShadingMaskScaled_radius set to 10000 meters (32786 feets)
-            scale = terrainShadingMaskScaled_radius/skyDomeRadius
-    
+            scale = terrainShadingMaskScaled_radius/objFileRadius
     
     validContextCentroid = True
     printMsg = "ok"
