@@ -5,7 +5,7 @@
 # This file is part of Ladybug.
 # 
 # Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com>
-# with assistance of Dr. Bojan Savric <b.savric@gmail.com>
+# with assistance of Dr. Bojan Savric <savricb@geo.oregonstate.edu>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -163,7 +163,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Terrain Shading Mask"
 ghenv.Component.NickName = "TerrainShadingMask"
-ghenv.Component.Message = "VER 0.0.62\nJUL_05_2016"
+ghenv.Component.Message = "VER 0.0.62\nJUL_07_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
