@@ -163,7 +163,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Terrain Shading Mask"
 ghenv.Component.NickName = "TerrainShadingMask"
-ghenv.Component.Message = "VER 0.0.62\nJUL_07_2016"
+ghenv.Component.Message = "VER 0.0.62\nJUL_09_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -648,7 +648,7 @@ def destinationLatLon(latitude1D, longitude1D, maxVisibilityRadiusM):
     
     # generate download link for raster region
     # based on: http://www.opentopography.org/developers
-    downloadRasterLink = "http://ot-data1.sdsc.edu:9090/otr/getdem?demtype=SRTMGL3&west=%s&south=%s&east=%s&north=%s&outputFormat=GTiff" % (longitudeLeftD,latitudeBottomD,longitudeRightD,latitudeTopD)
+    downloadRasterLink = "http://opentopo.sdsc.edu/otr/getdem?demtype=SRTMGL3&west=%s&south=%s&east=%s&north=%s&outputFormat=GTiff" % (longitudeLeftD,latitudeBottomD,longitudeRightD,latitudeTopD)
     
     return downloadRasterLink
 
