@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUL_21_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -135,11 +135,17 @@ def checkTheInputs():
             
             newShadesList = []
             for srf in allDataDict[path]["shadeSrfs"]:
-                if srf.Faces.Count == 1: newShadesList.append(srf)
-                else:
-                    for subSrf in srf.Faces:
-                        srfBrep = subSrf.ToBrep()
-                        newShadesList.append(srfBrep)
+                try:
+                    newSrf = rs.coercebrep(srf)
+                    if newSrf.Faces.Count == 1: newShadesList.append(newSrf)
+                    else:
+                        for subSrf in newSrf.Faces:
+                            srfBrep = subSrf.ToBrep()
+                            newShadesList.append(srfBrep)
+                except:
+                    newSrf = rs.coercemesh(srf)
+                    newShadesList.append(newSrf)
+            allDataDict[path]["shadeSrfs"] = newShadesList
     else:
         checkData2 = False
         print 'Connect a brep for both the _testRegion and the _testShade.'
@@ -335,7 +341,10 @@ def meshTheShade(gridSize, testShades):
     analysisMeshList = []
     
     for testShade in testShades:
-        analysisMesh = rc.Geometry.Mesh.CreateFromBrep(testShade, meshPar)[0]
+        try:
+            analysisMesh = rc.Geometry.Mesh.CreateFromBrep(testShade, meshPar)[0]
+        except:
+            analysisMesh = testShade
         
         #Generate breps of the mesh faces so that users can see how the shade will be divided before they run the analysis
         
@@ -403,6 +412,7 @@ def prepareGeometry(gridSize, allDataDict):
     for branchCount, branch in enumerate(allDataDict):
         #Mesh the shade.
         shadeMesh, shadeMeshBrepList, shadeMeshAreas = meshTheShade(gridSize, allDataDict[branch]["shadeSrfs"])
+        
         shadeMeshBreps.append(shadeMeshBrepList)
         allDataDict[branch]["shadeMesh"] = shadeMesh
         allDataDict[branch]["shadeMeshAreas"] = shadeMeshAreas
@@ -692,103 +702,103 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
     shadeMeshList = []
     calcSuccess = True
     
-    try:
-        #Evaluate each shade.
-        for regionCount, path in enumerate(allDataDict):
-            # let the user cancel the process
-            if gh.GH_Document.IsEscapeKeyDown(): assert False
-            
-            shadeHelpfulnessList.append([])
-            shadeHarmfulnessList.append([])
-            shadeNetEffectList.append([])
-            shadeMeshListInit.append([])
-            shadeMeshList.append([])
-            
-            temperatures = allDataDict[path]["tempertureFinal"]
-            numHrs = allDataDict[path]["divisor"]
-            
-            regionMesh = rc.Geometry.Mesh()
-            for brep in allDataDict[path]["regionSrf"]:
-                regionMesh.Append(rc.Geometry.Mesh.CreateFromBrep(brep)[0])
-            regionPoints = allDataDict[path]["regionPts"]
-            
-            for shadeCount, shadeMesh in enumerate(allDataDict[path]["shadeMesh"]):
-                totalShadeGeo.append(shadeMesh)
-                shadeMeshListInit[regionCount].append(shadeMesh)
-                shadeMeshAreas = allDataDict[path]["shadeMeshAreas"][shadeCount]
-                shadeHelpfulness, shadeHarmfulness, shadeNetEffect = evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, shadeMesh, shadeMeshAreas, regionMesh, regionPoints, sunVectors, skyResolution)
-                
-                
-                for item in shadeNetEffect: totalNetEffect.append(item)
-                shadeHelpfulnessList[regionCount].append(shadeHelpfulness)
-                shadeHarmfulnessList[regionCount].append(shadeHarmfulness)
-                shadeNetEffectList[regionCount].append(shadeNetEffect)
+    #try:
+    #Evaluate each shade.
+    for regionCount, path in enumerate(allDataDict):
+        # let the user cancel the process
+        if gh.GH_Document.IsEscapeKeyDown(): assert False
         
-        #Sort the net effects to find the highest and lowest values which will be used to generate colors and a legend for the mesh.
-        shadeNetSorted = totalNetEffect[:]
-        shadeNetSorted.sort()
-        mostHelp = shadeNetSorted[-1]
-        mostHarm = shadeNetSorted[0]
-        if abs(mostHelp) > abs(mostHarm): legendVal = abs(mostHelp)
-        else: legendVal = abs(mostHarm)
+        shadeHelpfulnessList.append([])
+        shadeHarmfulnessList.append([])
+        shadeNetEffectList.append([])
+        shadeMeshListInit.append([])
+        shadeMeshList.append([])
         
-        #Get the colors for the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
-        legendFont = 'Verdana'
-        if legendPar:
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
-            if legendPar[3] == []:
-                customColors = lb_visualization.gradientLibrary[12]
-                customColors.reverse()
-        else:
-            lowB = -1 * legendVal
-            highB = legendVal
-            numSeg = 11
+        temperatures = allDataDict[path]["tempertureFinal"]
+        numHrs = allDataDict[path]["divisor"]
+        
+        regionMesh = rc.Geometry.Mesh()
+        for brep in allDataDict[path]["regionSrf"]:
+            regionMesh.Append(rc.Geometry.Mesh.CreateFromBrep(brep)[0])
+        regionPoints = allDataDict[path]["regionPts"]
+        
+        for shadeCount, shadeMesh in enumerate(allDataDict[path]["shadeMesh"]):
+            totalShadeGeo.append(shadeMesh)
+            shadeMeshListInit[regionCount].append(shadeMesh)
+            shadeMeshAreas = allDataDict[path]["shadeMeshAreas"][shadeCount]
+            shadeHelpfulness, shadeHarmfulness, shadeNetEffect = evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, shadeMesh, shadeMeshAreas, regionMesh, regionPoints, sunVectors, skyResolution)
+            
+            
+            for item in shadeNetEffect: totalNetEffect.append(item)
+            shadeHelpfulnessList[regionCount].append(shadeHelpfulness)
+            shadeHarmfulnessList[regionCount].append(shadeHarmfulness)
+            shadeNetEffectList[regionCount].append(shadeNetEffect)
+    
+    #Sort the net effects to find the highest and lowest values which will be used to generate colors and a legend for the mesh.
+    shadeNetSorted = totalNetEffect[:]
+    shadeNetSorted.sort()
+    mostHelp = shadeNetSorted[-1]
+    mostHarm = shadeNetSorted[0]
+    if abs(mostHelp) > abs(mostHarm): legendVal = abs(mostHelp)
+    else: legendVal = abs(mostHarm)
+    
+    #Get the colors for the analysis mesh based on the calculated benefit values unless a user has connected specific legendPar.
+    legendFont = 'Verdana'
+    if legendPar:
+        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
+        if legendPar[3] == []:
             customColors = lb_visualization.gradientLibrary[12]
             customColors.reverse()
-            legendBasePoint = None
-            legendFontSize = None
-            legendBold = False
-            legendScale = 1
-            decimalPlaces = 2
-            removeLessThan = False
-        
-        #If the user has not input custom boundaries, automatically choose the boundaries for them.
-        if lowB == "min": lowB = -1 * legendVal
-        if highB == "max": highB = legendVal
-        
-        #Color each of the meshes with shade benefit.
-        for regionCount, shadeMeshGroup in enumerate(shadeMeshListInit):
+    else:
+        lowB = -1 * legendVal
+        highB = legendVal
+        numSeg = 11
+        customColors = lb_visualization.gradientLibrary[12]
+        customColors.reverse()
+        legendBasePoint = None
+        legendFontSize = None
+        legendBold = False
+        legendScale = 1
+        decimalPlaces = 2
+        removeLessThan = False
+    
+    #If the user has not input custom boundaries, automatically choose the boundaries for them.
+    if lowB == "min": lowB = -1 * legendVal
+    if highB == "max": highB = legendVal
+    
+    #Color each of the meshes with shade benefit.
+    for regionCount, shadeMeshGroup in enumerate(shadeMeshListInit):
+        for shadeCount, shadeMesh in enumerate(shadeMeshGroup):
+            shadeMeshNetEffect = shadeNetEffectList[regionCount][shadeCount]
+            colors = lb_visualization.gradientColor(shadeMeshNetEffect, lowB, highB, customColors)
+            coloredShadeMesh = lb_visualization.colorMesh(colors, shadeMesh)
+            shadeMeshList[regionCount].append(coloredShadeMesh)
+    
+    # If the user has set "delNonIntersect_" to True, delete those mesh values that do not have any solar intersections.
+    if delNonIntersect_ == True:
+        for regionCount, shadeMeshGroup in enumerate(shadeMeshList):
             for shadeCount, shadeMesh in enumerate(shadeMeshGroup):
+                deleteFaces = []
+                newShadeHelpfulness = []
+                newShadeHarmfulness = []
+                newShadeNetEffect = []
                 shadeMeshNetEffect = shadeNetEffectList[regionCount][shadeCount]
-                colors = lb_visualization.gradientColor(shadeMeshNetEffect, lowB, highB, customColors)
-                coloredShadeMesh = lb_visualization.colorMesh(colors, shadeMesh)
-                shadeMeshList[regionCount].append(coloredShadeMesh)
-        
-        # If the user has set "delNonIntersect_" to True, delete those mesh values that do not have any solar intersections.
-        if delNonIntersect_ == True:
-            for regionCount, shadeMeshGroup in enumerate(shadeMeshList):
-                for shadeCount, shadeMesh in enumerate(shadeMeshGroup):
-                    deleteFaces = []
-                    newShadeHelpfulness = []
-                    newShadeHarmfulness = []
-                    newShadeNetEffect = []
-                    shadeMeshNetEffect = shadeNetEffectList[regionCount][shadeCount]
-                    for cellCount, cell in enumerate(shadeMeshNetEffect):
-                        if shadeHelpfulnessList[regionCount][shadeCount][cellCount] == 0.0 and shadeHarmfulnessList[regionCount][shadeCount][cellCount] == 0.0:
-                            deleteFaces.append(cellCount)
-                        else:
-                            newShadeHelpfulness.append(shadeHelpfulnessList[regionCount][shadeCount][cellCount])
-                            newShadeHarmfulness.append(shadeHarmfulnessList[regionCount][shadeCount][cellCount])
-                            newShadeNetEffect.append(cell)
-                    shadeMesh.Faces.DeleteFaces(deleteFaces)
-                    shadeHelpfulnessList[regionCount][shadeCount] = newShadeHelpfulness
-                    shadeHarmfulnessList[regionCount][shadeCount] = newShadeHarmfulness
-                    shadeNetEffectList[regionCount][shadeCount] = newShadeNetEffect
-    except:
-        calcSuccess = False
-        print "The calculation has been terminated by the user!"
-        e = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
+                for cellCount, cell in enumerate(shadeMeshNetEffect):
+                    if shadeHelpfulnessList[regionCount][shadeCount][cellCount] == 0.0 and shadeHarmfulnessList[regionCount][shadeCount][cellCount] == 0.0:
+                        deleteFaces.append(cellCount)
+                    else:
+                        newShadeHelpfulness.append(shadeHelpfulnessList[regionCount][shadeCount][cellCount])
+                        newShadeHarmfulness.append(shadeHarmfulnessList[regionCount][shadeCount][cellCount])
+                        newShadeNetEffect.append(cell)
+                shadeMesh.Faces.DeleteFaces(deleteFaces)
+                shadeHelpfulnessList[regionCount][shadeCount] = newShadeHelpfulness
+                shadeHarmfulnessList[regionCount][shadeCount] = newShadeHarmfulness
+                shadeNetEffectList[regionCount][shadeCount] = newShadeNetEffect
+    #except:
+    #    calcSuccess = False
+    #    print "The calculation has been terminated by the user!"
+    #    e = gh.GH_RuntimeMessageLevel.Warning
+    #    ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
     
     if calcSuccess == True:
         #Generate a legend for all of the meshes.

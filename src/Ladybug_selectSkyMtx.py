@@ -29,7 +29,7 @@ Provided by Ladybug 0.0.62
     
     Args:
         _cumulativeSkyMtx: The output from a GenCumulativeSkyMtx component.
-        HOY_: An hour of the year for which you would like to select a sky.  This must be a value between 1 and 8760.
+        HOY_: An hour of the year or list of hours of the year for which you would like to select a sky.  This must be a value between 1 and 8760.
         _analysisPeriod_: An analysis period from Analysis Period component.  This will override an input HOY (hour of the year).
         removeDiffuse_: Set to "True" if you want to remove the diffuse component of the selected sky.
         removeDirect_: Set to "True" if you want to remove the direct component of the selected sky.
@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_12_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -59,16 +59,33 @@ from Grasshopper.Kernel.Data import GH_Path
 def getHourlySky(daylightMtxDict, HOY):
     # for presentation
     lb_preparation = sc.sticky["ladybug_Preparation"]()
-    stDate = lb_preparation.hour2Date(HOY, 1)
-    analysisP = ((stDate[1]+1, stDate[0], stDate[2]-1),(stDate[1]+1, stDate[0], stDate[2]))
+    HOY.sort()
+    stDate = lb_preparation.hour2Date(HOY[0], 1)
+    if len(HOY) == 1:
+        analysisP = ((stDate[1]+1, stDate[0], stDate[2]-1),(stDate[1]+1, stDate[0], stDate[2]))
+    else:
+        endDate = lb_preparation.hour2Date(HOY[-1], 1)
+        analysisP = ((stDate[1]+1, stDate[0], stDate[2]-1),(endDate[1]+1, endDate[0], endDate[2]-1))
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        convertedMtx = []
-        for val in daylightMtxDict[patchNumber][HOY]: convertedMtx.append(val/1000)
-        hourlyMtx.append(convertedMtx)
-    return hourlyMtx, analysisP
+        cumulativeDifValue = 0
+        cumulativeDirValue = 0
+        # adding upp the values
+        try:
+            for hoy in HOY:
+                difValue, dirValue = daylightMtxDict[patchNumber][hoy]
+                cumulativeDifValue += difValue
+                cumulativeDirValue += dirValue 
+        except Exception, e:
+            warning = 'One of the HOYs is less than 1 or greater than 8760.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        
+        hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
     
+    return hourlyMtx, analysisP
+
 def getCumulativeSky(daylightMtxDict, runningPeriod):
     
     lb_preparation = sc.sticky["ladybug_Preparation"]()

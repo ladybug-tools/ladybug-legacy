@@ -41,8 +41,15 @@ Provided by Ladybug 0.0.62
         a) a list of HOYs from outputs of the Ladybug_DOY_HOY for specific date;
         b) OR a list of values from 1 to 8760 for the whole year;
         c) OR Ladybug Analysis Period for the whole year.
+        isSunUpshift_: Set the number of hour after the sunrise and before the sunset you intend to exclude from the calculation of isSunUp. If no value is connected, the default value is 0.
         _year: A number between -1000 to 3000. The approximations used in these script are very good for years between 1800 and 2100. Results should still be sufficiently accurate for the range from -1000 to 3000.
-        
+        isSunUpAltitude_: write a conditional statement about solar altitude. Use 'v' as variable.
+        -
+        Here's an example:          v > 25.5 and v < 67.3
+        -
+        It is possible to use the following symbols:
+            and, or, ==, !=, >, <, >=, <=, ), (
+            
     Returns:
         readMe!: ...
         officialSunriseSunset: It is the time between day and night when there is light outside and the Sun is on the horizon (9050').
@@ -65,7 +72,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_SunriseSunset"
 ghenv.Component.NickName = 'Sunrise Sunset'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_22_2016'
+ghenv.Component.Message = 'VER 0.0.62\nMAY_04_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -76,13 +83,14 @@ import scriptcontext as sc
 import Grasshopper.Kernel as gh
 import rhinoscriptsyntax as rs
 import math
+import re
 
 def checkTheData(location, HOY):
-    if location == None \
-    and HOY == None:
+    if not location\
+    or not HOY:
         checkData = False
     elif location and HOY:
-        checkData = False
+        checkData = True
     else: checkData = True
     return checkData
 
@@ -344,14 +352,6 @@ def main():
     date = []
     sunLightDuration = []
     # function lists
-    eqOfTime = []
-    eqOfTimeSet = []
-    eqOfTimeRise = []
-    eqOfTimeDuration = []
-    sunDeclin = []
-    sunDeclinSet = []
-    sunDeclinRise = []
-    sunDeclinDuration = []
     sunRiseTime = []
     sunSetTime = []
     hourJd = []
@@ -375,22 +375,22 @@ def main():
             hourJd.append(item / 24)
             
         for i in range(0, len(_HOYorAnalysisPeriod)):
-            eqOfTime.append(sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[0])
-            sunDeclin.append(sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[1])
+            eqOfTime = sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[0]
+            sunDeclin = sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[1]
             #function for sun data
             dataSun = sunCalcSunData(hourJd[i], readLocation(_location)[0], readLocation(_location)[1],\
-            readLocation(_location)[2], eqOfTime[i], sunDeclin[i])
+            readLocation(_location)[2], eqOfTime, sunDeclin)
             # output Sun
             solarElevationCorrected.append(dataSun[0])
             solarAzimut.append(dataSun[1])
             sunVector.append(dataSun[2])
             
             ##Sunlight Duration per day (minutes)
-            eqOfTimeDuration.append(sunCalcPreparation(1, day[i], month[i], year_, readLocation(_location)[2])[0])
-            sunDeclinDuration.append(sunCalcPreparation(1, day[i], month[i], year_, readLocation(_location)[2])[1])
+            eqOfTimeDuration = sunCalcPreparation(1, day[i], month[i], year_, readLocation(_location)[2])[0]
+            sunDeclinDuration = sunCalcPreparation(1, day[i], month[i], year_, readLocation(_location)[2])[1]
             #function for sun data
             dataSunDuration = sunCalcTimeData(day[i], month[i], readLocation(_location)[0], readLocation(_location)[1],\
-            readLocation(_location)[2], eqOfTimeDuration[i], sunDeclinDuration[i])
+            readLocation(_location)[2], eqOfTimeDuration, sunDeclinDuration)
             sunLightDuration.append(dataSunDuration[5])
             
             # logical conditions for hoursJd
@@ -413,20 +413,21 @@ def main():
                 sunSethourJd = 1
                 
             # Sunrise
-            eqOfTimeRise.append(sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[0])
-            sunDeclinRise.append(sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[1])
+            eqOfTimeRise = sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[0]
+            sunDeclinRise = sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[1]
             
             dataSunRise = sunCalcTimeData(day[i], month[i], readLocation(_location)[0], readLocation(_location)[1],\
-            readLocation(_location)[2], eqOfTimeRise[i], sunDeclinRise[i])
+            readLocation(_location)[2], eqOfTimeRise, sunDeclinRise)
             sunRiseTime.append(dataSunRise[0])
             sunrise.append(dataSunRise[3])
             
+            
             # Sunset
-            eqOfTimeSet.append(sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[0])
-            sunDeclinSet.append(sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[1])
+            eqOfTimeSet = sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[0]
+            sunDeclinSet = sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[1]
             
             dataSunSet = sunCalcTimeData(day[i], month[i], readLocation(_location)[0], readLocation(_location)[1],\
-            readLocation(_location)[2], eqOfTimeSet[i], sunDeclinSet[i])
+            readLocation(_location)[2], eqOfTimeSet, sunDeclinSet)
             sunSetTime.append(dataSunSet[1])
             sunset.append(dataSunSet[4])
             
@@ -437,22 +438,42 @@ def main():
             
             # solarNoon
             solarNoon.append(dataSunSet[2])
-            
+        
+        
+        
         #generate isSunUp list
+        # isSunUpshift_, thanks to Cheney for this input.
+        # http://www.grasshopper3d.com/forum/topics/ladybug-sunrise-sunset?groupUrl=ladybug&commentId=2985220%3AComment%3A1519545&xg_source=msg_com_gr_forum
+        if isSunUpshift_ == None:
+            hourShift = 0
+        else: hourShift = abs(isSunUpshift_)
+        
         for i in range (0, len(hour)):
-            
             if sunrise[i] == 9999 or sunset[i] == 9999:
                 sunUp = 0
                 isSunUp.append(sunUp)
             elif sunrise[i] == 99 or sunset[i] == 99:
-                sunUp = 1
-                isSunUp.append(sunUp)
-            elif hour[i] <= (24*sunrise[i]) or hour[i] >= (24*sunset[i]):
+                if (24 - hourShift) >= hour[i] > hourShift:
+                    sunUp = 1
+                    isSunUp.append(sunUp)
+                else: isSunUp.append(0)
+            elif hour[i]-hourShift <= (24*sunrise[i]) or hour[i]+hourShift >= (24*sunset[i]):
                 sunUp = 0
                 isSunUp.append(sunUp)
             else:
                 sunUp = 1
                 isSunUp.append(sunUp)
+         
+        if isSunUpAltitude_:
+            for i in range (0, len(isSunUp)):
+                v = solarElevationCorrected[i]
+                if isSunUpAltitude_.find('v') != (-1) and isSunUp[i] != 0:
+                    variable = re.compile('(v)')
+                    conditional_statement = variable.sub( str(v), isSunUpAltitude_)
+                    if (eval(conditional_statement)):
+                        isSunUp[i] = 1
+                    else: isSunUp[i] = 0
+         
                 
     except:
         HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(_HOYorAnalysisPeriod, 1)
@@ -471,11 +492,11 @@ def main():
             hourJd.append(item / 24)
         
         for i in range(0, len(HOYS)):
-            eqOfTime.append(sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[0])
-            sunDeclin.append(sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[1])
+            eqOfTime = sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[0]
+            sunDeclin = sunCalcPreparation(hourJd[i], day[i], month[i], year_, readLocation(_location)[2])[1]
             #function for sun data
             dataSun = sunCalcSunData(hourJd[i], readLocation(_location)[0], readLocation(_location)[1],\
-            readLocation(_location)[2], eqOfTime[i], sunDeclin[i])
+            readLocation(_location)[2], eqOfTime, sunDeclin)
             # output Sun
             solarElevationCorrected.append(dataSun[0])
             solarAzimut.append(dataSun[1])
@@ -501,20 +522,20 @@ def main():
                 sunSethourJd = 1
                 
             # Sunrise
-            eqOfTimeRise.append(sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[0])
-            sunDeclinRise.append(sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[1])
+            eqOfTimeRise = sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[0]
+            sunDeclinRise = sunCalcPreparation(sunRisehourJd, day[i], month[i], year_, readLocation(_location)[2])[1]
             
             dataSunRise = sunCalcTimeData(day[i], month[i], readLocation(_location)[0], readLocation(_location)[1],\
-            readLocation(_location)[2], eqOfTimeRise[i], sunDeclinRise[i])
+            readLocation(_location)[2], eqOfTimeRise, sunDeclinRise)
             sunRiseTime.append(dataSunRise[0])
             sunrise.append(dataSunRise[3])
             
             # Sunset
-            eqOfTimeSet.append(sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[0])
-            sunDeclinSet.append(sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[1])
+            eqOfTimeSet = sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[0]
+            sunDeclinSet = sunCalcPreparation(sunSethourJd, day[i], month[i], year_, readLocation(_location)[2])[1]
             
             dataSunSet = sunCalcTimeData(day[i], month[i], readLocation(_location)[0], readLocation(_location)[1],\
-            readLocation(_location)[2], eqOfTimeSet[i], sunDeclinSet[i])
+            readLocation(_location)[2], eqOfTimeSet, sunDeclinSet)
             sunSetTime.append(dataSunSet[1])
             sunset.append(dataSunSet[4])
             
@@ -527,21 +548,36 @@ def main():
             solarNoon.append(dataSunSet[2])
             
         #generate isSunUp list
+        if isSunUpshift_ == None:
+            hourShift = 0
+        else: hourShift = abs(isSunUpshift_)
+        
         for i in range (0, len(hour)):
-            
             if sunrise[i] == 9999 or sunset[i] == 9999:
                 sunUp = 0
                 isSunUp.append(sunUp)
             elif sunrise[i] == 99 or sunset[i] == 99:
-                sunUp = 1
-                isSunUp.append(sunUp)
-            elif hour[i] <= (24*sunrise[i]) or hour[i] >= (24*sunset[i]):
+                if (24 - hourShift) >= hour[i] > hourShift:
+                    sunUp = 1
+                    isSunUp.append(sunUp)
+                else: isSunUp.append(0)
+            elif hour[i]-hourShift <= (24*sunrise[i]) or hour[i]+hourShift >= (24*sunset[i]):
                 sunUp = 0
                 isSunUp.append(sunUp)
             else:
                 sunUp = 1
                 isSunUp.append(sunUp)
                 
+        if isSunUpAltitude_:
+            for i in range (0, len(isSunUp)):
+                v = solarElevationCorrected[i]
+                if isSunUpAltitude_.find('v') != (-1) and isSunUp[i] != 0:
+                    variable = re.compile('(v)')
+                    conditional_statement = variable.sub( str(v), isSunUpAltitude_)
+                    if (eval(conditional_statement)):
+                        isSunUp[i] = 1
+                    else: isSunUp[i] = 0
+                    
     return officialSunriseSunset, solarElevationCorrected, solarAzimut, solarNoon, isSunUp, sunVector, date, sunLightDuration
 #import the classes
 initCheck = False
@@ -569,7 +605,7 @@ checkData = False
 if initCheck == True:
     checkData = checkTheData(_location, _HOYorAnalysisPeriod)
     
-    if checkData == False :
+    if checkData == True:
         result = main()
         if result != -1:
             officialSunriseSunset, solarElevationCorrected, solarAzimut, solarNoon ,isSunUp, sunVector, date, sunLightDuration = result

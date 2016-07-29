@@ -56,11 +56,11 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUN_08_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
-#compatibleLBVersion = VER 0.0.59\nMAR_15_2015
+#compatibleLBVersion = VER 0.0.59\nJUN_07_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -110,5 +110,5 @@ def main(_epw_file):
 result = main(_epwFile)
 if result!= -1:
     location, locName, latitude = result[0][-1], result[0][0], result[0][1]
-    dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, liquidPrecipitationDepth, barometricPressure, modelYear = result[1][:]
+    dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, horizontalInfraredRadiation, barometricPressure, modelYear = result[1][:]
     print 'Hourly weather data for ' + locName + ' is imported successfully!'

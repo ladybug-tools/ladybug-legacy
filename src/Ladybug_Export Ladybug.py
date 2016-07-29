@@ -37,20 +37,21 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_11_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
+import Grasshopper.Folders as folders
 import Grasshopper.Kernel as gh
 import scriptcontext as sc
 import shutil
 import os
 import uuid
 
-UOFolder = "C:\\Users\\" + os.getenv("USERNAME") + "\\AppData\\Roaming\\Grasshopper\\UserObjects\\"
+UOFolder = folders.UserObjectFolders[0]
 cs = gh.GH_ComponentServer()
 
 #gh.GH_ComponentServer

@@ -32,16 +32,17 @@ Provided by Ladybug 0.0.62
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
         _windSpeed_tenMeters: The wind speed from the import EPW component or a number representing the wind speed at 10 meters off the ground.  If this value is input without a corresponding wind direction below, the profile will be drawn with the average of the speed input here.  If corresponding values are connected to the windDirection, the speed on the profile will be the average speed of the prevailing wind direction.
         windDirection_: An optional number representing the degrees from north of the wind direction.  This can also be the windDirection output from the import EPW component.  This direction will be used to orient the wind profile in 3 dimensions to the direction of the prevailing wind.
-        terrainType_: An interger from 0 to 3 that sets the terrain class associated with the output windSpeedAtHeight. Interger values represent the following terrain classes:
-            0 = Urban: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
+        terrainType_: An interger or text string that sets the terrain class associated with the output windSpeedAtHeight. Interger values represent the following terrain classes:
+            0 = City: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
             1 = Suburban: suburbs, wooded areas.
             2 = Country: open, with scattered objects generally less than 10m high.
             3 = Water: Flat, unobstructed areas exposed to wind flowing over a large water body (no more than 500m inland).
-        epwTerrain_: An optional interger from 0 to 3 that sets the terrain class associated with the output windSpeedAtHeight. The default is set to 2 for flat clear land, which is typical for most EPW files that are recorded at airports.  Interger values represent the following terrain classes:
-            0 = Urban: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
+        epwTerrain_: An interger or text string that sets the terrain class associated with the output windSpeedAtHeight. The default is set to 2 for flat clear land, which is typical for most EPW files that are recorded at airports.  Interger values represent the following terrain classes:
+            0 = City: large city centres, 50% of buildings above 21m over a distance of at least 2000m upwind.
             1 = Suburban: suburbs, wooded areas.
             2 = Country: open, with scattered objects generally less than 10m high.
             3 = Water: Flat, unobstructed areas exposed to wind flowing over a large water body (no more than 500m inland).
+        powerOrLog_: Set to "True" to use a power law to translate the wind speed to that at a given height and set to "False" to use a log law to translate the wind speed.  The default is set to "True" for a power law as this is the function that is used by EnergyPlus.
         -------------------------: ...
         HOY_ : Use this input to select out specific indices of a list of values connected for wind speed and wind direction.  If you have connected hourly EPW data, this is the equivalent of a "HOY" input and you can use the "Ladybug_DOY_HOY" component to select out a specific hour and date.  Note that this overrides the analysisPeriod_ input below.
         analysisPeriod_: If you have connected data from an EPW component, plug in an analysis period from the Ladybug_Analysis Period component to calculate data for just a portion of the year. The default is Jan 1st 00:00 - Dec 31st 24:00, the entire year.
@@ -49,7 +50,6 @@ Provided by Ladybug 0.0.62
         conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the wind rose. To use this input correctly, hourly data, such as temperature or humidity, must be plugged into the annualHourlyData_ input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
                               The current version of this component accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
                               For the WindBoundaryProfile component, the variable "a" always represents windSpeed. For example, if you have hourly dry bulb temperature connected as the second list, and relative humidity connected as the third list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<b<23 and c<80 (without quotation marks).
-        -------------------------: ...
         originPt_: An optional point that can be used to change the base point at shich the wind profile curves are generated.  By default, the wond profile curves generate at the Rhino model origin.
         windVectorScale_: An optional number that can be used to change the scale of the wind vectors in relation to the height of the wind profile curve.  The default is set to 5 so that it is easier to see how the wind speed is changing with height.
         windProfileHeight_: An optional number in rc model units that can be used to change the height of the wind profile curve.  By default, the height of the curve is set to 30 meters (or the equivalent distance in your Rhino model units).  You may want to move this number higher or lower depending on the wind effects that you are interested in.
@@ -81,11 +81,11 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAPR_13_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nAPR_12_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
 except: pass
 
@@ -103,253 +103,236 @@ import System
 
 def checkTheInputs():
     # import the classes
-    if sc.sticky.has_key('ladybug_release'):
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
+    lb_wind = sc.sticky["ladybug_WindSpeed"]()
+    
+    #Define a value that will indicate whether someone has hooked up epw data.
+    epwData = False
+    epwStr = []
+    
+    #Check lenth of the _windSpeed_tenMeterslist and evaluate the contents.
+    checkData1 = False
+    windSpeed = []
+    windMultVal = False
+    nonPositive = True
+    if len(_windSpeed_tenMeters) != 0:
         try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
-        except:
-            warning = "You need a newer version of Ladybug to use this compoent." + \
-            "Use updateLadybug component to update userObjects.\n" + \
-            "If you have already updated userObjects drag Ladybug_Ladybug component " + \
-            "into canvas and try again."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
-        lb_preparation = sc.sticky["ladybug_Preparation"]()
-        lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
-        lb_wind = sc.sticky["ladybug_WindSpeed"]()
-        
-        #Define a value that will indicate whether someone has hooked up epw data.
-        epwData = False
-        epwStr = []
-        
-        #Check lenth of the _windSpeed_tenMeterslist and evaluate the contents.
-        checkData1 = False
-        windSpeed = []
-        windMultVal = False
-        nonPositive = True
-        if len(_windSpeed_tenMeters) != 0:
-            try:
-                if _windSpeed_tenMeters[2] == 'Wind Speed':
-                    windSpeed = _windSpeed_tenMeters[7:]
-                    checkData1 = True
-                    epwData = True
-                    epwStr = _windSpeed_tenMeters[0:7]
-            except: pass
-            if checkData1 == False:
-                for item in _windSpeed_tenMeters:
-                    try:
-                        if float(item) >= 0:
-                            windSpeed.append(float(item))
-                            checkData1 = True
-                        else: nonPositive = False
-                    except: checkData1 = False
-            if nonPositive == False: checkData1 = False
-            if len(windSpeed) > 1: windMultVal = True
-            if checkData1 == False:
-                warning = '_windSpeed_tenMeters input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        else:
-            checkData1 = False
-            print "Connect wind speed."
-        
-        #Check lenth of the windDirection_ list and evaluate the contents.
-        checkData2 = False
-        windDir = []
-        dirMultVal = False
-        nonPositive = True
-        if len(windDirection_) != 0:
-            try:
-                if windDirection_[2] == 'Wind Direction':
-                    windDir = windDirection_[7:]
-                    checkData2 = True
-                    epwData = True
-                    epwStr = windDirection_[0:7]
-            except: pass
-            if checkData2 == False:
-                for item in windDirection_:
-                    try:
-                        if float(item) >= 0:
-                            windDir.append(float(item))
-                            checkData2 = True
-                        else: nonPositive = False
-                    except: checkData2 = False
-            if nonPositive == False: checkData2 = False
-            if len(windDir) > 1: dirMultVal = True
-            if checkData2 == False:
-                warning = 'windDirection_ input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        else:
-            checkData2 = True
-            print "No value is connected for wind direction.  The profile will be drawn in 2D and the speed depicted on the profile will be the average of all connected wind speeds."
-        
-        #Define a function to duplicate data
-        def duplicateData(data, calcLength):
-            dupData = []
-            for count in range(calcLength):
-                dupData.append(data[0])
-            return dupData
-        
-        #For those lists of length greater than 1, check to make sure that they are all the same length.
-        checkData5 = False
-        if checkData1 == True and checkData2 == True :
-            if windMultVal == True or dirMultVal == True:
-                listLenCheck = []
-                if windMultVal == True: listLenCheck.append(len(windSpeed))
-                if dirMultVal == True: listLenCheck.append(len(windDir))
-                
-                if all(x == listLenCheck[0] for x in listLenCheck) == True:
-                    checkData5 = True
-                    calcLength = listLenCheck[0]
-                    
-                    if windMultVal == False: windSpeed = duplicateData(windSpeed, calcLength)
-                    if dirMultVal == False and windDir != []: windDir = duplicateData(windDir, calcLength)
-                    
-                else:
-                    calcLength = None
-                    warning = 'If you have put in lists with multiple values for wind speed or direction, the lengths of these lists must match across the parameters or you have a single value for a given parameter to be applied to all values in the list.'
-                    print warning
-                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            else:
-                checkData5 = True
-                calcLength = 1
-        else:
-            calcLength = 0
-        
-        #If the user has input a HOY_ that is longer than the calculation length, throw a warning.
-        checkData7 = True
-        if HOY_ == None: pass
-        else:
-            if HOY_ > calcLength or HOY_ < 1:
-                checkData7 = False
-                warning = 'You cannot input a HOY_ that is less than 1 or greater than the length of values in the _windSpeed or windDirection_ lists.'
-                print warning
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            else: pass
-        
-        # Evaluate the terrain type to get the right roughness length.
-        checkData3, terrainType, gradientHeightDiv, d, a, yValues, yAxisMaxRhinoHeight, nArrows, printMsg = lb_wind.terrain(terrainType_)
-        print printMsg
-        if checkData3 == False:
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, printMsg)
-        
-        #Take the model units into account.
-        checkData4 = True
-        heightsAboveGround = []
-        scaleFactor = lb_preparation.checkUnits()
-        conversionFactor = 1/(scaleFactor)
-        
-        #If a height has been entered that is above the boundary layer, set the height to the boundary layer.
-        if windProfileHeight_ != None:
-            if windProfileHeight_*scaleFactor > d:
-                windProfileHeight = float(d)
-                print "The input windProfileHeight_ is greater than the boundary layer height. The wind profile height has been set to the boundary layer height."
-                r = gh.GH_RuntimeMessageLevel.Remark
-                ghenv.Component.AddRuntimeMessage(r, "The input windProfileHeight_ is greater than the boundary layer height. The wind profile height has been set to the boundary layer height.")
-            else:
-                windProfileHeight = windProfileHeight_
-        else: windProfileHeight = None
-        
-        #Calaculate the heights above the ground to make the vectors from input profile ehight and distance between vectors.
-        if windProfileHeight == None:
-            windProfileHeight = 30*conversionFactor
-            print "Wind profile height set to " + str(windProfileHeight) + " " + str(sc.doc.ModelUnitSystem)
-        else:
-            if windProfileHeight < distBetweenVec_:
-                windProfileHeight = 0
-                checkData4 = False
-                print "The input windProfileHeight_ cannot be less than 0."
-                w = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(w, "The input windProfileHeight_ cannot be less than 0.")
-            else:
-                windProfileHeight = windProfileHeight
-                print "Wind profile height set to " + str(windProfileHeight) + " " + str(sc.doc.ModelUnitSystem)
-        
-        if distBetweenVec_ == None:
-            distBetweenVec = 2*conversionFactor
-            print "Distance between wind vectors is set to " + str(distBetweenVec) + " " + str(sc.doc.ModelUnitSystem)
-        else:
-            distBetweenVec = distBetweenVec_
-            print "Distance between wind vectors is set to " + str(windProfileHeight) + " " + str(sc.doc.ModelUnitSystem)
-        
-        if distBetweenVec > windProfileHeight or distBetweenVec < 0:
-            distBetweenVec = 0
-            checkData4 = False
-            print "The input distBetweenVec_ cannot be less than 0 and cannot be less than the windProfileHeight_."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "The input distBetweenVec_ cannot be less than 0 and cannot be less than the windProfileHeight_.")
-        
-        if windProfileHeight != 0 and distBetweenVec != 0:
-            height = 0
-            for num in range(int((windProfileHeight+distBetweenVec)/distBetweenVec)):
-                heightsAboveGround.append(height)
-                height += distBetweenVec
-        else:
-            checkData4 = False
-        
-        #Make the default analyisis period for the whole year if the user has not input one.
-        if analysisPeriod_ == []:
-            analysisPeriod = [(1, 1, 1), (12, 31, 24)]
-        else:
-            analysisPeriod = analysisPeriod_
-        
-        # Check to make sure that the wind vector scale has not been set to less than zero and set the deault to 5.
-        checkData6 = True
-        if windVectorScale_ == None:
-            windVectorScale = 5
-        else:
-            if windVectorScale_ < 0:
-                windVectorScale = 0
-                checkData6 = False
-                print "The input windVectorScale_ cannot be less than 0."
-                w = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(w, "The input windVectorScale_ cannot be less than 0.")
-            else:
-                windVectorScale = windVectorScale_
-        
-        # Set a defult epwTerrain if none is connected.
-        checkData8 = True
-        if epwTerrain_ != None:
-            if epwTerrain_ <=3 and epwTerrain_ >= 0: epwTerrain = epwTerrain_
-            else:
-                epwTerrain = None
-                checkData8 = False
-                print "You have not connected a correct epwTerrain_ type."
-                w = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct epwTerrain_ type.")
-        else:
-            epwTerrain = 2
-            print "epwTerrain_ has been set to (2 = country) for flat clear land, which is typical for most EPW files that are recorded at airports."
-        
-        #Set a default arrow style if none has been set.
-        checkData9 = True
-        if windArrowStyle_ != None:
-            if windArrowStyle_ <=4 and windArrowStyle_ >= 0: windArrowStyle = windArrowStyle_
-            else:
-                windArrowStyle = None
-                checkData9 = False
-                print "You have not connected a correct windArrowStyle_ type."
-                w = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct windArrowStyle_ type.")
-        else:
-            windArrowStyle = 1
-            print "windArrowStyle_ has been set to 1 for colored arrows."
-        
-        #Check if everything is good.
-        if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True  and checkData9 == True:
-            checkData = True
-        else:
-            checkData = False
-        
-        return checkData, heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, conversionFactor
+            if _windSpeed_tenMeters[2] == 'Wind Speed':
+                windSpeed = _windSpeed_tenMeters[7:]
+                checkData1 = True
+                epwData = True
+                epwStr = _windSpeed_tenMeters[0:7]
+        except: pass
+        if checkData1 == False:
+            for item in _windSpeed_tenMeters:
+                try:
+                    if float(item) >= 0:
+                        windSpeed.append(float(item))
+                        checkData1 = True
+                    else: nonPositive = False
+                except: checkData1 = False
+        if nonPositive == False: checkData1 = False
+        if len(windSpeed) > 1: windMultVal = True
+        if checkData1 == False:
+            warning = '_windSpeed_tenMeters input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
-        print "You should first let the Ladybug fly..."
+        checkData1 = False
+        print "Connect wind speed."
+    
+    #Check lenth of the windDirection_ list and evaluate the contents.
+    checkData2 = False
+    windDir = []
+    dirMultVal = False
+    nonPositive = True
+    if len(windDirection_) != 0:
+        try:
+            if windDirection_[2] == 'Wind Direction':
+                windDir = windDirection_[7:]
+                checkData2 = True
+                epwData = True
+                epwStr = windDirection_[0:7]
+        except: pass
+        if checkData2 == False:
+            for item in windDirection_:
+                try:
+                    if float(item) >= 0:
+                        windDir.append(float(item))
+                        checkData2 = True
+                    else: nonPositive = False
+                except: checkData2 = False
+        if nonPositive == False: checkData2 = False
+        if len(windDir) > 1: dirMultVal = True
+        if checkData2 == False:
+            warning = 'windDirection_ input does not contain valid wind speed in meters per second.  Note that wind speed must be positive.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    else:
+        checkData2 = True
+        print "No value is connected for wind direction.  The profile will be drawn in 2D and the speed depicted on the profile will be the average of all connected wind speeds."
+    
+    #Define a function to duplicate data
+    def duplicateData(data, calcLength):
+        dupData = []
+        for count in range(calcLength):
+            dupData.append(data[0])
+        return dupData
+    
+    #For those lists of length greater than 1, check to make sure that they are all the same length.
+    checkData5 = False
+    if checkData1 == True and checkData2 == True :
+        if windMultVal == True or dirMultVal == True:
+            listLenCheck = []
+            if windMultVal == True: listLenCheck.append(len(windSpeed))
+            if dirMultVal == True: listLenCheck.append(len(windDir))
+            
+            if all(x == listLenCheck[0] for x in listLenCheck) == True:
+                checkData5 = True
+                calcLength = listLenCheck[0]
+                
+                if windMultVal == False: windSpeed = duplicateData(windSpeed, calcLength)
+                if dirMultVal == False and windDir != []: windDir = duplicateData(windDir, calcLength)
+                
+            else:
+                calcLength = None
+                warning = 'If you have put in lists with multiple values for wind speed or direction, the lengths of these lists must match across the parameters or you have a single value for a given parameter to be applied to all values in the list.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        else:
+            checkData5 = True
+            calcLength = 1
+    else:
+        calcLength = 0
+    
+    #If the user has input a HOY_ that is longer than the calculation length, throw a warning.
+    checkData7 = True
+    if HOY_ == None: pass
+    else:
+        if HOY_ > calcLength or HOY_ < 1:
+            checkData7 = False
+            warning = 'You cannot input a HOY_ that is less than 1 or greater than the length of values in the _windSpeed or windDirection_ lists.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        else: pass
+    
+    # Evaluate the terrain type to get the right roughness length.
+    checkData3, terrainType, d, a, rl = lb_wind.readTerrainType(terrainType_, 2)
+    if checkData3 == False:
         w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
-        return -1
+        ghenv.Component.AddRuntimeMessage(w, printMsg)
+    else: print "Terrain set to " + terrainType + "."
+    
+    #Take the model units into account.
+    checkData4 = True
+    heightsAboveGround = []
+    scaleFactor = lb_preparation.checkUnits()
+    conversionFactor = 1/(scaleFactor)
+    
+    #If a height has been entered that is above the boundary layer, set the height to the boundary layer.
+    if windProfileHeight_ != None:
+        if windProfileHeight_*scaleFactor > d:
+            windProfileHeight = float(d)
+            print "The input windProfileHeight_ is greater than the boundary layer height. The wind profile height has been set to the boundary layer height."
+            r = gh.GH_RuntimeMessageLevel.Remark
+            ghenv.Component.AddRuntimeMessage(r, "The input windProfileHeight_ is greater than the boundary layer height. The wind profile height has been set to the boundary layer height.")
+        else:
+            windProfileHeight = windProfileHeight_
+    else: windProfileHeight = None
+    
+    #Calaculate the heights above the ground to make the vectors from input profile ehight and distance between vectors.
+    if windProfileHeight == None:
+        windProfileHeight = 30*conversionFactor
+        print "Wind profile height set to " + str(windProfileHeight) + " " + str(sc.doc.ModelUnitSystem)
+    else:
+        if windProfileHeight < distBetweenVec_:
+            windProfileHeight = 0
+            checkData4 = False
+            print "The input windProfileHeight_ cannot be less than 0."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, "The input windProfileHeight_ cannot be less than 0.")
+        else:
+            windProfileHeight = windProfileHeight
+            print "Wind profile height set to " + str(windProfileHeight) + " " + str(sc.doc.ModelUnitSystem)
+    
+    if distBetweenVec_ == None:
+        distBetweenVec = 2*conversionFactor
+        print "Distance between wind vectors is set to " + str(distBetweenVec) + " " + str(sc.doc.ModelUnitSystem)
+    else:
+        distBetweenVec = distBetweenVec_
+        print "Distance between wind vectors is set to " + str(windProfileHeight) + " " + str(sc.doc.ModelUnitSystem)
+    
+    if distBetweenVec > windProfileHeight or distBetweenVec < 0:
+        distBetweenVec = 0
+        checkData4 = False
+        print "The input distBetweenVec_ cannot be less than 0 and cannot be less than the windProfileHeight_."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, "The input distBetweenVec_ cannot be less than 0 and cannot be less than the windProfileHeight_.")
+    
+    if windProfileHeight != 0 and distBetweenVec != 0:
+        height = 0
+        for num in range(int((windProfileHeight+distBetweenVec)/distBetweenVec)):
+            heightsAboveGround.append(height)
+            height += distBetweenVec
+    else:
+        checkData4 = False
+    
+    #Make the default analyisis period for the whole year if the user has not input one.
+    if analysisPeriod_ == []:
+        analysisPeriod = [(1, 1, 1), (12, 31, 24)]
+    else:
+        analysisPeriod = analysisPeriod_
+    
+    # Check to make sure that the wind vector scale has not been set to less than zero and set the deault to 5.
+    checkData6 = True
+    if windVectorScale_ == None:
+        windVectorScale = 5
+    else:
+        if windVectorScale_ < 0:
+            windVectorScale = 0
+            checkData6 = False
+            print "The input windVectorScale_ cannot be less than 0."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, "The input windVectorScale_ cannot be less than 0.")
+        else:
+            windVectorScale = windVectorScale_
+    
+    # Set a defult epwTerrain if none is connected.
+    checkData8 = True
+    if epwTerrain_ != None:
+        if epwTerrain_ <=3 and epwTerrain_ >= 0: epwTerrain = epwTerrain_
+        else:
+            epwTerrain = None
+            checkData8 = False
+            print "You have not connected a correct epwTerrain_ type."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct epwTerrain_ type.")
+    else:
+        epwTerrain = 2
+        print "epwTerrain_ has been set to (2 = country) for flat clear land, which is typical for most EPW files that are recorded at airports."
+    
+    #Set a default arrow style if none has been set.
+    checkData9 = True
+    if windArrowStyle_ != None:
+        if windArrowStyle_ <=4 and windArrowStyle_ >= 0: windArrowStyle = windArrowStyle_
+        else:
+            windArrowStyle = None
+            checkData9 = False
+            print "You have not connected a correct windArrowStyle_ type."
+            w = gh.GH_RuntimeMessageLevel.Warning
+            ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct windArrowStyle_ type.")
+    else:
+        windArrowStyle = 1
+        print "windArrowStyle_ has been set to 1 for colored arrows."
+    
+    #Check if everything is good.
+    if checkData1 == True and checkData2 == True and checkData3 == True and checkData4 == True and checkData5 == True and checkData6 == True and checkData7 == True and checkData8 == True  and checkData9 == True:
+        checkData = True
+    else:
+        checkData = False
+    
+    return checkData, heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, conversionFactor
 
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement, analysisPeriod, HOYS):
@@ -905,7 +888,7 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
     return unitsTextLabels, untisTxt, unitsTxtPts
 
 
-def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
+def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
     #Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
@@ -913,14 +896,14 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
     windDirHieghts = []
     
     #Define a maximum wind speed if none is provided in the legendPar.
-    if highB == "max": maxSpeed = 6
+    if highB == "max": maxSpeed = 10
     else: maxSpeed = int(highB)
     
     #Factor the units system into the scale.
     windVectorScale = windVectorScale*scaleFactor
     
     #Read the coefficients of the epwTerrain.
-    checkData, metD, metA = lb_wind.readTerrainType(epwTerrain)
+    checkData, epwTerr, metD, metA, metrl = lb_wind.readTerrainType(epwTerrain, 2)
     
     #If epw data is connected, get the data for the analysis period and strip the header off.
     HOYS = range(1,8761)
@@ -1064,7 +1047,10 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
         windSpdHeight = []
         anchorPts = []
         for count, height in enumerate(heightsAboveGround):
-            windSpdHeight.append(lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, height/scaleFactor, d, a, metD, metA))
+            if powerOrLog_ == True or powerOrLog_ == None:
+                windSpdHeight.append(lb_wind.powerLawWind(avgHrWindSpd, height/scaleFactor, d, a, metD, metA))
+            else:
+                windSpdHeight.append(lb_wind.logLawWind(avgHrWindSpd, height/scaleFactor, rl, metrl))
             if windDir != []: anchorPts.append(rc.Geometry.Point3d(0, 0, height))
             else: anchorPts.append(rc.Geometry.Point3d(0, height, 0))
        
@@ -1103,7 +1089,9 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
                 ptList = [rc.Geometry.Point3d.Origin, profilePts[1]]
             else:
                 midPtHeight = (heightsAboveGround[1]-heightsAboveGround[0])/20
-                midPtX = lb_wind.calcWindSpeedBasedOnHeight(avgHrWindSpd, midPtHeight, d, a, metD, metA)
+                if powerOrLog_ == True or powerOrLog_ == None:
+                    midPtX = lb_wind.powerLawWind(avgHrWindSpd, midPtHeight, d, a, metD, metA)
+                else: midPtX = lb_wind.logLawWind(avgHrWindSpd, midPtHeight, rl, metrl)
                 if windDir == []:
                     midPt = rc.Geometry.Point3d(midPtX*windVectorScale, midPtHeight, 0)
                     ptList = [rc.Geometry.Point3d.Origin, midPt, profilePts[1]]
@@ -1138,15 +1126,19 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
                     arrowMesh = rc.Geometry.Mesh()
                     use1meterArrowHeadSize = True
                     for count, point in enumerate(anchorPts[1:]):
-                        mesh = createColoredArrowMesh(count, point, colors, windVec, heightsAboveGround, use1meterArrowHeadSize, scaleFactor)
-                        arrowMesh.Append(mesh)
+                        try:
+                            mesh = createColoredArrowMesh(count, point, colors, windVec, heightsAboveGround, use1meterArrowHeadSize, scaleFactor)
+                            arrowMesh.Append(mesh)
+                        except: pass
                     windVecMesh.append(arrowMesh)
                 #Create high-res colored 3D meshes
                 elif windArrowStyle == 2:
                     arrowMesh = rc.Geometry.Mesh()
                     for count, point in enumerate(anchorPts[1:]):
-                        mesh = createHighResColoredArrows(count, point, colors, windVec, heightsAboveGround, windDir)
-                        arrowMesh.Append(mesh)
+                        try:
+                            mesh = createHighResColoredArrows(count, point, colors, windVec, heightsAboveGround, windDir)
+                            arrowMesh.Append(mesh)
+                        except:pass
                     windVecMesh.append(arrowMesh)
                 #Create line arrows (colored)
                 elif windArrowStyle == 3:
@@ -1295,22 +1287,39 @@ def main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, wind
         return profileCrv, windVecMesh, windSpdHeight, windDirHieghts, windVec, anchorPts, profileAxes, axesText, legend, legendBasePoint
 
 
+#If Honeybee or Ladybug is not flying or is an older version, give a warning.
+initCheck = True
 
+#Ladybug check.
+if not sc.sticky.has_key('ladybug_release') == True:
+    initCheck = False
+    print "You should first let Ladybug fly..."
+    ghenv.Component.AddRuntimeMessage(w, "You should first let Ladybug fly...")
+else:
+    try:
+        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = False
+        if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): initCheck = False
+    except:
+        initCheck = False
+        warning = "You need a newer version of Ladybug to use this compoent." + \
+        "Use updateLadybug component to update userObjects.\n" + \
+        "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+        "into canvas and try again."
+        ghenv.Component.AddRuntimeMessage(w, warning)
 
 #Check the inputs.
 checkData = False
-check = checkTheInputs()
-
-if check != -1:
-    checkData, heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, \
+if initCheck == True:
+    check = checkTheInputs()
+    checkData, heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, \
     windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, \
     lb_wind, windVectorScale, scaleFactor = check
-
-#Get the wind profile curve if everything looks good.
-if checkData == True:
-    result = main(heightsAboveGround, analysisPeriod, d, a, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
-    if result != -1:
-        windProfileCurve, windVectorMesh, windSpeeds, windDirections, windVectors, vectorAnchorPts, profileAxes, axesText, legend, legendBasePt = result
+    
+    #Get the wind profile curve if everything looks good.
+    if checkData == True:
+        result = main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
+        if result != -1:
+            windProfileCurve, windVectorMesh, windSpeeds, windDirections, windVectors, vectorAnchorPts, profileAxes, axesText, legend, legendBasePt = result
 
 #Hide the anchor points.
 ghenv.Component.Params.Output[4].Hidden = True
