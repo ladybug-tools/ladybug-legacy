@@ -30,8 +30,10 @@ This component particularly helpful in making the colors of Ladybug graphics con
 Provided by Ladybug 0.0.62
     
     Args:
-        lowBound_: A number representing the lower boundary of the legend's numerical range.  The default is set to the lowest value of the data stream that the legend refers to.
+        lowBound_: A number representing the lowest boundary of the legend's numerical range.  The default is set to the lowest value of the data stream that the legend refers to.
         highBound_: A number representing the higher boundary of the legend's numerical range. The default is set to the highest value of the data stream that the legend refers to.
+        lowBoundColor_: A color representing the higher boundary of the legend's numerical range, use the Swatch component to specify a color.
+        highBoundColor_: A color representing the lowest boundary of the legend's numerical range, use the Swatch component to specify a color.
         numSegments_: An interger representing the number of steps between the high and low boundary of the legend.  The default is set to 11 and any custom values put in here should always be greater than or equal to 2.
         customColors_: A list of colors that will be used to re-color the legend and the corresponding colored mesh(es).  The number of colors input here should match the numSegments_ value input above.  An easy way to generate a list of colors to input here is with the Grasshopper "Gradient" component and a Grasshopper "Series" component connected to the Gradient component's "t" input.  A bunch of Grasshopper "Swatch" components is another way to generate a list of custom colors.  The default colors are a gradient spectrum from blue to yellow to red.
         legendLocation_: Input a point here to change the location of the legend in the Rhino scene.  The default is usually set to the right of the legend's corresponding Ladybug graphic.
@@ -46,12 +48,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Legend Parameters"
 ghenv.Component.NickName = 'legendPar'
-ghenv.Component.Message = 'VER 0.0.62\nJUL_03_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUL_29_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
 #compatibleLBVersion = VER 0.0.59\nNOV_20_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 
@@ -64,6 +66,20 @@ import Rhino as rc
 import System.Drawing.Text as textCollection
 
 
+def checkInput(lowBound,highBound,lowBoundColor,highBoundColor):
+    
+    if ((lowBound == None) and (lowBoundColor != None)) or ((highBound == None) and (highBoundColor != None)):
+        
+        warning = "You cannot specify a highBound value or a lowBound value without specifiying a corresponding color in highBound_ or lowBoundColor_ respectively \n"+\
+        " and vice versa"
+        print warning
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, warning)
+        
+        return -1
+
+
+
 def getFontsList():
     fonts = []
     fontColletion = textCollection.InstalledFontCollection().Families
@@ -74,7 +90,7 @@ def getFontsList():
     fonts.sort()
     return fonts
 
-def main(lowBound, highBound, numSegments, customColors, legendLocation, legendScale, font, fontSize, decimalPlaces, removeLessThan):
+def main(lowBound, highBound, numSegments, customColors, legendLocation, legendScale, font, fontSize, decimalPlaces, removeLessThan,highBoundColor,lowBoundColor):
     if len(customColors) != 1:
         if lowBound: lowBound = float(lowBound)
         if highBound: highBound = float(highBound)
@@ -96,16 +112,23 @@ def main(lowBound, highBound, numSegments, customColors, legendLocation, legendS
         else:
             legendPar = [lowBound, highBound, numSegments, customColors, legendLocation, legendScale]
         
-        legendPar.extend([font, fontSize, bold, decimalPlaces, removeLessThan])
+        legendPar.extend([font, fontSize, bold, decimalPlaces, removeLessThan,lowBoundColor,highBoundColor])
         return legendPar
     else:
         return -1
 
-legendPar = main(lowBound_, highBound_, numSegments_, customColors_, legendLocation_, legendScale_, font_, fontSize_, decimalPlaces_, removeLessThan_)
-ghenv.Component.Params.Output[0].Hidden = True
-if legendPar == -1:
-    warning = "You should connect at least two colors to customColors input."
-    print warning
-    w = gh.GH_RuntimeMessageLevel.Warning
-    ghenv.Component.AddRuntimeMessage(w, warning)
+if checkInput(lowBound_,highBound_,lowBoundColor_,highBoundColor_) != -1:
+
+    legendPar = main(lowBound_, highBound_, numSegments_, customColors_, legendLocation_, legendScale_, font_, fontSize_, decimalPlaces_, removeLessThan_,highBoundColor_,lowBoundColor_)
+    ghenv.Component.Params.Output[0].Hidden = True
+    if legendPar == -1:
+        warning = "You should connect at least two colors to customColors input."
+        print warning
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, warning)
+        legendPar = []
+            
+
+else:
+    
     legendPar = []
