@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAUG_01_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1013,7 +1013,13 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
     graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, textSize, legendFont, decimalPlaces = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
-    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger)
+    try:
+        dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger)
+    except ArithmeticError:
+        warning = "All values are zero.  Chart cannot be created."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
     
     #If the user has requested a comfort range, then draw it.
     comfortBand = None
