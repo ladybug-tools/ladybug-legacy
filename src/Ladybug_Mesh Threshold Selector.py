@@ -28,21 +28,21 @@ Use this component to delete out unwanted areas of a shade after a shade benefit
 Provided by Ladybug 0.0.62
     
     Args:
-        _shadeMesh: The shade mesh out of either of the shade benefit evaluators.
-        _shadeNetEffect: The shade net effect out of either of the shade benefit evaluators.
-        percentToKeep_: A number between 0 and 100 that represents the percentage of the beneficial shade cells that you would like to keep.  By default, this is set to 25% but you may want to move it down if the area of your resulting shade is very large or move it up if you want to save more energy and do not care about the area of your shade.
-        levelOfPerform_: An optional number that represents the mimimum acceptable energy savings per square area unit to be included in the created shade.  An input here will override the percent input above.
+        _inputMesh: The mesh for which you would like to highlight the portion that meets a threshold.
+        _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.
+        percentToKeep_: A number between 0 and 100 that represents the percentage of the mesh faces that you would like to include in the resulting newColoredMesh.  By default, this is set to 25%.
+        levelOfPerform_: An optional number that represents the threshold above which a given mesh face is included in the newColoredMesh.  An input here will override the percent input above.
     Returns:
         readMe!: ...
-        energySavedByShade: The anticipated energy savings (or degree-days helped) for the shade output below.  Values should be in kWh for energy shade benefit or degrees C for comfort shade benefit.
-        areaOfShade: The area of the shade brep below in model units.
-        newColoredMesh: A new colored mesh with the unhelpful cells deleted out of it.
-        newShadeBrep: A new shade brep that represents the most effective shade possible.
+        totalValue: The sum of all of the values that meet the criteria multiplied by the mesh face area.  For example, if the _inputMesh is a radiation study mesh, this is equal to the total radiation falling on the newColoredMesh.  For an energy shade benefit mesh, this is the total energy saved by a shade of this size.
+        areaMeetsThresh: The area of the newColoredMesh in Rhino model units.
+        newColoredMesh: A new colored mesh with the vlues below the threshold deleted out of it.
+        newMeshOutline: A set of curves outlining the portion of the mesh that is above the threshold.
 """
 
-ghenv.Component.Name = "Ladybug_Mesh Threshold Selecotr"
+ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.62\nJUL_25_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAUG_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Extra"
@@ -59,12 +59,12 @@ import Grasshopper.Kernel as gh
 
 def checkTheInputs():
     #Check to make sure that the number of shade mesh faces matches the length of the shade New Effect.
-    if _shadeMesh.Faces.Count == len(_shadeNetEffect): checkData1 = True
+    if _inputMesh.Faces.Count == len(_analysisResult): checkData1 = True
     else:
         checkData1 = False
-        print "The number of faces in the _shadeMesh does not equal the number of values in the _shadeNetEffect.  Are you sure that you connected a mesh that matches your input data?"
+        print "The number of faces in the _inputMesh does not equal the number of values in the _analysisResult.  Are you sure that you connected a mesh that matches your input data?"
         w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, "The number of faces in the _shadeMesh does not equal the number of values in the _shadeNetEffect.  Are you sure that you connected a mesh that matches your input data?")
+        ghenv.Component.AddRuntimeMessage(w, "The number of faces in the _inputMesh does not equal the number of values in the _analysisResult.  Are you sure that you connected a mesh that matches your input data?")
     
     #Check to see if the user has hooked up a percent to keep and, if not, set it to 50%.
     if percentToKeep_ == None:
@@ -90,18 +90,18 @@ def checkTheInputs():
 
 def main(percent):
     #Make a list to keep track of all of the faces in the test mesh.
-    faceNumbers = range(len(_shadeNetEffect))
+    faceNumbers = range(len(_analysisResult))
     
     #Sort the list of net effect along with the face numbers list and reverse it so the most valuable cells are at the top.
-    faceNumbersSort = [x for (y,x) in sorted(zip(_shadeNetEffect, faceNumbers))]
+    faceNumbersSort = [x for (y,x) in sorted(zip(_analysisResult, faceNumbers))]
     faceNumbersSort.reverse()
-    _shadeNetEffect.sort()
-    _shadeNetEffect.reverse()
+    _analysisResult.sort()
+    _analysisResult.reverse()
     
     #Remove the faces numbers that are harmful.
     faceNumbersHarm = []
     shadeNetEffectHelp = []
-    for count, num in enumerate(_shadeNetEffect):
+    for count, num in enumerate(_analysisResult):
         if num > 0: shadeNetEffectHelp.append(num)
         else: faceNumbersHarm.append(faceNumbersSort[count])
     
@@ -118,7 +118,7 @@ def main(percent):
             else: faceNumbersHarm.append(faceNumbersSort[count])
     
     #Remove the unnecessary cells from the shade mesh.
-    newMesh = _shadeMesh
+    newMesh = _inputMesh
     newMesh.Faces.DeleteFaces(faceNumbersHarm)
     
     #Turn the new mesh into a brep snd get the area of each face.
@@ -132,9 +132,8 @@ def main(percent):
         try:
             edgeCrv = meshBrep.DuplicateEdgeCurves(True)
             joinedCrv = rc.Geometry.Curve.JoinCurves(edgeCrv, sc.doc.ModelAbsoluteTolerance)
-            meshBrepFinal = rc.Geometry.Brep.CreatePlanarBreps(joinedCrv)
         except:
-            meshBrepFinal = meshBrep
+            joinedCrv = none
         
         #Calculate the total area and the energy saved by the new mesh.
         totalArea = sum(areaList)
@@ -143,16 +142,15 @@ def main(percent):
             totalEnergyList.append(shadeNetFinal[count]*area)
         totalEnergy = sum(totalEnergyList)
         
-        return totalEnergy, totalArea, newMesh, meshBrepFinal
+        return totalEnergy, totalArea, newMesh, joinedCrv
     else:
         return 0, 0, None, None
 
 
 checkData = False
-if _shadeMesh != None and _shadeNetEffect != [] and _shadeNetEffect != [None]:
+if _inputMesh != None and _analysisResult != [] and _analysisResult != [None]:
     checkData, percent = checkTheInputs()
 
-if checkData == True and _shadeMesh and _shadeNetEffect != []:
-    energySavedByShade, areaOfShade, newColoredMesh, newShadeBrep = main(percent)
-
+if checkData == True and _inputMesh and _analysisResult != []:
+    totalValue, areaMeetsThresh, newColoredMesh, newMeshOutline = main(percent)
 ghenv.Component.Params.Output[3].Hidden = True
