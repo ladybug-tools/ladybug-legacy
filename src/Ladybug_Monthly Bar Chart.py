@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.62\nAUG_01_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAUG_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -553,6 +553,17 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
         srf.Transform(rotation)
     textSrfs.extend(yAxisSrf[0])
     lowVal1, valRange1, finalValues, negativeTrigger = makeNumberLabels(dataList[0], True, lowBList[0], highBList[0], newDataMethodsList[0])
+    if valRange1 == 0:
+        valRange1 = 1
+        finalValues = []
+        valStep = valRange1/(numSeg-1)
+        for num in range(numSeg):
+            finalValues.append(str(round(lowVal1 + num*valStep, 2)))
+        warning = "You have a list where all values are zero and this is would cause the Y-Axis to go from 0 to 0. \n" + \
+        "As a result the Y-Axis has automatically beeen set to go from 0 to 1.  Use LegendPar to change this or try setting stackValues to True."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    
     startVals.append(lowVal1)
     scaleFacs.append(valRange1/height)
     #Move the text based on how long it is.
@@ -764,8 +775,16 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                 
                 for stackCount, stack in enumerate(month):
                     #Calculate the height of the bar
-                    if negativeTrigger: barHeight = (stack)/scaleFacs[dataCount]
-                    else: barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                    if negativeTrigger:
+                        try:
+                            barHeight = (stack)/scaleFacs[dataCount]
+                        except:
+                            barHeight = 0
+                    else:
+                        try:
+                            barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                        except:
+                            barHeight = 0
                     
                     #Generate the points that make the face of the mesh
                     if barHeight > 0:
@@ -1048,13 +1067,7 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
     graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, monthsInChart, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, textSize, legendFont, decimalPlaces = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZero, xS, yS, legendPs, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
-    try:
-        dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger, dataPtOffset)
-    except ArithmeticError:
-        warning = "All values are zero.  Chart cannot be created."
-        print warning
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        return -1
+    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger, dataPtOffset)
     
     #If the user has requested a comfort range, then draw it.
     comfortBand = None
