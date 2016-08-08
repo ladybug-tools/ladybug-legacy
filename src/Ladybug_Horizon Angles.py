@@ -30,7 +30,7 @@ http://resources.solmetric.com/get/Solmetric%20SunEye%20200%20Series%20Users%20G
 "PVsyst 6 Help", PVsyst SA
 http://files.pvsyst.com/help/index.html?horizon_import.htm
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         _location: The output from the "importEPW" or "constructLocation" component.  This is essentially a list of text summarizing a location on the Earth.
@@ -108,13 +108,13 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Horizon Angles"
 ghenv.Component.NickName = "HorizonAngles"
-ghenv.Component.Message = "VER 0.0.62\nJUN_28_2016"
+ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
-#ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
+#ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
-try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 import Grasshopper.Kernel as gh

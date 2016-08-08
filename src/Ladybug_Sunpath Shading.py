@@ -34,7 +34,7 @@ Use "shadedSolarRadiationPerHour" data for "solarRadiationPerHour_" input of "Th
 "annualShading" output is based on "Using sun path charts to estimate the effects of shading on PV arrays", University of Oregon, Frank Vignola:
 http://solardat.uoregon.edu/download/Papers/UsingSunPathChartstoEstimatetheEffectofShadingonPVArrays.pdf
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -199,12 +199,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Sunpath Shading"
 ghenv.Component.NickName = "SunpathShading"
-ghenv.Component.Message = 'VER 0.0.62\nMAY_21_2016'
+ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+ghenv.Component.SubCategory = "4 | Renewables"
+#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.DataTree as ghdt
@@ -411,7 +411,7 @@ def checkInputData(analysisGeometry, ACenergyPerHour, context, coniferousTrees, 
     validContextCategories = [index for index in [validContext1, validContext2, validContext3] if index > 0]
     
     # default transmission indices based on: Planning and Installing Photovoltaic Systems: A Guide for Installers, Architects and Engineers,
-    # Deutsche Gesellschaft Fr Sonnenenergie (Dgs), Dec 2007.
+    # Deutsche Gesellschaft Für Sonnenenergie (Dgs), Dec 2007.
     if (coniferousAllyearIndex == None) or (coniferousAllyearIndex < 0) or (coniferousAllyearIndex > 1):
         coniferousAllyearIndex = 0.30
     if (deciduousInleafIndex == None) or (deciduousInleafIndex < 0) or (deciduousInleafIndex > 1):

@@ -47,7 +47,7 @@ http://www.movable-type.co.uk/scripts/latlong-vincenty.html
 Topography data from: http://opentopography.org
 GDAL Libraries from: http://gisinternals.com
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         _location: The output from the "importEPW" or "constructLocation" component.  This is essentially a list of text summarizing a location on the Earth.
@@ -163,11 +163,10 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Terrain Shading Mask"
 ghenv.Component.NickName = "TerrainShadingMask"
-ghenv.Component.Message = "VER 0.0.62\nJUL_09_2016"
+ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
-#ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
