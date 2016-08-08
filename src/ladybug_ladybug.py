@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nJUL_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAUG_09_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -867,53 +867,55 @@ class Preparation(object):
             ground temperature data corresponds to is the 2nd item in the list of all the ground temperature data.
         """
         
+        
+        epwfile = open(epw_file,"r")
+        
         groundtemp1st = [self.strToBeFoundgt, location, 'Depth', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         
-
-        with open(epw_file,"r") as i:
-            for lnum, line in enumerate(i): 
-                if lnum > 3:
-                    break
-                elif lnum == 3:
+        lnum = 1 # Line number
+        
+        with epwfile as i:
+            for line in i: 
+                if lnum == 3:
                     noData = False
-                    groundtemp = line.split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
+                    groundtemp = epwfile.readline().split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
                     
                     self.groundtemp = groundtemp
                     
                     def stringtoFloat(sequence): # stringtoFloattion that converts strings to floats, if not possible it passes
-                        strings = []
-                        seq = [] # line 18 - data = CSV.Branch(month_-1) creates grasshoppers own List[object] this does not contain a remove method'
-                        # therefore in line 4 6 and 7 we must add the data to a python list to be able to use the function
-                        for item in sequence:
-                            seq.append(item)
-                        for i in range(len(seq)):
-                            try:
-                                seq[i] = float(seq[i])
-                            except:
-                                strings.append(seq[i])
-                        for x in strings:
-                            seq.remove(x)
-                        return seq
+                    	strings = []
+                    	seq = [] # line 18 - data = CSV.Branch(month_-1) creates grasshoppers own List[object] this does not contain a remove method'
+                    	# therefore in line 4 6 and 7 we must add the data to a python list to be able to use the function
+                    	for item in sequence:
+                    		seq.append(item)
+                    	for i in range(len(seq)):
+                    		try:
+                    			seq[i] = float(seq[i])
+                    		except:
+                    			strings.append(seq[i])
+                    	for x in strings:
+                    		seq.remove(x)
+                    	return seq
                     
                     if noData == False:
-                        try:
-                            groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
-                            groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
-                            groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
-                            
-                            self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
-                            try: self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
-                            except: pass
-                            try: self.depthData(groundtemp3rd,float(groundtemp[34]))
-                            except: pass
-                        except:
-                            print ">>> Failed to import ground temperatures from %s." % epw_file
-
+                        groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
+                        groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
+                        groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
+                        
+                        self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
+                        try: self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
+                        except: pass
+                        try: self.depthData(groundtemp3rd,float(groundtemp[34]))
+                        except: pass
+                    
+                else:
+                    pass
+                lnum += 1
+                
         return groundtemp1st,groundtemp2nd,groundtemp3rd
-
-
+    
     def printgroundTempData(self,groundtemp):
                     
         try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st) ' + groundtemp[18]+ ' meters (2nd) '+ groundtemp[34]+' meters (3rd) respectively'
@@ -964,7 +966,6 @@ class Preparation(object):
                 glbIll.append(float(line.split(',')[16]))
                 cloudCov.append(float(line.split(',')[22]))
             lnum += 1
-        epwfile.close()
         return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, infRad, barPress, modelYear
     
     ##### Start of Gencumulative Sky
@@ -2367,13 +2368,9 @@ class RunAnalysisInsideGH(object):
         
         #Get the importance for view vectors.
         vecImportance = []
-        if viewType == 0:
-            for vec in viewPoints:
-                vecImportance.append(1)
-        else:
-            totalArea = sum(patchAreas)
-            for area in patchAreas:
-                vecImportance.append((area*100)/totalArea)
+        totalArea = sum(patchAreas)
+        for area in patchAreas:
+            vecImportance.append((area*100)/totalArea)
         
         
         #Create an empty list to be filled.
@@ -2499,8 +2496,7 @@ class ResultVisualization(object):
         18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
         19: [System.Drawing.Color.FromArgb(138,17,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(128,102,64)],
         20: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(137,0,139), System.Drawing.Color.FromArgb(218,0,218), System.Drawing.Color.FromArgb(196,0,255), System.Drawing.Color.FromArgb(0,92,255), System.Drawing.Color.FromArgb(0,198,252), System.Drawing.Color.FromArgb(0,244,215), System.Drawing.Color.FromArgb(0,220,101), System.Drawing.Color.FromArgb(7,193,0), System.Drawing.Color.FromArgb(115,220,0), System.Drawing.Color.FromArgb(249,251,0), System.Drawing.Color.FromArgb(254,178,0), System.Drawing.Color.FromArgb(253,77,0), System.Drawing.Color.FromArgb(255,15,15), System.Drawing.Color.FromArgb(255,135,135), System.Drawing.Color.FromArgb(255,255,255)],
-        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)],
-        22: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,77), System.Drawing.Color.FromArgb(255,115,0), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(0,0,0)]
+        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)]
         }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
@@ -2563,9 +2559,19 @@ class ResultVisualization(object):
             joinedMesh.VertexColors[joinedMesh.Faces[srfCount].D] = colors[srfCount]
         return joinedMesh
     
-    def gradientColor(self, values, lowB, highB, colors):
-        if highB == 'max': highB = max(values)
-        if lowB == 'min': lowB = min(values)
+    def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
+
+        # make a deep copy of colors so colors isn't popped twice once for legend colors and once for mesh colors
+        
+        copyColors = list(colors)
+        
+        if highB == 'max':
+            
+            highB = max(values)
+            
+        if lowB == 'min':
+            
+            lowB = min(values)
         
         # this function inputs values, and custom colors and outputs gradient colors
         def parNum(num, lowB, highB):
@@ -2585,7 +2591,22 @@ class ResultVisualization(object):
             color = System.Drawing.Color.FromArgb(red, green, blue)
             return color
         
+        # Calculate num of colors
+        
+        if (highBoundColor != None):
+            
+            # Subtract a color to make room for the highBoundColor
+            
+            copyColors.pop()
+
+        if (lowBoundColor != None):
+            
+            # Subtract a color to make room for the lowBoundColor
+            
+            copyColors.pop()
+        
         numofColors = len(colors)
+        
         colorBounds = rs.frange(0, 1, round(1/(numofColors-1),6))
         if len(colorBounds) != numofColors: colorBounds.append(1)
         colorBounds = [round(x,3) for x in colorBounds]
@@ -2594,12 +2615,32 @@ class ResultVisualization(object):
         for num in values: numP.append(parNum(num, lowB, highB))
             
         colorTemp = []
+        
         for num in numP:
             for i in range(numofColors):
+                
                 if  colorBounds[i] <= num <= colorBounds[i + 1]:
-                    colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
-                    break
+
+                    if (num == 1) and (highBoundColor != None) :
+                        
+                        colorTemp.append(highBoundColor)
+                        
+                        break
+                        
+                    elif (num == 0) and (lowBoundColor != None):
+                        
+                        colorTemp.append(lowBoundColor)
+                        
+                        break
+                        
+                    else:
+                        
+                        colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
+
+                        break
+        
         color = colorTemp
+        
         return color
     
     def calculateBB(self, geometries, restricted = False):
@@ -4046,28 +4087,36 @@ class ComfortModels(object):
         TKelvin = []
         for item in airTemp:
             TKelvin.append(item+273)
+        
         saturationPressure = self.calcVapPressHighAccuracy(TKelvin)
+        
         #Calculate hourly water vapor pressure
         DecRH = []
         for item in relHumid:
             DecRH.append(item*0.01)
+        
         partialPressure = [a*b for a,b in zip(DecRH,saturationPressure)]
         
         #Calculate hourly humidity ratio
         PressDiffer = [a-b for a,b in zip(barPress,partialPressure)]
+        
         Constant = []
         for item in partialPressure:
             Constant.append(item*0.621991)
+        
         humidityRatio = [a/b for a,b in zip(Constant,PressDiffer)]
         
         #Calculate hourly enthalpy
         EnVariable1 = []
         for item in humidityRatio:
             EnVariable1.append(1.01+(1.89*item))
+        
         EnVariable2 = [a*b for a,b in zip(EnVariable1,airTemp)]
+        
         EnVariable3 = []
         for item in humidityRatio:
             EnVariable3.append(2500*item)
+        
         EnVariable4 = [a+b for a,b in zip(EnVariable2,EnVariable3)]
         
         enthalpy = []
@@ -4080,42 +4129,6 @@ class ComfortModels(object):
         #Return all of the results
         return humidityRatio, enthalpy, partialPressure, saturationPressure
     
-    def findWetBulb(self, dbTemp, RH, Psta=101325):
-        """
-        Calculates Wet Bulb Temperature (C) at Temperature dbTemp (C),
-        Relative Humidity RH (%), and Barometric Pressure Psta (Pa).
-        """
-        es = 6.112 * math.e**((17.67 * dbTemp) / (dbTemp + 243.5))
-        e = (es * RH) / 100
-        Tw = 0
-        increse = 10
-        previoussign = 1
-        Ed = 1
-        
-        while math.fabs(Ed) > 0.005:
-            Ewg = 6.112 * math.e**((17.67 * Tw) / (Tw + 243.5))
-            eg = Ewg - (Psta / 100) * (dbTemp - Tw) * 0.00066 * (1 + (0.00155 * Tw))
-            Ed = e - eg
-            if Ed == 0:
-                break
-            else:
-                if Ed < 0:
-                    cursign = -1
-                    if cursign != previoussign:
-                        previoussign = cursign
-                        increse = increse / 10
-                    else:
-                        increse = increse
-                else:
-                    cursign = 1
-                    if cursign != previoussign:
-                        previoussign = cursign
-                        increse = increse / 10
-                    else:
-                        increse = increse
-            Tw = Tw + increse * previoussign
-        
-        return Tw
     
     def calcRelHumidFromHumidRatio(self, absHumid, barPress, temperature):
         #Calculate the partial pressure of water in the atmostphere.
