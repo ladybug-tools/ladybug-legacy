@@ -24,7 +24,7 @@
 Use this component to calculate various Photovoltaics performance metrics
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         _PVsurface: - Input planar Grasshopper/Rhino Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
@@ -48,7 +48,7 @@ Provided by Ladybug 0.0.62
         _totalRadiationPerHour: Import "totalRadiationPerHour" output data from "Photovoltaics surface" component.
                                 In kWh/m2.
         _cellTemperaturePerHour: Import "cellTemperaturePerHour" output data from "Photovoltaics surface" component.
-                                 In C.
+                                 In °C.
         ACenergyDemandPerHour_: Required electrical energy used for any kind of load: heating, cooling, electric lights, solar water heating circulation pump etc.
                                 For example, any of the Honeybee's "Read EP Result" outputs can be inputted in here. Either separately or summed.
                                 -
@@ -151,12 +151,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+ghenv.Component.SubCategory = "4 | Renewables"
+#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.Kernel as gh
