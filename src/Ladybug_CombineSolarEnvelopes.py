@@ -44,10 +44,10 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = 'Ladybug_CombineSolarEnvelopes'
 ghenv.Component.NickName = 'CombineEnvelopes'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAUG_08_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass

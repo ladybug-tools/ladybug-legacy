@@ -45,9 +45,9 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Visualize_Shadows"
 ghenv.Component.NickName = 'Visualize_Shadows'
-ghenv.Component.Message = 'VER 0.0.61\nApr_15_2016' #Change this date to be that of your commit or pull request.
+ghenv.Component.Message = 'VER 0.0.61\nAUG_08_2016' #Change this date to be that of your commit or pull request.
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "7 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 #Change the following date to be that of the HB version of your commit or pull request (or get rid of the follwoing if your component is a part of Ladybug):
