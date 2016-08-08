@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nJUN_28_2016'
+ghenv.Component.Message = 'VER 0.0.62\nJUL_26_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -964,6 +964,7 @@ class Preparation(object):
                 glbIll.append(float(line.split(',')[16]))
                 cloudCov.append(float(line.split(',')[22]))
             lnum += 1
+        epwfile.close()
         return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, infRad, barPress, modelYear
     
     ##### Start of Gencumulative Sky
@@ -2498,7 +2499,8 @@ class ResultVisualization(object):
         18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
         19: [System.Drawing.Color.FromArgb(138,17,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(128,102,64)],
         20: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(137,0,139), System.Drawing.Color.FromArgb(218,0,218), System.Drawing.Color.FromArgb(196,0,255), System.Drawing.Color.FromArgb(0,92,255), System.Drawing.Color.FromArgb(0,198,252), System.Drawing.Color.FromArgb(0,244,215), System.Drawing.Color.FromArgb(0,220,101), System.Drawing.Color.FromArgb(7,193,0), System.Drawing.Color.FromArgb(115,220,0), System.Drawing.Color.FromArgb(249,251,0), System.Drawing.Color.FromArgb(254,178,0), System.Drawing.Color.FromArgb(253,77,0), System.Drawing.Color.FromArgb(255,15,15), System.Drawing.Color.FromArgb(255,135,135), System.Drawing.Color.FromArgb(255,255,255)],
-        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)]
+        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)],
+        22: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,77), System.Drawing.Color.FromArgb(255,115,0), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(0,0,0)]
         }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
@@ -4044,36 +4046,28 @@ class ComfortModels(object):
         TKelvin = []
         for item in airTemp:
             TKelvin.append(item+273)
-        
         saturationPressure = self.calcVapPressHighAccuracy(TKelvin)
-        
         #Calculate hourly water vapor pressure
         DecRH = []
         for item in relHumid:
             DecRH.append(item*0.01)
-        
         partialPressure = [a*b for a,b in zip(DecRH,saturationPressure)]
         
         #Calculate hourly humidity ratio
         PressDiffer = [a-b for a,b in zip(barPress,partialPressure)]
-        
         Constant = []
         for item in partialPressure:
             Constant.append(item*0.621991)
-        
         humidityRatio = [a/b for a,b in zip(Constant,PressDiffer)]
         
         #Calculate hourly enthalpy
         EnVariable1 = []
         for item in humidityRatio:
             EnVariable1.append(1.01+(1.89*item))
-        
         EnVariable2 = [a*b for a,b in zip(EnVariable1,airTemp)]
-        
         EnVariable3 = []
         for item in humidityRatio:
             EnVariable3.append(2500*item)
-        
         EnVariable4 = [a+b for a,b in zip(EnVariable2,EnVariable3)]
         
         enthalpy = []
@@ -4086,6 +4080,42 @@ class ComfortModels(object):
         #Return all of the results
         return humidityRatio, enthalpy, partialPressure, saturationPressure
     
+    def findWetBulb(self, dbTemp, RH, Psta=101325):
+        """
+        Calculates Wet Bulb Temperature (C) at Temperature dbTemp (C),
+        Relative Humidity RH (%), and Barometric Pressure Psta (Pa).
+        """
+        es = 6.112 * math.e**((17.67 * dbTemp) / (dbTemp + 243.5))
+        e = (es * RH) / 100
+        Tw = 0
+        increse = 10
+        previoussign = 1
+        Ed = 1
+        
+        while math.fabs(Ed) > 0.005:
+            Ewg = 6.112 * math.e**((17.67 * Tw) / (Tw + 243.5))
+            eg = Ewg - (Psta / 100) * (dbTemp - Tw) * 0.00066 * (1 + (0.00155 * Tw))
+            Ed = e - eg
+            if Ed == 0:
+                break
+            else:
+                if Ed < 0:
+                    cursign = -1
+                    if cursign != previoussign:
+                        previoussign = cursign
+                        increse = increse / 10
+                    else:
+                        increse = increse
+                else:
+                    cursign = 1
+                    if cursign != previoussign:
+                        previoussign = cursign
+                        increse = increse / 10
+                    else:
+                        increse = increse
+            Tw = Tw + increse * previoussign
+        
+        return Tw
     
     def calcRelHumidFromHumidRatio(self, absHumid, barPress, temperature):
         #Calculate the partial pressure of water in the atmostphere.

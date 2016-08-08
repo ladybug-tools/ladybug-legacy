@@ -37,7 +37,6 @@ Provided by Ladybug 0.0.62
                         3 - UTCI Comfort (outdoor)
                         Note that this option is only available when temperature is connected so, by default, it is set to 0 for no comfort range.
         bldgBalancePt_: An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions.
-        _______________: ...
         stackValues_: Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other.
         plotFromZero_: Set to 'True' to have the component plot all bar values starting from zero (as opposed from the bottom of the chart, which might be a negative number).  This is useful when you are plotting the terms of an energy balance where you want gains to be above zero and losses to be below.  It can be detrimental if you are plotting temperatures in degrees celcius and do not want negative values to go below zero.  As such, the default is set to 'False' to not plot from zero.
         altTitle_: An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'
@@ -45,6 +44,7 @@ Provided by Ladybug 0.0.62
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
         _xScale_: The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year).
         _yScale_: The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units.
+        _labelPtsOffset_: A number in Rhino model units that represents the distance between the top of bars on the chart and the location where the dataLabelPts are. If you set this value to 0, you can use the dataLabelPts to create a polyline of monthly values.  The default is autocalculated based on the scale of the chart.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAUG_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -94,16 +94,7 @@ inputsDict = {
     
 0: ["_inputData", "A list of input data to plot.  This should usually be data out of the 'Ladybug_Average Data' component or monthly data from an energy simulation but can also be hourly or daily data from the 'Ladybug_Import EPW.'  However, it is recommended that you use the 'Ladybug_3D Chart' component for daily or hourly data as this is usually a bit clearer."],
 1: ["comfortModel_", "An optional interger to draw the comfort model on the chart.  Choose from the following: \n 0 - No comfort range \n 1 - PMV comfort range (indoor) \n 2 - Adaptive confort range (naturally ventilated) \n 3 - UTCI Comfort (outdoor) \n Note that this option is only available when temperature is connected so, by default, it is set to 0 for no comfort range."],
-2: ["bldgBalancePt_", "An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions."],
-3: ["_______________", "..."],
-4: ["stackValues_", "Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other."],
-5: ["plotFromZero_", "Set to 'True' to have the component plot all bar values starting from zero (as opposed from the bottom of the chart, which might be a negative number).  This is useful when you are plotting the terms of an energy balance where you want gains to be above zero and losses to be below.  It can be detrimental if you are plotting temperatures in degrees celcius and do not want negative values to go below zero.  As such, the default is set to 'False' to not plot from zero."],
-6: ["altTitle_", "An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'"],
-7: ["altYAxisTitle_", "An optional text string to replace the default Y-Axis label of the chart.  This can also be a list of 2 y-axis titles if there are two different types of data connected to _inputData.  The default is set to pick out the names of the first (and possibly the second) list connected to the 'inputData.'"],
-8: ["_basePoint_", "An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0)."],
-9: ["_xScale_", "The scale of the X axis of the graph. The default is set to 1 and this will plot the X axis with a length of 120 Rhino model units (for 12 months of the year)."],
-10: ["_yScale_", "The scale of the Y axis of the graph. The default is set to 1 and this will plot the Y axis with a length of 50 Rhino model units."],
-11: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."]
+2: ["bldgBalancePt_", "An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions."]
 }
 
 
@@ -181,8 +172,8 @@ def checkTheInputs():
                         if comfortModel_ == 2:
                             outdoorDryBlubTest = False
                             for list in listInfo:
-                                if 'Temperature' in list[2] or 'Universal Thermal Climate Index' in list[2]:
-                                    if list[5] == (1,1,1) and list[6] == (12,31,24): outdoorDryBlubTest = True
+                                if 'Dry Bulb Temperature' in list[2]:
+                                    outdoorDryBlubTest = True
                             if outdoorDryBlubTest == True: comfortModel = comfortModel_
                             else:
                                 checkData2 = False
@@ -205,6 +196,10 @@ def checkTheInputs():
             #Set a default for stackValues_.
             if stackValues_ != None: stackValues = stackValues_
             else: stackValues = False
+            
+            #Set a default for plotFromZero_.
+            if plotFromZero_ != None: plotFromZero = plotFromZero_
+            else: plotFromZero = False
             
             #Set defaults for xScale and yScale.
             if _xScale_ != None: xS = _xScale_
@@ -231,7 +226,7 @@ def checkTheInputs():
             if checkData1 == True and checkData2 == True and checkData3 == True: checkData = True
             else: checkData = False
             
-            return checkData, separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels
+            return checkData, separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, plotFromZero, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels
     else:
         print "You should first let the Ladybug fly..."
         w = gh.GH_RuntimeMessageLevel.Warning
@@ -241,7 +236,7 @@ def checkTheInputs():
 
 def manageInput():
     #If some of the component inputs and outputs are not right, blot them out or change them.
-    for input in range(12):
+    for input in range(3):
         if input == 1:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
@@ -256,13 +251,13 @@ def manageInput():
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def restoreInput():
-    for input in range(12):
+    for input in range(3):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 
-def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization):
+def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZero, xS, yS, legendPs, lb_preparation, lb_visualization):
     #Read legend parameters
     lowBNotImp, highBNotImp, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
     numSeg = int(numSeg)
@@ -272,49 +267,8 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
     allText = []
     allTextPt = []
     
-    #Make a chart boundary.
-    chartAxes = []
-    width = xS*120
-    height = yS*50
-    chartAxes.append(rc.Geometry.Rectangle3d(rc.Geometry.Plane.WorldXY, width, height).ToNurbsCurve())
-    
-    #Add in the segments for each month.
-    monthLines = []
-    textBasePts = []
-    segWidth = 0
-    for segmentNum in range(12):
-        planeRec = rc.Geometry.Plane.WorldXY
-        startPt = rc.Geometry.Point3d(segWidth, 0, 0)
-        textBasePts.append(rc.Geometry.Point3d(segWidth + width/24 - legendFontSize*2, -legendFontSize*2, 0))
-        planeRec.Origin = startPt
-        monthLine = rc.Geometry.Rectangle3d(planeRec, width/12, height).ToNurbsCurve()
-        monthLines.append(monthLine)
-        segWidth = segWidth + (width/(12))
-    chartAxes.extend(monthLines)
-    
-    #Make a chart with the number of y segments from the legendPar.
-    gridLines = []
-    yAxisLeftPts = []
-    yAxisRightPts = []
-    segHeight = 0
-    for segmentNum in range(numSeg):
-        gridLine = rc.Geometry.Line(0,segHeight,0,width,segHeight,0).ToNurbsCurve()
-        gridLines.append(gridLine)
-        yAxisLeftPts.append(rc.Geometry.Point3d(-8*legendFontSize,segHeight,0))
-        yAxisRightPts.append(rc.Geometry.Point3d(legendFontSize+width,segHeight,0))
-        segHeight = segHeight + (height/(int(numSeg) - 1))
-    chartAxes.extend(gridLines)
-    
-    #Put in month labels.
+    ### ANALYZE THE INPUT DATA TO SEE WHAT WE HAVE.
     daysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    textSrfs = []
-    for count, monthText in enumerate(monthNames):
-        textSrf = lb_visualization.text2srf([monthText], [textBasePts[count]], legendFont, legendFontSize, legendBold)
-        textSrfs.extend(textSrf[0])
-    allText.extend(monthNames)
-    allTextPt.extend(textBasePts)
-    
     #Organize the data into lists of relevant info for the chart axes.
     unitsList = []
     dataTypeList = []
@@ -346,7 +300,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
                 startList[startMonth-1].append(item)
                 startMonth +=1
             
-            #Organize data for monthly per hour values.
+        #Organize data for monthly per hour values.
         elif methodsList[listCount] == 1:
             startMonth = listInfo[listCount][5][0]
             hourRange = listInfo[listCount][6][2]-listInfo[listCount][5][2]+1
@@ -390,7 +344,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
                     hourCumulative = hourCumulative + monthCumulative
                     startList[startMonth-1][startDay-1].append(item)
             
-            #Organize data for daily values.
+        #Organize data for daily values.
         elif methodsList[listCount] == 3:
             startMonth = listInfo[listCount][5][0]
             startDay = listInfo[listCount][5][1]
@@ -435,8 +389,75 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             newDataMethodsList.append(methodsList[listCount])
             futureColorsList.append([0])
     
+    ### DRAW AN INITIAL BOUNDARY AROUND THE CHART AND DRAW MONTH LABELS.
+    def areAllListsEmpty(masterList):
+        return all(i == [] for i in masterList)
+    
+    monthsWeNeed = []
+    for dat in dataList:
+        for count, mon in enumerate(dat):
+            if mon != [] and not areAllListsEmpty(mon) and count not in monthsWeNeed:
+                monthsWeNeed.append(count)
+    monthsWeNeed.sort()
+    startMon = monthsWeNeed[0]
+    endMon = monthsWeNeed[-1]
+    totMons = range(startMon, endMon+1)
+    
+    #Make a chart boundary.
+    chartAxes = []
+    width = xS*10*len(totMons)
+    height = yS*50
+    chartAxes.append(rc.Geometry.Rectangle3d(rc.Geometry.Plane.WorldXY, width, height).ToNurbsCurve())
+    
+    #Add in the segments for each month.
+    monthLines = []
+    textBasePts = []
+    segWidth = 0
+    for segmentNum in range(len(totMons)):
+        planeRec = rc.Geometry.Plane.WorldXY
+        startPt = rc.Geometry.Point3d(segWidth, 0, 0)
+        textBasePts.append(rc.Geometry.Point3d(segWidth + width/(len(totMons)*2) - legendFontSize*2, -legendFontSize*2, 0))
+        planeRec.Origin = startPt
+        monthLine = rc.Geometry.Rectangle3d(planeRec, width/len(totMons), height).ToNurbsCurve()
+        monthLines.append(monthLine)
+        segWidth = segWidth + (width/len(totMons))
+    chartAxes.extend(monthLines)
+    
+    #Make a chart with the number of y segments from the legendPar.
+    gridLines = []
+    yAxisLeftPts = []
+    yAxisRightPts = []
+    segHeight = 0
+    for segmentNum in range(numSeg):
+        gridLine = rc.Geometry.Line(0,segHeight,0,width,segHeight,0).ToNurbsCurve()
+        gridLines.append(gridLine)
+        yAxisLeftPts.append(rc.Geometry.Point3d(-8*legendFontSize,segHeight,0))
+        yAxisRightPts.append(rc.Geometry.Point3d(legendFontSize+width,segHeight,0))
+        segHeight = segHeight + (height/(int(numSeg) - 1))
+    chartAxes.extend(gridLines)
+    
+    #Put in month labels.
+    monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    textSrfs = []
+    for count, monthInt in enumerate(totMons):
+        textSrf = lb_visualization.text2srf([monthNames[monthInt]], [textBasePts[count]], legendFont, legendFontSize, legendBold)
+        textSrfs.extend(textSrf[0])
+    allText.extend(monthNames)
+    allTextPt.extend(textBasePts)
+    
+    # Remove unneeded months from the data list.
+    if len(totMons) != 12:
+        newDataList = []
+        for datCount, dat in enumerate(dataList):
+            newDataList.append([])
+            for count, mon in enumerate(dat):
+                if count in totMons:
+                    newDataList[datCount].append(mon)
+        dataList = newDataList
+    
+    ### Correctly Label the Y-Values.
     #Have a value that tracks whether we have a stacked value graph with negative values.
-    if plotFromZero_: negativeTrigger = True
+    if plotFromZero: negativeTrigger = True
     else: negativeTrigger = False
     
     #Make a function that checks the range of the data and comes up with a scaling factor for the data.
@@ -499,6 +520,9 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
                     highB = -lowB
             else: lowB = 0
         
+        if plotFromZero and not lowB < 0:
+            lowB = 0
+        
         valRange = highB - lowB
         valStep = valRange/(numSeg-1)
         
@@ -529,6 +553,17 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
         srf.Transform(rotation)
     textSrfs.extend(yAxisSrf[0])
     lowVal1, valRange1, finalValues, negativeTrigger = makeNumberLabels(dataList[0], True, lowBList[0], highBList[0], newDataMethodsList[0])
+    if valRange1 == 0:
+        valRange1 = 1
+        finalValues = []
+        valStep = valRange1/(numSeg-1)
+        for num in range(numSeg):
+            finalValues.append(str(round(lowVal1 + num*valStep, 2)))
+        warning = "You have a list where all values are zero and this is would cause the Y-Axis to go from 0 to 0. \n" + \
+        "As a result the Y-Axis has automatically beeen set to go from 0 to 1.  Use LegendPar to change this or try setting stackValues to True."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    
     startVals.append(lowVal1)
     scaleFacs.append(valRange1/height)
     #Move the text based on how long it is.
@@ -688,10 +723,10 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, le
             newColors[listCount].append(colors[colorCount])
             colorCount += 1
     
-    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, newDataMethodsList, startVals, scaleFacs, newColors, width/12, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, legendFontSize, legendFont, decimalPlaces
+    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, totMons, newDataMethodsList, startVals, scaleFacs, newColors, width/(len(totMons)), tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, legendFontSize, legendFont, decimalPlaces
 
 
-def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger):
+def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger, dataPtOffset):
     #Perform an analysis of the number of each data type so that I know how to space out the bars.
     numOfMethod = [0,0,0,0]
     for dataMethod in dataMethodsList:
@@ -721,13 +756,14 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
     
     #Plot the data in each list.
     for dataCount, dataMethod in enumerate(dataMethodsList):
+        dataLabelPtsInit = []
         
         #Plot the monthly data
         if dataMethod == 0:
             #Analyze any stacking effects correctly.
             stackList = []
             numberStacks = []
-            dataLabelPtsInit = []
+            
             for month in dataList[dataCount]: numberStacks.append(len(month))
             numberStacks.sort()
             topLen = numberStacks[-1]
@@ -739,8 +775,16 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                 
                 for stackCount, stack in enumerate(month):
                     #Calculate the height of the bar
-                    if negativeTrigger: barHeight = (stack)/scaleFacs[dataCount]
-                    else: barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                    if negativeTrigger:
+                        try:
+                            barHeight = (stack)/scaleFacs[dataCount]
+                        except:
+                            barHeight = 0
+                    else:
+                        try:
+                            barHeight = (stack-startVals[dataCount])/scaleFacs[dataCount]
+                        except:
+                            barHeight = 0
                     
                     #Generate the points that make the face of the mesh
                     if barHeight > 0:
@@ -764,7 +808,10 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                     
                     #Append a point for text labels to the list.
                     if stackCount == len(month)-1:
-                        dataLabelPoint = rc.Geometry.Point3d((monthWidth*monthCt+(monthWidth/2))+xWidth*monthCount, stackBottom+barHeight+(yS/conversionFac), 0)
+                        if dataPtOffset == None:
+                            dataLabelPoint = rc.Geometry.Point3d((monthWidth*monthCt+(monthWidth/2))+xWidth*monthCount, stackBottom+barHeight+(yS/conversionFac), 0)
+                        else:
+                            dataLabelPoint = rc.Geometry.Point3d((monthWidth*monthCt+(monthWidth/2))+xWidth*monthCount, stackBottom+barHeight+dataPtOffset, 0)
                         dataLabelPtsInit.append(dataLabelPoint)
                     
                     #Add the mesh to the list and increase the bar height for the next item in the stack.
@@ -785,7 +832,6 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
         #Plot the avgMonthlyPerHour data.
         if dataMethod == 1:
             curvesList = []
-            dataLabelPtsInit = []
             
             for monthCount, month in enumerate(dataList[dataCount]):
                 #Generate the polyline points for each month.
@@ -797,7 +843,11 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                 monthPline = rc.Geometry.PolylineCurve(pLinePts)
                 curvesList.append(monthPline)
                 #Append a point for text labels to the list.
-                dataLabelPtsInit.extend(pLinePts)
+                if dataPtOffset == None:
+                    dataLabelPtsInit.extend(pLinePts)
+                else:
+                    for pt in pLinePts:
+                        dataLabelPtsInit.append(rc.Geometry.Point3d(pt.X, pt.Y+dataPtOffset, pt.Z))
             
             dataLabelPts.append(dataLabelPtsInit)
             dataCurves.append(curvesList)
@@ -806,7 +856,6 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
         #Plot the hourly data.
         if dataMethod == 2:
             curvesList = []
-            dataLabelPtsInit = []
             
             for monthCount, month in enumerate(dataList[dataCount]):
                 for dayCount, day in enumerate(month):
@@ -819,7 +868,11 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                     dayPline = rc.Geometry.PolylineCurve(pLinePts)
                     curvesList.append(dayPline)
                     #Append a point for text labels to the list.
-                    dataLabelPtsInit.extend(pLinePts)
+                    if dataPtOffset == None:
+                        dataLabelPtsInit.extend(pLinePts)
+                    else:
+                        for pt in pLinePts:
+                            dataLabelPtsInit.append(rc.Geometry.Point3d(pt.X, pt.Y+dataPtOffset, pt.Z))
             
             dataLabelPts.append(dataLabelPtsInit)
             dataCurves.append(curvesList)
@@ -830,7 +883,6 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
             #Analyze any stacking effects correctly.
             stackList = []
             numberStacks = []
-            dataLabelPtsInit = []
             for month in dataList[dataCount]:
                 for day in month:
                     numberStacks.append(len(day))
@@ -872,8 +924,10 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
                         
                         #Append a point for text labels to the list.
                         if stackCount == len(day)-1:
-                            dataLabelPoint = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+(dayWidth[monthCount]/2))+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight+(yS/(conversionFac*4)), 0)
-                            #dataLabelPoint = rc.Geometry.Point3d((monthWidth*monthCt+(monthWidth/2))+xWidth*monthCount, stackBottom+barHeight+(yS/conversionFac), 0)
+                            if dataPtOffset == None:
+                                dataLabelPoint = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+(dayWidth[monthCount]/2))+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight+(yS/(conversionFac*4)), 0)
+                            else:
+                                dataLabelPoint = rc.Geometry.Point3d((dayWidth[monthCount]*dayCt+(dayWidth[monthCount]/2))+(dayWidth[monthCount]*(dayCt+dayStackCt)*(numOfMethod[3]-1))+xWidth*monthCount, stackBottom+barHeight+dataPtOffset, 0)
                             dataLabelPtsInit.append(dataLabelPoint)
                         
                         #Add the mesh to the list and increase the bar height for the next item in the stack.
@@ -896,7 +950,7 @@ def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS
     return dataMeshes, dataCurves, crvColors, dataLabelPts
 
 
-def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tempScale, avgMonthTemp, yS, lb_comfortModels):
+def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, monthsInChart, tempVals, tempScale, avgMonthTemp, yS, lb_comfortModels):
     comfortBand = []
     
     #Create the comfort bands for the PMV model.
@@ -908,7 +962,7 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
         highB = bldgBalPt + offsetDist
         
         monthCt = 0
-        for month in range(12):
+        for month in range(len(monthsInChart)):
             #Calculate the height of the bar
             barTop = ((highB-tempVals[0])/tempScale)*yS
             barBottom = ((lowB-tempVals[0])/tempScale)*yS
@@ -954,7 +1008,7 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
                 #else: avgTemps.append(None)
         
         monthCt = 0
-        for month in range(12):
+        for month in range(len(monthsInChart)):
             if avgTemps[month] != None:
                 #Calculate the height of the bar
                 barTop = ((avgTemps[month]+offsetDist-tempVals[0])/tempScale)*yS
@@ -986,7 +1040,7 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
         highB = startPt + offsetDist
         
         monthCt = 0
-        for month in range(12):
+        for month in range(len(monthsInChart)):
             #Calculate the height of the bar
             barTop = ((highB-tempVals[0])/tempScale)*yS
             barBottom = ((lowB-tempVals[0])/tempScale)*yS
@@ -1008,17 +1062,17 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, tem
     return comfortBand
 
 
-def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels):
+def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, plotFromZero, tempInList, farenheitCheck, xS, yS, dataPtOffset, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels):
     #Make the chart curves.
-    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, textSize, legendFont, decimalPlaces = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, xS, yS, legendPs, lb_preparation, lb_visualization)
+    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, monthsInChart, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, textSize, legendFont, decimalPlaces = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZero, xS, yS, legendPs, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
-    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger)
+    dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger, dataPtOffset)
     
     #If the user has requested a comfort range, then draw it.
     comfortBand = None
     if tempInList == True and comfortModel != 0:
-        comfortBand = drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, tempVals, (tempScale[0]/50), avgMonthTemp, yS, lb_comfortModels)
+        comfortBand = drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, monthsInChart, tempVals, (tempScale[0]/50), avgMonthTemp, yS, lb_comfortModels)
     
     #If the basePoint is specified and it's different than the origin, move everything.
     if _basePoint_ != None and _basePoint_ != rc.Geometry.Point3d.Origin:
@@ -1067,7 +1121,7 @@ checkData = False
 tempInList = True
 initCheck = checkTheInputs()
 if initCheck != -1:
-    checkData, separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels = initCheck
+    checkData, separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, plotFromZero, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels = initCheck
 
 #Manage the input.
 if checkData == True and tempInList == False: manageInput()
@@ -1075,7 +1129,7 @@ else: restoreInput()
 
 #Run the main function if all is good.
 if checkData == True:
-    result = main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, tempInList, farenheitCheck, xS, yS, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels)
+    result = main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, plotFromZero, tempInList, farenheitCheck, xS, yS, _labelPtsOffset_, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels)
     if result != -1:
         dataMeshInit, dataCurvesInit, dataCrvColorsInit, graphAxes, graphLabels, title, titleBasePt, legend, legendBasePt, dataLabelPtsPy, comfortBand = result
         

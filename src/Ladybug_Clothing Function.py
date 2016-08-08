@@ -254,7 +254,10 @@ def main():
             cloDifference = maxClo-minClo
             f1Slope = ((maxClo - cloDifference*.75) - maxClo)/10
             f1yInt = maxClo - (f1Slope*maxCloTemp)
-            f2Slope = (minClo - (maxClo - cloDifference*.75))/(minCloTemp - (maxCloTemp+10))
+            try:
+                f2Slope = (minClo - (maxClo - cloDifference*.75))/(minCloTemp - (maxCloTemp+10))
+            except:
+                f2Slope = 0
             f2yInt = minClo - (f2Slope*minCloTemp)
             
             for temperature in finalAirTemps:

@@ -41,9 +41,9 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Surface View Analysis"
 ghenv.Component.NickName = 'srfViewFactors'
-ghenv.Component.Message = 'VER 0.0.61\nAPR_12_2016'
+ghenv.Component.Message = 'VER 0.0.61\nAUG_06_2016'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 #compatibleHBVersion = VER 0.0.56\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
