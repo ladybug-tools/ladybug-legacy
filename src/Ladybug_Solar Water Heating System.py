@@ -30,7 +30,7 @@ If nothing inputed, the following swh system will be used by default:
 - 1 story
 - unshaded
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         collectorType_: Type of the collector. The following ones can be used:
@@ -39,19 +39,19 @@ Provided by Ladybug 0.0.62
                         Least expensive.
                         Mostly used for single home domestic how water heating and for heating swimming pools.
                         More cost efficient in tropical and subtropical environments. They can also be used in moderate climates for seasonal usage.
-                        Can output water temperatures up to 30C (86F).
+                        Can output water temperatures up to 30°C (86°F).
                         -
                         1 - glazed flat plate
                         Less expensive.
                         More cost efficient in warm and mild-warm climates. But also used in temperate climates.
                         Mostly used for single home domestic how water heating, space heating and space cooling. And for heating swimming pools.
-                        Can output water temperatures up to 60C (140F).
+                        Can output water temperatures up to 60°C (140°F).
                         - 
                         2 - evacuated tube
                         The most expensive.
                         More cost efficient in cold temperate and cold climates (with low ambient temperature, for example: during winter) and during overcast skies.
                         Evacuated tube collectors (or concentrating collectors) are typically used for industrial applications, or multi residential or commercial buildings for space heating and space cooling. 
-                        Can output water temperatures higher than 90C (194F) degrees, up to 177C (350F).
+                        Can output water temperatures higher than 90°C (194°F) degrees, up to 177°C (350°F).
                         -
                         -
                         If not supplied, glazed flat plate collectors (1) will be used.
@@ -85,7 +85,7 @@ Provided by Ladybug 0.0.62
                    1 - open (direct) loop
                    No usage of heatexchangers. Water is the working fluid.
                    Less expensive.
-                   More efficient in warm and mild-warm climates, where it rarely freezes (air temperature never drops below 5C(41F) degrees).
+                   More efficient in warm and mild-warm climates, where it rarely freezes (air temperature never drops below 5°C(41°F) degrees).
                    Only suitable for locations with low water hardness (mineral content) otherwise limescale will form in solar collectors.
                    -
                    -
@@ -102,12 +102,12 @@ Provided by Ladybug 0.0.62
                           -
                           -
                           If not supplied, "1" story will be used as a default value (a house with only a ground floor, without a basement).
-        skyViewFactor_: Continuous Sky View Factor - portion of the visible sky (dome). It defines the shading of the parts of diffuse irradiance. It ranges from 0 to 1.
-                        Import it from "Sunpath shading" component's "skyViewFactor" output.
-                        -
-                        If not supplied, 1 will be used as a default value (SWHsurface is unshaded).
-                        -
-                        Unitless.
+        skyExposureFactor_: Continuous Sky Exposure Factor - portion of the visible sky (dome). It defines the shading of the diffuse irradiance components. It ranges from 0 to 1.
+                            Import it from "Sunpath shading" component's "skyExposureFactor" output.
+                            -
+                            If not supplied, 1 will be used as a default value (SWHsurface is unshaded).
+                            -
+                            Unitless.
         beamIndexPerHour_: Transmission index of beam (direct) irradiance for each hour during a year. It ranges from 0-1.
                            Import it from "Sunpath shading" component's "beamIndexPerHour" output.
                            -
@@ -122,19 +122,19 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating System"
 ghenv.Component.NickName = "SolarWaterHeatingSystem"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = "VER 0.0.62\nJAN_26_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | WIP"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 import Grasshopper.Kernel as gh
 import scriptcontext as sc
 
 
-def SWHsystemInputData(collectorType, activeSWHsystem, openLoop, numberOfStories, skyViewFactor, beamIndexPerHour):
+def SWHsystemInputData(collectorType, activeSWHsystem, openLoop, numberOfStories, skyExposureFactor, beamIndexPerHour):
     
     if (collectorType == 0):
         # unglazed flat plate
@@ -162,7 +162,7 @@ def SWHsystemInputData(collectorType, activeSWHsystem, openLoop, numberOfStories
     
     if activeSWHsystem:
         # active swh system (with pumps(s))
-        mechanicalRoomTemperatureData = [20 for i in range(8760)]  # default value 20C for each hour = tank storage located inside the building
+        mechanicalRoomTemperatureData = [20 for i in range(8760)]  # default value 20°C for each hour = tank storage located inside the building
         pumpPower = None  # will be calculated based on SWH active area
         pumpEfficiency = 0.85  # default value for flat plate glazed collectors
     else:
@@ -187,8 +187,8 @@ def SWHsystemInputData(collectorType, activeSWHsystem, openLoop, numberOfStories
     
     flowRatePerM2 = 0.012  # default value for flat plate collectors
     
-    if (skyViewFactor == None) or (skyViewFactor < 0) or (skyViewFactor > 1):
-        skyViewFactor = 1  # default - no shading
+    if (skyExposureFactor == None) or (skyExposureFactor < 0) or (skyExposureFactor > 1):
+        skyExposureFactor = 1  # default - no shading
     
     if (len(beamIndexPerHour) == 0) or (beamIndexPerHour[0] is ""):
         beamIndexPerHourData = [1 for i in range(0,8760)]  # default - no shading
@@ -219,7 +219,7 @@ def SWHsystemInputData(collectorType, activeSWHsystem, openLoop, numberOfStories
     else:
         averageAnnualMechanicalRoomTemp = "will be calculated based on air temperature"
     
-    SWHsystemSettings = [collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyViewFactor, beamIndexPerHourData, maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, mechanicalRoomTemperatureData, pipeLength, pipeDiameter, pipeInsulationThickness, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness]
+    SWHsystemSettings = [collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyExposureFactor, beamIndexPerHourData, maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, mechanicalRoomTemperatureData, pipeLength, pipeDiameter, pipeInsulationThickness, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness]
     
     printOutputMsg = \
     """
@@ -234,32 +234,32 @@ Average annual Transmission index of beam irradiance (-): %s
 Results in the following SWH system settings:
 
 Collector optical efficiency (-): %0.2f
-Collector thermal loss (W/m2/C): %0.2f
+Collector thermal loss (W/m2/°C): %0.2f
 Collector active area percent (percent): %0.2f
-Working fluid heat capacity (J/kg/C): %0.2f
+Working fluid heat capacity (J/kg/°C): %0.2f
 Flow rate per M2 (kg/s/m2): %0.3f
 IAM modifier coefficient (-): %0.2f
 Sky View Factor (-): %0.2f
 Average annual Transmission index of beam irradiance (-): %0.2f
 -----
-Max working temperature (C): %0.2f
-Discharge temperature (C): %0.2f
-Delivery water temperature (C): %0.2f
-Average January cold water temperature (C): %s
-Average mechanical room temperature (C): %s
+Max working temperature (°C): %0.2f
+Discharge temperature (°C): %0.2f
+Delivery water temperature (°C): %0.2f
+Average January cold water temperature (°C): %s
+Average mechanical room temperature (°C): %s
 -----
 Pipe length (m): %0.2f
 Pipe diameter (mm): %s
 Pipe insulation thickness (mm): %s
-Pipe insulation conductivity (W/m/C): %0.2f
+Pipe insulation conductivity (W/m/°C): %0.2f
 Pump power (W): %s
 Pump efficiency (-): %0.2f
 -----
 Tank size (l): %s
-Tank loss (W/m2/C): %0.2f
+Tank loss (W/m2/°C): %0.2f
 Height-diameter tank ratio (-): %0.2f
 Heat exchanger effectiveness (-): %0.2f
-    """ % (collectorType, activeSWHsystem, openLoop, sum(beamIndexPerHourData)/8760, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyViewFactor, sum(beamIndexPerHourData)/len(beamIndexPerHourData), maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, averageAnnualMechanicalRoomTemp, pipeLength, pipeDiameter, pipeInsulationThickness, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness)
+    """ % (collectorType, activeSWHsystem, openLoop, sum(beamIndexPerHourData)/8760, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyExposureFactor, sum(beamIndexPerHourData)/len(beamIndexPerHourData), maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, averageAnnualMechanicalRoomTemp, pipeLength, pipeDiameter, pipeInsulationThickness, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness)
     print printOutputMsg
     
     validSWHsystemData = True
@@ -273,7 +273,7 @@ if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
-        SWHsystemSettings, validSWHsystemData, printMsg = SWHsystemInputData(collectorType_, activeSWHsystem_, openLoop_, numberOfStories_, skyViewFactor_, beamIndexPerHour_)
+        SWHsystemSettings, validSWHsystemData, printMsg = SWHsystemInputData(collectorType_, activeSWHsystem_, openLoop_, numberOfStories_, skyExposureFactor_, beamIndexPerHour_)
         if not validSWHsystemData:
             print printMsg
             ghenv.Component.AddRuntimeMessage(level, printMsg)
