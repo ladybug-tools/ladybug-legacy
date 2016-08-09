@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Wh2BTU"
 ghenv.Component.NickName = 'Wh2BTU'
-ghenv.Component.Message = 'VER 0.0.62\nAUG_08_2016'
+ghenv.Component.Message = 'VER 0.0.62\nAUG_09_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -46,16 +46,16 @@ floorNorm = False
 BTU = []
 for num in _Wh:
     try:
-        if 'WH/M2' in num.upper():
-            BTU.append('BTU/ft2')
-            floorNorm = True
-        elif 'KWH/M2' in num.upper():
+        if 'KWH/M2' in num.upper():
             BTU.append('kBTU/ft2')
             floorNorm = True
-        elif 'WH' in num.upper():
-            BTU.append('BTU')
+        elif 'WH/M2' in num.upper():
+            BTU.append('BTU/ft2')
+            floorNorm = True
         elif 'KWH' in num.upper():
             BTU.append('kBTU')
+        elif 'WH' in num.upper():
+            BTU.append('BTU')
         else:
             if floorNorm == True:
                 try: BTU.append(float(num)*0.316998331)
