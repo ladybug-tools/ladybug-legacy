@@ -144,9 +144,9 @@ Provided by Ladybug 0.0.63
                       For northern hemisphere, USA school holidays schedules have been taken as a default.
                       For southern hemisphere, Australian school holidays schedule have been taken as a default.
         deliveryWaterTemperature_: Required water temperature. In Celsius
-                                   It is recommended for delivery water temperature to not be lower than 60°C (140°F) to avoid the risk of Legionella pneumophila bacteria appearance.
+                                   It is recommended for delivery water temperature to not be lower than 60C (140F) to avoid the risk of Legionella pneumophila bacteria appearance.
                                    -
-                                   If not supplied, default value: 60°C (140°F) will be used.
+                                   If not supplied, default value: 60C (140F) will be used.
                                    -
                                    In Celsius degrees.
         coldWaterTemperaturePerHour_: Cold (inlet) water temperature supplied from public water system, for each hour during a year. In Celsius.
@@ -183,7 +183,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Commercial Public Apartment Hot Water"
 ghenv.Component.NickName = "CommercialPublicApartmentHotWater"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -499,8 +499,8 @@ Occupancy duration: %s
 First week start day: %s
 Weekend days: %s
 Holiday days: %s
-Delivery water temperature (°C): %0.2f
-Annual average cold water temperature (°C): %0.2f
+Delivery water temperature (C): %0.2f
+Annual average cold water temperature (C): %0.2f
     """ % (locationName, buildingType, numberOfUnits, units[buildingType], litersPerUnitPerDay, occupancyStartingHour, occupancyDuration, firstWeekStartDay, weekendDays, holidayDays, deliveryWaterTemperature, TinletAverageAnnual_C)
     print resultsCompletedMsg
     print printOutputMsg

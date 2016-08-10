@@ -26,7 +26,7 @@ Note that, to see shadows cast onto a ground, a surface representing the ground 
 Also, please note that, for a list of input _geometry that is larger than 4 or 5 breps, the calculation time of this component can be very long.  Please keep the input geometry to small lists or be prepared to wait a long time.
 WARNING: This component is a proof of concept that will not work in every situation.  It is not ideal for analyzing curved surfaces and it is not able to calculate shadows for geometries that are intersecting each other.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _geometry: Breps representig test geometries that will cast shadows on each other.
@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Shadow Study"
 ghenv.Component.NickName = 'shadowStudy'
-ghenv.Component.Message = 'VER 0.0.62\nAUG_08_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

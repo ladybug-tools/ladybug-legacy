@@ -30,7 +30,7 @@
 Use this component to combine two or more solar envelopes from Ladybug_SolarEnvelope component
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _baseSrf: A surface representing the area for which you want to create the solar envelope (could also be a closed planer curve). Must be the same as the _BaseSrf connected to the solar Envelope component.
@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = 'Ladybug_CombineSolarEnvelopes'
 ghenv.Component.NickName = 'CombineEnvelopes'
-ghenv.Component.Message = 'VER 0.0.62\nAUG_08_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

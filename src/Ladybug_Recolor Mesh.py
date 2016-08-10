@@ -26,7 +26,7 @@ Use this component to re-color a mesh with new a numerical data set whose length
 This component is useful if you have post-processed any of the numerical data out of the Ladybug components using Grasshopper math components.
 It is also necessary to view results from the Ladybug Real Time Radiation Analysis.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to re-color the _inputMesh.
@@ -49,7 +49,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Recolor Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.62\nAUG_08_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

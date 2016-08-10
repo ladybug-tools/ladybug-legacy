@@ -79,7 +79,7 @@ Provided by Ladybug 0.0.63
                                To use this input correctly, hourly data, such as dryBulbTemperature or windSpeed, must be plugged into the "annualHourlyData_" input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<3" (without the quotation marks).
                                conditionalStatement_ accepts "and" and "or" operators. To visualize the hourly data, English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
                                -
-                               For example, if you have an hourly dryBulbTemperature connected as the first list, and windSpeed connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18°C and 23°C, and windSpeed is larger than 3m/s, the conditionalStatement_ should be written as "18<a<23 and b>3" (without the quotation marks).
+                               For example, if you have an hourly dryBulbTemperature connected as the first list, and windSpeed connected as the second list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and windSpeed is larger than 3m/s, the conditionalStatement_ should be written as "18<a<23 and b>3" (without the quotation marks).
                                -
                                This input can also be used for analysis of drainback systems. Input a "dryBulbTemperature" data from "Import epw" component into upper "annualHourlyData_" input. Then input "a>5" to this ("conditionalStatement_") input.
         _runIt: ...
@@ -108,7 +108,7 @@ Provided by Ladybug 0.0.63
                            In kWh.
         tankWaterTemperaturePerHour: Tank water temperature per each hour during a year.
                                      -
-                                     In °C.
+                                     In C.
         SWHsurfaceTiltAngle: The angle from horizontal of the inclination of the SWHsurface. Example: 0 = horizontal, 90 = vertical.
                              It ranges from 0-180.
                              -
@@ -124,7 +124,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating Surface"
 ghenv.Component.NickName = "SolarWaterHeatingSurface"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -289,7 +289,7 @@ def SWHsystemSettingsInput(heatingLoadPerHourData, SWHsystemSettings, srfArea, d
         dischargeTemperature = 92
         deliveryWaterTemperature = 60
         avrJanuaryColdWaterTemperature = None
-        mechanicalRoomTemperatureData = [20 for i in range(0,8760)]  # default 20°C
+        mechanicalRoomTemperatureData = [20 for i in range(0,8760)]  # default 20C
         pipeLength = 20
         pipeDiameterMM = None  #math.sqrt((4 * (flowRatePerM2*collectorActiveArea)/0.7) / math.pi)
         pipeInsulationThicknessMM = None
@@ -591,7 +591,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
     heatFromTankPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Thermal energy from storage tank", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)] + heatFromTankPerHour
     heatFromAuxiliaryHeaterPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Thermal energy from auxiliary heater", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)] + heatFromAuxiliaryHeaterPerHour
     dischargedHeatPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Discharged thermal energy from storage tank", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)] + dischargedHeatPerHour
-    tankWaterTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Storage tank water temperature", "°C", "Hourly", (1, 1, 1), (12, 31, 24)] + tankWaterTemperaturePerHour
+    tankWaterTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Storage tank water temperature", "C", "Hourly", (1, 1, 1), (12, 31, 24)] + tankWaterTemperaturePerHour
     pumpEnergyPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Circulation pumps electricity consumption", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)] + pumpEnergyPerHour
     
     # optimal collector area, tank storage volume initial data
@@ -610,9 +610,9 @@ def printOutput(locationName, latitude, longitude, north, albedoL, heatingLoadPe
 Input data:
 
 Location: %s
-Latitude (°): %s
-Longitude (°): %s
-North (°): %s
+Latitude (): %s
+Longitude (): %s
+North (): %s
 Average annual albedo(-): %0.2f
 
 Average heating load per day (kWh/day): %0.2f
@@ -620,36 +620,36 @@ Surface percentage used for SWH collectors (percent): %0.2f
 Surface area (m2): %0.2f
 Surface active area (m2): %0.2f
 Nameplate thermal capacity (kWt): %0.2f
-Surface azimuth angle (°): %0.2f
-Surface tilt angle (°): %0.2f
+Surface azimuth angle (): %0.2f
+Surface tilt angle (): %0.2f
 
 
 SWH system:
 
 Collector optical efficiency (-): %0.2f
-Collector thermal loss (W/m2/°C): %0.2f
+Collector thermal loss (W/m2/C): %0.2f
 Collector active area percent (percent): %0.2f
-Working fluid heat capacity (J/kg/°C): %0.2f
+Working fluid heat capacity (J/kg/C): %0.2f
 Flow rate per M2 (kg/s/m2): %0.3f
 IAM modifier coefficient (-): %0.2f
 Sky View Factor: %0.2f
 Average annual Transmission index of beam irradiance (-): %0.2f
 -----
-Max working temperature (°C): %0.2f
-Discharge temperature (°C): %0.2f
-Delivery water temperature (°C): %0.2f
-Average January cold water temperature (°C): %0.2f
-Average mechanical room temperature (°C): %0.2f
+Max working temperature (C): %0.2f
+Discharge temperature (C): %0.2f
+Delivery water temperature (C): %0.2f
+Average January cold water temperature (C): %0.2f
+Average mechanical room temperature (C): %0.2f
 -----
 Pipe length (m): %0.2f
 Pipe diameter (mm): %0.2f
 Pipe insulation thickness (mm): %0.2f
-Pipe insulation conductivity (W/m/°C): %0.2f
+Pipe insulation conductivity (W/m/C): %0.2f
 Pump power (W): %0.2f
 Pump efficiency (-): %0.2f
 -----
 Tank size (l): %0.2f
-Tank loss (W/m2/°C): %0.2f
+Tank loss (W/m2/C): %0.2f
 Height-diameter tank ratio (-): %0.2f
 Heat exchanger effectiveness (-): %0.2f
 

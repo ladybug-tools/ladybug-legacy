@@ -22,7 +22,7 @@
 """
 Use this component to calculate view factors from a point or plane to a set of surfaces.  View factors are used in many thermal comfort calculations such as mean radiant temperture (MRT) or discomfort from radiant assymetry. 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
 
     Args:
         _testPtsOrPlanes: A point or plane from which view vectors will be pojected.  Note that, if a point is connected, all view vectors will be weighted evenly (assuming no directional bias).  However, if a plane is connected, vectors will be weighted based on their angle to the plane normal, producing view factors for a surface in the connected plane.  The first is useful for MRT calculations while the latter is needed for radiant assymetry calculations.  This input can also be a list of points or planes.
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Surface View Analysis"
 ghenv.Component.NickName = 'srfViewFactors'
-ghenv.Component.Message = 'VER 0.0.61\nAUG_06_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

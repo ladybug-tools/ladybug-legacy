@@ -25,7 +25,7 @@ Use this component to create a horizon file (.hor) and visualize horizon angles.
 -
 Component based on:
 
-"Solmetric SunEye 210 User’s Guide", Solmetric Corporation, 2011
+"Solmetric SunEye 210 Users Guide", Solmetric Corporation, 2011
 http://resources.solmetric.com/get/Solmetric%20SunEye%20200%20Series%20Users%20Guide_en.pdf
 "PVsyst 6 Help", PVsyst SA
 http://files.pvsyst.com/help/index.html?horizon_import.htm
@@ -108,7 +108,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Horizon Angles"
 ghenv.Component.NickName = "HorizonAngles"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

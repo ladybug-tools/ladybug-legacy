@@ -33,7 +33,7 @@ This component calculates sunrise and sunset per hourly data. The approximation 
 -
 Despite this component does not consider the leap day (FEB 29th), results are accurate enough.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -72,7 +72,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_SunriseSunset"
 ghenv.Component.NickName = 'Sunrise Sunset'
-ghenv.Component.Message = 'VER 0.0.62\nAUG_08_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

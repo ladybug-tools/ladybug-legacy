@@ -73,11 +73,11 @@ Provided by Ladybug 0.0.63
                       -
                       If not supplied, no holiday days will be used.
         deliveryWaterTemperature_: Required (set) water temperature.
-                                   It is recommended for delivery water temperature to not be lower than 60°C (140°F) to avoid the risk of propagation of Legionella pneumophila bacteria.
+                                   It is recommended for delivery water temperature to not be lower than 60C (140F) to avoid the risk of propagation of Legionella pneumophila bacteria.
                                    -
                                    Electric water heater used as a default.
                                    -
-                                   If not supplied, default value: 60°C (140°F) will be used.
+                                   If not supplied, default value: 60C (140F) will be used.
                                    -
                                    In Celsius degrees.
         coldWaterTemperaturePerHour_: Cold (inlet) water temperature supplied from public water system, for each hour during a year. In Celsius.
@@ -114,7 +114,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Residential Hot Water"
 ghenv.Component.NickName = "ResidentialHotWater"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -556,8 +556,8 @@ Pay utility bill: %s
 First week start day: %s
 Weekend days: %s
 Holiday days: %s
-Delivery water temperature (°C): %0.2f
-Annual average cold water temperature (°C): %0.2f
+Delivery water temperature (C): %0.2f
+Annual average cold water temperature (C): %0.2f
     """ % (locationName, totalNumberOfPersons, numberOfPreSchoolChildren, numberOfSchoolChildren, numberOfAdults, numberOfAdultsAtHome, seniorOnly, dishWasher, clothsWasher, payUtilityBill, firstWeekStartDay, weekendDays, holidayDays, deliveryWaterTemperature, TinletAverageAnnual_C)
     print resultsCompletedMsg
     print printOutputMsg
