@@ -708,11 +708,11 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
     
     #Create legend.
     legend = []
-    fullLegTxt = lb_preparation.flattenList(legendTextSrfs)
-    legend.extend(fullLegTxt)
     #color legend surfaces
     legendSrf = lb_visualization.colorMesh(colors, legendSrf)
     legend.append(legendSrf)
+    fullLegTxt = lb_preparation.flattenList(legendTextSrfs)
+    legend.extend(fullLegTxt)
     
     #Reorder the list of colors to align with the dataList.
     newColors = []
