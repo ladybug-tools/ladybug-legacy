@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.63
                                 -
                                 If not supplied, default value 4 (glazed flat plate) will be used.
                                 -
-                                In W/m2/°C.
+                                In W/m2/C.
         collectorActiveAreaPercent_: Percentage of the collector's area excluding collector framing, lateral insulation, or gaps between evacuated tubes... Also called aperture area.
                                      It ranges from 70 to 95% depending on the type of collector.
                                      -
@@ -59,19 +59,19 @@ Provided by Ladybug 0.0.63
                                      In percent.
         workingFluidHeatCapacity_: Specific heat of the working fluid.
                                    -
-                                   If swh system is intended to be used in a non-freezing or light freezing climate (tropical and subtropical regions), then water should be used as a working fluid. The specific heat of water is: 4180 J/kg/°C.
+                                   If swh system is intended to be used in a non-freezing or light freezing climate (tropical and subtropical regions), then water should be used as a working fluid. The specific heat of water is: 4180 J/kg/C.
                                    -
                                    If swh system is used in freezing climates (temperate, polar...), an antifreeze needs to be added to the water. In most cases this is Propylen glycol, Ethylen glycol or Bio glycol added in certain percentages to the water. Depending on the freezing temperatures of the climates, there are the following specific heats of water-glycol mixtures:
-                                   up to -10°C:  water-propylenglycol 25%:  4080 J/kg/°C.
-                                   up to -10°C:  water-ethylenglycol 20%:  4020 J/kg/°C.
-                                   up to -20°C:  water-propylenglycol 38%:  4000 J/kg/°C.
-                                   up to -20°C:  water-ethylenglycol 34%:  3840 J/kg/°C.
-                                   up to -30°C:  water-propylenglycol 47%:  3890 J/kg/°C.
-                                   up to -40°C:  water-ethylenglycol 52%:  3560 J/kg/°C.
+                                   up to -10C:  water-propylenglycol 25%:  4080 J/kg/C.
+                                   up to -10C:  water-ethylenglycol 20%:  4020 J/kg/C.
+                                   up to -20C:  water-propylenglycol 38%:  4000 J/kg/C.
+                                   up to -20C:  water-ethylenglycol 34%:  3840 J/kg/C.
+                                   up to -30C:  water-propylenglycol 47%:  3890 J/kg/C.
+                                   up to -40C:  water-ethylenglycol 52%:  3560 J/kg/C.
                                    -
-                                   If not supplied 3840 (water-ethylenglycol 34%) J/kg/°C will be used.
+                                   If not supplied 3840 (water-ethylenglycol 34%) J/kg/C will be used.
                                    -
-                                   In J/kg/°C.
+                                   In J/kg/C.
         flowRatePerM2_: Test flow rate of working fluid through the collector per square meter of collector's area.
                         The higher the flow rate, the higher the collector efficiency is. On the other hand higher flow rates require more pump power, larger pipe diameters and can cause erosion corrosion.
                         -
@@ -103,39 +103,39 @@ Provided by Ladybug 0.0.63
                            Unitless.
         maxWorkingTemperature_: Maximal working temperature of the tank storage.
                                 It is used to prevent the overheating problems and damage of the swh system due to exceedance of allowable temperature (and pressure) and appearance of fluid boiling.
-                                Depends on the quality of pipes, valves, tank, working fluid type... Generally ranges from 93-99°C.
+                                Depends on the quality of pipes, valves, tank, working fluid type... Generally ranges from 93-99C.
                                 -
-                                If not supplied 95°C (203°F) will be used.
+                                If not supplied 95C (203F) will be used.
                                 -
-                                In °C.
+                                In C.
         dischargeTemperature_: Storage tank temperature at which the discharge of the excess heat and cold water makeup stops.
-                               It is generally 2-3°C degrees less than maximal working temperature.
+                               It is generally 2-3C degrees less than maximal working temperature.
                                -
-                               If not supplied maxWorkingTemperature-3°C will be used.
+                               If not supplied maxWorkingTemperature-3C will be used.
                                -
-                               In °C.
+                               In C.
         deliveryWaterTemperature_: Water heater lower thermostat setting. Depends on the type of usage of solar hot water system. In Celsius
-                                   For domestic hot water, it is recommended not be lower than 60°C (140°F).
-                                   For space heating, it varies from 33 to 82°C (90 to 180°F) depending on the type (in-floor tubes, radiators/baseboards, heat exchanger inside a forced-air heater).
-                                   For space cooling it varies from 60 to 80°C (140 to 176°F) depending on the cooling system used.
+                                   For domestic hot water, it is recommended not be lower than 60C (140F).
+                                   For space heating, it varies from 33 to 82C (90 to 180F) depending on the type (in-floor tubes, radiators/baseboards, heat exchanger inside a forced-air heater).
+                                   For space cooling it varies from 60 to 80C (140 to 176F) depending on the cooling system used.
                                    -
-                                   If not supplied, default value: 60°C (140°F) will be used.
+                                   If not supplied, default value: 60C (140F) will be used.
                                    -
-                                   In °C.
+                                   In C.
         avrJanuaryColdWaterTemperature_: Average January cold water inlet temperature. This is the temperature of the water from the local pipe grid.
                                       Input it from first item of "Cold Water Temperature" component's "avrColdWaterTemperaturePerMonth" output.
                                       -
                                       If not supplied it will be calculated for the following input data: method "1" (Christensen and Burch), pipes depth from 0.3 to 1 meters.
                                       -
-                                      In °C.
+                                      In C.
         mechanicalRoomTemperature_: Temperature of the room where the storage tank will be located.
                                     This input accepts list of values (8760 values or 8767 with heading included) or a single value. If you input a single value, this means that for each 8760 hours during a year, the mechanicalRoomTemperature will correspond to that inputted value.
                                     -
                                     In case your storage tank is located outside, not inside the building (thermosyphon, ics-batch swh systems or active swh systems), supply the "dryBulbTemperature" data from Ladybug's "Import epw" component to "mechanicalRoomTemperature_" input.
                                     -
-                                    If not supplied, a value of 20°C degrees will be used for each hour during a year (meaning: storage tank is located inside the building).
+                                    If not supplied, a value of 20C degrees will be used for each hour during a year (meaning: storage tank is located inside the building).
                                     -
-                                    In °C.
+                                    In C.
         pipeLength_: Total pipes length run in the solar loop.
                      -
                      If collectors are located on the roof: a rule of a thumb is to add 10 meters for each story (basement is calculated as a story too) and additionally 10 meters for the roof.
@@ -150,7 +150,7 @@ Provided by Ladybug 0.0.63
                        Depends on overall collector area, working fluid type, piping length...
                        -
                        If not supplied, for active swh systems, it will be calculated as:
-                       √(4 * flowRatePerM2 * collectorActiveArea / flowSpeed / pi), with flowSpeed assumed to be 0.7 liters/sec.
+                       (4 * flowRatePerM2 * collectorActiveArea / flowSpeed / pi), with flowSpeed assumed to be 0.7 liters/sec.
                        -
                        For passive swh systems as:
                        1.5 times the value of upper formula.
@@ -180,7 +180,7 @@ Provided by Ladybug 0.0.63
                                      -
                                      If not supplied, 0.027 (Polyurethane) will be used as a default value.
                                      -
-                                     In W/(m*°C).
+                                     In W/(m*C).
         pumpPower_: Overall circulation pumps power.
                     In SWH systems, there are typically two pumps: solar and storage tank ones.
                     -
@@ -208,7 +208,7 @@ Provided by Ladybug 0.0.63
                    -
                    If not supplied, default value 0.30 will be used.
                    -
-                   In W/m2/°C.
+                   In W/m2/C.
         heightDiameterTankRatio_: Storage tank height and diameter ratio. It mostly ranges from 1 to 3.
                                   This input is important for calculation of tank's area.
                                   -
@@ -232,7 +232,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating System Detailed"
 ghenv.Component.NickName = "SolarWaterHeatingSystemDetailed"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -295,7 +295,7 @@ def SWHsystemInputData(collectorOpticalEfficiency, collectorThermalLoss, collect
         avrJanuaryColdWaterTemperature = None  # will be calculated from lb_photovoltaics.inletWaterTemperature()
     
     if (len(mechanicalRoomTemperature) == 0) or (mechanicalRoomTemperature[0] is ""):
-        mechanicalRoomTemperatureData = [20 for i in range(8760)]  # default value 20°C for each hour
+        mechanicalRoomTemperatureData = [20 for i in range(8760)]  # default value 20C for each hour
     elif (len(mechanicalRoomTemperature) == 1):
         mechanicalRoomTemperatureData = [float(mechanicalRoomTemperature[0]) for i in range(8760)]
     elif (len(mechanicalRoomTemperature) == 8760):
@@ -309,7 +309,7 @@ def SWHsystemInputData(collectorOpticalEfficiency, collectorThermalLoss, collect
         printMsg = "Something is wrong with your \"mechanicalRoomTemperature_\" input." + \
                    "If your storage tank is planned to be located outside of the house (on the roof: ICS-batch or Thermosyphone systems) or simply on the ground outside of the house, then input the \"dryBulbTemperature\" data from \"Import epw\" component." + \
                    "You can also input a list of 8760 values if you plan to locate the storage tank inside the house and you know the temperature of the mechanical room for each hour during a year." + \
-                   "If you do not know the temperature of the mechanical room for each hour, then an approximation of 20°C degrees (68F) can be used for each hour during a year. This is the default behavior in case you do not supply anything to the \"mechanicalRoomTemperature_\" input"
+                   "If you do not know the temperature of the mechanical room for each hour, then an approximation of 20C degrees (68F) can be used for each hour during a year. This is the default behavior in case you do not supply anything to the \"mechanicalRoomTemperature_\" input"
         
         return SWHsystemSettings, validSWHsystemData, printMsg
     
@@ -352,29 +352,29 @@ def SWHsystemInputData(collectorOpticalEfficiency, collectorThermalLoss, collect
 Input data:
 
 Collector optical efficiency (-): %0.2f
-Collector thermal loss (W/m2/°C): %0.2f
+Collector thermal loss (W/m2/C): %0.2f
 Collector active area percent (percent): %0.2f
-Working fluid heat capacity (J/kg/°C): %0.2f
+Working fluid heat capacity (J/kg/C): %0.2f
 Flow rate per M2 (kg/s/m2): %0.3f
 IAM modifier coefficient (-): %0.2f
 Sky View Factor (-): %0.2f
 Average annual Transmission index of beam irradiance (-): %0.2f
 -----
-Max working temperature (°C): %0.2f
-Discharge temperature (°C): %0.2f
-Delivery water temperature (°C): %0.2f
-Average January cold water temperature (°C): %s
-Average mechanical room temperature (°C): %0.2f
+Max working temperature (C): %0.2f
+Discharge temperature (C): %0.2f
+Delivery water temperature (C): %0.2f
+Average January cold water temperature (C): %s
+Average mechanical room temperature (C): %0.2f
 -----
 Pipe length (m): %0.2f
 Pipe diameter (mm): %s
 Pipe insulation thickness (mm): %s
-Pipe insulation conductivity (W/m/°C): %0.2f
+Pipe insulation conductivity (W/m/C): %0.2f
 Pump power (W): %s
 Pump efficiency (-): %0.2f
 -----
 Tank size (l): %s
-Tank loss (W/m2/°C): %0.2f
+Tank loss (W/m2/C): %0.2f
 Height-diameter tank ratio (-): %0.2f
 Heat exchanger effectiveness (-): %0.2f
     """ % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyExposureFactor, sum(beamIndexPerHourData)/len(beamIndexPerHourData), maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, sum(mechanicalRoomTemperatureData)/len(mechanicalRoomTemperatureData), pipeLength, pipeDiameterMM, pipeInsulationThicknessMM, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness)

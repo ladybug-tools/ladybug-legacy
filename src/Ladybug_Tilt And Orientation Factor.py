@@ -77,13 +77,13 @@ Provided by Ladybug 0.0.63
               -
               In percent(%).
         PVsurfaceTilt: Tilt angle of the inputted PV_SWHsurface.
-                       In degrees (°).
+                       In degrees ().
         PVsurfaceAzimuth: Orientation angle of the inputted PV_SWHsurface.
-                          In degrees (°).
+                          In degrees ().
         optimalTilt: Optimal tilt of the PV_SWHsurface for a given location. Optimal tilt being the one that receives the most annual solar radiation.
-                     In degrees (°).
+                     In degrees ().
         optimalAzimuth: Optimal orientation of the PV_SWHsurface for a given location. Optimal azimuth being the one that receives the most annual solar radiation.
-                        In degrees (°).
+                        In degrees ().
         optimalRoofPitch: Optimal steepness of the PV_SWHsurface for a given location. Optimal steepness being the one that receives the most annual solar radiation.
                           In inches/inches
         optimalRadiation: Total solar radiation per square meter for a whole year received on a PV_SWHsurface of optimal tilt and azimuth, at given location.
@@ -99,7 +99,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -505,8 +505,8 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
     y2AxisLabelOrigin = Rhino.Geometry.Point3d(originOffset.X + 80+12, originOffset.Y+45/2, originOffset.Z)
     
     # xAxis, yAxis, y2Axis LabelMeshes
-    xAxisLabelMeshes = lb_visualization.text2srf(["Azimuth (°)"], [xAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 1)[0]
-    yAxisLabelMeshes = lb_visualization.text2srf(["Tilt (°)"], [yAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 2)[0]
+    xAxisLabelMeshes = lb_visualization.text2srf(["Azimuth ()"], [xAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 1)[0]
+    yAxisLabelMeshes = lb_visualization.text2srf(["Tilt ()"], [yAxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 2)[0]
     y2AxisLabelMeshes = lb_visualization.text2srf(["Roof pitch"], [y2AxisLabelOrigin], legendFont, legendFontSize, legendBold, None, 3)[0]
     
     # title LabelOrigin
@@ -516,7 +516,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
     TSRFoptimal = 100 # always 100%
     titleLabelText = "Annual total solar radiation as a function of panel tilt/orientation"
     titleLabelMeshes = lb_visualization.text2srf([titleLabelText], [titleLabelOrigin], legendFont, legendFontSize*1.6, legendBold, None, 6)[0]
-    descriptionLabelText = "Location: %s, Latitude: %s°, Longitude: %s°\nOptimal: Tilt: %0.1f°, Azimuth: %0.1f°, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f\nAnalysed: Tilt: %0.1f°, Azimuth: %0.1f°, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f" %(locationName, latitude, longitude, optimalTiltD, optimalAzimuthD, maximalTotalRadiationPerYear, TOFoptimal, TSRFoptimal, srfTiltD, srfAzimuthD, totalRadiationPerYear, TOF, TSRF)
+    descriptionLabelText = "Location: %s, Latitude: %s, Longitude: %s\nOptimal: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f\nAnalysed: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f" %(locationName, latitude, longitude, optimalTiltD, optimalAzimuthD, maximalTotalRadiationPerYear, TOFoptimal, TSRFoptimal, srfTiltD, srfAzimuthD, totalRadiationPerYear, TOF, TSRF)
     descriptionLabelMeshes = lb_visualization.text2srf([descriptionLabelText], [descriptionLabelOrigin], legendFont, legendFontSize*1.3, legendBold, None, 6)[0]
     
     # region percent values
@@ -612,10 +612,10 @@ def printOutput(north, latitude, longitude, locationName, albedoL, srfArea, prec
     """
 Input data:
 
-Location (°): %s
-Latitude (°): %s
-Longitude (°): %s
-North (°): %s
+Location (): %s
+Latitude (): %s
+Longitude (): %s
+North (): %s
 Average annual albedo(-): %0.2f
 
 Surface area (m2): %0.2f

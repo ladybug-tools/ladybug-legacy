@@ -149,7 +149,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating Performance Metrics"
 ghenv.Component.NickName = "SolarWaterHeatingPerformanceMetrics"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -259,7 +259,7 @@ def SWHinputData(SWHsurface, SWHsurfacePercent, SWHsystemSettings, collectorLife
         dischargeTemperature = 93
         deliveryWaterTemperature = 60
         avrJanuaryColdWaterTemperature = None
-        mechanicalRoomTemperatureData = [20 for i in range(0,8760)]  # default 20°C
+        mechanicalRoomTemperatureData = [20 for i in range(0,8760)]  # default 20C
         pipeLength = 20
         pipeDiameterMM = None  #math.sqrt((4 * (flowRatePerM2*collectorActiveArea)/0.7) / math.pi)
         pipeInsulationThicknessMM = None

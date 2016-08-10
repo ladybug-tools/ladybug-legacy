@@ -27,7 +27,7 @@ Use this component to define the Photovoltaics module settings.
 If nothing inputed, the following PV module settings will be used by default:
 - moduleType: Close (flush) roof mount 
 - moduleEfficiency: 15%
-- temperatureCoefficient: -0.5 %/°C
+- temperatureCoefficient: -0.5 %/C
 - moduleActiveAreaPercent: 90%
 -
 Provided by Ladybug 0.0.63
@@ -47,13 +47,13 @@ Provided by Ladybug 0.0.63
                            If not defined, default value of 15(%) will be used.
                            -
                            In percent (%).
-        temperatureCoefficient_: A coefficient which accounts for the percentage the solar module's DC output power decrease/increase for every degree Celsius the solar cells temperature rises above/below 25°C. 
+        temperatureCoefficient_: A coefficient which accounts for the percentage the solar module's DC output power decrease/increase for every degree Celsius the solar cells temperature rises above/below 25C. 
                                  -
                                  In general it ranges from -0.44 to -0.5 for crystaline silicon modules.
                                  -
                                  If not supplied, -0.5 will be used as a default.
                                  -
-                                 In %/°C.
+                                 In %/C.
         moduleActiveAreaPercent_: Percentage of the module's area excluding module framing and gaps between cells. 
                                   -
                                   If not supplied, default value of 90(%) will be used.
@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Module"
 ghenv.Component.NickName = "PhotovoltaicsModule"
-ghenv.Component.Message = "VER 0.0.63\nAUG_08_2016"
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
