@@ -58,6 +58,7 @@ except: pass
 
 import math
 import scriptcontext as sc
+import Grasshopper.Kernel as gh
 
 def checkTheData():
     #Define a value that will indicate whether someone has hooked up epw data.
