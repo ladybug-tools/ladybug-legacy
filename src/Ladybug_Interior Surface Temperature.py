@@ -66,7 +66,7 @@ def main(outTemp, inTemp, uValue, srfOrient = None, emissivity = 0.9):
     heatFlowFactor = (-12.443 * (math.pow(dimHeatFlow,3))) + (24.28 * (math.pow(dimHeatFlow,2))) - (16.898 * dimHeatFlow) + 8.1275
     filmCoeff = (heatFlowFactor * dimHeatFlow) + (5.81176 * emissivity) + 0.9629
     
-    intTemp = (uValue * abs(inTemp - outTemp))/filmCoeff
+    intTemp = inTemp - (uValue * abs(inTemp - outTemp))/filmCoeff
     
     return intTemp, filmCoeff
 
