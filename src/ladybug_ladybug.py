@@ -24,16 +24,12 @@
 This component carries all of Ladybug's main classes. Other components refer to these
 classes to run the studies. Therefore, you need to let her fly before running the studies so the
 classes will be copied to Rhinos shared space. So let her fly!
-
 -
 Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 You should have received a copy of the GNU General Public License
 along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
-
 @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
-
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
-
 -
 Provided by Ladybug 0.0.63
     Args:
@@ -45,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_16_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2563,8 +2559,14 @@ class ResultVisualization(object):
             joinedMesh.VertexColors[joinedMesh.Faces[srfCount].D] = colors[srfCount]
         return joinedMesh
     
-    def gradientColor(self, values, lowB, highB, colors):
+    def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
+    
+        # make a deep copy of colors so colors isn't popped twice once for legend colors and once for mesh colors
+        
+        copyColors = list(colors)
+        
         if highB == 'max': highB = max(values)
+            
         if lowB == 'min': lowB = min(values)
         
         # this function inputs values, and custom colors and outputs gradient colors
@@ -2575,7 +2577,7 @@ class ResultVisualization(object):
             elif highB == lowB: numP = 0
             else: numP = (num - lowB)/(highB - lowB)
             return numP
-
+    
         def calColor(valueP, rangeMinP, rangeMaxP, minColor, maxColor):
             # range is between 0 and 1
             rangeP = rangeMaxP - rangeMinP
@@ -2585,7 +2587,22 @@ class ResultVisualization(object):
             color = System.Drawing.Color.FromArgb(red, green, blue)
             return color
         
+        # Calculate num of colors
+        
+        if (highBoundColor != None):
+            
+            # Subtract a color to make room for the highBoundColor
+            
+            copyColors.pop()
+    
+        if (lowBoundColor != None):
+            
+            # Subtract a color to make room for the lowBoundColor
+            
+            copyColors.pop()
+        
         numofColors = len(colors)
+        
         colorBounds = rs.frange(0, 1, round(1/(numofColors-1),6))
         if len(colorBounds) != numofColors: colorBounds.append(1)
         colorBounds = [round(x,3) for x in colorBounds]
@@ -2594,14 +2611,34 @@ class ResultVisualization(object):
         for num in values: numP.append(parNum(num, lowB, highB))
             
         colorTemp = []
+        
         for num in numP:
             for i in range(numofColors):
+                
                 if  colorBounds[i] <= num <= colorBounds[i + 1]:
-                    colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
-                    break
-        color = colorTemp
-        return color
     
+                    if (num == 1) and (highBoundColor != None) :
+                        
+                        colorTemp.append(highBoundColor)
+                        
+                        break
+                        
+                    elif (num == 0) and (lowBoundColor != None):
+                        
+                        colorTemp.append(lowBoundColor)
+                        
+                        break
+                        
+                    else:
+                        
+                        colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
+    
+                        break
+                            
+        color = colorTemp
+        
+        return color
+        
     def calculateBB(self, geometries, restricted = False):
         bbox = None
         plane = rc.Geometry.Plane.WorldXY
