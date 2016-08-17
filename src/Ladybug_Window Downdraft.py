@@ -27,8 +27,13 @@ The model used in this component comes from physical measurements of window down
 Provided by Ladybug 0.0.63
     
     Args:
-        _draftAirTemp: The air temperature of the draft in degrees Celcius.
+        _testPts: The test points at which downdraft conditions will be evaluated.
+        _windowSrfs: Breps or Surfaces representing the window surfaces off of which downdraft flows.
+        _winSrfTemp: A number representing the surface temperature of the windows in degrees Celcius.
+        _airTemp: A number representing the air temperature of the room in degrees Celcius.
         defaultVeloc_: A number in m/s that represents the speed of the air that is not in the downdraft. The default is set to 0.05 m/s.
+        parallel_: Set to "True" to run the calculation in parallel and set to "False" to run it with a single core.  The default is set to "False."
+        _runIt: Set to 'True' to run the component and claculate downdraft conditions.
      Returns:
         draftAirTemp: The air temperature of the draft 10 cm off of the floor in degrees Celcius.
         draftAirVeloc: The velocity of the draft 10 cm off of the floor in m/s.
@@ -36,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_12_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_17_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -88,16 +93,9 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel
     
     # Get the normal vectors of all the window surfaces.
     normalVecs = []
-    revNormVecs = []
-    winMeshes = []
     for srf in windowSrfs:
         normVec = getSrfCenPtandNormal(srf)
         normalVecs.append(normVec)
-        revVec = copy.copy(normVec)
-        revVec.Reverse()
-        revNormVecs.append(revVec)
-        winMesh = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
-        winMeshes.append(winMesh)
     
     # See if any of the test points are in the wake of the downdraft.
     ptIntList = []
@@ -107,20 +105,21 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel
     def intRays(i):
         #Create the rays to be projected from each point.
         pointIntersectDict = {}
-        pointRays = []
-        pointRaysRev = []
-        for vec in normalVecs: pointRays.append(rc.Geometry.Ray3d(testPts[i], vec))
-        for vec in revNormVecs: pointRaysRev.append(rc.Geometry.Ray3d(testPts[i], vec))
+        testPt = testPts[i]
         
-        #Perform the intersection of the rays with the mesh.
-        for rayCount, ray in enumerate(pointRays):
-            intersect = rc.Geometry.Intersect.Intersection.MeshRay(winMeshes[rayCount], ray)
-            if intersect != -1:
-                pointIntersectDict[rayCount] = [intersect*conversionFactor, ray]
-        for rayCount, ray in enumerate(pointRaysRev):
-            intersect = rc.Geometry.Intersect.Intersection.MeshRay(winMeshes[rayCount], ray)
-            if intersect != -1:
-                pointIntersectDict[rayCount] = [intersect*conversionFactor, ray]
+        for srfCount, srf in enumerate(windowSrfs):
+            closestPt = srf.ClosestPoint(testPt)
+            srfLine = rc.Geometry.Line(testPt, closestPt)
+            distToSrf = srfLine.Length
+            srfVec = rc.Geometry.Vector3d(closestPt.X-testPt.X, closestPt.Y-testPt.Y, closestPt.Z-testPt.Z)
+            #srfVec = rc.Geometry.Vector3d(testPt.X-closestPt.X, testPt.Y-closestPt.Y, testPt.Z-closestPt.Z)
+            angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
+            if abs(angle2Srf) > 90:
+                normalVecs[srfCount].Reverse()
+                angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
+            angFactor = (90-abs(angle2Srf))/90
+            
+            pointIntersectDict[srfCount] = [distToSrf*conversionFactor, srfVec, angle2Srf, angFactor]
         
         ptIntList[i] = pointIntersectDict
     
@@ -134,14 +133,20 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel
     for ptCount, ptDict in enumerate(ptIntList):
         for srf in ptDict.keys():
             intSrf = windowSrfs[srf]
-            directVec = ptDict[srf][1].Direction
+            directVec = ptDict[srf][1]
+            directAng = ptDict[srf][2]
             normalPlaneVec = rc.Geometry.Vector3d(directVec.Y, directVec.X, 0)
             intPlane = rc.Geometry.Plane(testPts[ptCount], normalPlaneVec)
-            intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
-            startPtZ = intCurve.PointAtStart.Z
-            endPtZ = intCurve.PointAtEnd.Z
-            glzHeight  = (abs(endPtZ-startPtZ))*conversionFactor
-            ptDict[srf].append(glzHeight)
+            try:
+                intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
+                startPtZ = intCurve.PointAtStart.Z
+                endPtZ = intCurve.PointAtEnd.Z
+                glzHeight  = (abs(endPtZ-startPtZ))*conversionFactor
+                ptDict[srf].append(glzHeight)
+            except:
+                srfBB = intSrf.GetBoundingBox(True)
+                glzHeight = (srfBB.Max.Z - srfBB.Min.Z)*conversionFactor
+                ptDict[srf].append(glzHeight)
     
     # Compute the temperature difference.
     glassAirDelta = airTemp - winSrfTemp
@@ -154,14 +159,15 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel
         ptTemplists.append([])
         for srf in ptDict.keys():
             dist = ptDict[srf][0]
-            windowHgt = ptDict[srf][2]
+            angFac = ptDict[srf][3]
+            windowHgt = ptDict[srf][4]
             if dist < 0.4: windSpd = velMaxClose(glassAirDelta, windowHgt)
             elif dist < 2: windSpd = velMaxMid(dist, glassAirDelta, windowHgt)
             else: windSpd = velMaxFar(glassAirDelta, windowHgt)
             floorAirTemp = calcFloorAirTemp(airTemp, dist, glassAirDelta)
             
-            ptVelLists[ptCount].append(windSpd)
-            ptTemplists[ptCount].append(floorAirTemp)
+            ptVelLists[ptCount].append((windSpd*angFac))
+            ptTemplists[ptCount].append(airTemp-((airTemp-floorAirTemp)*angFac))
     
     # Make final lists that just have the larger of the downdraft terms.
     draftSpeeds = []
@@ -170,9 +176,6 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel
         if len(ptList) == 0:
             draftSpeeds.append(defaultVeloc)
             draftAirTemps.append(airTemp)
-        elif len(ptList) == 1:
-            draftSpeeds.append(ptList[0])
-            draftAirTemps.append(ptTemplists[lCount][0])
         else:
             draftSpeeds.append(max(ptList))
             draftAirTemps.append(min(ptTemplists[lCount]))
