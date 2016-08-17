@@ -32,7 +32,6 @@ Provided by Ladybug 0.0.63
         _winSrfTemp: A number representing the surface temperature of the windows in degrees Celcius.
         _airTemp: A number representing the air temperature of the room in degrees Celcius.
         defaultVeloc_: A number in m/s that represents the speed of the air that is not in the downdraft. The default is set to 0.05 m/s.
-        parallel_: Set to "True" to run the calculation in parallel and set to "False" to run it with a single core.  The default is set to "False."
         _runIt: Set to 'True' to run the component and claculate downdraft conditions.
      Returns:
         draftAirTemp: The air temperature of the draft 10 cm off of the floor in degrees Celcius.
@@ -55,6 +54,7 @@ import Rhino as rc
 import scriptcontext as sc
 import copy
 import System.Threading.Tasks as tasks
+import copy
 
 def getSrfCenPtandNormal(surface):
     brepFace = surface.Faces[0]
@@ -105,14 +105,11 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel
     def intRays(i):
         #Create the rays to be projected from each point.
         pointIntersectDict = {}
-        testPt = testPts[i]
-        
         for srfCount, srf in enumerate(windowSrfs):
-            closestPt = srf.ClosestPoint(testPt)
-            srfLine = rc.Geometry.Line(testPt, closestPt)
+            closestPt = srf.ClosestPoint(testPts[i])
+            srfLine = rc.Geometry.Line(testPts[i], closestPt)
             distToSrf = srfLine.Length
-            srfVec = rc.Geometry.Vector3d(closestPt.X-testPt.X, closestPt.Y-testPt.Y, closestPt.Z-testPt.Z)
-            #srfVec = rc.Geometry.Vector3d(testPt.X-closestPt.X, testPt.Y-closestPt.Y, testPt.Z-closestPt.Z)
+            srfVec = rc.Geometry.Vector3d(closestPt.X-testPts[i].X, closestPt.Y-testPts[i].Y, closestPt.Z-testPts[i].Z)
             angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
             if abs(angle2Srf) > 90:
                 normalVecs[srfCount].Reverse()
@@ -123,11 +120,8 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel
         
         ptIntList[i] = pointIntersectDict
     
-    if parallel == True:
-        tasks.Parallel.ForEach(range(len(testPts)), intRays)
-    else:
-        for count in range(len(testPts)):
-            intRays(count)
+    for count in range(len(testPts)):
+        intRays(count)
     
     # For the points that are in the wake, find the height of the glazing at the point's downdraft location.
     for ptCount, ptDict in enumerate(ptIntList):
