@@ -22,7 +22,7 @@
 """
 Use this component to link Rhino solar system to grasshopper and create sun positions according to the weatherfile. Furthermore, this component can be used to render the active viewport (with the selected renderer), and/or save the image of the viewport or render.
 -
-Provided by Ladybug 0.0.61
+Provided by Ladybug 0.0.63
     Args:
         _location: get location from Ladybug_Import epw component. This will update rhino solar system to the correct coordinates and timezone
         North_: North direction of the model. This can be either an number representing angle, or a vector. (by default North is set on the y axis)
@@ -45,9 +45,9 @@ Provided by Ladybug 0.0.61
 
 ghenv.Component.Name = "Ladybug_Visualize_Shadows"
 ghenv.Component.NickName = 'Visualize_Shadows'
-ghenv.Component.Message = 'VER 0.0.61\nApr_15_2016' #Change this date to be that of your commit or pull request.
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "7 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 #Change the following date to be that of the HB version of your commit or pull request (or get rid of the follwoing if your component is a part of Ladybug):

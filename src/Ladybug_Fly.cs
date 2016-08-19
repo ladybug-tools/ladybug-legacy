@@ -107,8 +107,8 @@ public class Script_Instance : GH_ScriptInstance
     Component.Name = "Ladybug_fly";
     Component.NickName = "FLY!";
     Component.Category = "Ladybug";
-    Component.SubCategory = "4 | Extra";
-    Component.Message = "VER 0.0.62\nJAN_26_2016";
+    Component.SubCategory = "5 | Extra";
+    Component.Message = "VER 0.0.62\nAUG_08_2016";
 
     //add a toggle if we need one
     // I comment out this based on some user feedback. It's cool but can be pretty confusing
@@ -225,7 +225,7 @@ public class Script_Instance : GH_ScriptInstance
         popupMessage += "\n";
       }
       if (System.Windows.Forms.MessageBox.Show(sliders.Count + " slider(s) connected:\n" + popupMessage +
-        "\n" + totalLoops.ToString() + " iterations will be done. Continue?", "Start?", MessageBoxButtons.YesNo) == DialogResult.No)
+        "\n" + totalLoops.ToString() + " iterations will be done. Continue?"+ "\n\n (Press ESC to pause during progressing!)", "Start?", MessageBoxButtons.YesNo) == DialogResult.No)
       {
         SetBooleanToFalse(boolTrigger);
         Component.Message = "Release the fly!";

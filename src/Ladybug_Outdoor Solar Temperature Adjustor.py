@@ -24,7 +24,7 @@
 """
 Use this component to adjust an existing Mean Radiant Temperature for shortwave solar radiation.  This adjusted mean radiant temperature can then be used in comfort studies.
 _
-Note that this component assumes that you have already accounted for longwave radiation in the form of the _meanRadTemperature input.  If you do not hook up a _meanRadTemperature, this component will assume that the surrounding radiant temperature is the same as the air temperature, which is a decent assumption for someone standing in an unobstructed field.  However, the more obstacles that surround the person (and the more "context" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.  Also note that this component is not meant to account for shortwave radiation passing through glass.
+Note that this component assumes that you have already accounted for longwave radiation in the form of the _baseTemperature input.  If you do not hook up a _baseTemperature, this component will assume that the surrounding radiant temperature is the same as the air temperature, which is a decent assumption for someone standing in an unobstructed field.  However, the more obstacles that surround the person (and the more "context" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.  Also note that this component is not meant to account for shortwave radiation passing through glass.
 _
 This component uses Radiance functions in order to determine the amount of direct and diffuse solar radiation falling on a comfort mannequin.  The portion reflected off of the ground to the comfort mannequin is derived from these values of direct and diffuse radiation.
 
@@ -32,24 +32,24 @@ Lastly, the formulas to translate this radiation into an effective radiant field
 Arens, Edward; Huang, Li; Hoyt, Tyler; Zhou, Xin; Shiavon, Stefano. (2014). Modeling the comfort effects of short-wave solar radiation indoors.  Indoor Environmental Quality (IEQ).
 http://escholarship.org/uc/item/89m1h2dg#page-4
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
-        _location: The location output from the "Ladybug_Import epw" component.
+        _location: The location output from the "Ladybug_Import epw" component. This is used to determine the position of the sun.
         _cumSkyMtxOrDirNormRad: Either the output from a GenCumulativeSkyMtx component (for high-resolution analysis) or the directNormalRadiation ouput from the "Ladybug_Import epw" component (for simple, low-resolution analsysis).
         _diffuseHorizRad: If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the "Ladybug_Import epw" component here.  Otherwise, this input is not required.
-        _meanRadTemperature: A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can be air temperature data from the 'Import_epw' component and will follow the assumption that the surrounding mean radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more "contextShading_" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.
+        _baseTemperature: A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can be air temperature data from the 'Import_epw' component and will follow the assumption that the surrounding mean radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more "contextShading_" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.
+        _baseDryBulbOrMRT_: Set to 'True' to have the _baseTemperature above understood as the outdoor dry bulb air temperature, in which case this component will attempt to account for long wave radiation by computing sky temperature and assuming all other surfaces are at the specified _baseTemperature.  Set to 'False' to have the input above interpreted as a starting long wave MRT, which will only be increased to account for short wave radiation.  The latter is useful for indoor conditions where you can compute a starting long wave MRT from the indoor surface temperatures.  The default is set to 'True' to interpret the input above as outdoor air temperature.
+        _horizInfraredRad: A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'
         -------------------------: ...
         bodyPosture_: An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting.
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
         bodyLocation_: An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. Note that this point should be at the lowest point of the mannequin (atthe feet for sitting and standing).  The default is set to the Rhino origin.
-        contextShading_: Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  If you are using this component for indoor studies, windows or any transparent materials should not be included in this geometry.  You should factor the transmissivity of these materials in with the windowTransmissivity_ input.  Also, note that, if you have a lot of this context geometry, you should make sure that you input a starting _meanRadTemperature that accounts for the temperature of all the temperture of these shading surfaces.
+        contextShading_: Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  If you are using this component for indoor studies, windows or any transparent materials should not be included in this geometry.  You should factor the transmissivity of these materials in with the windowTransmissivity_ input.  Also, note that, if you have a lot of this context geometry, you should make sure that you input a starting _baseTemperature that accounts for the temperature of all the temperture of these shading surfaces.
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
-        -------------------------: ...
         groundReflectivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation reflected off of the ground.  By default, this is set to 0.25, which is characteristic of outdoor grass or dry bare soil.  You may want to increase this value for concrete or decrease it for water or dark soil.
         clothingAbsorptivity_: An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.7 for (average/brown) skin and average clothing.  You may want to increase this value for darker skin or darker clothing.
-        windowTransmissivity_: An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions. 
-        -------------------------: ...
+        windowTransmissivity_: An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions.
         analysisPeriodOrHOY_: An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis. If no value is connected here, the component will run for noon on the winter solstice.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         tempOrRad_: Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person. The default is set to 'False'.
@@ -64,7 +64,7 @@ Provided by Ladybug 0.0.62
         --------------------: ...
         effectiveRadiantField: The estimated effective radiant field of the comfort mannequin induced by the sun for each hour of the analysis period.  This is in W/m2.
         MRTDelta: The estimated change in mean radiant temperature for the comfort mannequin induced by the solar radiation.  This is in degreed Celcius.
-        solarAdjustedMRT: The estimated solar adjusted mean radiant temperature for each hour of the analysis period.  This is essentially the change in mean radiant temperature above added to the hourly _meanRadTemperature input.  This is in degreed Celcius and can be plugged into any comfort components for comfort studies.
+        solarAdjustedMRT: The estimated solar adjusted mean radiant temperature for each hour of the analysis period.  This is essentially the change in mean radiant temperature above added to the hourly _baseTemperature input.  This is in degreed Celcius and can be plugged into any comfort components for comfort studies.
         --------------------: ...
         mannequinMesh: A colored mesh of a comfort mannequin showing the amount of radiation falling over the mannequin's body.
         legend: A legend that corresponds to the colors on the mannequinMesh and shows the relative W/m2.
@@ -76,11 +76,11 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_01_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nNOV_20_2015
+#compatibleLBVersion = VER 0.0.59\nJUN_07_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -102,21 +102,21 @@ w = gh.GH_RuntimeMessageLevel.Warning
 
 inputsDict = {
     
-0: ["_location", "The location output from the 'Ladybug_Import epw' component."],
+0: ["_location", "The location output from the 'Ladybug_Import epw' component. This is used to determine the position of the sun."],
 1: ["_cumSkyMtxOrDirNormRad", "Either the output from a GenCumulativeSkyMtx component (for high-resolution analysis) or the directNormallRadiation ouput from the 'Ladybug_Import epw' component (for simple, low-resolution analsysis)."],
 2: ["_diffuseHorizRad", "If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the 'Ladybug_Import epw' component here.  Otherwise, this input is not required."],
-3: ["_meanRadTemperature", "A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can be air temperature data from the 'Import_epw' component and will follow the assumption that the surrounding mean radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more 'contextShading_' that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation."],
-4: ["-------------------------", "..."],
-5: ["bodyPosture_", "An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting."],
-6: ["rotationAngle_", "An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature."],
-7: ["bodyLocation_", "An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. Note that this point should be the center of gravity of your person.  The default is set to a person just above the Rhino origin."],
-8: ["contextShading_", "Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  If you are using this component for indoor studies, windows or any transparent materials should not be included in this geometry.  You should factor the transmissivity of these materials in with the windowTransmissivity_ input.  Also, note that, if you have a lot of this context geometry, you should make sure that you input a starting _meanRadTemperature that accounts for the temperature of all the temperture of these shading surfaces."],
-9: ["north_", "Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees)."],
-10: ["-------------------------", "..."],
-11: ["groundReflectivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation reflected off of the ground.  By default, this is set to 0.25, which is characteristic of outdoor grass or dry bare soil.  You may want to increase this value for concrete or decrease it for water or dark soil."],
-12: ["clothingAbsorptivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.7 for (average/brown) skin and average clothing.  You may want to increase this value for darker skin or darker clothing."],
-13: ["windowTransmissivity_", "An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions."],
-14: ["-------------------------", "..."],
+3: ["_baseTemperature", "A number or list of numbers representing either the outdoor dry bulb air temperture (if the input below is set to 'True') or the long wave mean radiant temperature (MRT) of the surrounding surfaces in degrees Celcius (if the input below is set to 'False').  The former is useufl for computing outdoor MRT if you only have the air temperature while the latter is useful for indoor conditions when you can compute a starting long wave MRT from the indoor surface temperatures."],
+4: ["_baseDryBulbOrMRT_", "Set to 'True' to have the _baseTemperature above understood as the outdoor dry bulb air temperature, in which case this component will attempt to account for long wave radiation by computing sky temperature and assuming all other surfaces are at the specified _baseTemperature.  Set to 'False' to have the input above interpreted as a starting long wave MRT, which will only be increased to account for short wave radiation.  The latter is useful for indoor conditions where you can compute a starting long wave MRT from the indoor surface temperatures.  The default is set to 'True' to interpret the input above as outdoor air temperature."],
+5: ["_horizInfraredRad", "A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'"],
+6: ["-------------------------", "..."],
+7: ["bodyPosture_", "An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting."],
+8: ["rotationAngle_", "An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature."],
+9: ["bodyLocation_", "An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. Note that this point should be the center of gravity of your person.  The default is set to a person just above the Rhino origin."],
+10: ["contextShading_", "Optional breps or meshes that represent shading or opaque solar obstructions around the mannequin.  If you are using this component for indoor studies, windows or any transparent materials should not be included in this geometry.  You should factor the transmissivity of these materials in with the windowTransmissivity_ input.  Also, note that, if you have a lot of this context geometry, you should make sure that you input a starting _baseTemperature that accounts for the temperature of all the temperture of these shading surfaces."],
+11: ["north_", "Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees)."],
+12: ["groundReflectivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation reflected off of the ground.  By default, this is set to 0.25, which is characteristic of outdoor grass or dry bare soil.  You may want to increase this value for concrete or decrease it for water or dark soil."],
+13: ["clothingAbsorptivity_", "An optional decimal value between 0 and 1 that represents the fraction of solar radiation absorbed by the human body. The default is set to 0.7 for (average/brown) skin and average clothing.  You may want to increase this value for darker skin or darker clothing."],
+14: ["windowTransmissivity_", "An optional decimal value between 0 and 1 that represents the transmissivity of windows around the person.  This can also be a list of 8760 values between 0 and 1 that represents a list of hourly window transmissivties, in order to represent the effect of occupants pulling blinds over the windows, etc. Note that you should only set a value here if you are using this component for indoor analysis where the only means by which sunlight will hit an occupant is if it comes through a window.  The default is set to 1 for outdoor conditions."],
 15: ["analysisPeriodOrHOY_", "An optional analysis period from the 'Analysis Period component' or an hour of the year between 1 and 8760 for which you want to conduct the analysis. If no value is connected here, the component will run for noon on the winter solstice."],
 16: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
 17: ["tempOrRad_", "Set to 'True' to have the mannequin labled with adjusted perceived radiant temperature and set to 'False' to have the mannequin labled with total radiation falling on the person. The default is set to 'False'."],
@@ -132,7 +132,7 @@ outputsDict = {
 1: ["--------------------", "..."],
 2: ["effectiveRadiantField", "The estimated effective radiant field of the comfort mannequin induced by the sun for each hour of the analysis period.  This is in W/m2."],
 3: ["MRTDelta", "The estimated change in mean radiant temperature for the comfort mannequin induced by the solar radiation.  This is in degreed Celcius."],
-4: ["solarAdjustedMRT", "The estimated solar adjusted mean radiant temperature for each hour of the analysis period.  This is essentially the change in mean radiant temperature above added to the hourly _meanRadTemperature input.  This is in degreed Celcius and can be plugged into any comfort components for comfort studies."],
+4: ["solarAdjustedMRT", "The estimated solar adjusted mean radiant temperature for each hour of the analysis period.  This is essentially the change in mean radiant temperature above added to the hourly _baseTemperature input.  This is in degreed Celcius and can be plugged into any comfort components for comfort studies."],
 5: ["--------------------", "..."],
 6: ["mannequinMesh", "A colored mesh of a comfort mannequin showing the amount of radiation falling over the mannequin's body."],
 7: ["legend", "A legend that corresponds to the colors on the mannequinMesh and shows the relative W/m2."],
@@ -158,38 +158,44 @@ def checkTheInputs():
     #Check to see if the user has connected valid MRT data.
     checkData1 = False
     radTemp = []
-    try:
-        if "Temperature" in _meanRadTemperature[2]:
-            radTemp = _meanRadTemperature[7:]
-            checkData1 = True
-            epwData = True
-            epwStr = _meanRadTemperature[0:7]
-    except: pass
-    if checkData1 == False:
-        for item in _meanRadTemperature:
-            try:
-                radTemp.append(float(item))
+    if len(_baseTemperature) > 0:
+        try:
+            if "Temperature" in _baseTemperature[2]:
+                radTemp = _baseTemperature[7:]
                 checkData1 = True
-            except: checkData1 = False
-    if checkData1 == False:
-        warning = '_meanRadTemperature input does not contain valid temperature values in degrees Celcius.'
-        print warning
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        return -1
-    
-    
-    #If there is only one value for MRT, duplicate it 8760 times.
-    if len(radTemp) < 8760 and len(radTemp) !=0:
-        if len(radTemp) == 1:
-            dupData = []
-            for count in range(8760):
-                dupData.append(radTemp[0])
-            radTemp = dupData
-        else:
-            warning = 'Input for _meanRadTemperature must be either the output of an energy simulation, a list of 8760 values, or a single MRT to be applied for every hour of the year.'
+                epwData = True
+                epwStr = _baseTemperature[0:7]
+        except: pass
+        if checkData1 == False:
+            for item in _baseTemperature:
+                try:
+                    radTemp.append(float(item))
+                    checkData1 = True
+                except: checkData1 = False
+        if checkData1 == False:
+            warning = '_baseTemperature input does not contain valid temperature values in degrees Celcius.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1
+        
+        
+        #If there is only one value for MRT, duplicate it 8760 times.
+        if len(radTemp) < 8760 and len(radTemp) !=0:
+            if len(radTemp) == 1:
+                dupData = []
+                for count in range(8760):
+                    dupData.append(radTemp[0])
+                radTemp = dupData
+            else:
+                warning = 'Input for _baseTemperature must be either the output of an energy simulation, a list of 8760 values, or a single MRT to be applied for every hour of the year.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+    else:
+        warning = 'Input _baseTemperature failed to collect data.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
     
     #Check to be sure the there is a _cumSkyMtxOrDirNormRad and use it to set the method of the component.
     cumSkyMtx = None
@@ -416,7 +422,7 @@ def checkTheInputs():
     
     #Check the ground reflectivity.
     if groundReflectivity_ != None:
-        if groundReflectivity_ < 1 and groundReflectivity_ > 0:
+        if groundReflectivity_ <= 1 and groundReflectivity_ >= 0:
             groundR = groundReflectivity_
         else:
             groundR = None
@@ -518,6 +524,48 @@ def checkTheInputs():
         else: rotationAngle = 0.0
     except: rotationAngle = 0.0
     
+    #Set a default _baseDryBulbOrMRT_.
+    if _baseDryBulbOrMRT_ != None: baseTempType = _baseDryBulbOrMRT_
+    else: baseTempType = True
+    
+    #Check to see if the user has connected valid relative humidity data.
+    checkData2 = False
+    infraredRad = []
+    try:
+        try:
+            if "Infrared Radiation" in _horizInfraredRad[2]:
+                infraredRad = _horizInfraredRad[7:]
+                checkData2 = True
+                epwData = True
+                epwStr = _horizInfraredRad[0:7]
+        except: pass
+        if checkData2 == False:
+            for item in _horizInfraredRad:
+                try:
+                    infraredRad.append(float(item))
+                    checkData2 = True
+                except: checkData2 = False
+        if checkData2 == False:
+            warning = '_horizInfraredRad input does not contain valid long wave sky radiation values.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+        
+        
+        #If there is only one value for MRT, duplicate it 8760 times.
+        if len(infraredRad) < 8760 and len(infraredRad) !=0:
+            if len(infraredRad) == 1:
+                dupData = []
+                for count in range(8760):
+                    dupData.append(infraredRad[0])
+                infraredRad = dupData
+            else:
+                warning = 'Input for _horizInfraredRad must be either the output of the import EPW component, a list of 8760 values, or a single relative humidity to be applied for every hour of the year.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
+    except: pass
+    
     #Pull the location data from the inputs.
     latitude = None
     longitude = None
@@ -535,10 +583,10 @@ def checkTheInputs():
         return -1
     
     
-    return methodInit, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
+    return methodInit, baseTempType, radTemp, infraredRad, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath
 
 
-def manageInputOutput(method):
+def manageInputOutput(method, baseTempType):
     #If some of the component inputs and outputs are not right, blot them out or change them.
     for input in range(21):
         if input == 2:
@@ -550,6 +598,10 @@ def manageInputOutput(method):
                 ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
                 ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
                 ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+        elif input == 5 and baseTempType == False:
+            ghenv.Component.Params.Input[input].NickName = "."
+            ghenv.Component.Params.Input[input].Name = "."
+            ghenv.Component.Params.Input[input].Description = " "
         elif input == 16 and method == 2:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
@@ -771,13 +823,18 @@ def convertFluxToTemp(radiantFlux, cloA, fracEff, radTransCoeff, currentRT, avgW
     
     return avgRT
 
+def computeSkyTemp(La):
+    # formula by Man-ENvironment heat EXchange model (MENEX_2005)
+    # incoming long-wave radiation emitted from the sky hemisphere, in W/m2
+    skyTemp = (((La) / (0.95*5.667*(10**(-8))))**(0.25)) - 273
+    
+    return skyTemp
 
-def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
+def main(method, baseTempType, radTemp, infraredRad, mannequinMesh, groundMesh, contextSrfs, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
     solarAdjustedMRT = []
-    hourOrder = []
     
     #Define the fraction of the body visible to radiation.
     if bodyPosture_ == 0 or bodyPosture_ == 3:
@@ -795,12 +852,13 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
     else: HOYS = [analysisPeriodOrHOY]
     
     #Compute the existing ERF for the analysis period.
-    if analysisPeriodOrHOY != [(1, 1, 1), (12, 31, 24)]:
-        newAirTemp = []
-        newRadTemp = []
-        for hour in HOYS:
-            newRadTemp.append(radTemp[hour-1])
-        radTemp = newRadTemp
+    skyTemp = []
+    newRadTemp = []
+    for hour in HOYS:
+        newRadTemp.append(radTemp[hour-1])
+        if baseTempType == True:
+            skyTemp.append(computeSkyTemp(infraredRad[hour-1]))
+    radTemp = newRadTemp
     
     #Calculate the sun-up hours of the year to help make things faster down the road.
     lb_sunpath.initTheClass(float(latitude), northAngle, rc.Geometry.Point3d.Origin, 100, float(longitude), float(timeZone))
@@ -846,6 +904,30 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
         radResults, totalRadResults, listInfo, intersectionMtx = runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH)
         
         if radResults:
+            #Analyse the person mech.
+            personMeshAreas = []
+            for area in meshSrfAreas[:-1]:
+                personMeshAreas.append(area*conversionFac*conversionFac)
+            if method == 0:
+                totalPersonArea = sum(personMeshAreas)
+            elif method == 1:
+                totalPersonArea = 1.775
+            
+            #Compute the sky view of each mesh face and an average sky view over the body.
+            skyViews = []
+            if baseTempType == True:
+                avgSkyTemp = sum(skyTemp)/len(skyTemp)
+                for ptCount in intersectionMtx.keys():
+                    skyView = 0
+                    numPatches = len(intersectionMtx[ptCount].keys())
+                    for patchCount in intersectionMtx[ptCount].keys():
+                        if intersectionMtx[ptCount][patchCount]['isIntersect']:
+                            skyView = skyView + 1/numPatches
+                    skyViews.append(skyView)
+                skyViewFac = 0
+                for count, area in enumerate(personMeshAreas):
+                    skyViewFac = skyViewFac + ((area/totalPersonArea) * skyViews[count])
+            
             #Convert Rad results to radiant temperature.
             if tempOrRad == True:
                 unit = 'C'
@@ -856,6 +938,9 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                     if periodMethod == 0: energyConvertFac = 500
                     else: energyConvertFac = 1
                     avgFlux = flux/len(radTemp)
+                    if baseTempType == True:
+                        currentRT = sum(radTemp)/len(radTemp)
+                        currentRT = (avgSkyTemp*skyViews[count]) + (currentRT*(1-(skyViews[count])))
                     convertRadTemp = convertFluxToTemp(avgFlux, cloA, fracEff, radTransCoeff, currentRT, avgWinTrans, energyConvertFac)
                     meshResults.append(convertRadTemp)
             else: meshResults = radResults
@@ -878,14 +963,38 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                 legend.append(item)
             
             intDict = intersectionMtx
-            personMeshAreas = []
-            for area in meshSrfAreas[:-1]:
-                personMeshAreas.append(area*conversionFac*conversionFac)
-            if method == 0:
-                totalPersonArea = sum(personMeshAreas)
-            elif method == 1:
-                totalPersonArea = 1.775
             
+            #Add the headers to the computed lists.
+            if periodMethod == 0:
+                analysisStart = analysisPeriodOrHOY[0]
+                analysisEnd = analysisPeriodOrHOY[1]
+            else:
+                stDate = lb_preparation.hour2Date(analysisPeriodOrHOY)
+                analysisStart = stDate
+                analysisEnd = stDate
+            ERF.append('key:location/dataType/units/frequency/startsAt/endsAt')
+            ERF.append(str(location))
+            ERF.append('Effective Radiant Field')
+            ERF.append('kWh/m2')
+            ERF.append('Hourly')
+            ERF.append(analysisStart)
+            ERF.append(analysisEnd)
+            
+            MRTDelta.append('key:location/dataType/units/frequency/startsAt/endsAt')
+            MRTDelta.append(str(location))
+            MRTDelta.append('Short Wave MRT Delta')
+            MRTDelta.append('C')
+            MRTDelta.append('Hourly')
+            MRTDelta.append(analysisStart)
+            MRTDelta.append(analysisEnd)
+            
+            solarAdjustedMRT.append('key:location/dataType/units/frequency/startsAt/endsAt')
+            solarAdjustedMRT.append(str(location))
+            solarAdjustedMRT.append('Solar-Adjusted Mean Radiant Temperature')
+            solarAdjustedMRT.append('C')
+            solarAdjustedMRT.append('Hourly')
+            solarAdjustedMRT.append(analysisStart)
+            solarAdjustedMRT.append(analysisEnd)
             
             #Define functions for computing the radiation for each hour, which is in parallal and not in parallel.
             def nonParallelRadCalc():
@@ -936,14 +1045,21 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                             ERF.append(hourERF/1000)
                             
                             #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
-                            hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
-                            solarAdjustedMRT.append(hourMRT)
-                            mrtDelt = hourMRT - radTemp[count]
+                            mrtDelt = (hourERF/(fracEff*radTransCoeff))
                             MRTDelta.append(mrtDelt)
+                            if baseTempType == False:
+                                hourMRT = mrtDelt + (radTemp[count])
+                            else:
+                                hourMRT = mrtDelt + (skyTemp[count]*(skyViewFac) + radTemp[count]*(1-(skyViewFac)))
+                            solarAdjustedMRT.append(hourMRT)
                         else:
                             ERF.append(0)
-                            solarAdjustedMRT.append(radTemp[count])
                             MRTDelta.append(0)
+                            if baseTempType == False:
+                                hourMRT = radTemp[count]
+                            else:
+                                hourMRT = (skyTemp[count]*(skyViewFac) + radTemp[count]*(1-(skyViewFac)))
+                            solarAdjustedMRT.append(hourMRT)
                     return True
                 except:
                     print "The calculation has been terminated by the user!"
@@ -993,18 +1109,24 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
                         totalPersonRad = totalPersonBeamDiffRad + groundRefRad
                         radiantFlux = totalPersonRad/totalPersonArea
                         hourERF = (radiantFlux * cloA)/0.95
-                        ERF.append(hourERF/1000)
+                        ERF[count+7] = hourERF/1000
                         
                         #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
-                        hourMRT = (hourERF/(fracEff*radTransCoeff)) + (radTemp[count])
-                        solarAdjustedMRT.append(hourMRT)
-                        mrtDelt = hourMRT - radTemp[count]
-                        MRTDelta.append(mrtDelt)
+                        mrtDelt = (hourERF/(fracEff*radTransCoeff))
+                        MRTDelta[count+7] = mrtDelt
+                        if baseTempType == False:
+                            hourMRT = mrtDelt + (radTemp[count])
+                        else:
+                            hourMRT = mrtDelt + (skyTemp[count]*(skyViewFac) + radTemp[count]*(1-(skyViewFac)))
+                        solarAdjustedMRT[count+7] = hourMRT
                     else:
-                        ERF.append(0)
-                        solarAdjustedMRT.append(radTemp[count])
-                        MRTDelta.append(0)
-                    hourOrder.append(count)
+                        ERF[count+7] = 0
+                        MRTDelta[count+7] = 0
+                        if baseTempType == False:
+                            hourMRT = radTemp[count]
+                        else:
+                            hourMRT = (skyTemp[count]*(skyViewFac) + radTemp[count]*(1-(skyViewFac)))
+                        solarAdjustedMRT[count+7] = hourMRT
                 
                 
                 tasks.Parallel.ForEach(range(len(HOYS)), radCalc)
@@ -1016,48 +1138,13 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
             if parallel == False:
                 runSuccess = nonParallelRadCalc()
             else:
+                for count, hour in enumerate(HOYS):
+                    ERF.append(0)
+                    MRTDelta.append(0)
+                    solarAdjustedMRT.append(0)
                 runSuccess = parallelRadCalc()
             
             if runSuccess == True:
-                #If the process above was run in parallel, re-order the numbers correctly (instead of by when they finished calculating).
-                if parallel == True:
-                    ERF = [x for (y,x) in sorted(zip(hourOrder, ERF))]
-                    MRTDelta = [x for (y,x) in sorted(zip(hourOrder, MRTDelta))]
-                    solarAdjustedMRT = [x for (y,x) in sorted(zip(hourOrder, solarAdjustedMRT))]
-                
-                
-                #Add the headers to the computed lists.
-                if periodMethod == 0:
-                    analysisStart = analysisPeriodOrHOY[0]
-                    analysisEnd = analysisPeriodOrHOY[1]
-                else:
-                    analysisStart = analysisPeriodTxt[0]
-                    analysisEnd = analysisPeriodTxt[1]
-                
-                ERF.insert(0,analysisEnd)
-                ERF.insert(0,analysisStart)
-                ERF.insert(0,'Hourly')
-                ERF.insert(0,'kWh/m2')
-                ERF.insert(0,'Effective Radiant Field')
-                ERF.insert(0,str(location))
-                ERF.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
-                
-                MRTDelta.insert(0,analysisEnd)
-                MRTDelta.insert(0,analysisStart)
-                MRTDelta.insert(0,'Hourly')
-                MRTDelta.insert(0,'C')
-                MRTDelta.insert(0,'Solar Mean Radiant Temp Delta')
-                MRTDelta.insert(0,str(location))
-                MRTDelta.insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
-                
-                solarAdjustedMRT.insert(0,analysisEnd)
-                solarAdjustedMRT.insert(0,analysisStart)
-                solarAdjustedMRT.insert(0,'Hourly')
-                solarAdjustedMRT.insert(0,'C')
-                solarAdjustedMRT.insert(0,'Solar-Adjusted Mean Radiant Temperature')
-                solarAdjustedMRT.insert(0,str(location))
-                solarAdjustedMRT.insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
-                
                 #If the user has requested to bake the results, then bake them.
                 if bakeIt_ > 0:
                     #Set up the new layer.
@@ -1090,12 +1177,11 @@ def main(method, radTemp, mannequinMesh, groundMesh, contextSrfs, groundR, cloA,
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
 
 
-def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath):
+def mainSimple(baseTempType, radTemp, infraredRad, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath):
     #Define lists to be filled and put headers on them.
     ERF = []
     MRTDelta = []
     solarAdjustedMRT = []
-    hourOrder = []
     
     #Define the fraction of the body visible to radiation.
     if bodyPosture_ == 0 or bodyPosture_ == 3:
@@ -1113,13 +1199,13 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
     else: HOYS = [analysisPeriodOrHOY]
     
     #Compute the existing ERF for the analysis period.
-    if analysisPeriodOrHOY != [(1, 1, 1), (12, 31, 24)]:
-        newAirTemp = []
-        newRadTemp = []
-        for hour in HOYS:
-            newRadTemp.append(radTemp[hour-1])
-        radTemp = newRadTemp
-    
+    skyTemp = []
+    newRadTemp = []
+    for hour in HOYS:
+        newRadTemp.append(radTemp[hour-1])
+        if baseTempType == True:
+            skyTemp.append(computeSkyTemp(infraredRad[hour-1]))
+    radTemp = newRadTemp
     
     #Calculate the sun-up hours of the year in order to understand whether the context geometry will block the sun.
     lb_sunpath.initTheClass(float(latitude), northAngle, rc.Geometry.Point3d.Origin, 100, float(longitude), float(timeZone))
@@ -1138,10 +1224,42 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
         else: sunVectors.append(None)
     
     for ptCount, manMeshPt in enumerate(mannequinMesh):
+        # Make the lists to be filled.
         ERF.append([])
         MRTDelta.append([])
         solarAdjustedMRT.append([])
-        hourOrder.append([])
+        #Add the headers to the computed lists.
+        if periodMethod == 0:
+            analysisStart = analysisPeriodOrHOY[0]
+            analysisEnd = analysisPeriodOrHOY[1]
+        else:
+            stDate = lb_preparation.hour2Date(analysisPeriodOrHOY)
+            analysisStart = stDate
+            analysisEnd = stDate
+        ERF[ptCount].append('key:location/dataType/units/frequency/startsAt/endsAt')
+        ERF[ptCount].append(str(location))
+        ERF[ptCount].append('Effective Radiant Field')
+        ERF[ptCount].append('kWh/m2')
+        ERF[ptCount].append('Hourly')
+        ERF[ptCount].append(analysisStart)
+        ERF[ptCount].append(analysisEnd)
+        
+        MRTDelta[ptCount].append('key:location/dataType/units/frequency/startsAt/endsAt')
+        MRTDelta[ptCount].append(str(location))
+        MRTDelta[ptCount].append('Short Wave MRT Delta')
+        MRTDelta[ptCount].append('C')
+        MRTDelta[ptCount].append('Hourly')
+        MRTDelta[ptCount].append(analysisStart)
+        MRTDelta[ptCount].append(analysisEnd)
+        
+        solarAdjustedMRT[ptCount].append('key:location/dataType/units/frequency/startsAt/endsAt')
+        solarAdjustedMRT[ptCount].append(str(location))
+        solarAdjustedMRT[ptCount].append('Solar-Adjusted Mean Radiant Temperature')
+        solarAdjustedMRT[ptCount].append('C')
+        solarAdjustedMRT[ptCount].append('Hourly')
+        solarAdjustedMRT[ptCount].append(analysisStart)
+        solarAdjustedMRT[ptCount].append(analysisEnd)
+        
         
         #Calculate the skyview factor of the occupant.
         if bodyPosture_ == None or bodyPosture_ == 0 or bodyPosture_ == 1 or bodyPosture_ == 2: middlePt = manMeshPt[4]
@@ -1237,16 +1355,25 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                             #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
                             mrtDelt = (hourERF/(fracEff*radTransCoeff))
                             MRTDelta[ptCount].append(mrtDelt)
-                            hourMRT = mrtDelt + (radTemp[count])
+                            if baseTempType == False:
+                                hourMRT = mrtDelt + (radTemp[count])
+                            else:
+                                hourMRT = mrtDelt + (skyTemp[count]*(skyViewFac/2) + radTemp[count]*(1-(skyViewFac/2)))
                             solarAdjustedMRT[ptCount].append(hourMRT)
                         else:
                             ERF[ptCount].append(0)
-                            solarAdjustedMRT[ptCount].append(radTemp[count])
                             MRTDelta[ptCount].append(0)
+                            if baseTempType == False:
+                                solarAdjustedMRT[ptCount].append(radTemp[count])
+                            else:
+                                solarAdjustedMRT[ptCount].append((skyTemp[count]*(skyViewFac/2) + radTemp[count]*(1-(skyViewFac/2))))
                     else:
                         ERF[ptCount].append(0)
-                        solarAdjustedMRT[ptCount].append(radTemp[count])
                         MRTDelta[ptCount].append(0)
+                        if baseTempType == False:
+                            solarAdjustedMRT[ptCount].append(radTemp[count])
+                        else:
+                            solarAdjustedMRT[ptCount].append((skyTemp[count]*(skyViewFac/2) + radTemp[count]*(1-(skyViewFac/2))))
                 return True
             except:
                 print "The calculation has been terminated by the user!"
@@ -1318,22 +1445,29 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
                         # Calculate the ERF of the occupant
                         hourERF = ((0.5*fracEff*skyViewFac*(diffRad + (globHorizRad*groundR))+ (fracEff*ProjAreaFac*fBes*dirNormRad))*winTrans[HOYS[count]-1])*(cloA/0.95)
                         
-                        ERF[ptCount].append(hourERF)
+                        ERF[ptCount][count+7] = hourERF
                         #Calculate the MRT delta, the solar adjusted MRT, and the solar adjusted operative temperature.
                         mrtDelt = (hourERF/(fracEff*radTransCoeff))
-                        MRTDelta[ptCount].append(mrtDelt)
-                        hourMRT = mrtDelt + (radTemp[count])
-                        solarAdjustedMRT[ptCount].append(hourMRT)
+                        MRTDelta[ptCount][count+7] = mrtDelt
+                        if baseTempType == False:
+                            hourMRT = mrtDelt + (radTemp[count])
+                        else:
+                            hourMRT = mrtDelt + (skyTemp[count]*(skyViewFac/2) + radTemp[count]*(1-(skyViewFac/2)))
+                        solarAdjustedMRT[ptCount][count+7] = hourMRT
                     else:
-                        ERF[ptCount].append(0)
-                        solarAdjustedMRT[ptCount].append(radTemp[count])
-                        MRTDelta[ptCount].append(0)
+                        ERF[ptCount][count+7] = 0
+                        MRTDelta[ptCount][count+7] = 0
+                        if baseTempType == False:
+                            solarAdjustedMRT[ptCount][count+7] = radTemp[count]
+                        else:
+                            solarAdjustedMRT[ptCount][count+7] = (skyTemp[count]*(skyViewFac/2) + radTemp[count]*(1-(skyViewFac/2)))
                 else:
-                        ERF[ptCount].append(0)
-                        solarAdjustedMRT[ptCount].append(radTemp[count])
-                        MRTDelta[ptCount].append(0)
-                
-                hourOrder[ptCount].append(count)
+                    ERF[ptCount][count+7] = 0
+                    MRTDelta[ptCount][count+7] = 0
+                    if baseTempType == False:
+                        solarAdjustedMRT[ptCount][count+7] = radTemp[count]
+                    else:
+                        solarAdjustedMRT[ptCount][count+7] = (skyTemp[count]*(skyViewFac/2) + radTemp[count]*(1-(skyViewFac/2)))
             
             tasks.Parallel.ForEach(range(len(HOYS)), MRTCalc)
         
@@ -1341,48 +1475,11 @@ def mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysi
         if parallel == False:
             nonParallelMRTCalc()
         else:
+            for count, hour in enumerate(HOYS):
+                ERF[ptCount].append(0)
+                MRTDelta[ptCount].append(0)
+                solarAdjustedMRT[ptCount].append(0)
             parallelMRTCalc()
-        
-        #If the process above was run in parallel, re-order the numbers correctly (instead of by when they finished calculating).
-        if parallel == True:
-            ERF[ptCount] = [x for (y,x) in sorted(zip(hourOrder[ptCount], ERF[ptCount]))]
-            MRTDelta[ptCount] = [x for (y,x) in sorted(zip(hourOrder[ptCount], MRTDelta[ptCount]))]
-            solarAdjustedMRT[ptCount] = [x for (y,x) in sorted(zip(hourOrder[ptCount], solarAdjustedMRT[ptCount]))]
-        
-        
-        #Add the headers to the computed lists.
-        if periodMethod == 0:
-            analysisStart = analysisPeriodOrHOY[0]
-            analysisEnd = analysisPeriodOrHOY[1]
-        else:
-            stDate = lb_preparation.hour2Date(analysisPeriodOrHOY)
-            analysisStart = stDate
-            analysisEnd = stDate
-        
-        ERF[ptCount].insert(0,analysisEnd)
-        ERF[ptCount].insert(0,analysisStart)
-        ERF[ptCount].insert(0,'Hourly')
-        ERF[ptCount].insert(0,'kWh/m2')
-        ERF[ptCount].insert(0,'Effective Radiant Field')
-        ERF[ptCount].insert(0,str(location))
-        ERF[ptCount].insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
-        
-        MRTDelta[ptCount].insert(0,analysisEnd)
-        MRTDelta[ptCount].insert(0,analysisStart)
-        MRTDelta[ptCount].insert(0,'Hourly')
-        MRTDelta[ptCount].insert(0,'C')
-        MRTDelta[ptCount].insert(0,'Solar Mean Radiant Temp Delta')
-        MRTDelta[ptCount].insert(0,str(location))
-        MRTDelta[ptCount].insert(0, 'key:location/dataType/units/frequency/startsAt/endsAt')
-        
-        solarAdjustedMRT[ptCount].insert(0,analysisEnd)
-        solarAdjustedMRT[ptCount].insert(0,analysisStart)
-        solarAdjustedMRT[ptCount].insert(0,'Hourly')
-        solarAdjustedMRT[ptCount].insert(0,'C')
-        solarAdjustedMRT[ptCount].insert(0,'Solar-Adjusted Mean Radiant Temperature')
-        solarAdjustedMRT[ptCount].insert(0,str(location))
-        solarAdjustedMRT[ptCount].insert(0,'key:location/dataType/units/frequency/startsAt/endsAt')
-        
     
     return ERF, MRTDelta, solarAdjustedMRT
 
@@ -1416,28 +1513,30 @@ if initCheck == True:
     #Check the inputs
     results = checkTheInputs()
     if results!= -1:
-        method, radTemp, mannequinMesh, groundMesh, context, groundR, \
-        cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, directSolarRad, diffSolarRad, location, tempOrRad, \
+        method, baseTempType, radTemp, infraredRad, mannequinMesh, groundMesh, context, groundR, \
+        cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, \
+        timeZone, rotationAngle, northAngle, northVector, epwStr, conversionFac, cumSkyMtx, \
+        directSolarRad, diffSolarRad, location, tempOrRad, \
         lb_preparation, lb_visualization, lb_mesh, lb_runStudy_GH, lb_comfortModels,\
         lb_sunpath = results
     #Change the inputs or outputs based on what is connected.
     
     if results!= -1:
-        checkInputOutput = manageInputOutput(method)
+        checkInputOutput = manageInputOutput(method, baseTempType)
     else: restoreInputOutput()
     if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): checkInputOutput = False
 
 
 if _runIt == True and checkInputOutput == True:
     if method == 0 or method == 1:
-        result = main(method, radTemp, mannequinMesh, \
+        result = main(method, baseTempType, radTemp, infraredRad, mannequinMesh, \
         groundMesh, context, groundR, cloA, winTrans, parallel, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, northAngle, \
         northVector, epwStr, conversionFac, cumSkyMtx, location, tempOrRad, lb_preparation, lb_visualization, lb_mesh, \
         lb_runStudy_GH, lb_comfortModels, lb_sunpath)
         if result != -1:
             effectiveRadiantField, MRTDelta, solarAdjustedMRT, mannequinMesh, legend, legendBasePt, meshFaceResult, meshFaceArea = result
     else:
-        result = mainSimple(radTemp, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath)
+        result = mainSimple(baseTempType, radTemp, infraredRad, mannequinMesh, context, groundR, cloA, winTrans, analysisPeriodOrHOY, periodMethod, latitude, longitude, timeZone, rotationAngle, northAngle, northVector, epwStr, directSolarRad, diffSolarRad, location, parallel, lb_preparation, lb_comfortModels, lb_sunpath)
         if result != -1:
             effectiveRadiantFieldInit, MRTDeltaInit, solarAdjustedMRTInit = result
             #Unpack the Data Trees of values.

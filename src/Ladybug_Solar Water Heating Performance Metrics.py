@@ -24,7 +24,7 @@
 Use this component to calculate various Solar water heating performance metrics.
 Also use it to calculate the optimal SWH system size and tank storage volume.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         _SWHsurface: Use the same "_SWHsurface" you supplied to the "Solar Water Heating Surface" component.
@@ -149,12 +149,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating Performance Metrics"
 ghenv.Component.NickName = "SolarWaterHeatingPerformanceMetrics"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
-#compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+ghenv.Component.SubCategory = "4 | Renewables"
+#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 import Grasshopper.Kernel as gh

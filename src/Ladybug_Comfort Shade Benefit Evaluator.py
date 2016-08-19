@@ -38,7 +38,7 @@ http://www.gsd.harvard.edu/research/gsdsquare/Publications/Shaderade_BS2011.pdf
 The heating/temperture degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the temperture-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or temperture degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive temperture degree-days to give a net effect for the cell.
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _location: The location output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_12_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -135,11 +135,17 @@ def checkTheInputs():
             
             newShadesList = []
             for srf in allDataDict[path]["shadeSrfs"]:
-                if srf.Faces.Count == 1: newShadesList.append(srf)
-                else:
-                    for subSrf in srf.Faces:
-                        srfBrep = subSrf.ToBrep()
-                        newShadesList.append(srfBrep)
+                try:
+                    newSrf = rs.coercebrep(srf)
+                    if newSrf.Faces.Count == 1: newShadesList.append(newSrf)
+                    else:
+                        for subSrf in newSrf.Faces:
+                            srfBrep = subSrf.ToBrep()
+                            newShadesList.append(srfBrep)
+                except:
+                    newSrf = rs.coercemesh(srf)
+                    newShadesList.append(newSrf)
+            allDataDict[path]["shadeSrfs"] = newShadesList
     else:
         checkData2 = False
         print 'Connect a brep for both the _testRegion and the _testShade.'
@@ -335,7 +341,10 @@ def meshTheShade(gridSize, testShades):
     analysisMeshList = []
     
     for testShade in testShades:
-        analysisMesh = rc.Geometry.Mesh.CreateFromBrep(testShade, meshPar)[0]
+        try:
+            analysisMesh = rc.Geometry.Mesh.CreateFromBrep(testShade, meshPar)[0]
+        except:
+            analysisMesh = testShade
         
         #Generate breps of the mesh faces so that users can see how the shade will be divided before they run the analysis
         
@@ -403,6 +412,7 @@ def prepareGeometry(gridSize, allDataDict):
     for branchCount, branch in enumerate(allDataDict):
         #Mesh the shade.
         shadeMesh, shadeMeshBrepList, shadeMeshAreas = meshTheShade(gridSize, allDataDict[branch]["shadeSrfs"])
+        
         shadeMeshBreps.append(shadeMeshBrepList)
         allDataDict[branch]["shadeMesh"] = shadeMesh
         allDataDict[branch]["shadeMeshAreas"] = shadeMeshAreas
