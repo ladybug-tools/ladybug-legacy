@@ -87,7 +87,7 @@ def velMaxMid(dist, deltaT, windowHgt):
 def velMaxFar(deltaT, windowHgt):
     return 0.028*(math.sqrt(deltaT*windowHgt))
 
-def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05, parallel = False):
+def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
     # Check Rhino model units.
     conversionFactor = lb_preparation.checkUnits()
     
@@ -202,4 +202,4 @@ else:
 
 
 if initCheck == True and _testPts[0] != None and _windowSrfs[0] != None and _runIt == True:
-    draftAirVeloc, draftAirTemp = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_, parallel_)
+    draftAirVeloc, draftAirTemp = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_)
