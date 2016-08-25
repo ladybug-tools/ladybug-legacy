@@ -51,14 +51,13 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Recolor Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_16_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_25_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 #compatibleLBVersion = VER 0.0.59\nJAN_24_2016
-
 
 import scriptcontext as sc
 import Rhino as rc
@@ -77,7 +76,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         Creates a new 3D mesh based on input values
         Thanks to David Mans for providing the VB example of the code
         """
-        
         mappedValues = []
         def remapValues():
             tmin = domain.T0
@@ -96,7 +94,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         inputMesh.FaceNormals.ComputeFaceNormals()
         inputMesh.FaceNormals.UnitizeFaceNormals()
         values = []
-        
         
         # collect the values and average  them for each vertices
         for i in range(mtv.Count):
@@ -148,7 +145,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         
         return mo
 
-    
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -187,7 +183,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
                 
             lb_visualization.calculateBB([coloredChart], True)
                 
-                
             if not legendTitle:  legendTitle = 'unknown units  '
             if not analysisTitle: analysisTitle = '\nno title'
             
@@ -197,8 +192,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
             
             # generate legend colors
             legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors,lowBoundColor,highBoundColor)
-            
-            print len(legendColors)
             
             # color legend surfaces
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
@@ -238,7 +231,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         return -1
     
     conversionFac = lb_preparation.checkUnits()
-
 
 if _inputMesh and len(_analysisResult)!=0:
     

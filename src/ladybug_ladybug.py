@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_16_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_25_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2620,19 +2620,16 @@ class ResultVisualization(object):
                     if (num == 1) and (highBoundColor != None) :
                         
                         colorTemp.append(highBoundColor)
-                        
                         break
                         
                     elif (num == 0) and (lowBoundColor != None):
                         
                         colorTemp.append(lowBoundColor)
-                        
                         break
                         
                     else:
                         
                         colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
-    
                         break
                             
         color = colorTemp
