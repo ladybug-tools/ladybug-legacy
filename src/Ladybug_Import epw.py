@@ -27,7 +27,7 @@ For detailed information about the structure of an epw file, you may want to rea
 "Weather Converter Program" section in "Auxiliary EnergyPlus Programs" document.
 All descriptions of importaed data are borrowed from this document.
 The document is available online at this address:
-"http://apps1.eere.energy.gov/buildings/energyplus/pdfs/auxiliaryprograms.pdf"
+http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/energyplus-weather-file-epw-data-dictionary.html
 -
 Provided by Ladybug 0.0.63
     
@@ -56,7 +56,7 @@ Provided by Ladybug 0.0.63
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_28_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
