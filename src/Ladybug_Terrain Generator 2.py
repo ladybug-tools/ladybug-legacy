@@ -123,7 +123,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Generator 2"
 ghenv.Component.NickName = "TerrainGenerator2"
-ghenv.Component.Message = "VER 0.0.63\nAUG_26_2016"
+ghenv.Component.Message = "VER 0.0.63\nAUG_30_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -340,6 +340,7 @@ def checkInputData(maxVisibilityRadiusM, north, type, origin, workingFolderPath,
         print "standThickness_ input can not be lower than 0. It can only be either 0 (no stand) or higher.\n" + \
               "standThickness_ input set to 0 (no stand)."
     
+    
     if (numOfContours == None):
         numOfContours = 10  # default
     elif (numOfContours < 0):
@@ -348,8 +349,6 @@ def checkInputData(maxVisibilityRadiusM, north, type, origin, workingFolderPath,
               "numOfContours_ input set to 0 (no elevation contours will be created)."
     
     
-    # for locations from .epw files, the maxVisibilityRadius can be estimated from .epw file's field N24 (visibility) and its maximal annual hourly value.
-    # Still this value may not be the maximal one for the chosen location.
     if (maxVisibilityRadiusM == None):
         maxVisibilityRadiusM = 200  # default in meters
     elif (maxVisibilityRadiusM >= 20) and (maxVisibilityRadiusM < 200):
@@ -891,7 +890,7 @@ def createTerrainMeshBrep(GDAL_librariesFolderPath, objFilePath, rasterFilePath,
     
     # output crs
     outputCRS = osrc.SpatialReference("")
-    # by http://stackoverflow.com/a/9188972/3137724 (link given by Even Rouault even.rouault@spatialys.com)
+    # by http://stackoverflow.com/a/9188972/3137724 (link given by Even Rouault)
     UTMzone = (math.floor((locationLongitudeD + 180)/6) % 60) + 1
     if locationLatitudeD >= 0:
         # for northern hemisphere
@@ -1110,8 +1109,23 @@ def split_createStand_colorTerrain(terrainMesh, terrainBrep, locationPt, origin,
         elif (type == 0) or (type == 1):
             # mesh, color the meshes
             meshParam = Rhino.Geometry.MeshingParameters()
-            meshParam.MinimumEdgeLength = 0.0001
-            meshParam.MaximumEdgeLength = 100
+            # setting the meshParam so that it does not crash Rhino
+            if (radius_ <= 300):
+                meshParam.MaximumEdgeLength = 0.1
+            elif (radius_ > 300) and (radius_ <= 400):
+                meshParam.MaximumEdgeLength = 0.2
+            elif (radius_ > 400) and (radius_ <= 500):
+                meshParam.MaximumEdgeLength = 0.3
+            elif (radius_ > 500) and (radius_ <= 1000):
+                meshParam.MaximumEdgeLength = 0.4
+            elif (radius_ > 1000) and (radius_ <= 2000):
+                meshParam.MaximumEdgeLength = 0.5
+            elif (radius_ > 2000) and (radius_ <= 3000):
+                meshParam.MaximumEdgeLength = 0.7
+            elif (radius_ > 3000) and (radius_ <= 4000):
+                meshParam.MaximumEdgeLength = 0.9
+            elif (radius_ > 4000):
+                meshParam.MaximumEdgeLength = 10
             
             loftedTerrain_Outline_and_OutlineProjected_Brep__and__terrainOutlineProjected_Brep_Mesh = Rhino.Geometry.Mesh.CreateFromBrep(loftedTerrain_Outline_and_OutlineProjected_Brep__and__terrainOutlineProjected_Brep, meshParam)  # it can contain more than one mesh
             terrain_withStand = Rhino.Geometry.Mesh()  # for scaling of terrainShadingMask
@@ -1151,7 +1165,7 @@ def createElevationContours(terrainUnoriginUnscaledUnrotated, numOfContours, typ
     return elevationContours
 
 
-def compassCrvs_title_scalingRotating(terrainUnoriginUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, locationPt, maxVisibilityRadiusM, type, origin, northVec, northRad, numOfContours, unitConversionFactor):
+def title_scalingRotating(terrainUnoriginUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, locationPt, maxVisibilityRadiusM, type, origin, northVec, northRad, numOfContours, unitConversionFactor):
     
     # scaling, rotating
     originTransformMatrix = Rhino.Geometry.Transform.PlaneToPlane(  Rhino.Geometry.Plane(locationPt, Rhino.Geometry.Vector3d(0,0,1)), Rhino.Geometry.Plane(origin, Rhino.Geometry.Vector3d(0,0,1)) )  # move the terrain from "locationPt" to "origin"
@@ -1282,7 +1296,7 @@ if sc.sticky.has_key("ladybug_release"):
                                 if (rasterFilePath != "needless") and (rasterFilePath != "download failed"):  # terrain shading mask NEEDS to be created
                                     terrainMesh, terrainBrep, locationPt, elevationM = createTerrainMeshBrep(GDAL_librariesFolderPath, objFilePath, rasterFilePath, rasterFilePath_aeqd, rasterFileNamePlusExtension_aeqd, vrtFilePath, locationLatitudeD, locationLongitudeD, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, type, origin, legendPar_, unitConversionFactor, unitConversionFactor2)
                                     terrainUnoriginUnscaledUnrotated = split_createStand_colorTerrain(terrainMesh, terrainBrep, locationPt, origin, northRad, standThickness, unitConversionFactor2)
-                                terrain, title, elevationContours = compassCrvs_title_scalingRotating(terrainUnoriginUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, locationPt, maxVisibilityRadiusM, type, origin, northVec, northRad, numOfContours, unitConversionFactor)
+                                terrain, title, elevationContours = title_scalingRotating(terrainUnoriginUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, locationPt, maxVisibilityRadiusM, type, origin, northVec, northRad, numOfContours, unitConversionFactor)
                                 if bakeIt_: bakingGrouping(locationName, locationLatitudeD, locationLongitudeD, maxVisibilityRadiusM, typeLabel, standThickness, terrain, title, elevationContours, origin)
                                 printOutput(northRad, locationLatitudeD, locationLongitudeD, locationName, maxVisibilityRadiusM, type, typeLabel, origin, workingSubFolderPath, standThickness, numOfContours)
                                 originPt = origin; elevation = elevationM
