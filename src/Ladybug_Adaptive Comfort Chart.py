@@ -1526,5 +1526,5 @@ if checkData == True and _runIt == True:
         for listCount, dataList in enumerate(colorLegendsInit):
             for item in dataList: hourPointLegend.Add(item, GH_Path(listCount))
 
-ghenv.Component.Params.Output[13].Hidden = True
 ghenv.Component.Params.Output[15].Hidden = True
+ghenv.Component.Params.Output[17].Hidden = True
