@@ -35,9 +35,11 @@ Provided by Ladybug 0.0.63
     
     Args:
         _basePoint: Input a point here to georeference the terrain model.
-        _basePointGeo: Write latitude, longitude and elevation that represent WSG84 coordinates of the base point. You can achieve these type of coordinates from Google Maps or similar.
-        -
+        _basePointGeo: It accepts two type of inputs. 
+        a) latitude, longitude and elevation that represent WSG84 coordinates of the base point. You can achieve these type of coordinates from Google Maps or similar.
         e.g. 40.821796, 14.426439, 990
+        -
+        b) location, you can obtain this type of input from "Ladybug_Construct Location", "Ladybug_Location Finder", "Ladybug_Import epw", "Ladybug_Import Location".
         _radius_: A radius to make the terrain 3D model in Rhino model units. The default is set to 100.
         -
         If you provide a big radius, this could require lots of time (also a couple of minutes).
@@ -53,6 +55,12 @@ Provided by Ladybug 0.0.63
         20 = Buildings
         -
         The default value is 18.
+        mapType_: Connect an integer number, from 0 to 3, which manages the formats of map.
+        -
+        0 = Satellite (default)
+        1 = Roadmap, specifies a standard roadmap image
+        2 = Terrain, it shows terrain and vegetation 
+        3 = Hybrid, it specifies a hybrid of the satellite and roadmap image
         _runIt: Set to "True" to run the component and generate the 3D terrain model. 
     Returns:
         readMe!: ...
@@ -67,7 +75,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Generator"
 ghenv.Component.NickName = 'TerrainGenerator'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_30_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_31_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -148,7 +156,7 @@ def terrainGen(pts, xf, run):
     url_part2 = flat_list_coordinate
     
     url_part1 = 'http://maps.googleapis.com/maps/api/elevation/json?locations='
-    goog_url = url_part1 + url_part2
+    goog_url = url_part1 + url_part2 + '&sensor=false'
     
     # Temporary file
     # I should change this part here, the alternative way is to use urllib.request,
@@ -210,7 +218,7 @@ def latlontopixels(lat, lon, zoom, origin_shift, initial_resolution):
     return px, py
 
 
-def textureGen(run, center, points, origin_shift, initial_resolution, imgResolution):
+def textureGen(run, center, points, origin_shift, initial_resolution, imgResolution, mapType):
     list_latitude = [pt.Y for pt in points]
     list_longitude = [pt.X for pt in points]
     
@@ -233,7 +241,7 @@ def textureGen(run, center, points, origin_shift, initial_resolution, imgResolut
         return -1
     
     urlPart1 = 'http://maps.googleapis.com/maps/api/staticmap?'
-    urlPart2 = "center={0},%20{1}&zoom={2}&size={3}x{4}&maptype=satellite".format(str(center.Y), str(center.X), str(zoom), str(int(dx)), str(int(dy)))
+    urlPart2 = "center={0},%20{1}&zoom={2}&size={3}x{4}&maptype={5}&sensor=false".format(str(center.Y), str(center.X), str(zoom), str(int(dx)), str(int(dy)), str(mapType))
     
     goog_url = urlPart1 + urlPart2
     
@@ -279,6 +287,9 @@ def main():
     equator_circumference = 2 * pi * earth_radius
     initial_resolution = equator_circumference / 256.0
     origin_shift = equator_circumference / 2.0
+    
+    mapsType = {'0':'satellite', '1':'roadmap', '2':'terrain', '3':'hybrid'}
+    
     if _imgResolution_ == None:
         imgResolution = 18
     else: imgResolution = int(_imgResolution_) # make sure that it is an integer number
@@ -291,8 +302,20 @@ def main():
     if _numOfTiles_ == None:
         numOfTiles = 3
     else: numOfTiles = int(_numOfTiles_)
+    if mapType_ == None:
+        mapType = mapsType['0']
+    else: mapType = mapsType[mapType_]
     
-    xf = earthPoint(_basePointGeo, _basePoint) 
+    
+    # location or point3d
+    try:
+        lat, lon, elev = eval(_basePointGeo)
+        basePointGeo = Rhino.Geometry.Point3d(lat, lon, elev)
+    except:
+        locationName, latitude, longitude, timeZone, elevation = lb_preparation.decomposeLocation(_basePointGeo)
+        basePointGeo = Rhino.Geometry.Point3d(latitude, longitude, elevation)
+        
+    xf = earthPoint(basePointGeo, _basePoint) 
     
     tilesTree = DataTree[System.Object]()
     tiles = createTiles(_basePoint, radius, numOfTiles)
@@ -316,7 +339,7 @@ def main():
                 points_for_srf.extend(points_srf)
                 elevations_for_srf.extend(elevations)
                 
-                URL = textureGen(_runIt, pointGeo, points, origin_shift, initial_resolution, imgResolution)
+                URL = textureGen(_runIt, pointGeo, points, origin_shift, initial_resolution, imgResolution, mapType)
                 URLs.append(URL)
                 
                 path = GH_Path(0, i)
