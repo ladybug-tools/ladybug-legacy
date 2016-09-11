@@ -56,7 +56,7 @@ import scriptcontext as sc
 import System
 import System.Threading.Tasks as tasks
 import math
-import rhinoscriptsyntax as rs
+
 
 tol = sc.doc.ModelAbsoluteTolerance
 
