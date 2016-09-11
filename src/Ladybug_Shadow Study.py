@@ -35,8 +35,8 @@ Provided by Ladybug 0.0.63
         
     Returns:
         readMe!: ...
-        shadow: Outline curves representing the shadows cast by the individual input Breps on other input Breps.  Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing shadows cast.
-        shade: Outline curves representing the the parts of individual input Breps that are not in the sun.  In other words, this is the self-shaded part of the Breps. Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing self-shaded areas.
+        shadow: Meshes representing the shadows cast by the individual input Breps on other input Breps.  Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing shadows cast.
+        shade: Meshes representing the the parts of individual input Breps that are not in the sun.  In other words, this is the self-shaded part of the Breps. Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing self-shaded areas.
 
 """
 
@@ -68,8 +68,6 @@ def joinMesh(meshList):
 def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
         # Mesh functions should be modified and be written interrelated as a class
         movingDis = disFromBase
-        
-        # Here, the analysisSrfs is the list of meshes we get from the _geometry input
         # preparing bulk lists
         testPoint = [[]] * len(analysisSrfs)
         srfNormals = [[]] * len(analysisSrfs)
@@ -79,7 +77,6 @@ def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
         
         srfCount = 0
         for srf in analysisSrfs:
-            # Nobody knows why there are so many testpoint, Normals, Edges, and meshes. Move on.
             testPoint[srfCount] = range(srf.Faces.Count)
             srfNormals[srfCount] = range(srf.Faces.Count)
             meshSrfCen[srfCount] = range(srf.Faces.Count)
@@ -90,8 +87,6 @@ def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
         try:
             def srfPtCalculator(i):
                 # calculate face normals
-                #print analysisSrfs[i]
-                #Here, the analysisSrfs is the list of meshes we get from the _geometry input
                 analysisSrfs[i].FaceNormals.ComputeFaceNormals()
                 analysisSrfs[i].FaceNormals.UnitizeFaceNormals()
                 
@@ -99,11 +94,8 @@ def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
                     srfNormals[i][face] = (analysisSrfs[i].FaceNormals)[face] # store face normals
                     meshSrfCen[i][face] = analysisSrfs[i].Faces.GetFaceCenter(face) # store face centers
                     # calculate test points
-                    #print movingDis
                     if srfNormals[i][face]:
-                        # Here, multiplying the surface normal with the movingDis
                         movingVec = rc.Geometry.Vector3f.Multiply(movingDis,srfNormals[i][face])
-                        # Here, moving the center points using the movingVec defined in the earlier line
                         testPoint[i][face] = rc.Geometry.Point3d.Add(rc.Geometry.Point3d(meshSrfCen[i][face]), movingVec)
                         
                     # make mesh surface, calculate the area, dispose the mesh and mass area calculation
@@ -129,29 +121,16 @@ def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
         else:
             for i in range(len(analysisSrfs)):
                 srfPtCalculator(i)
-                
-#        print testPoint
-#        print " "
-#        print srfNormals
-#        print " "
-#        print meshSrfEdges
-#        print " "
-#        print meshes
-#        print " "
 
         return testPoint, srfNormals, meshSrfEdges, meshes
-
-#TestResult01 = parallel_testPointCalculator(_geometry,5, parallel = True)
-
-
+        
+        
 def projectToPlane(geometry, plane, vector):
     
     def getTransform():
-        # Checking whether the vector is parellel to ZAxis of plane
         if plane.ZAxis.IsParallelTo(vector)**2 == 1:
             x = rc.Geometry.Transform.PlanarProjection(plane)
             return x
-        # Checking if the vector is perpendicular to the ZAxis of plane
         elif math.sin(rc.Geometry.Vector3d.VectorAngle(plane.ZAxis,vector)) == 1:
             x = rc.Geometry.Transform.Unset
             return x
@@ -168,7 +147,6 @@ def projectToPlane(geometry, plane, vector):
             P2 = rc.Geometry.Plane(originalPlane)
             P2.XAxis = axis.UnitTangent
             P2.YAxis = rc.Geometry.Vector3d.CrossProduct(P2.XAxis, P2.ZAxis)
-            #Read beta = (Pi/2 - angle)
             beta = 0.5 * math.pi - angle
             factor = 1.0 / math.sin(beta)
             project = rc.Geometry.Transform.PlanarProjection(newPlane)
@@ -455,7 +433,6 @@ if _sunVector!=None:
         shadowCurves = shadowCrvsCollection
         shadeCurves = shaded
         
-        # Finally, making meshes
         shadow = []
         shade = []
         
@@ -464,8 +441,7 @@ if _sunVector!=None:
             
         for item in shadeCurves:
             shade.append(rs.AddPlanarMesh(item))
-
-#Making a note to preview shadows in Grey.            
+          
 print "If you want to see shadows in grey color, write [0,0,0(69)] without those brackets, in a panel and connect that to native grasshopper Custom Preview component."
       
       
