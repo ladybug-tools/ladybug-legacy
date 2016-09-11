@@ -437,10 +437,14 @@ if _sunVector!=None:
         shade = []
         
         for item in shadowCurves:
-            shadow.append(rs.AddPlanarMesh(item))
+            meshingPar = rc.Geometry.MeshingParameters.Coarse
+            mesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(item, meshingPar)
+            shadow.append(mesh)
             
         for item in shadeCurves:
-            shade.append(rs.AddPlanarMesh(item))
+            meshingPar = rc.Geometry.MeshingParameters.Coarse
+            mesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(item, meshingPar)
+            shade.append(mesh)
           
 print "If you want to see shadows in grey color, write [0,0,0(69)] without those brackets, in a panel and connect that to native grasshopper Custom Preview component."
       
