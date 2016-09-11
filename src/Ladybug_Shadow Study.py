@@ -436,13 +436,13 @@ if _sunVector!=None:
         shadow = []
         shade = []
         
+        meshingPar = rc.Geometry.MeshingParameters.Coarse
+        
         for item in shadowCurves:
-            meshingPar = rc.Geometry.MeshingParameters.Coarse
             mesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(item, meshingPar)
             shadow.append(mesh)
             
         for item in shadeCurves:
-            meshingPar = rc.Geometry.MeshingParameters.Coarse
             mesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(item, meshingPar)
             shade.append(mesh)
           
