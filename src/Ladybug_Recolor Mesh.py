@@ -57,7 +57,7 @@ ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nAUG_25_2016
 
 import scriptcontext as sc
 import Rhino as rc
