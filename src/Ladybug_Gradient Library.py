@@ -54,17 +54,18 @@ Provided by Ladybug 0.0.63
             20 - THERM
             21 - Cloud Cover
             22 - Glare Potential
+            23 - Radiation Benefit
     Returns:
         customColors: A series of colors to be plugged into the "Ladybug_Legend Parameters" component.
 """
 
 ghenv.Component.Name = "Ladybug_Gradient Library"
 ghenv.Component.NickName = 'GradientLibrary'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nSEP_21_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
-#compatibleLBVersion = VER 0.0.59\nSEP_13_2015
+#compatibleLBVersion = VER 0.0.59\nSEP_21_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -95,10 +96,10 @@ def main(gradIndex):
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
 
-if _gradIndex >=0 and _gradIndex <=22:
+if _gradIndex >=0 and _gradIndex <=23:
     result = main(_gradIndex)
     if result != -1: customColors = result
 elif _gradIndex != None:
-    print "_gradIndex must be between 0 ans 22"
+    print "_gradIndex must be between 0 and 23."
     w = gh.GH_RuntimeMessageLevel.Warning
     ghenv.Component.AddRuntimeMessage(w, "_gradIndex must be between 0 ans 22")
