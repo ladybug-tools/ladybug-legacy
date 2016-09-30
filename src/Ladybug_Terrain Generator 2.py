@@ -123,7 +123,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Generator 2"
 ghenv.Component.NickName = "TerrainGenerator2"
-ghenv.Component.Message = "VER 0.0.63\nAUG_30_2016"
+ghenv.Component.Message = "VER 0.0.63\nSEP_30_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -964,7 +964,8 @@ def createTerrainMeshBrep(GDAL_librariesFolderPath, objFilePath, rasterFilePath,
     uDegree = min(3, numOfCellsInY - 1)
     vDegree = min(3, numOfCellsInX - 1)
     uClosed = False; vClosed = False
-    terrainBrep = Rhino.Geometry.NurbsSurface.CreateThroughPoints(pts, numOfCellsInY, numOfCellsInX, uDegree, vDegree, uClosed, vClosed).ToBrep()
+    terrainSurface = Rhino.Geometry.NurbsSurface.CreateThroughPoints(pts, numOfCellsInY, numOfCellsInX, uDegree, vDegree, uClosed, vClosed)
+    terrainBrep = terrainSurface.ToBrep()
     
     
     # project origin_0_0_0 (locationPt) to terrainMesh
@@ -1007,7 +1008,7 @@ def colorMesh(terrainMesh):
     return terrainMesh  # colored mesh
 
 
-def split_createStand_colorTerrain(terrainMesh, terrainBrep, locationPt, origin, northRad, standThickness, unitConversionFactor2):
+def split_createStand_colorTerrain(terrainMesh, terrainBrep, locationPt, origin, standThickness, unitConversionFactor2):
     
     scaleFactor = 0.01  # scale terrainMesh 100 times (should never be changed), meaning 1 meter in real life is 0.01 meters in Rhino document
     
@@ -1102,7 +1103,7 @@ def split_createStand_colorTerrain(terrainMesh, terrainBrep, locationPt, origin,
         
         if (type == 2) or (type == 3):
             # surface, no coloring should be performed
-            loftedTerrain_Outline_and_OutlineProjected_Brep__and__terrainOutlineProjected_Brep__and__terrain = Rhino.Geometry.Brep.JoinBreps([loftedTerrain_Outline_and_OutlineProjected_Brep, terrainOutlineProjected_Brep, terrain_MeshOrBrep_Splitted],0.001)[0]
+            loftedTerrain_Outline_and_OutlineProjected_Brep__and__terrainOutlineProjected_Brep__and__terrain = Rhino.Geometry.Brep.JoinBreps([terrain_MeshOrBrep_Splitted, loftedTerrain_Outline_and_OutlineProjected_Brep, terrainOutlineProjected_Brep],0.001)[0]
             del terrainMesh
             
             return loftedTerrain_Outline_and_OutlineProjected_Brep__and__terrainOutlineProjected_Brep__and__terrain
@@ -1217,21 +1218,21 @@ def bakingGrouping(locationName, locationLatitudeD, locationLongitudeD, maxVisib
     
     layerName = locationName + "_" + str(locationLatitudeD) + "_" + str(locationLongitudeD) + "_RADIUS=" + str(maxVisibilityRadiusM) + "M" + "_STAND=" + str(round(standThickness,2)) + "_"+ typeLabel
     
-    layerIndex, l = lb_visualization.setupLayers(layerName, "LADYBUG", "TERRAIN_GENERATOR", "TERRAIN")
+    layerIndex, l = lb_visualization.setupLayers(layerName, "LADYBUG", "TERRAIN_GENERATOR2", "TERRAIN")
     
     attr = Rhino.DocObjects.ObjectAttributes()
     attr.LayerIndex = layerIndex
     attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
     attr.PlotColorSource = Rhino.DocObjects.ObjectPlotColorSource.PlotColorFromObject
     
-    # bake terrain, title
+    # bake terrain, title, origin
     geometryIds = []
     geometry = [terrain, title, Rhino.Geometry.Point(origin)]
     for obj in geometry:
         id = Rhino.RhinoDoc.ActiveDoc.Objects.Add(obj,attr)
         geometryIds.append(id)
     
-    # bake terrain, title
+    # bake elevationContours
     elevationCrvsIds = []
     geometry2 = elevationContours
     for obj2 in geometry2:
@@ -1239,7 +1240,7 @@ def bakingGrouping(locationName, locationLatitudeD, locationLongitudeD, maxVisib
         elevationCrvsIds.append(id2)
     
     # grouping of elevationContours
-    groupIndex = Rhino.RhinoDoc.ActiveDoc.Groups.Add(layerName + "_terrainGenerator2_elevationContours" + str(time.time()))
+    groupIndex = Rhino.RhinoDoc.ActiveDoc.Groups.Add(layerName + "_terrainGenerator2_elevationContours_" + str(time.time()))
     Rhino.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, elevationCrvsIds)
     
     # grouping of terrain and title
@@ -1284,7 +1285,7 @@ if sc.sticky.has_key("ladybug_release"):
         if _location:
             locationLatitudeD, locationLongitudeD, locationName, fileNameIncomplete, validLocationData, printMsg = getLocationData(_location)
             if validLocationData:
-                heightM = 0; minVisibilityRadiusM = 0; maskStyle = 0; maskStyleLabel = "sph"; downloadTSVLink = None  # dummy values
+                heightM = 0; minVisibilityRadiusM = 0; maskStyle = 0; maskStyleLabel = "sph"; downloadUrl_ = None; downloadTSVLink = None  # dummy values
                 maxVisibilityRadiusM, northRad, northVec, type, typeLabel, origin, standThickness, numOfContours, GDAL_librariesFolderPath, workingSubFolderPath, downloadTSVLink, unitConversionFactor, unitConversionFactor2, validInputData, printMsg = checkInputData(radius_, north_, type_, origin_, workingFolder_, standThickness_, numOfContours_, downloadTSVLink)
                 librariesFolder = GDAL_librariesFolderPath
                 if validInputData:
@@ -1295,7 +1296,7 @@ if sc.sticky.has_key("ladybug_release"):
                             if valid_Obj_or_Raster_file:
                                 if (rasterFilePath != "needless") and (rasterFilePath != "download failed"):  # terrain shading mask NEEDS to be created
                                     terrainMesh, terrainBrep, locationPt, elevationM = createTerrainMeshBrep(GDAL_librariesFolderPath, objFilePath, rasterFilePath, rasterFilePath_aeqd, rasterFileNamePlusExtension_aeqd, vrtFilePath, locationLatitudeD, locationLongitudeD, minVisibilityRadiusM, maxVisibilityRadiusM, northRad, type, origin, legendPar_, unitConversionFactor, unitConversionFactor2)
-                                    terrainUnoriginUnscaledUnrotated = split_createStand_colorTerrain(terrainMesh, terrainBrep, locationPt, origin, northRad, standThickness, unitConversionFactor2)
+                                    terrainUnoriginUnscaledUnrotated = split_createStand_colorTerrain(terrainMesh, terrainBrep, locationPt, origin, standThickness, unitConversionFactor2)
                                 terrain, title, elevationContours = title_scalingRotating(terrainUnoriginUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, locationPt, maxVisibilityRadiusM, type, origin, northVec, northRad, numOfContours, unitConversionFactor)
                                 if bakeIt_: bakingGrouping(locationName, locationLatitudeD, locationLongitudeD, maxVisibilityRadiusM, typeLabel, standThickness, terrain, title, elevationContours, origin)
                                 printOutput(northRad, locationLatitudeD, locationLongitudeD, locationName, maxVisibilityRadiusM, type, typeLabel, origin, workingSubFolderPath, standThickness, numOfContours)
