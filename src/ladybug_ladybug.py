@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_25_2016'
+ghenv.Component.Message = 'VER 0.0.63\nSEP_21_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2496,7 +2496,8 @@ class ResultVisualization(object):
         19: [System.Drawing.Color.FromArgb(138,17,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(128,102,64)],
         20: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(137,0,139), System.Drawing.Color.FromArgb(218,0,218), System.Drawing.Color.FromArgb(196,0,255), System.Drawing.Color.FromArgb(0,92,255), System.Drawing.Color.FromArgb(0,198,252), System.Drawing.Color.FromArgb(0,244,215), System.Drawing.Color.FromArgb(0,220,101), System.Drawing.Color.FromArgb(7,193,0), System.Drawing.Color.FromArgb(115,220,0), System.Drawing.Color.FromArgb(249,251,0), System.Drawing.Color.FromArgb(254,178,0), System.Drawing.Color.FromArgb(253,77,0), System.Drawing.Color.FromArgb(255,15,15), System.Drawing.Color.FromArgb(255,135,135), System.Drawing.Color.FromArgb(255,255,255)],
         21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)],
-        22: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,77), System.Drawing.Color.FromArgb(255,115,0), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(0,0,0)]
+        22: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,77), System.Drawing.Color.FromArgb(255,115,0), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(0,0,0)],
+        23: [System.Drawing.Color.FromArgb(0,191,48), System.Drawing.Color.FromArgb(255,238,184), System.Drawing.Color.FromArgb(255,0,0)]
         }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
