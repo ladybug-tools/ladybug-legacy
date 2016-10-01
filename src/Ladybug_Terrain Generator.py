@@ -43,6 +43,11 @@ Provided by Ladybug 0.0.63
         _radius_: A radius to make the terrain 3D model in Rhino model units. The default is set to 100.
         -
         If you provide a big radius, this could require lots of time (also a couple of minutes).
+        type_: Select the type of output:
+        0 = rectangular mesh
+        1 = rectangular surface
+        -
+        The default value is 0.
         _numOfTiles_: Set the number of tiles (e.g. 4, that means 4x4). If no input is connected this will be 3 (tiles: 3x3).
         _numDivision_: Set the number of points for each tile. If no input is connected this will be 15 (grid: 16x16).
         _imgResolution_: Connect an integer number which manage the quality of single satellite image.
@@ -75,11 +80,11 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Generator"
 ghenv.Component.NickName = 'TerrainGenerator'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_31_2016'
+ghenv.Component.Message = 'VER 0.0.63\nSEP_30_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.62\nJUN_07_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
@@ -305,7 +310,8 @@ def main():
     if mapType_ == None:
         mapType = mapsType['0']
     else: mapType = mapsType[mapType_]
-    
+    if type_ == None: type = 0
+    else: type = type_
     
     # location or point3d
     try:
@@ -353,9 +359,14 @@ def main():
         # thanks to djordje for this advice
         cull_pts = cullAndSortPoints(points_for_srf, elevations_for_srf)
         num = (numDivision + 1) * numOfTiles - (numOfTiles - 1)
-        lb_meshpreparation = sc.sticky["ladybug_Mesh"]()
-        terrainMesh = lb_meshpreparation.meshFromPoints(num, num, cull_pts)
-        
+        if type == 0:
+            lb_meshpreparation = sc.sticky["ladybug_Mesh"]()
+            terrain = lb_meshpreparation.meshFromPoints(num, num, cull_pts)
+        elif type == 1:
+             uDegree = min(3, num - 1)
+             vDegree = min(3, num - 1)
+             terrain = Rhino.Geometry.NurbsSurface.CreateThroughPoints(cull_pts, num, num, uDegree, vDegree, False, False)
+             
         # make a folder for the images
         appdata = os.getenv("APPDATA")
         directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
@@ -378,7 +389,7 @@ def main():
         print("Size of the grid = {0} x {0}".format(dimension))
         return None, None, None, None, None, tilesTree
     
-    return pointsGeo, pointsZ, pointsXY, imagePath, terrainMesh, tilesTree
+    return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree
 
 
 initCheck = False
