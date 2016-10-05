@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nSEP_21_2016'
+ghenv.Component.Message = 'VER 0.0.63\nOCT_03_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -115,18 +115,16 @@ class CheckIn():
                 sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
             else:
                 # let's use the user folder
-                appdata = os.getenv("APPDATA")
+                appdata = False
+                try:
+                    appdata = rc.RhinoApp.GetDataDirectory(True, False)
+                except AttributeError:
+                    appdata = os.getenv("APPDATA")
+                    
                 # make sure appdata doesn't have space
-                if (" " in appdata):
-                    msg = "User name on this system: " + appdata + " has white space." + \
-                          " Default fodelr cannot be set.\nUse defaultFolder_ to set the path to another folder and try again!" + \
-                          "\nLadybug failed to fly! :("
-                    print msg
-                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
-                    sc.sticky["Ladybug_DefaultFolder"] = ""
-                    self.letItFly = False
-                    return
-                
+                assert appdata, 'Failed to set up the folder.\n' \
+                    'Try to set it up manually using defaultFolder_ input.'
+
                 sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
         
         self.updateCategoryIcon()
@@ -6575,10 +6573,15 @@ if checkIn.letItFly:
     sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
-        print "Hi " + os.getenv("USERNAME")+ "!\n" + \
-              "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
-              "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+        greeting = "Hi{}!\n" \
+                   "Ladybug is Flying! Vviiiiiiizzz...\n\n" \
+                   "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
         
+        try:
+            print greeting.format(' ' + os.getenv('USERNAME'))
+        except:
+            print greeting.format('')
+            
         # push ladybug component to back
         ghenv.Component.OnPingDocument().SelectAll()
         ghenv.Component.Attributes.Selected = False
