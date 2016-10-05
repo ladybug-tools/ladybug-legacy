@@ -103,12 +103,11 @@ Provided by Ladybug 0.0.63
         terrain: The geometry of the terrain.
                  -
                  Depening on the type_ input it will be either a mesh (type_ = 0 and 1) or a surface (type_ = 2 and 3)
-        title: Title geometry with information about location, radius, north angle.
-        originPt: The origin (center) point of the "terrain" geometry.
-                  -
-                  Use grasshopper's "Point" parameter to visualize it.
-                  -
-                  Use this point to move the "terrain", geometry around in the Rhino scene with grasshopper's "Move" component.
+        origin: The origin (center) point of the "terrain" geometry. It's the same as "origin_" input point.
+                -
+                Use grasshopper's "Point" parameter to visualize it.
+                -
+                Use this point to move the "terrain" geometry around in the Rhino scene with grasshopper's "Move" component.
         elevation: Elevation of the origin_ input.
                    -
                    In Rhino document units.
@@ -119,11 +118,12 @@ Provided by Ladybug 0.0.63
                          It is created as:
                          Ladybug_Ladybug component's "defaultFolder_" + "terrain shading mask libraries 32-bit"  for Rhino5 x86,
                          Ladybug_Ladybug component's "defaultFolder_" + "terrain shading mask libraries 64-bit"  for Rhino5 x64.
+        title: Title geometry with information about location, radius, north angle.
 """
 
 ghenv.Component.Name = "Ladybug_Terrain Generator 2"
 ghenv.Component.NickName = "TerrainGenerator2"
-ghenv.Component.Message = "VER 0.0.63\nSEP_30_2016"
+ghenv.Component.Message = "VER 0.0.63\nOCT_04_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -717,10 +717,9 @@ def checkObjRasterFile(fileNameIncomplete, workingSubFolderPath, downloadTSVLink
                 if "Elevation" in line:
                     splittedLine = line.split(" ")
                     elevationM = splittedLine[2]
-                    #elevationM = float(splittedLine[2])/0.305  # ovo mi ne treba. "elevation" output ce uvek da bude u meters
                     break
             else:
-                elevationM = None  # is somebody opened the .obj file and deleted the heading for some reason
+                elevationM = None  # if somebody opened the .obj file and deleted the heading for some reason
             myFile.close()
             
             rasterFilePath = "needless"
@@ -975,7 +974,7 @@ def createTerrainMeshBrep(GDAL_librariesFolderPath, objFilePath, rasterFilePath,
     rayIntersectParam = Rhino.Geometry.Intersect.Intersection.MeshRay(terrainMesh, ray)
     locationPt = ray.PointAt(rayIntersectParam)
     
-    elevationM = locationPt.Z/scaleFactor  # in meters
+    elevationM = locationPt.Z/scaleFactor  # in rhino document units (not meters)
     elevationM = round(elevationM,2)
     
     
@@ -1208,7 +1207,7 @@ def title_scalingRotating(terrainUnoriginUnscaledUnrotated, locationName, locati
     for mesh in titleLabelMeshes:
         titleLabelMesh.Append(mesh)
     
-    # hide originPt output
+    # hide "origin" output
     ghenv.Component.Params.Output[3].Hidden = True
     
     return terrainUnoriginUnscaledUnrotated, titleLabelMesh, elevationContours_UnoriginUnscaledUnrotated
@@ -1300,7 +1299,7 @@ if sc.sticky.has_key("ladybug_release"):
                                 terrain, title, elevationContours = title_scalingRotating(terrainUnoriginUnscaledUnrotated, locationName, locationLatitudeD, locationLongitudeD, locationPt, maxVisibilityRadiusM, type, origin, northVec, northRad, numOfContours, unitConversionFactor)
                                 if bakeIt_: bakingGrouping(locationName, locationLatitudeD, locationLongitudeD, maxVisibilityRadiusM, typeLabel, standThickness, terrain, title, elevationContours, origin)
                                 printOutput(northRad, locationLatitudeD, locationLongitudeD, locationName, maxVisibilityRadiusM, type, typeLabel, origin, workingSubFolderPath, standThickness, numOfContours)
-                                originPt = origin; elevation = elevationM
+                                elevation = elevationM
                             else:
                                 print printMsg
                                 ghenv.Component.AddRuntimeMessage(level, printMsg)
