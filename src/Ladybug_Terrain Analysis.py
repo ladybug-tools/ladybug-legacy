@@ -57,12 +57,20 @@ Provided by Ladybug 0.0.63
                        6 - TRI categories (Terrain Ruggedness Index categories by Riley)
                        7 - Mean curvature
         _terrain: A terrain surface or polysurface.
-                  Add it by supplying the "terrain" output from the Ladybug "Terrain Generator 2" component.
-                  It needs to be a rectangular surface (set the "type_" input of the Ladybug "Terrain Generator 2" component to "2" !!!
-        _originPt: An origin point of the upper "_terrain" input.
-                   Add it by supplying the "originPt" output from the Ladybug "Terrain Generator 2" component.
-        _elevation: Elevation of the upper "_originPt".
-                    Add it by supplying the "elevation" output from the Ladybug "Terrain Generator 2" component.
+                  Add it by supplying the "terrain" output from the "Terrain Generator" or "Terrain Generator 2" components.
+                  -
+                  It needs to be a surface. So set the:
+                  "type_" input of the "Terrain Generator" component to "1"
+                  or
+                  "type_" input of the "Terrain Generator 2" component to "2" or "3"
+        _origin: An origin (point on a "_terrain") of the upper "_terrain" input.
+                 Add it by suppling the "origin" output from the "Terrain Generator" component.
+                 or
+                 Add it by supplying the "origin" output from the "Terrain Generator 2" component.
+        _elevation: Elevation of the upper "_origin".
+                    Add it by supplying the "elevation" output from the "Decompose Location" component.
+                    or
+                    Add it by supplying the "elevation" output from the "Terrain Generator 2" component.
                     -
                     In Rhino document units.
         north_: Input a vector to be used as a true North direction, or a number between 0 and 360 that represents the clockwise degrees off from the Y-axis.
@@ -94,6 +102,11 @@ Provided by Ladybug 0.0.63
     
     output:
         readMe!: ...
+        origin: The origin point of the "analysedTerrain" geometry. It's the same as "_origin" input point.
+                -
+                Use grasshopper's "Point" parameter to visualize it.
+                -
+                Use this point to move the "analysedTerrain" geometry around in the Rhino scene with grasshopper's "Move" component.
         title: Title geometry with information about the chosen analysis type and other inputs
         legend: Legend geometry of the "analysedTerrain" output.
         legendBasePt: Legend base point, which can be used to move the "legend" geometry with grasshopper's "Move" component.
@@ -103,7 +116,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Analysis"
 ghenv.Component.NickName = "TerrainAnalysis"
-ghenv.Component.Message = "VER 0.0.63\nSEP_30_2016"
+ghenv.Component.Message = "VER 0.0.63\nOCT_04_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -151,7 +164,9 @@ def checkInputData(analysisType, terrainId, originPt, originPtElevation, north, 
         analysisType = analysisTypeLabel = originPt = originPtElevation = northRad = northD = sunVector = hypsometricStrength = refine = exportValues = unitSystem = unitConversionFactor = legendUnit = None
         validInputData = False
         printMsg = "Please supply the \"terrain\" output data from the Ladybug \"Terrain Generator 2\" component, to this component's \"_terrain\" input.\n" + \
-                   "It needs to be a rectangular surface/polysurface (set the \"type_\" input of the Ladybug \"Terrain Generator 2\" component to \"2\")."
+                   "It needs to be a surface/polysurface: set the:\n" + \
+                   "\"type_\" input of the \"Terrain Generator\" component to \"1\", or\n" + \
+                   "\"type_\" input of the \"Terrain Generator 2\" component to \"2\" or \"3\"."
         return analysisType, analysisTypeLabel, originPt, originPtElevation, northRad, northD, sunVector, hypsometricStrength, refine, exportValues, unitSystem, unitConversionFactor, legendUnit, validInputData, printMsg
     else:
         terrainObj = rs.coercegeometry(terrainId)
@@ -162,23 +177,25 @@ def checkInputData(analysisType, terrainId, originPt, originPtElevation, north, 
             #isinstance(terrainObj, Rhino.Geometry.Mesh) or any other geometry type
             analysisType = analysisTypeLabel = originPt = originPtElevation = northRad = northD = sunVector = hypsometricStrength = refine = exportValues = unitSystem = unitConversionFactor = legendUnit = None
             validInputData = False
-            printMsg = "The data you spplied to the \"_terrain\" input is not a surface nor a polysurface.\n" + \
-                       "Please supply the \"terrain\" output data from the Ladybug \"Terrain Generator 2\" component, to this component's \"_terrain\" input.\n" + \
-                       "It needs to be a rectangular surface (set the \"type_\" input of the Ladybug \"Terrain Generator 2\" component to \"2\")."
+            printMsg = "The data you supplied to the \"_terrain\" input is not a surface nor a polysurface.\n" + \
+                       "Please supply the \"terrain\" output data from the Ladybug \"Terrain Generator\" or \"Terrain Generator 2\" component, to this component's \"_terrain\" input.\n" + \
+                       "It needs to be a surface/polysurface: set the:\n" + \
+                       "\"type_\" input of the \"Terrain Generator\" component to \"1\", or\n" + \
+                       "\"type_\" input of the \"Terrain Generator 2\" component to \"2\" or \"3\"."
             return analysisType, analysisTypeLabel, originPt, originPtElevation, northRad, northD, sunVector, hypsometricStrength, refine, exportValues, unitSystem, unitConversionFactor, legendUnit, validInputData, printMsg
     
     
     if (originPt == None):
         analysisType = analysisTypeLabel = originPt = originPtElevation = northRad = northD = sunVector = hypsometricStrength = refine = exportValues = unitSystem = unitConversionFactor = legendUnit = None
         validInputData = False
-        printMsg = "Please supply the \"originPt\" output data from the Ladybug \"Terrain Generator 2\" component, to this component's \"_originPt\" input.."
+        printMsg = "Please supply the \"origin\" output data from Ladybug \"Terrain Generator\" or \"Terrain Generator 2\" component, to this component's \"_origin\" input.."
         return analysisType, analysisTypeLabel, originPt, originPtElevation, northRad, northD, sunVector, hypsometricStrength, refine, exportValues, unitSystem, unitConversionFactor, legendUnit, validInputData, printMsg
     
     
     if (originPtElevation == None):
         analysisType = analysisTypeLabel = originPt = originPtElevation = northRad = northD = sunVector = hypsometricStrength = refine = exportValues = unitSystem = unitConversionFactor = legendUnit = None
         validInputData = False
-        printMsg = "Please supply the \"elevation\" output data from the Ladybug \"Terrain Generator 2\" component, to this component's \"_elevation\" input.."
+        printMsg = "Please supply the \"elevation\" output data from Ladybug \"Terrain Generator\" or \"Terrain Generator 2\" component, to this component's \"_elevation\" input.."
         return analysisType, analysisTypeLabel, originPt, originPtElevation, northRad, northD, sunVector, hypsometricStrength, refine, exportValues, unitSystem, unitConversionFactor, legendUnit, validInputData, printMsg
     
     
@@ -279,8 +296,9 @@ def createOutputDescriptions(analysisType, unitSystem):
         ["Terrain Visibility analysis mesh.",  #analysedTerrain
         
         "Terrain Visibility values.\n" + \
-        "Each value represents the distance between the _originPt and each mesh vertex.\n" + \
-        "If mesh vertex is not visible from the _originPt (these are gray colored areas), then the distance will be: 0.\n" + \
+        "Each value represents the distance between the lifted _origin and each mesh vertex.\n" + \
+        "_origin is always lifted for 1.6 meters (5.25 feet) to depict the height of a human eyesight.\n" + \
+        "If mesh vertex is not visible from the _origin (these are gray colored areas), then the distance will be: 0.\n" + \
         "-\n" + \
         "In %s." % unitSystem]  #values
         
@@ -445,9 +463,10 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         eachMeshVertexIndex_notHitted = []
         colors = [None]*len(terrainMesh_vertices)
         
-        liftedOriginPt = Rhino.Geometry.Point3d(originPt.X, originPt.Y, originPt.Z + 0.4)  # radi sa + 0.05, ali refine = True
+        eyeHeightRhinoUnits = 1.6 / unitConversionFactor  # (1.6 meters, 5.25 feet)
+        liftedOriginPt = Rhino.Geometry.Point3d(originPt.X, originPt.Y, originPt.Z + eyeHeightRhinoUnits)  # lift the originPt (_origin) for average eye height
         for index,vertex in enumerate(terrainMesh_vertices):
-            liftedVertex = Rhino.Geometry.Point3d(vertex.X, vertex.Y, vertex.Z + 0.4)  # radi sa + 0.05, ali refine = True
+            liftedVertex = Rhino.Geometry.Point3d(vertex.X, vertex.Y, vertex.Z + 0.01)  # lift each mesh vertex due to Intersection.MeshLine
             line = Rhino.Geometry.Line(liftedOriginPt, liftedVertex)
             intersectionPts, intersectionFaceIndex = Rhino.Geometry.Intersect.Intersection.MeshLine(terrainMesh,line)
             if len(intersectionPts) != 0:
@@ -459,15 +478,13 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             else:
                 # nothing hitted
                 eachMeshVertexIndex_notHitted.append(index)
-                distance = liftedOriginPt.DistanceTo(vertex)
-                distanceToEachMeshVertex_notHitted.append(distance)  # will be used to create a legend
-                distanceToEachMeshVertex_all.append(distance)  # will be used for "values" output
+                distanceRhinoUnits = liftedOriginPt.DistanceTo(vertex)
+                distanceToEachMeshVertex_notHitted.append(distanceRhinoUnits)  # will be used to create a legend
+                distanceToEachMeshVertex_all.append(distanceRhinoUnits)  # will be used for "values" output
         if len(distanceToEachMeshVertex_notHitted) == 0:  # fix when all vertices can not be seen
             distanceToEachMeshVertex_notHitted = [System.Drawing.Color.FromArgb(70,70,70)]*len(terrainMesh_vertices)
         
-        customColors2 = customColors[:]
-        customColors2.reverse()
-        colors_notHitted = lb_visualization.gradientColor(distanceToEachMeshVertex_notHitted, lowB, highB, customColors2)
+        colors_notHitted = lb_visualization.gradientColor(distanceToEachMeshVertex_notHitted, lowB, highB, customColors)
         
         for dummyIndex, notHittedVertexIndex in enumerate(eachMeshVertexIndex_notHitted):
             colors[notHittedVertexIndex] = colors_notHitted[dummyIndex]
@@ -791,8 +808,9 @@ def createTitleLegend(analysisType, terrainMesh_withWithoutStand, legendValues, 
     for mesh in legendMeshes:
         legendMesh.Append(mesh)
     
-    # hide legendBasePt output
-    ghenv.Component.Params.Output[5].Hidden = True
+    # hide origin, legendBasePt output
+    ghenv.Component.Params.Output[3].Hidden = True
+    ghenv.Component.Params.Output[6].Hidden = True
     
     gc.collect()
     
@@ -814,7 +832,7 @@ def bakingGrouping(analysisType, analysisTypeLabel, terrainMesh_withWithoutStand
     attr.ColorSource = Rhino.DocObjects.ObjectColorSource.ColorFromObject
     attr.PlotColorSource = Rhino.DocObjects.ObjectPlotColorSource.PlotColorFromObject
     
-    # bake analysedTerrain, title, originPt
+    # bake analysedTerrain, title, origin
     geometryIds = []
     geometry = [terrainMesh_withWithoutStand, titleLabelMesh, Rhino.Geometry.Point(originPt)]
     for obj in geometry:
@@ -832,7 +850,7 @@ def bakingGrouping(analysisType, analysisTypeLabel, terrainMesh_withWithoutStand
     groupIndex = Rhino.RhinoDoc.ActiveDoc.Groups.Add(layerName + "_terrainAnalysis_" + analysisTypeLabel + "_legend_" + str(time.time()))
     Rhino.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, legendIds)
     
-    # grouping of analysedTerrain, title, originPt with legend
+    # grouping of analysedTerrain, title, origin with legend
     groupIndex2 = Rhino.RhinoDoc.ActiveDoc.Groups.Add(layerName + "_terrainAnalysis_" + analysisTypeLabel + "_" + str(time.time()))
     Rhino.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex2, geometryIds + legendIds)
 
@@ -868,7 +886,7 @@ if sc.sticky.has_key("ladybug_release"):
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
-        analysisType, analysisTypeLabel, originPt, originPtElevation, northRad, northD, sunVector, hypsometricStrength, refine, exportValues, unitSystem, unitConversionFactor, legendUnit, validInputData, printMsg = checkInputData(_analysisType, _terrain, _originPt, _elevation, north_, sunVector_, hypsoStrength_, refine_)
+        analysisType, analysisTypeLabel, originPt, originPtElevation, northRad, northD, sunVector, hypsometricStrength, refine, exportValues, unitSystem, unitConversionFactor, legendUnit, validInputData, printMsg = checkInputData(_analysisType, _terrain, _origin, _elevation, north_, sunVector_, hypsoStrength_, refine_)
         if validInputData:
             createOutputDescriptions(analysisType, unitSystem)
             if _runIt:
@@ -877,7 +895,7 @@ if sc.sticky.has_key("ladybug_release"):
                 titleLabelMesh, legendMesh, legendBasePt = createTitleLegend(analysisType, terrainMesh_withWithoutStand, legendValues, analysisTypeLabel, northD, sunVector, hypsometricStrength, refine, unitSystem, legendUnit, legendPar_)
                 if bakeIt_: bakingGrouping(analysisType, analysisTypeLabel, terrainMesh_withWithoutStand, titleLabelMesh, legendMesh, legendBasePt, originPt)
                 printOutput(analysisType, analysisTypeLabel, originPt, originPtElevation, northD, sunVector, hypsometricStrength, refine, unitSystem)
-                analysedTerrain = terrainMesh_withWithoutStand; title = titleLabelMesh; legend = legendMesh; del legendValues;
+                analysedTerrain = terrainMesh_withWithoutStand; origin = originPt; title = titleLabelMesh; legend = legendMesh; del legendValues;
             else:
                 print "All inputs are ok. Please set \"_runIt\" to True, in order to run the Terrain analysis component"
         else:
