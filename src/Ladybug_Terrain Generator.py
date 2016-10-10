@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.63
     
     Args:
         _location: It accepts two type of inputs.
-        _origin_: Input a point here to georeference the terrain model.
+        _basePoint_: Input a point here to georeference the terrain model.
         a) latitude, longitude and elevation that represent WSG84 coordinates of the base point. You can achieve these type of coordinates from Google Maps or similar.
         e.g. 40.821796, 14.426439, 990
         -
@@ -66,6 +66,7 @@ Provided by Ladybug 0.0.63
         1 = Roadmap, specifies a standard roadmap image
         2 = Terrain, it shows terrain and vegetation 
         3 = Hybrid, it specifies a hybrid of the satellite and roadmap image
+        folder_: The folder into which you would like to write the image file. This should be a complete file path to the folder.  If no folder is provided, the images will be written to C:/USERNAME/AppData/Roaming/Ladybug/IMG_Google.
         _runIt: Set to "True" to run the component and generate the 3D terrain model. 
     Returns:
         readMe!: ...
@@ -76,7 +77,7 @@ Provided by Ladybug 0.0.63
         imagePath: Satellite images from Google Static Maps API. Connect it to 'DB' input of 'Human Custom Preview Material' to apply textures to the 3d model or to the list of input surfaces.
         -----------: ...
         terrain: 3D terrain model.
-        originPt: The origin (center) point of the "terrain" geometry.
+        origin: The origin (center) point of the "terrain" geometry.
         elevation: Elevation of the origin_ input.
 """
 
@@ -123,14 +124,14 @@ def checkInternetConnection():
         return False
 
 
-def earthPoint(location, origin):
+def earthPoint(location, basePoint):
     base_point = Rhino.DocObjects.EarthAnchorPoint()
     base_point.EarthBasepointLatitude = location.X
     base_point.EarthBasepointLongitude = location.Y
     base_point.EarthBasepointElevation = location.Z
     base_point.ModelEast = Rhino.Geometry.Vector3d.XAxis
     base_point.ModelNorth = Rhino.Geometry.Vector3d.YAxis
-    base_point.ModelBasePoint = origin
+    base_point.ModelBasePoint = basePoint
     
     modelUnit = Rhino.UnitSystem()
     xf = base_point.GetModelToEarthTransform(modelUnit)
@@ -289,6 +290,26 @@ def cullAndSortPoints(pts, elevations):
     return cull_pts
 
 
+def mdPath(folder):
+    # make a folder for the images
+    if folder != None:
+        directory = os.path.join(folder, "IMG_Google\\")
+        if not os.path.exists(folder):
+            try:
+                os.mkdir(directory)
+            except Exception:
+                appdata = os.getenv("APPDATA")
+                directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
+                w = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(w, "Invalid Folder, you can find images here: {}".format(directory))
+    else:
+        appdata = os.getenv("APPDATA")
+        directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
+        if not os.path.exists(directory): os.makedirs(directory)
+    
+    return directory
+
+
 def main():
     earth_radius = 6378137
     equator_circumference = 2 * pi * earth_radius
@@ -297,9 +318,9 @@ def main():
     
     mapsType = {'0':'satellite', '1':'roadmap', '2':'terrain', '3':'hybrid'}
     
-    if _origin_ == None:
-        origin = Rhino.Geometry.Point3d.Origin
-    else: origin = _origin_
+    if _basePoint_ == None:
+        basePoint = Rhino.Geometry.Point3d.Origin
+    else: basePoint = _basePoint_
     if _imgResolution_ == None:
         imgResolution = 18
     else: imgResolution = int(_imgResolution_) # make sure that it is an integer number
@@ -327,14 +348,14 @@ def main():
         locationName, latitude, longitude, timeZone, elevation = lb_preparation.decomposeLocation(_location)
         location = Rhino.Geometry.Point3d(latitude, longitude, elevation)
         
-    xf = earthPoint(location, origin) 
+    xf = earthPoint(location, basePoint) 
     
-    # make sure that origin is on the terrain
+    # make sure that basePoint is on the terrain
     if elevation >= 0: factor = 1
     else: factor = -1
     
     tilesTree = DataTree[System.Object]()
-    tiles = createTiles(origin, radius, numOfTiles)
+    tiles = createTiles(basePoint, radius, numOfTiles)
     for i, tile in enumerate(tiles):
         path = GH_Path(0, i)
         tilesTree.Add(tile, path)
@@ -372,18 +393,17 @@ def main():
         if type == 0:
             lb_meshpreparation = sc.sticky["ladybug_Mesh"]()
             terrain = lb_meshpreparation.meshFromPoints(num, num, cull_pts)
-            originPt = Rhino.Geometry.Intersect.Intersection.ProjectPointsToMeshes([terrain], [origin], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
+            origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToMeshes([terrain], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
         elif type == 1:
              uDegree = min(3, num - 1)
              vDegree = min(3, num - 1)
              terrain = Rhino.Geometry.NurbsSurface.CreateThroughPoints(cull_pts, num, num, uDegree, vDegree, False, False)
-             originPt = Rhino.Geometry.Intersect.Intersection.ProjectPointsToBreps([terrain.ToBrep()], [origin], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
-             
+             origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToBreps([terrain.ToBrep()], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
+        
+        
         # make a folder for the images
-        appdata = os.getenv("APPDATA")
-        directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        directory = mdPath(folder_)
+        
         try:
             for i, u in enumerate(URLs):
                 path = GH_Path(0, i)
@@ -401,7 +421,7 @@ def main():
         print("Size of the grid = {0} x {0}".format(dimension))
         return None, None, None, None, None, tilesTree, None, None
     
-    return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree, originPt, elevation
+    return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree, origin, elevation
 
 
 initCheck = False
@@ -430,7 +450,7 @@ if check and initCheck:
     if checkInternetConnection():
         result = main()
         if result != -1:
-            pointsGeo, pointsZ, pointsXY, imagePath, terrain, tiles, originPt, elevation = result
+            pointsGeo, pointsZ, pointsXY, imagePath, terrain, tiles, origin, elevation = result
     else:
         warning = "Please enable your internet connection."
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
@@ -439,4 +459,5 @@ else:
     print("Please provide all inputs.")
 
 # hide outputs
+ghenv.Component.Params.Output[1].Hidden = True
 ghenv.Component.Params.Output[2].Hidden = True
