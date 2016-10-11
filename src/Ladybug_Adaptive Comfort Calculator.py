@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The Adaptive model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -96,8 +96,6 @@ if outdoorConditions == True:
     "the outdoor condtions should be changed in order to make indoor conditions comfortable. They do not idicate whether someone will actually be comfortable outdoors.\n" + \
     "If you are interested in whether the outdoors are actually comfortable, you should use the Ladybug Outdoor Comfort Calculator."
     print message1
-    m = gh.GH_RuntimeMessageLevel.Remark
-    ghenv.Component.AddRuntimeMessage(m, message1)
 
 ghenv.Component.Attributes.Owner.OnPingDocument()
 
@@ -338,7 +336,7 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
     #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
     individualCases = False
     daysForMonths = lb_preparation.numOfDays
-    if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
+    if calcLength == 8760 and len(analysisPeriod_)!=0:
         HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
         runPeriod = analysisPeriod_
         calcLength = len(HOYS)
@@ -348,17 +346,25 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
             elif days[0] == 1 and days[-1] != 31: dayNums.extend(range(daysForMonths[month-1], daysForMonths[month-1]+days[-1]))
             elif days[0] != 1 and days[-1] == 31: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month]))
             else: dayNums.extend(range(daysForMonths[month-1]+days[0], daysForMonths[month-1]+days[-1]))
-    elif len(analysisPeriod_)==0 and epwData == True:
+    elif epwData == True:
         HOYS = range(calcLength)[1:] + [calcLength]
         runPeriod = [epwStr[5], epwStr[6]]
         months = [1,2,3,4,5,6,7,8,9,10,11,12]
         dayNums = range(365)
+        if calcLength != 8760 and len(analysisPeriod_) != 0:
+            periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+            print periodMsg
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
     else:
         HOYS = range(calcLength)[1:] + [calcLength]
         runPeriod = [(1,1,1), (12,31,24)]
         months = []
         days = []
         individualCases = True
+        if len(analysisPeriod_) != 0:
+            periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+            print periodMsg
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
     
     #Check to see if there are any times when the prevailing temperature is too cold and give a comment that we are using a non-standard model.
     monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -375,7 +381,6 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
                     coldMsg += monthNames[month-1]
             if coldThere == True:
                 print coldMsg
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
         else:
             totalColdInPeriod = []
             for day in dayNums:
@@ -383,7 +388,6 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
             if totalColdInPeriod != []:
                 coldMsg = "There were " + str(len(totalColdInPeriod)) + " days of the analysis period when the outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
                 print coldMsg
-                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
     elif individualCases:
         totalColdInPeriod = []
         for temp in prevailTemp:
@@ -391,7 +395,6 @@ def main(checkData, epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, 
         if totalColdInPeriod != []:
             coldMsg = "There were " + str(len(totalColdInPeriod)) + " cases when the prevailing outdoor temperatures were too cold for the official " + modelName + " standard. \n A correlation from recent research has been used in these cases."
             print coldMsg
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, coldMsg)
     
     #If things are good, run it through the comfort model.
     comfortableOrNot = []

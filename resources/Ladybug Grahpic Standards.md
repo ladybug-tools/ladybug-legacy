@@ -19,7 +19,7 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 * If the input is meant to take the output of another Ladybug component, this other component should be referenced in the description.
 * If the input has a default value when nothing is connected, this must be included in the description.
 
-4) All inputs of components will use the following convention of '_' placement for communicating the importance of the input to the user:
+4) All inputs of components shall use the following convention of '_' placement for communicating the importance of the input to the user:
 
 * _input : An input that the user is required to provide in order to run the component.  Generally, the number of these inputs should be minimized if there are possible good defaults. (Example of this type of input: _location on the sunpath)
 * _ input _ : An input that is important/required for the primary function of the component but for which the component includes a good default value. (Example of this type of input: _ hour _ on the sunpath)
@@ -27,22 +27,22 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 5) Any time that a component relies on a change made in Ladybug_Ladybug or Honeybee_Honeybee, the "#compatibleLBVersion" and/or the "#compatibleHBVersion" in the header must be updated to this version of Ladybug_Ladybug or Honeybee_Honeybee.
 
-6) Components will remain grey when dropped on the canvas but, once any input is connected, the component should use Grasshopper's "Warning" capability (orange component) any time that there is a missing required input or incorrect type of input.  Ideally, all of these warnings are given either before or within the input-checking function of the component (so all warnings are given before getting to the main function).
+6) Components should use Grasshopper's "Warning" capability (orange component) any time that there is a missing required input (it is recommended that you use the isInputMissing function in the [template](https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Component_Template.py) for this).  This "Warning" capability should also be used to indicate when a given input is outside the range of acceptable values. Ideally, all of these warnings are given either before or within the input-checking function of the component (so all warnings are given before getting to the main function).
 
-7) If a component gets to its main function but fails to run to completion, Grasshopper's "Error" capability should be used (ie. an energy simulation was started but failed because of incorrect inputs).  If the component is running to completion and you you only want to give the user information about how the process has run, please use the "readMe!" output (by printing the message) and not any warnings, errors, or remarks.  Grasshopper's "Remark" capability should never be used because it over-rides the color of the component in the case of warnings or errors.
+7) If a component gets to its main function but fails to run to completion, Grasshopper's "Error" or "Warning" capability should be used (ie. an energy simulation was started but failed because of incorrect inputs).  If the component is running to completion and you you only want to give the user information about how the process has run, please use the "readMe!" output (by printing the message) and not any warnings, errors, or remarks.  Grasshopper's "Remark" capability should never be used because it over-rides the color of the component in the case of warnings or errors.
 
-8) Components that produce a graphic output in the Rhino scene will have their preview turned on by default while those that do not produce a graphic output will have their preview turned off.
+8) Components that produce a graphic output in the Rhino scene shall have their preview turned on by default while those that do not produce a graphic output shall have their preview turned off.
 
-9) All components will be placed first in WIP and beta tested by the community before being moved to the other tabs.  This will communicate to users that the components are still being vetted and they should use them at their own risk.
+9) All components shall be placed first in WIP and beta tested by the community before being moved to the other tabs.  This will communicate to users that the components are still being vetted and they should use them at their own risk.
 
-10) No one understands best what a specific component should be telling its user better than the developer and those trying to apply it.  Therefore, these standards should be seen as a minimum of what is required and any additional warnings, errors, or information that you realize should be given to the user is desirable and encouraged as long as you are not violating the general structure outlined in this document.
+10) No one understands best what a specific component should be doing better than the developer - the one with a vision apply it.  Therefore, these standards should be seen as a minimum of what is required and any additional warnings, errors, or information that you realize should be given to the user is desirable and encouraged.
 
 
 
 
 #GUIDELINES
 
-1) Please be mindful of the color schemes and fonts that other developers have implemented on the existing component icons.  Deviating too much from these colors/fonts can compromise the graphic identity of the project.
+1) Please be mindful of the color schemes and fonts that other developers have implemented on the existing component icons.  Keeping with a consistent color scheme and font helps ensure a graphic identity for the project.
 
 2) If a given input to a component is one that merits some expert knowledge (like a certain coefficient), it is usually a good idea to include some examples of this in the input description.
 

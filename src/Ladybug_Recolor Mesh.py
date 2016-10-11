@@ -26,7 +26,7 @@ Use this component to re-color a mesh with new a numerical data set whose length
 This component is useful if you have post-processed any of the numerical data out of the Ladybug components using Grasshopper math components.
 It is also necessary to view results from the Ladybug Real Time Radiation Analysis.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to re-color the _inputMesh.
@@ -40,6 +40,8 @@ Provided by Ladybug 0.0.62
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
             2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
         layerName_: If bakeIt_ is set to "True", input Text here corresponding to the Rhino layer onto which the resulting mesh and legend should be baked.
+        lowBoundColor_: A color representing the higher boundary of the legend's numerical range, use the Swatch component to specify a color.
+        highBoundColor_: A color representing the lowest boundary of the legend's numerical range, use the Swatch component to specify a color.
     Returns:
         readMe!: ...
         newMesh: A new mesh that has been re-colored based on the _analysisResult data.
@@ -49,14 +51,13 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Recolor Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_25_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
-
+#compatibleLBVersion = VER 0.0.59\nAUG_25_2016
 
 import scriptcontext as sc
 import Rhino as rc
@@ -68,14 +69,13 @@ AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
 
-def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, legendTitle, bakeIt, layerName):
+def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, legendTitle, bakeIt, layerName, lowBoundColor, highBoundColor):
     
     def create3DColoredMesh(inputMesh, analysisResult, domain, colors):
         """
         Creates a new 3D mesh based on input values
         Thanks to David Mans for providing the VB example of the code
         """
-        
         mappedValues = []
         def remapValues():
             tmin = domain.T0
@@ -94,7 +94,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         inputMesh.FaceNormals.ComputeFaceNormals()
         inputMesh.FaceNormals.UnitizeFaceNormals()
         values = []
-        
         
         # collect the values and average  them for each vertices
         for i in range(mtv.Count):
@@ -146,7 +145,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         
         return mo
 
-    
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -176,14 +174,14 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
             
             lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
             
-            colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors)
+            colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors,lowBoundColor,highBoundColor)
+            
             coloredChart = lb_visualization.colorMesh(colors, inputMesh)
             
             if heightDomain!=None:
                 coloredChart = create3DColoredMesh(inputMesh, analysisResult, heightDomain, colors)
                 
             lb_visualization.calculateBB([coloredChart], True)
-                
                 
             if not legendTitle:  legendTitle = 'unknown units  '
             if not analysisTitle: analysisTitle = '\nno title'
@@ -193,7 +191,7 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
                 , legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             
             # generate legend colors
-            legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
+            legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors,lowBoundColor,highBoundColor)
             
             # color legend surfaces
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
@@ -234,7 +232,6 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
     
     conversionFac = lb_preparation.checkUnits()
 
-
 if _inputMesh and len(_analysisResult)!=0:
     
     def openLegend(legendRes):
@@ -246,7 +243,7 @@ if _inputMesh and len(_analysisResult)!=0:
             return meshAndCrv
         else: return
     
-    result = main(_analysisResult, _inputMesh, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_)
+    result = main(_analysisResult, _inputMesh, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_,lowBoundColor_,highBoundColor_)
     if result!= -1:
         newLegend= []
         newMesh = result[0]

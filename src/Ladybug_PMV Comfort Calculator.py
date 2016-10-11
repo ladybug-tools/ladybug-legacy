@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The PMV model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript comfort models: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Calculator"
 ghenv.Component.NickName = 'PMVComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -447,18 +447,27 @@ def main():
         
         if checkData == True:
             #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
-            if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
+            if calcLength == 8760 and len(analysisPeriod_)!=0:
+                ##HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
                 HOYSInit, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
                 HOYS = []
                 for hour in HOYSInit: HOYS.append(hour-1)
                 runPeriod = analysisPeriod_
                 calcLength = len(HOYS)
-            elif len(analysisPeriod_)==0 and epwData == True:
+            elif epwData == True:
                 HOYS = range(calcLength)
                 runPeriod = [epwStr[5], epwStr[6]]
+                if calcLength != 8760 and len(analysisPeriod_) != 0:
+                    periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+                    print periodMsg
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
             else:
                 HOYS = range(calcLength)
                 runPeriod = [(1,1,1), (12,31,24)]
+                if calcLength != 8760 and len(analysisPeriod_) != 0:
+                    periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+                    print periodMsg
+                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
         
         #If things are good, run it through the comfort model.
         predictedMeanVote = []

@@ -31,7 +31,7 @@ This component outputs a percentage of viewpoints seen by the input _geometry.  
 This component will evaluate view from the test points objectively in all directions. 
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _geometry: Geometry for which visibility analysis will be conducted.  Geometry must be either a Brep, a Mesh, or a list of Breps or Meshes.
@@ -41,11 +41,12 @@ Provided by Ladybug 0.0.62
         orientationStudyP_: Optional output from the "Orientation Study Parameter" component.  You can use an Orientation Study input here to answer questions like "What orientation of my building will give me the highest or lowest visibility from the street?"  An Orientation Study will automatically rotate your input _geometry around several times and record the visibility results each time in order to output a list of values for averageView and a grafted data stream for viewStudyResult.
         _viewTypeOrPoints: An integer representing the type of view analysis that you would like to conduct or a list of points to which you would like to test the view.  For integer options, choose from the following options:
             0 - Horizontal Radial - The percentage of the 360 horizontal view band visible from each test point. Use this to study horizontal views from interior spaces to the outdoors.
-            1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors.  Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
-            2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene.
+            1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors.
+            2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry.
             3 - Sky Exposure - The percentage of the sky that is visible from the points of the input _geometry (as opposed to Sky View, which is the amount of sky seen by a surface).  This is equivalent to a solid angle or even-spaced ray-tracing calculation from the point.  It is useful for evaluating one's general visual connection to the sky at a given set of points.
             4 - Sky View - The percentage of the sky that is visible from the surface _geometry (as opposed to Sky Exposure, which is the amount of sky seen by the points).  While Sky Exposure treats each patch of the sky with relatively equal weight, Sky View weights these patches by their area projected into the plane of the surface being evaluated.  In other words, Sky View for a horizontal surface would give more importance to the sky patches that are overhead vs near the horizon.  Sky View is an important factor in for modelling urban heat island since the inability of warm urban surfaces to radiate heat to a cool night sky is one of the largest contributors of the heat island effect.
         viewPtsWeights_: A list of numbers that align with the test points to assign weights of importance to the several _viewTypeOrPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value.
+        geometryBlocksView_: Set to "True" to have the component count the input _geometry as opaque and set to "False" to discount the _geometry from the calculation and only look at context_ that blocks the view.  The default is set to "False" for all types of view studies except for (3 - Sky Exposure) and (4 - Sky View), where the default is set to "True."
         _____________________: ...
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         parallel_: Set to "True" to run the visibility analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine.
@@ -71,7 +72,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_19_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -107,16 +108,17 @@ inputsDict = {
 4: ["orientationStudyP_", "Optional output from the 'Orientation Study Parameter' component.  You can use an Orientation Study input here to answer questions like 'What orientation of my building will give me the highest or lowest visibility from the street?'  An Orientation Study will automatically rotate your input _geometry around several times and record the visibility results each time in order to output a list of values for averageView and a grafted data stream for viewStudyResult."],
 5: ["_viewTypeOrPoints", "An integer representing the type of view analysis that you would like to conduct or a list of points to which you would like to test the view.  For integer options, choose from the following options: \n0 - Horizontal Radial - The percentage of the 360 horizontal view band visible from each test point. Use this to study horizontal views from interior spaces to the outdoors. \n 1 - Horizontal 60 Degree Cone of Vision - The percentage of the 360 horizontal view band bounded on top and bottom by a 30 degree offset from the horizontal (derived from the human cone of vision). Use this to study views from interior spaces to the outdoors. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n2 - Spherical - The percentage of the sphere surrounding each of the test points that is not blocked by context geometry. Note that this will discount the _geometry from the calculation and only look at _context that blocks the scene. \n3 - Sky Exposure - The percentage of the sky that is visible from the points of the input _geometry (as opposed to Sky View, which is the amount of sky seen by a surface).  This is equivalent to a solid angle or even-spaced ray-tracing calculation from the point.  It is useful for evaluating one's general visual connection to the sky at a given set of points. \n4 - Sky View - The percentage of the sky that is visible from the surface _geometry (as opposed to Sky Exposure, which is the amount of sky seen by the points).  While Sky Exposure treats each patch of the sky with relatively equal weight, sky view weights these patches by their area projected into the plane of the surface being evaluated.  In other words, sky view for a horizontal surface would give more importance to the sky patches that are overhead vs near the horizon.  Sky view is an important factor in for modelling urban heat island since the inability of warm urban surfaces to radiate heat to a cool night sky is one of the largest contributors of the heat island effect."],
 6: ["viewPtsWeights_", "A list of numbers that align with the test points to assign weights of importance to the several _viewTypeOrPoints that have been connected.  Weighted values should be between 0 and 1 and should be closer to 1 if a certain point is more important. The default value for all points is 0, which means they all have an equal importance. This input could be useful in cases such as the radiative heater example where points on the human body with exposed skin could be weighted at a higher value."],
-7: ["_____________________", "..."],
-8: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
-9: ["parallel_", "Set to 'True' to run the visibility analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine."],
-10: ["_runIt", "Set to 'True' to run the component and perform visibility analysis of the input _geometry."],
-11: ["bakeIt_", "An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options: \n     0 (or False) - No geometry will be baked into the Rhino scene (this is the default). \n     1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. \n     2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry."]
+7: ["geometryBlocksView_", "Set to 'True' to have the component count the input _geometry as opaque and set to 'False' to discount the _geometry from the calculation and only look at context_ that blocks the view.  The default is set to 'False' for all types of view studies except for (3 - Sky Exposure) and (4 - Sky View), where the default is set to 'True.'"],
+8: ["_____________________", "..."],
+9: ["legendPar_", "Optional legend parameters from the Ladybug Legend Parameters component."],
+10: ["parallel_", "Set to 'True' to run the visibility analysis using multiple CPUs.  This can dramatically decrease calculation time but can interfere with other intense computational processes that might be running on your machine."],
+11: ["_runIt", "Set to 'True' to run the component and perform visibility analysis of the input _geometry."],
+12: ["bakeIt_", "An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options: \n     0 (or False) - No geometry will be baked into the Rhino scene (this is the default). \n     1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. \n     2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry."]
 }
 
 
 def setComponentInputs():
-    for input in range(12):
+    for input in range(13):
         if input == 6:
             ghenv.Component.Params.Input[input].NickName = 'viewResolution_'
             ghenv.Component.Params.Input[input].Name = 'viewResolution_'
@@ -127,16 +129,18 @@ def setComponentInputs():
             ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def restoreComponentInputs():
-    for input in range(12):
+    for input in range(13):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 
 def checkViewType(lb_preparation):
-    viewVecs, viewType, patchAreas = [], -1, []
+    #Assign default values.
+    viewVecs, viewType, patchAreas, geoBlockView = [], -1, [], False
     try:
         viewType = int(_viewTypeOrPoints[0])
-        if viewType >= 0 and viewType <= 4: pass
+        if viewType >= 0 and viewType <= 4:
+            if viewType <= 3: geoBlockView = True
         else:
             warning = "_viewTypeOrPoints must be between 0 and 3."
             print warning
@@ -164,7 +168,10 @@ def checkViewType(lb_preparation):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1
     
-    return viewVecs, viewType, patchAreas
+    #Check geometryBlocksView_.
+    if geometryBlocksView_ != None: geoBlockView = geometryBlocksView_
+    
+    return viewVecs, viewType, patchAreas, geoBlockView
 
 def checkViewResolution(viewResolution, viewType, lb_preparation):
     newVecs = []
@@ -210,7 +217,7 @@ def openLegend(legendRes):
     else: return
 
 
-def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH):
+def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, geoBlockView, lb_mesh, lb_runStudy_GH):
     listInfo = ['key:location/dataType/units/frequency/startsAt/endsAt', 'City/Latitude', 'View Analysis', '%', 'NA', (1, 1, 1), (12, 31, 24)]
     if parallel:
         try:
@@ -222,7 +229,7 @@ def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
     if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
     else: joinedContext = None
     
-    viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas)
+    viewResults, averageViewResults, ptVisibility = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, geoBlockView)
     
     return [viewResults], [averageViewResults], listInfo, ptVisibility
 
@@ -293,7 +300,7 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
     viewType = -1
     viewCheck = checkViewType(lb_preparation)
     if viewCheck != -1:
-        viewPoints_viewStudy, viewType, patchAreas = viewCheck
+        viewPoints_viewStudy, viewType, patchAreas, geoBlockView = viewCheck
     else: return -1
     
     try: viewPtsWeights = viewPtsWeights_
@@ -402,7 +409,8 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
             sunVectors_sunlightHour = []
             
             results, eachTotalResult, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                        analysisSrfs, mergedContextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH)
+                                        analysisSrfs, mergedContextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights,
+                                        conversionFac, viewType, patchAreas, geoBlockView, lb_mesh, lb_runStudy_GH)
             
             #collect surfaces, results, and values
             orirntationStudyRes[angle] = {"angle" : angle,
@@ -480,7 +488,8 @@ def main(geometry, context, gridSize, disFromBase, orientationStudyP, viewPoints
         # no orientation study
         angle = 0; l = [0]
         results, totalResults, listInfo, pointVisiblity = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights, conversionFac, viewType, patchAreas, lb_mesh, lb_runStudy_GH)
+                                analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewPtsWeights,
+                                conversionFac, viewType, patchAreas, geoBlockView, lb_mesh, lb_runStudy_GH)
     
     #Returen view vectors is the vector method is specified.
     viewVecs = []

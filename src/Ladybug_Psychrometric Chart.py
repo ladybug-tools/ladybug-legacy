@@ -37,7 +37,7 @@ _
 The information for the polygons representing passive strategies comes from the climate consultant psychrometric chart.  Further information on how these polygons are calculated can be found here:
 http://apps1.eere.energy.gov/buildings/tools_directory/software.cfm/ID=123/pagename=alpha_list
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.  Finally, this component can also acccept temperatures in Farenheit in order to draw a chart with IP units but, in order for this component to sense that the values are Farenheit, there must be at least one 'F' or 'F' in the stream of connected data.
@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_19_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -229,10 +229,8 @@ def checkTheInputs():
         if checkData3 == False:
             for item in barometricPressure_:
                 try:
-                    if 0 <= float(item) <= 100:
-                        barPress.append(float(item))
-                        checkData3 = True
-                    else: nonValue = False
+                    barPress.append(float(item))
+                    checkData3 = True
                 except:checkData3 = False
         if nonValue == False: checkData3 = False
         if len(barPress) > 1: pressMultVal = True
@@ -1887,7 +1885,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if mollierHX_ == True:
             for item in chartCurves:
                 if str(item.ObjectType) == 'Curve': mollierHXTransform(item)
-            mollierHXTransform(coloredMesh)
+            try:
+                mollierHXTransform(coloredMesh)
+            except: pass
             for geo in comfortPolygon: mollierHXTransform(geo)
             for geo in strategyPolygons: mollierHXTransform(geo)
             for geo in hourPts: mollierHXTransform(geo)
@@ -1897,9 +1897,13 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if basePoint_ != None:
             transformMtx = rc.Geometry.Transform.Translation(basePoint_.X, basePoint_.Y, basePoint_.Z)
             for geo in chartCurves: geo.Transform(transformMtx)
-            coloredMesh.Transform(transformMtx)
+            try:
+                coloredMesh.Transform(transformMtx)
+            except: pass
             for geo in legend: geo.Transform(transformMtx)
-            legendBasePoint.Transform(transformMtx)
+            try:
+                legendBasePoint.Transform(transformMtx)
+            except: pass
             for geo in comfortPolygon: geo.Transform(transformMtx)
             for geo in strategyPolygons: geo.Transform(transformMtx)
             for geo in hourPts: geo.Transform(transformMtx)
@@ -1913,9 +1917,13 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if scale_ != None:
             transformMtx = rc.Geometry.Transform.Scale(basePoint, scale_)
             for geo in chartCurves: geo.Transform(transformMtx)
-            coloredMesh.Transform(transformMtx)
+            try:
+                coloredMesh.Transform(transformMtx)
+            except: pass
             for geo in legend: geo.Transform(transformMtx)
-            legendBasePoint.Transform(transformMtx)
+            try:
+                legendBasePoint.Transform(transformMtx)
+            except: pass
             for geo in comfortPolygon: geo.Transform(transformMtx)
             for geo in strategyPolygons: geo.Transform(transformMtx)
             for geo in hourPts: geo.Transform(transformMtx)

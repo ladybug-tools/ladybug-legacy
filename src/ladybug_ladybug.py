@@ -11,7 +11,6 @@
 # or (at your option) any later version. 
 # 
 # Ladybug is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of 
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
 # GNU General Public License for more details.
 # 
@@ -25,18 +24,14 @@
 This component carries all of Ladybug's main classes. Other components refer to these
 classes to run the studies. Therefore, you need to let her fly before running the studies so the
 classes will be copied to Rhinos shared space. So let her fly!
-
 -
 Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 You should have received a copy of the GNU General Public License
 along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
-
 @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
-
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
-
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -46,7 +41,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_11_2016'
+ghenv.Component.Message = 'VER 0.0.63\nOCT_03_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -120,19 +115,17 @@ class CheckIn():
                 sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
             else:
                 # let's use the user folder
-                username = os.getenv("USERNAME")
-                # make sure username doesn't have space
-                if (" " in username):
-                    msg = "User name on this system: " + username + " has white space." + \
-                          " Default fodelr cannot be set.\nUse defaultFolder_ to set the path to another folder and try again!" + \
-                          "\nLadybug failed to fly! :("
-                    print msg
-                    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
-                    sc.sticky["Ladybug_DefaultFolder"] = ""
-                    self.letItFly = False
-                    return
-                
-                sc.sticky["Ladybug_DefaultFolder"] = os.path.join("C:\\Users\\", username, "AppData\\Roaming\\Ladybug\\")
+                appdata = False
+                try:
+                    appdata = rc.RhinoApp.GetDataDirectory(True, False)
+                except AttributeError:
+                    appdata = os.getenv("APPDATA")
+                    
+                # make sure appdata doesn't have space
+                assert appdata, 'Failed to set up the folder.\n' \
+                    'Try to set it up manually using defaultFolder_ input.'
+
+                sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
         
         self.updateCategoryIcon()
     
@@ -868,55 +861,53 @@ class Preparation(object):
             ground temperature data corresponds to is the 2nd item in the list of all the ground temperature data.
         """
         
-        
-        epwfile = open(epw_file,"r")
-        
         groundtemp1st = [self.strToBeFoundgt, location, 'Depth', 'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp2nd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         groundtemp3rd = [self.strToBeFoundgt, location, 'Depth' ,  'C', 'Monthly', (1, 1, 1), (12, 31, 24)];
         
-        lnum = 1 # Line number
-        
-        with epwfile as i:
-            for line in i: 
-                if lnum == 3:
+
+        with open(epw_file,"r") as i:
+            for lnum, line in enumerate(i): 
+                if lnum > 3:
+                    break
+                elif lnum == 3:
                     noData = False
-                    groundtemp = epwfile.readline().split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
+                    groundtemp = line.split(',') ## Adding line from epw to file as a string then splitting it along , this line in the epw contains groundtemp data
                     
                     self.groundtemp = groundtemp
                     
                     def stringtoFloat(sequence): # stringtoFloattion that converts strings to floats, if not possible it passes
-                    	strings = []
-                    	seq = [] # line 18 - data = CSV.Branch(month_-1) creates grasshoppers own List[object] this does not contain a remove method'
-                    	# therefore in line 4 6 and 7 we must add the data to a python list to be able to use the function
-                    	for item in sequence:
-                    		seq.append(item)
-                    	for i in range(len(seq)):
-                    		try:
-                    			seq[i] = float(seq[i])
-                    		except:
-                    			strings.append(seq[i])
-                    	for x in strings:
-                    		seq.remove(x)
-                    	return seq
+                        strings = []
+                        seq = [] # line 18 - data = CSV.Branch(month_-1) creates grasshoppers own List[object] this does not contain a remove method'
+                        # therefore in line 4 6 and 7 we must add the data to a python list to be able to use the function
+                        for item in sequence:
+                            seq.append(item)
+                        for i in range(len(seq)):
+                            try:
+                                seq[i] = float(seq[i])
+                            except:
+                                strings.append(seq[i])
+                        for x in strings:
+                            seq.remove(x)
+                        return seq
                     
                     if noData == False:
-                        groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
-                        groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
-                        groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
-                        
-                        self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
-                        try: self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
-                        except: pass
-                        try: self.depthData(groundtemp3rd,float(groundtemp[34]))
-                        except: pass
-                    
-                else:
-                    pass
-                lnum += 1
-                
+                        try:
+                            groundtemp1st.extend(stringtoFloat(groundtemp[6:18])) ## Need to use func and not just float as it is a list using float() won't work
+                            groundtemp2nd.extend(stringtoFloat(groundtemp[22:34]))
+                            groundtemp3rd.extend(stringtoFloat(groundtemp[38:50]))
+                            
+                            self.depthData(groundtemp1st,float(groundtemp[2])) ## Referring to the depthData function 
+                            try: self.depthData(groundtemp2nd,float(groundtemp[18])) ## In each groundtemp list changing 'Depth' index to each datasets corresponding depth in the epw
+                            except: pass
+                            try: self.depthData(groundtemp3rd,float(groundtemp[34]))
+                            except: pass
+                        except:
+                            print ">>> Failed to import ground temperatures from %s." % epw_file
+
         return groundtemp1st,groundtemp2nd,groundtemp3rd
-    
+
+
     def printgroundTempData(self,groundtemp):
                     
         try: print 'Ground temperature data contains monthly average temperatures at ' + groundtemp[1] + ' different depths ' + groundtemp[2] + ' meters (1st) ' + groundtemp[18]+ ' meters (2nd) '+ groundtemp[34]+' meters (3rd) respectively'
@@ -940,11 +931,12 @@ class Preparation(object):
         dirRad = [self.strToBeFound, location, 'Direct Normal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
         difRad = [self.strToBeFound, location, 'Diffuse Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
         glbRad = [self.strToBeFound, location, 'Global Horizontal Radiation', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        infRad = [self.strToBeFound, location, 'Horizontal Infrared Radiation Intensity', 'Wh/m2', 'Hourly', (1, 1, 1), (12, 31, 24)];
         dirIll = [self.strToBeFound, location, 'Direct Normal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
         difIll = [self.strToBeFound, location, 'Diffuse Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
         glbIll = [self.strToBeFound, location, 'Global Horizontal Illuminance', 'lux', 'Hourly', (1, 1, 1), (12, 31, 24)];
         cloudCov = [self.strToBeFound, location, 'Total Cloud Cover', 'tenth', 'Hourly', (1, 1, 1), (12, 31, 24)];
-        rainDepth = [self.strToBeFound, location, 'Liquid Precipitation Depth', 'mm', 'Hourly', (1, 1, 1), (12, 31, 24)];
+        visibility = [self.strToBeFound, location, 'Visibility', 'km', 'Hourly', (1, 1, 1), (12, 31, 24)];
         barPress = [self.strToBeFound, location, 'Barometric Pressure', 'Pa', 'Hourly', (1, 1, 1), (12, 31, 24)];
         epwfile = open(epw_file,"r")
         lnum = 1 # line number
@@ -960,16 +952,14 @@ class Preparation(object):
                 dirRad.append(float(line.split(',')[14]))
                 difRad.append(float(line.split(',')[15]))
                 glbRad.append(float(line.split(',')[13]))
+                infRad.append(float(line.split(',')[12]))
                 dirIll.append(float(line.split(',')[17]))
                 difIll.append(float(line.split(',')[18]))
                 glbIll.append(float(line.split(',')[16]))
                 cloudCov.append(float(line.split(',')[22]))
-                try:
-                    if float(line.split(',')[33])!=999: rainDepth.append(float(line.split(',')[33]))
-                    else: rainDepth.append(0.0)
-                except: pass
             lnum += 1
-        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, rainDepth, barPress, modelYear
+        epwfile.close()
+        return dbTemp, dewPoint, RH, windSpeed, windDir, dirRad, difRad, glbRad, dirIll, difIll, glbIll, cloudCov, infRad, barPress, modelYear
     
     ##### Start of Gencumulative Sky
     def removeBlank(self, str):
@@ -2112,18 +2102,50 @@ class MeshPreparation(object):
     
         return testPoint, srfNormals, meshSrfArea
     
+    def calculateMeshFaceAreas(self, mesh):
+        
+        def triangleMeshFaceArea(A,B,C):
+            # Heron's formula
+            a = A.DistanceTo(B)
+            b = B.DistanceTo(C)
+            c = A.DistanceTo(C)
+            s = (a+b+c)/2  # triangle semiperimeter
+            triangleMeshFaceArea = math.sqrt(s * (s - a) * (s - b) * (s - c))
+            
+            return triangleMeshFaceArea
+        
+        meshFaces = mesh.Faces
+        meshVertices = mesh.Vertices
+        meshFaceAreas = []
+        for mFace in meshFaces:
+            if mFace.IsTriangle:
+                triangleMeshFaceArea1 = triangleMeshFaceArea(meshVertices[mFace.A], meshVertices[mFace.B], meshVertices[mFace.C])
+                triangleMeshFaceArea2 = 0 
+            elif mFace.IsQuad:
+                d1 = meshVertices[mFace.A].DistanceTo(meshVertices[mFace.C])
+                d2 = meshVertices[mFace.B].DistanceTo(meshVertices[mFace.D])
+                if d1 > d2:
+                    triangleMeshFaceArea1 = triangleMeshFaceArea(meshVertices[mFace.D], meshVertices[mFace.A], meshVertices[mFace.B])
+                    triangleMeshFaceArea2 = triangleMeshFaceArea(meshVertices[mFace.D], meshVertices[mFace.B], meshVertices[mFace.C])
+                else:
+                    triangleMeshFaceArea1 = triangleMeshFaceArea(meshVertices[mFace.A], meshVertices[mFace.B], meshVertices[mFace.C])
+                    triangleMeshFaceArea2 = triangleMeshFaceArea(meshVertices[mFace.A], meshVertices[mFace.C], meshVertices[mFace.D])
+            meshFaceAreas.append(triangleMeshFaceArea1+triangleMeshFaceArea2)
+        
+        return meshFaceAreas
+    
     def meshFromPoints(self, u, v, pts, meshColors=None):
         # creates a mesh from grid of points
         mesh = rc.Geometry.Mesh()
         if (meshColors == None) or (len(meshColors) == 0):
-            for i,pt in enumerate(pts):
+            for pt in pts:
                 mesh.Vertices.Add(pt)
         else:
             for i,pt in enumerate(pts):
                 mesh.Vertices.Add(pt)
                 mesh.VertexColors.Add(meshColors[i])
-        for i in range(1,u):
-            for k in range(1,v):
+        for i in xrange(1,u):
+            for k in xrange(1,v):
                 mesh.Faces.AddFace(k-1+(i-1)*v, k-1+i*v, k-1+i*v+1, k-1+(i-1)*v+1)
         
         return mesh
@@ -2320,7 +2342,7 @@ class RunAnalysisInsideGH(object):
         return sunlightHoursResult, totalSLH, sunVisibility
     
     
-    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas):
+    def parallel_viewCalculator(self, testPts, testVec, meshSrfArea, bldgMesh, contextMesh, parallel, viewPoints, viewPtsWeights, conversionFac, viewType, patchAreas, geoBlockView):
         # preparing bulk lists for parallel process.
         view = [0] * len(testPts)
         viewResult = [0] * len(testPts)
@@ -2339,9 +2361,13 @@ class RunAnalysisInsideGH(object):
         
         #Get the importance for view vectors.
         vecImportance = []
-        totalArea = sum(patchAreas)
-        for area in patchAreas:
-            vecImportance.append((area*100)/totalArea)
+        if viewType == 0:
+            for vec in viewPoints:
+                vecImportance.append(1)
+        else:
+            totalArea = sum(patchAreas)
+            for area in patchAreas:
+                vecImportance.append((area*100)/totalArea)
         
         
         #Create an empty list to be filled.
@@ -2349,7 +2375,7 @@ class RunAnalysisInsideGH(object):
         for pt in testPts: ptVisibility.append(range(len(viewPoints)))
         
         #If the view type is spherical or connical, neglect it from the view analysis.
-        if viewType == 1 or viewType == 2: bldgMesh = None
+        if geoBlockView == False: bldgMesh = None
         
         #Function for view by test points.
         try:
@@ -2467,7 +2493,9 @@ class ResultVisualization(object):
         18: [System.Drawing.Color.FromArgb(69,92,166), System.Drawing.Color.FromArgb(66,128,167), System.Drawing.Color.FromArgb(62,176,168), System.Drawing.Color.FromArgb(78,181,137), System.Drawing.Color.FromArgb(120,188,59), System.Drawing.Color.FromArgb(139,184,46), System.Drawing.Color.FromArgb(197,157,54), System.Drawing.Color.FromArgb(220,144,57), System.Drawing.Color.FromArgb(228,100,59), System.Drawing.Color.FromArgb(233,68,60)],
         19: [System.Drawing.Color.FromArgb(138,17,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(128,102,64)],
         20: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(137,0,139), System.Drawing.Color.FromArgb(218,0,218), System.Drawing.Color.FromArgb(196,0,255), System.Drawing.Color.FromArgb(0,92,255), System.Drawing.Color.FromArgb(0,198,252), System.Drawing.Color.FromArgb(0,244,215), System.Drawing.Color.FromArgb(0,220,101), System.Drawing.Color.FromArgb(7,193,0), System.Drawing.Color.FromArgb(115,220,0), System.Drawing.Color.FromArgb(249,251,0), System.Drawing.Color.FromArgb(254,178,0), System.Drawing.Color.FromArgb(253,77,0), System.Drawing.Color.FromArgb(255,15,15), System.Drawing.Color.FromArgb(255,135,135), System.Drawing.Color.FromArgb(255,255,255)],
-        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)]
+        21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)],
+        22: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,77), System.Drawing.Color.FromArgb(255,115,0), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(0,0,0)],
+        23: [System.Drawing.Color.FromArgb(0,191,48), System.Drawing.Color.FromArgb(255,238,184), System.Drawing.Color.FromArgb(255,0,0)]
         }
     
     def readRunPeriod(self, runningPeriod, p = True, full = True):
@@ -2530,8 +2558,14 @@ class ResultVisualization(object):
             joinedMesh.VertexColors[joinedMesh.Faces[srfCount].D] = colors[srfCount]
         return joinedMesh
     
-    def gradientColor(self, values, lowB, highB, colors):
+    def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
+    
+        # make a deep copy of colors so colors isn't popped twice once for legend colors and once for mesh colors
+        
+        copyColors = list(colors)
+        
         if highB == 'max': highB = max(values)
+            
         if lowB == 'min': lowB = min(values)
         
         # this function inputs values, and custom colors and outputs gradient colors
@@ -2542,7 +2576,7 @@ class ResultVisualization(object):
             elif highB == lowB: numP = 0
             else: numP = (num - lowB)/(highB - lowB)
             return numP
-
+    
         def calColor(valueP, rangeMinP, rangeMaxP, minColor, maxColor):
             # range is between 0 and 1
             rangeP = rangeMaxP - rangeMinP
@@ -2552,7 +2586,22 @@ class ResultVisualization(object):
             color = System.Drawing.Color.FromArgb(red, green, blue)
             return color
         
+        # Calculate num of colors
+        
+        if (highBoundColor != None):
+            
+            # Subtract a color to make room for the highBoundColor
+            
+            copyColors.pop()
+    
+        if (lowBoundColor != None):
+            
+            # Subtract a color to make room for the lowBoundColor
+            
+            copyColors.pop()
+        
         numofColors = len(colors)
+        
         colorBounds = rs.frange(0, 1, round(1/(numofColors-1),6))
         if len(colorBounds) != numofColors: colorBounds.append(1)
         colorBounds = [round(x,3) for x in colorBounds]
@@ -2561,14 +2610,31 @@ class ResultVisualization(object):
         for num in values: numP.append(parNum(num, lowB, highB))
             
         colorTemp = []
+        
         for num in numP:
             for i in range(numofColors):
+                
                 if  colorBounds[i] <= num <= colorBounds[i + 1]:
-                    colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
-                    break
-        color = colorTemp
-        return color
     
+                    if (num == 1) and (highBoundColor != None) :
+                        
+                        colorTemp.append(highBoundColor)
+                        break
+                        
+                    elif (num == 0) and (lowBoundColor != None):
+                        
+                        colorTemp.append(lowBoundColor)
+                        break
+                        
+                    else:
+                        
+                        colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
+                        break
+                            
+        color = colorTemp
+        
+        return color
+        
     def calculateBB(self, geometries, restricted = False):
         bbox = None
         plane = rc.Geometry.Plane.WorldXY
@@ -3247,7 +3313,7 @@ class ComfortModels(object):
         CSTR = 0.5
         
         TempSkinNeutral = 33.7 #setpoint (neutral) value for Tsk
-        TempCoreNeutral = 36.49 #setpoint value for Tcr
+        TempCoreNeutral = 36.8 #setpoint value for Tcr
         TempBodyNeutral = 36.49 #setpoint for Tb (.1*TempSkinNeutral + .9*TempCoreNeutral)
         SkinBloodFlowNeutral = 6.3 #neutral value for SkinBloodFlow
     
@@ -3507,7 +3573,7 @@ class ComfortModels(object):
                 # when top > 25 degC.
                 if vel < 0.9: coolingEffect = 1.2
                 elif  vel < 1.2: coolingEffect = 1.8
-                elif vel > 1.2: coolingEffect = 2.2
+                elif vel >= 1.2: coolingEffect = 2.2
                 else: pass
             
             #Figure out the relation between comfort and outdoor temperature depending on the level of conditioning.
@@ -3558,7 +3624,7 @@ class ComfortModels(object):
             if (vel >= 0.6 and to >= 25):
                 if vel < 0.9: coolingEffect = 1.2
                 elif  vel < 1.2: coolingEffect = 1.8
-                elif vel > 1.2: coolingEffect = 2.2
+                elif vel >= 1.2: coolingEffect = 2.2
                 else: pass
             if levelOfConditioning == 0: tComf = 0.31 * 33.5 + 17.8
             else: tComf = ((0.09*levelOfConditioning)+(0.31*(1-levelOfConditioning))) * 33.5 + ((22.6*levelOfConditioning)+(17.8*(1-levelOfConditioning)))
@@ -4013,36 +4079,28 @@ class ComfortModels(object):
         TKelvin = []
         for item in airTemp:
             TKelvin.append(item+273)
-        
         saturationPressure = self.calcVapPressHighAccuracy(TKelvin)
-        
         #Calculate hourly water vapor pressure
         DecRH = []
         for item in relHumid:
             DecRH.append(item*0.01)
-        
         partialPressure = [a*b for a,b in zip(DecRH,saturationPressure)]
         
         #Calculate hourly humidity ratio
         PressDiffer = [a-b for a,b in zip(barPress,partialPressure)]
-        
         Constant = []
         for item in partialPressure:
             Constant.append(item*0.621991)
-        
         humidityRatio = [a/b for a,b in zip(Constant,PressDiffer)]
         
         #Calculate hourly enthalpy
         EnVariable1 = []
         for item in humidityRatio:
             EnVariable1.append(1.01+(1.89*item))
-        
         EnVariable2 = [a*b for a,b in zip(EnVariable1,airTemp)]
-        
         EnVariable3 = []
         for item in humidityRatio:
             EnVariable3.append(2500*item)
-        
         EnVariable4 = [a+b for a,b in zip(EnVariable2,EnVariable3)]
         
         enthalpy = []
@@ -4055,6 +4113,42 @@ class ComfortModels(object):
         #Return all of the results
         return humidityRatio, enthalpy, partialPressure, saturationPressure
     
+    def findWetBulb(self, dbTemp, RH, Psta=101325):
+        """
+        Calculates Wet Bulb Temperature (C) at Temperature dbTemp (C),
+        Relative Humidity RH (%), and Barometric Pressure Psta (Pa).
+        """
+        es = 6.112 * math.e**((17.67 * dbTemp) / (dbTemp + 243.5))
+        e = (es * RH) / 100
+        Tw = 0
+        increse = 10
+        previoussign = 1
+        Ed = 1
+        
+        while math.fabs(Ed) > 0.005:
+            Ewg = 6.112 * math.e**((17.67 * Tw) / (Tw + 243.5))
+            eg = Ewg - (Psta / 100) * (dbTemp - Tw) * 0.00066 * (1 + (0.00155 * Tw))
+            Ed = e - eg
+            if Ed == 0:
+                break
+            else:
+                if Ed < 0:
+                    cursign = -1
+                    if cursign != previoussign:
+                        previoussign = cursign
+                        increse = increse / 10
+                    else:
+                        increse = increse
+                else:
+                    cursign = 1
+                    if cursign != previoussign:
+                        previoussign = cursign
+                        increse = increse / 10
+                    else:
+                        increse = increse
+            Tw = Tw + increse * previoussign
+        
+        return Tw
     
     def calcRelHumidFromHumidRatio(self, absHumid, barPress, temperature):
         #Calculate the partial pressure of water in the atmostphere.
@@ -5174,102 +5268,343 @@ class ComfortModels(object):
 
 
 class WindSpeed(object):
-    
-    def terrain(self, terrainType):
-        # Atmospheric boundary layer parameters based on terrain type
-        if terrainType == None:
-            # Default terrain value
-            terrainType = "City Terrain"
-            gradientHeightDiv = 921
-            gradientHeight = 460
-            a = 0.33
-            yValues = [str(yLabel) for yLabel in range(0,500,50)]
-            yAxisMaxRhinoHeight = 92
-            nArrows = 10
-            validTerrain = True
-            printMsg = "Terrain has been set to a default of (0 = city)."
-        else:
-            if terrainType == "city" or int(terrainType) == 0:
+    def readTerrainType(self, terrainType, powerOrLog = 0):
+        # Function that reads terrain type and returns the following paremeters used to calculate wind speed above the ground:
+        # d = Boundary layer height.  The height above the ground at which wind speeds become stable (or wind is at 95% of the max speed). Used in power-law wind speed calculations.
+        # a = Power-law exponent.
+        # rl = Roughness length. The height above the ground at which wind speed has dropped to 0.  Used in log-law wind speed calculations.
+        validTerrain = True
+        
+        try:
+            if terrainType == None or terrainType == "city" or int(terrainType) == 0:
                 terrainType = "City Terrain"
-                gradientHeightDiv = 921
-                gradientHeight = 460
+                d = 460
                 a = 0.33
-                yValues = [str(yLabel) for yLabel in range(0,500,50)]
-                yAxisMaxRhinoHeight = 92
-                nArrows = 10
-                validTerrain = True
-                printMsg = "Terrain set to (0 = city)"
+                rl = 1.0
             elif terrainType == "suburban" or int(terrainType) == 1:
                 terrainType = "Suburban Terrain"
-                gradientHeightDiv = 741
-                gradientHeight = 370
+                d = 370
                 a = 0.22
-                yValues = [str(yLabel) for yLabel in range(0,400,50)]
-                yAxisMaxRhinoHeight = 72
-                nArrows = 8
-                validTerrain = True
-                printMsg = "Terrain set to (1 = suburban)"
+                rl = 0.5
             elif terrainType == "country" or int(terrainType) == 2:
                 terrainType = "Country Terrain"
-                gradientHeightDiv = 541
-                gradientHeight = 270
+                d = 270
                 a = 0.14
-                yValues = [str(yLabel) for yLabel in range(0,300,50)]
-                yAxisMaxRhinoHeight = 52
-                nArrows = 6
-                validTerrain = True
-                printMsg = "Terrain set to (2 = country)"
+                rl = 0.1
             elif terrainType == "water" or int(terrainType) == 3:
                 terrainType = "Water Terrain"
-                gradientHeightDiv = 421
-                gradientHeight = 210
+                d = 210
                 a = 0.10
-                yValues = [str(yLabel) for yLabel in range(0,250,50)]
-                yAxisMaxRhinoHeight = 42
-                nArrows = 5
-                validTerrain = True
-                printMsg = "Terrain set to (3 = water)"
+                rl = 0.03
             else:
-                terrainType = gradientHeightDiv = gradientHeight = a = yValues = yAxisMaxRhinoHeight = nArrows = None
+                terrainType = None
+                d = None
+                a = None
+                rl = None
                 validTerrain = False
-                printMsg = "Please choose one of three terrain types: 0=city, 1=urban, 2=country 3=water"
-        
-        return validTerrain, terrainType, gradientHeightDiv, gradientHeight, a, yValues, yAxisMaxRhinoHeight, nArrows, printMsg
-    
-    
-    
-    def readTerrainType(self, terrainType):
-        checkData = True
-        roughLength = None
-        
-        if round(terrainType, 1) == 3.0 or terrainType == "water":
-            d = 210
-            a = 0.10
-        elif round(terrainType, 1) == 2.0 or terrainType == "country":
-            d = 270
-            a = 0.14
-        elif round(terrainType, 1) == 1.0 or terrainType == "suburban":
-            d = 370
-            a = 0.22
-        elif round(terrainType, 1) == 0.0 or terrainType == "urban":
-            d = 460
-            a = 0.33
-        else:
+        except:
+            terrainType = None
             d = None
             a = None
-            checkData = False
+            rl = None
+            validTerrain = False
         
-        return checkData, d, a
+        #Return the information.
+        if powerOrLog == 0:
+            return validTerrain, terrainType, d, a
+        elif powerOrLog == 1:
+            return validTerrain, terrainType, rl
+        else:
+            return validTerrain, terrainType, d, a, rl
     
-    def calcWindSpeedBasedOnHeight(self, vMet, height, d, a, metD, metA):
-        #Calculate the wind speed.
-        vHeight = ((height / d) ** a) * (vMet * (metD / 10) ** metA)
-        
+    
+    def powerLawWind(self, vMet, height, d, a, metD, metA, refH=10):
+        #Calculate the wind speed using a power law.
+        vHeight = ((height / d) ** a) * (vMet * (metD / refH) ** metA)
+        return vHeight
+    
+    def logLawWind(self, vMet, height, rl, metrl, refH=10):
+        #Calculate the wind speed using a power law.
+        if height > rl: vHeight = vMet * ((math.log(height/rl)) / (math.log(refH/metrl)))
+        else: vHeight = 0
         return vHeight
 
 
 class Photovoltaics(object):
     """ Set of methods for Photovoltaics and Solar Water Heating analysis """
+    def noLeavesPeriod(self, criteria, latitude, sunWindowQuadrantIndex, leaflessStartHOY=None, leaflessEndHOY=None):
+        if criteria == "perQuadrant":
+            if latitude > 0:  # northern hemisphere
+                if sunWindowQuadrantIndex < 72:
+                    seasonIndex = 0  # winter/autumn
+                elif sunWindowQuadrantIndex >= 72:
+                    seasonIndex = 1  # spring/summer
+            elif latitude < 0:  # southern hemisphere
+                if sunWindowQuadrantIndex < 72:
+                    seasonIndex = 1  # spring/summer
+                elif sunWindowQuadrantIndex >= 72:
+                    seasonIndex = 0  # winter/autumn
+        elif criteria == "perHoy":
+            if leaflessStartHOY < leaflessEndHOY:
+                if (sunWindowQuadrantIndex >= leaflessStartHOY) and (sunWindowQuadrantIndex <= leaflessEndHOY):
+                    seasonIndex = 0  # leafless period
+                else:
+                    seasonIndex = 1  # inleaf period
+            elif leaflessStartHOY > leaflessEndHOY:
+                if (sunWindowQuadrantIndex >= leaflessStartHOY) or (sunWindowQuadrantIndex <= leaflessEndHOY):
+                    seasonIndex = 0  # leafless period
+                else:
+                    seasonIndex = 1  # inleaf period
+        
+        return seasonIndex
+    
+    def calculateSkyExposureFactor(self, testPt, contextMeshes, latitude, radius, precision, treesTransmissionIndices=[0,[0,0]], leaflessStartHOY=None, leaflessEndHOY=None):
+        
+        # lifting up the testPt due to MeshRay intersection
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        testPtLifted = rc.Geometry.Point3d(testPt.X, testPt.Y, testPt.Z+tol)
+        lb_meshpreparation = MeshPreparation()
+        
+        precisionU = precision*5
+        precisionV = int(precisionU/3.5)
+        
+        skyDomeHalfSphere = rc.Geometry.Sphere(rc.Geometry.Plane(rc.Geometry.Point3d(testPtLifted),rc.Geometry.Vector3d(0,0,1)), radius)
+        splittedSkyDomeDomainUmin, splittedSkyDomeDomainUmax = [0, 2*math.pi]  # sphere diameter
+        splittedSkyDomeDomainVmin, splittedSkyDomeDomainVmax = [0, 0.5*math.pi]  # sphere vertical arc
+        splittedSkyDomeDomainVmax = 0.995*splittedSkyDomeDomainVmax
+        
+        stepU = (splittedSkyDomeDomainUmax - splittedSkyDomeDomainUmin)/precisionU
+        stepV = (splittedSkyDomeDomainVmax - splittedSkyDomeDomainVmin)/precisionV
+        
+        skyDomePts = []
+        for i in xrange(0,precisionU):
+            for k in xrange(0,precisionV):
+                u = splittedSkyDomeDomainUmin + stepU*i
+                v = splittedSkyDomeDomainVmin + stepV*k
+                skyDomePt = skyDomeHalfSphere.PointAt(u,v)
+                skyDomePts.append(skyDomePt)
+        skyDomeMeshPts = skyDomePts + skyDomePts[:precisionV]  # increases precisionU for 1
+        skyDomeMesh = lb_meshpreparation.meshFromPoints(precisionU+1, precisionV, skyDomeMeshPts)
+        meshFacesCentroids = [skyDomeMesh.Faces.GetFaceCenter(i) for i in xrange(skyDomeMesh.Faces.Count)]
+        meshFaces = skyDomeMesh.Faces
+        meshVertices = skyDomeMesh.Vertices
+        
+        meshFaceAreas = lb_meshpreparation.calculateMeshFaceAreas(skyDomeMesh)
+        skyDomeMeshArea = sum(meshFaceAreas)
+        skyDomeMeshArea2 = rc.Geometry.AreaMassProperties.Compute(skyDomeMesh).Area
+        #print "skyDomeMeshArea: ", skyDomeMeshArea
+        #print "skyDomeMeshArea2: ", skyDomeMeshArea2
+        
+        del skyDomeMeshPts
+        del meshVertices
+        del meshFaces
+        del skyDomeMesh
+        leaflessStartHOYdummy = 0; leaflessEndHOYdummy = 1
+        skyExposureFactor = 0  # 0 equals to 100% shading, 1 equals to 0% shading
+        for i,centroid in enumerate(meshFacesCentroids):
+            raysIntensityWithoutTransmissionIndex = meshFaceAreas[i]/skyDomeMeshArea
+            vector = rc.Geometry.Vector3d(centroid)-rc.Geometry.Vector3d(testPtLifted)
+            ray = rc.Geometry.Ray3d(testPtLifted, vector)
+            for meshIndex,mesh in enumerate(contextMeshes):
+                intersectParam = rc.Geometry.Intersect.Intersection.MeshRay(mesh,ray)
+                # ray hitted something
+                if intersectParam >= 0:
+                    seasonIndexDummy = self.noLeavesPeriod("perHoy", latitude, i, leaflessStartHOYdummy, leaflessEndHOYdummy)
+                    if meshIndex == 0:  # context mesh hitted
+                        treesTransmissionIndex = 0
+                    elif meshIndex == 1:  # coniferousTrees mesh hitted
+                        treesTransmissionIndex = treesTransmissionIndices[0]
+                    elif meshIndex == 2:  # deciduousTrees mesh hitted
+                        treesTransmissionIndex = treesTransmissionIndices[1][seasonIndexDummy]
+                    skyExposureFactor += raysIntensityWithoutTransmissionIndex*treesTransmissionIndex
+                    break
+            # no hitting, the ray only hits the sky dome
+            else:
+                treesTransmissionIndex = 1
+                skyExposureFactor += raysIntensityWithoutTransmissionIndex * treesTransmissionIndex
+        
+        del meshFacesCentroids
+        
+        return skyExposureFactor
+    
+    def calculateSrfAzimuthAngle(self, PVsurface):
+        # calculate PVsurface azimuth angle
+        obj = PVsurface.DuplicateBrep()
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        srfNormal = objSrf.NormalAt(0.5, 0.5)
+        srfNormal.Unitize()
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        
+        if (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (1-tol < srfNormal.Z < 1+tol):
+            # "_PVsurface" surface is parallel to the XY plane, faced upward
+            srfAzimuthD = 180
+            surfaceTiltD = 0
+        elif (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (-1-tol < srfNormal.Z < -1+tol):
+            # "_PVsurface" surface is parallel to the XY plane, faced downward
+            srfAzimuthD = 180
+            surfaceTiltD = 180
+        else:
+            # "_PVsurface" surface is not parallel to the XY plane
+            if (-tol < srfNormal.Z < tol):
+                # "_PVsurface" surface is perpendicular to the XY plane, faced downward
+                surfaceTiltD = 90
+            else:
+                # "_PVsurface" surface is not parallel nor perpendicular to XY plane
+                surfaceTiltD = None
+            # calculate the srfAzimuthD
+            xyPlane = rc.Geometry.Plane(rc.Geometry.Point3d(0,0,0), rc.Geometry.Vector3d(0,0,1))
+            
+            projNormalPt = xyPlane.ClosestPoint(rc.Geometry.Point3d(srfNormal))
+            projNormal = rc.Geometry.Vector3d(projNormalPt)
+            projNormal.Unitize()
+            
+            angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
+            srfAzimuthR = angleToYaxis
+            srfAzimuthD = math.degrees(srfAzimuthR)
+        
+        return srfAzimuthD, surfaceTiltD
+    
+    def srfAzimuthAngle(self, PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceAzimuthAngle != None):
+            if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+            else:
+                srfAzimuthD = PVsurfaceAzimuthAngle
+            surfaceTiltDCalculated = "needs to be calculated"
+        
+        # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceAzimuthAngle == None):
+            if PVsurfaceInputType == "brep":
+                srfAzimuthD, surfaceTiltDCalculated = self.calculateSrfAzimuthAngle(PVsurface)
+                if surfaceTiltDCalculated == None:
+                    surfaceTiltDCalculated = "needs to be calculated"
+            
+            # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
+            elif PVsurfaceInputType == "number":
+                if latitude >= 0:
+                    srfAzimuthD = 180  # equator facing for northern hemisphere
+                elif latitude < 0:
+                    srfAzimuthD = 0  # equator facing for southern hemisphere
+                surfaceTiltDCalculated = "needs to be calculated"
+        
+        return srfAzimuthD, surfaceTiltDCalculated
+    
+    def calculateSrfTiltAngle(self, PVsurface):
+        # calculate PVsurface tilt angle
+        obj = PVsurface.DuplicateBrep()
+        zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
+        zAxis = rc.Geometry.Vector3d(0,0,1)
+        worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
+        boundingBox = rc.Geometry.Brep.GetBoundingBox(obj, worldXYplane)
+        boundingBoxBrep = boundingBox.ToBrep()
+        lowerFaceBB = boundingBoxBrep.Faces[4].DuplicateFace(False)
+        centroidLowerFaceBB = rc.Geometry.AreaMassProperties.Compute(lowerFaceBB).Centroid
+        lowerFaceBBPlane = rc.Geometry.Plane(centroidLowerFaceBB, zAxis)
+        transformMatrix = rc.Geometry.Transform.Translation(zeroZeroZeroPt-centroidLowerFaceBB)
+        obj.Transform(transformMatrix)
+        
+        objSrf = obj.Faces[0]
+        reparematizedDomain = rc.Geometry.Interval(0,1)
+        objSrf.SetDomain(0, reparematizedDomain)
+        objSrf.SetDomain(1, reparematizedDomain)
+        centroidClosestPoint = objSrf.PointAt(0.5, 0.5)
+        orientedSrfNormal = objSrf.NormalAt(0.5, 0.5)
+        transformMatrix2 = rc.Geometry.Transform.PlanarProjection(worldXYplane)
+        projectedSrf = rc.Geometry.Brep.DuplicateBrep(obj)
+        projectedSrf.Transform(transformMatrix2)
+        
+        intersectPlane = rc.Geometry.Plane(centroidClosestPoint, zAxis, orientedSrfNormal)
+        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
+        brepPlaneInterCrv1 = rc.Geometry.Intersect.Intersection.BrepPlane(obj, intersectPlane, tol)[1][0]
+        brepPlaneInterCrv2 = rc.Geometry.Intersect.Intersection.BrepPlane(projectedSrf, intersectPlane, tol)[1][0]
+        brepPlaneInterVec1 = rc.Geometry.Vector3d(brepPlaneInterCrv1.PointAtEnd - brepPlaneInterCrv1.PointAtStart)
+        brepPlaneInterVec2 = rc.Geometry.Vector3d(brepPlaneInterCrv2.PointAtEnd - brepPlaneInterCrv2.PointAtStart)
+        srfTitlR = rc.Geometry.Vector3d.VectorAngle(brepPlaneInterVec1, brepPlaneInterVec2)
+    
+        if orientedSrfNormal.Z < 0:
+            srfTitlR = math.pi - srfTitlR
+        srfTiltD = math.degrees(srfTitlR)
+        
+        return srfTiltD
+    
+    def srfTiltAngle(self, PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
+        
+        # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
+        if (PVsurfaceTiltAngle != None):
+            
+            if (PVsurfaceTiltAngle < 0):
+                srfTiltD = 0
+            elif (PVsurfaceTiltAngle > 180):
+                srfTiltD = 0
+            else:
+                srfTiltD = PVsurfaceTiltAngle
+        
+        # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
+        elif (PVsurfaceTiltAngle == None):
+            
+            # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
+            if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
+                srfTiltD = surfaceTiltDCalculated
+            elif surfaceTiltDCalculated == "needs to be calculated":
+                if PVsurfaceInputType == "brep":
+                    srfTiltD = self.calculateSrfTiltAngle(PVsurface)
+                # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
+                elif PVsurfaceInputType == "number":
+                    srfTiltD = abs(latitude)
+        
+        return srfTiltD
+    
+    def angle2northClockwise(self, north):
+        # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
+        try:
+            northVec = rc.Geometry.Vector3d.YAxis
+            northVec.Rotate(-math.radians(float(north)),rc.Geometry.Vector3d.ZAxis)
+            northVec.Unitize()
+            return 2*math.pi-math.radians(float(north)), northVec
+        except Exception, e:
+            try:
+                northVec =rc.Geometry.Vector3d(north)
+                northVec.Unitize()
+                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVec, rc.Geometry.Plane.WorldXY), northVec
+            except Exception, e:
+                return 0, rc.Geometry.Vector3d.YAxis
+    
+    def correctSrfAzimuthDforNorth(self, north, srfAzimuthD):
+        # nothing inputted in "north_" - use default value: 0
+        if north == None:
+            northDeg = 0  # default
+            correctedSrfAzimuthD = srfAzimuthD
+            validNorth = True
+            printMsg = "ok"
+        else:
+            try:  # check if it's a number
+                north = float(north)
+                if north < 0 or north > 360:
+                    correctedSrfAzimuthD = northDeg = None
+                    validNorth = False
+                    printMsg = "Please input north angle value from 0 to 360."
+                    return correctedSrfAzimuthD, validNorth, printMsg
+            except Exception, e:  # check if it's a vector
+                north.Unitize()
+            
+            northRad, northVec = self.angle2northClockwise(north)
+            northDeg = 360-math.degrees(northRad)
+            correctedSrfAzimuthD = northDeg + srfAzimuthD
+            if correctedSrfAzimuthD > 360:
+                correctedSrfAzimuthD = correctedSrfAzimuthD - 360
+            validNorth = True
+            printMsg = "ok"
+        
+        return correctedSrfAzimuthD, northDeg, validNorth, printMsg
+    
     def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
         # sunZenith, sunAzimuth, sunAltitude angles
         # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
@@ -5649,184 +5984,6 @@ class Photovoltaics(object):
         if Pac < 0: Pac = 0
         
         return Tm, Tcell, Pdc_, Pac
-    
-    def calculateSrfAzimuthAngle(self, PVsurface):
-        # calculate PVsurface azimuth angle
-        obj = PVsurface.DuplicateBrep()
-        objSrf = obj.Faces[0]
-        reparematizedDomain = rc.Geometry.Interval(0,1)
-        objSrf.SetDomain(0, reparematizedDomain)
-        objSrf.SetDomain(1, reparematizedDomain)
-        srfNormal = objSrf.NormalAt(0.5, 0.5)
-        srfNormal.Unitize()
-        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
-        
-        if (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (1-tol < srfNormal.Z < 1+tol):
-            # "_PVsurface" surface is parallel to the XY plane, faced upward
-            srfAzimuthD = 180
-            surfaceTiltD = 0
-        elif (-tol < srfNormal.X < tol) and (-tol < srfNormal.Y < tol) and (-1-tol < srfNormal.Z < -1+tol):
-            # "_PVsurface" surface is parallel to the XY plane, faced downward
-            srfAzimuthD = 180
-            surfaceTiltD = 180
-        else:
-            # "_PVsurface" surface is not parallel to the XY plane
-            if (-tol < srfNormal.Z < tol):
-                # "_PVsurface" surface is perpendicular to the XY plane, faced downward
-                surfaceTiltD = 90
-            else:
-                # "_PVsurface" surface is not parallel nor perpendicular to XY plane
-                surfaceTiltD = None
-            # calculate the srfAzimuthD
-            xyPlane = rc.Geometry.Plane(rc.Geometry.Point3d(0,0,0), rc.Geometry.Vector3d(0,0,1))
-            
-            projNormalPt = xyPlane.ClosestPoint(rc.Geometry.Point3d(srfNormal))
-            projNormal = rc.Geometry.Vector3d(projNormalPt)
-            projNormal.Unitize()
-            
-            angleToYaxis = rc.Geometry.Vector3d.VectorAngle(projNormal, rc.Geometry.Vector3d(0,1,0), xyPlane)
-            srfAzimuthR = angleToYaxis
-            srfAzimuthD = math.degrees(srfAzimuthR)
-        
-        return srfAzimuthD, surfaceTiltD
-    
-    def srfAzimuthAngle(self, PVsurfaceAzimuthAngle, PVsurfaceInputType, PVsurface, latitude):
-        
-        # always use "PVsurfaceAzimuthAngle" input, even in case surface has been inputted into the "_PVsurface" input
-        if (PVsurfaceAzimuthAngle != None):
-            if (PVsurfaceAzimuthAngle < 0) or (PVsurfaceAzimuthAngle > 360):
-                if latitude >= 0:
-                    srfAzimuthD = 180  # equator facing for northern hemisphere
-                elif latitude < 0:
-                    srfAzimuthD = 0  # equator facing for southern hemisphere
-            else:
-                srfAzimuthD = PVsurfaceAzimuthAngle
-            surfaceTiltDCalculated = "needs to be calculated"
-        
-        # nothing inputted into "PVsurfaceAzimuthAngle_" input, calculate the PVsurfaceAzimuthAngle from inputted "_PVsurface" surface
-        elif (PVsurfaceAzimuthAngle == None):
-            if PVsurfaceInputType == "brep":
-                srfAzimuthD, surfaceTiltDCalculated = self.calculateSrfAzimuthAngle(PVsurface)
-                if surfaceTiltDCalculated == None:
-                    surfaceTiltDCalculated = "needs to be calculated"
-            
-            # nothing inputted into "PVsurfaceAzimuthAngle_" input, use south orientation (180 for + latitude locations, 0 for - latitude locations)
-            elif PVsurfaceInputType == "number":
-                if latitude >= 0:
-                    srfAzimuthD = 180  # equator facing for northern hemisphere
-                elif latitude < 0:
-                    srfAzimuthD = 0  # equator facing for southern hemisphere
-                surfaceTiltDCalculated = "needs to be calculated"
-        
-        return srfAzimuthD, surfaceTiltDCalculated
-    
-    def calculateSrfTiltAngle(self, PVsurface):
-        # calculate PVsurface tilt angle
-        obj = PVsurface.DuplicateBrep()
-        zeroZeroZeroPt = rc.Geometry.Point3d(0,0,0)
-        zAxis = rc.Geometry.Vector3d(0,0,1)
-        worldXYplane = rc.Geometry.Plane(zeroZeroZeroPt, zAxis)
-        boundingBox = rc.Geometry.Brep.GetBoundingBox(obj, worldXYplane)
-        boundingBoxBrep = boundingBox.ToBrep()
-        lowerFaceBB = boundingBoxBrep.Faces[4].DuplicateFace(False)
-        centroidLowerFaceBB = rc.Geometry.AreaMassProperties.Compute(lowerFaceBB).Centroid
-        lowerFaceBBPlane = rc.Geometry.Plane(centroidLowerFaceBB, zAxis)
-        transformMatrix = rc.Geometry.Transform.Translation(zeroZeroZeroPt-centroidLowerFaceBB)
-        obj.Transform(transformMatrix)
-        
-        objSrf = obj.Faces[0]
-        reparematizedDomain = rc.Geometry.Interval(0,1)
-        objSrf.SetDomain(0, reparematizedDomain)
-        objSrf.SetDomain(1, reparematizedDomain)
-        centroidClosestPoint = objSrf.PointAt(0.5, 0.5)
-        orientedSrfNormal = objSrf.NormalAt(0.5, 0.5)
-        transformMatrix2 = rc.Geometry.Transform.PlanarProjection(worldXYplane)
-        projectedSrf = rc.Geometry.Brep.DuplicateBrep(obj)
-        projectedSrf.Transform(transformMatrix2)
-        
-        intersectPlane = rc.Geometry.Plane(centroidClosestPoint, zAxis, orientedSrfNormal)
-        tol = rc.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance
-        brepPlaneInterCrv1 = rc.Geometry.Intersect.Intersection.BrepPlane(obj, intersectPlane, tol)[1][0]
-        brepPlaneInterCrv2 = rc.Geometry.Intersect.Intersection.BrepPlane(projectedSrf, intersectPlane, tol)[1][0]
-        brepPlaneInterVec1 = rc.Geometry.Vector3d(brepPlaneInterCrv1.PointAtEnd - brepPlaneInterCrv1.PointAtStart)
-        brepPlaneInterVec2 = rc.Geometry.Vector3d(brepPlaneInterCrv2.PointAtEnd - brepPlaneInterCrv2.PointAtStart)
-        srfTitlR = rc.Geometry.Vector3d.VectorAngle(brepPlaneInterVec1, brepPlaneInterVec2)
-    
-        if orientedSrfNormal.Z < 0:
-            srfTitlR = math.pi - srfTitlR
-        srfTiltD = math.degrees(srfTitlR)
-        
-        return srfTiltD
-    
-    def srfTiltAngle(self, PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, PVsurface, latitude):
-        
-        # always use "PVsurfaceTiltAngle" input, even in case surface has been inputted into the "_PVsurface" input
-        if (PVsurfaceTiltAngle != None):
-            
-            if (PVsurfaceTiltAngle < 0):
-                srfTiltD = 0
-            elif (PVsurfaceTiltAngle > 180):
-                srfTiltD = 0
-            else:
-                srfTiltD = PVsurfaceTiltAngle
-        
-        # nothing inputted into "PVsurfaceTiltAngle_" input, calculate the PVsurfaceTiltAngle from inputted "_PVsurface" surface
-        elif (PVsurfaceTiltAngle == None):
-            
-            # check if srfTildD hasn't already been calculated at srfAzimuthAngle() function
-            if (surfaceTiltDCalculated == 0) or (surfaceTiltDCalculated == 90) or (surfaceTiltDCalculated == 180):
-                srfTiltD = surfaceTiltDCalculated
-            elif surfaceTiltDCalculated == "needs to be calculated":
-                if PVsurfaceInputType == "brep":
-                    srfTiltD = self.calculateSrfTiltAngle(PVsurface)
-                # nothing inputted into "PVsurfaceTiltAngle_" input, use site abs(latitude) for PVsurfaceTiltAngle
-                elif PVsurfaceInputType == "number":
-                    srfTiltD = abs(latitude)
-        
-        return srfTiltD
-    
-    def angle2northClockwise(self, north):
-        # temporary function, until "Sunpath" class from Labybug_ladbybug.py starts calculating sun positions counterclockwise
-        try:
-            northVec = rc.Geometry.Vector3d.YAxis
-            northVec.Rotate(-math.radians(float(north)),rc.Geometry.Vector3d.ZAxis)
-            northVec.Unitize()
-            return 2*math.pi-math.radians(float(north)), northVec
-        except Exception, e:
-            try:
-                northVec =rc.Geometry.Vector3d(north)
-                northVec.Unitize()
-                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVec, rc.Geometry.Plane.WorldXY), northVec
-            except Exception, e:
-                return 0, rc.Geometry.Vector3d.YAxis
-    
-    def correctSrfAzimuthDforNorth(self, north, srfAzimuthD):
-        # nothing inputted in "north_" - use default value: 0
-        if north == None:
-            northDeg = 0  # default
-            correctedSrfAzimuthD = srfAzimuthD
-            validNorth = True
-            printMsg = "ok"
-        else:
-            try:  # check if it's a number
-                north = float(north)
-                if north < 0 or north > 360:
-                    correctedSrfAzimuthD = northDeg = None
-                    validNorth = False
-                    printMsg = "Please input north angle value from 0 to 360."
-                    return correctedSrfAzimuthD, validNorth, printMsg
-            except Exception, e:  # check if it's a vector
-                north.Unitize()
-            
-            northRad, northVec = self.angle2northClockwise(north)
-            northDeg = 360-math.degrees(northRad)
-            correctedSrfAzimuthD = northDeg + srfAzimuthD
-            if correctedSrfAzimuthD > 360:
-                correctedSrfAzimuthD = correctedSrfAzimuthD - 360
-            validNorth = True
-            printMsg = "ok"
-        
-        return correctedSrfAzimuthD, northDeg, validNorth, printMsg
     
     def inletWaterTemperature(self, dryBulbTemperature_C, method=0, minimalTemperature_C=1, depth_m=2, soilThermalDiffusivity_m2_s=2.5):
         # calculate cold (inlet) water temperature
@@ -6416,6 +6573,17 @@ if checkIn.letItFly:
     sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
-        print "Hi " + os.getenv("USERNAME")+ "!\n" + \
-              "Ladybug is Flying! Vviiiiiiizzz...\n\n" + \
-              "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+        greeting = "Hi{}!\n" \
+                   "Ladybug is Flying! Vviiiiiiizzz...\n\n" \
+                   "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+        
+        try:
+            print greeting.format(' ' + os.getenv('USERNAME'))
+        except:
+            print greeting.format('')
+            
+        # push ladybug component to back
+        ghenv.Component.OnPingDocument().SelectAll()
+        ghenv.Component.Attributes.Selected = False
+        ghenv.Component.OnPingDocument().BringSelectionToTop()
+        ghenv.Component.OnPingDocument().DeselectAll()
