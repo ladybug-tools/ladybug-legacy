@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_17_2016'
+ghenv.Component.Message = 'VER 0.0.63\nOCT_12_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -112,9 +112,9 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
             srfVec = rc.Geometry.Vector3d(closestPt.X-testPts[i].X, closestPt.Y-testPts[i].Y, closestPt.Z-testPts[i].Z)
             angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
             if abs(angle2Srf) > 90:
-                normalVecs[srfCount].Reverse()
-                angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
-            angFactor = (90-abs(angle2Srf))/90
+                angFactor = 0
+            else:
+                angFactor = (90-abs(angle2Srf))/90
             
             pointIntersectDict[srfCount] = [distToSrf*conversionFactor, srfVec, angle2Srf, angFactor]
         
@@ -129,18 +129,22 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
             intSrf = windowSrfs[srf]
             directVec = ptDict[srf][1]
             directAng = ptDict[srf][2]
-            normalPlaneVec = rc.Geometry.Vector3d(directVec.Y, directVec.X, 0)
-            intPlane = rc.Geometry.Plane(testPts[ptCount], normalPlaneVec)
-            try:
-                intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
-                startPtZ = intCurve.PointAtStart.Z
-                endPtZ = intCurve.PointAtEnd.Z
-                glzHeight  = (abs(endPtZ-startPtZ))*conversionFactor
-                ptDict[srf].append(glzHeight)
-            except:
-                srfBB = intSrf.GetBoundingBox(True)
-                glzHeight = (srfBB.Max.Z - srfBB.Min.Z)*conversionFactor
-                ptDict[srf].append(glzHeight)
+            if directAng < 90:
+                normalPlaneVec = rc.Geometry.Vector3d(directVec.X, directVec.Y, 0)
+                intPlane = rc.Geometry.Plane(testPts[ptCount], normalPlaneVec)
+                intPlane.Rotate(math.pi/2, rc.Geometry.Vector3d.ZAxis)
+                try:
+                    intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
+                    startPtZ = intCurve.PointAtStart.Z
+                    endPtZ = intCurve.PointAtEnd.Z
+                    glzHeight  = (abs(endPtZ-startPtZ))*conversionFactor
+                    ptDict[srf].append(glzHeight)
+                except:
+                    srfBB = intSrf.GetBoundingBox(True)
+                    glzHeight = (srfBB.Max.Z - srfBB.Min.Z)*conversionFactor
+                    ptDict[srf].append(glzHeight)
+            else:
+                ptDict[srf].append(1)
     
     # Compute the temperature difference.
     glassAirDelta = airTemp - winSrfTemp
