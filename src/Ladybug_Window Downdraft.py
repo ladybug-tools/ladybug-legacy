@@ -22,7 +22,9 @@
 """
 Use this component to compute the floor-level downdraft air temperature and velocity at a given set of points that are located close to a cold surface such as a window.  The draft conditions produced by this model are assumed to be 10 cm off of the floor.
 _
-The model used in this component comes from physical measurements of window downdraft conducted and published by Heiselberg.
+The model used in this component comes from physical measurements of window downdraft conducted and published here:
+_
+Heiselberg, P. Draft Risk from Cold Vertical Surfaces. Building and Environment, 29 (1994): 297-301.
 -
 Provided by Ladybug 0.0.63
     
@@ -43,7 +45,7 @@ ghenv.Component.NickName = 'downDraft'
 ghenv.Component.Message = 'VER 0.0.63\nOCT_12_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
