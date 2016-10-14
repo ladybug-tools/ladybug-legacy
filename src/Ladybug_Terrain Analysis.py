@@ -24,38 +24,46 @@
 Use this component to perform the following terrain analysis types:
 -
 - Slope
+- Grade
 - Aspect
 - Elevation
 - Visibility
 - Hillshade
 - TRI (Terrain Ruggedness Index by Riley)
 - TRI categories (Terrain Ruggedness Index categories by Riley)
+- SRF (Surface Roughness Factor by Hobson)
+- TPI (Topographic Position Index)
 - Mean curvature
 ------
 Component mainly based on:
 
 "DEM Surface Tools for ArcGIS", Jenness Enterprises, 2013.
 "How Hillshade works" article from Esri Developer Network
-"A terrain ruggedness index that quantifies topographic heterogeneity", S. J. Riley, S. D. DeGloria, R. Elliot, Intermountain journal of sciences Vol 5, 1999.
 "How to calculate Topographic Ruggedness Index in ArcGIS Desktop" article from gis.stackexchange.com
+"Terrain Roughness – 13 Ways" article from gis4geomorphology.com
+TopoToolbox "roughness" function by Wolfgang Schwanghart
 -
 http://www.jennessent.com/downloads/DEM%20Surface%20Tools%20for%20ArcGIS_A4.pdf
 http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
-http://download.osgeo.org/qgis/doc/reference-docs/Terrain_Ruggedness_Index.pdf
 http://gis.stackexchange.com/a/6059/65002
+http://gis4geomorphology.com/roughness-topographic-position
+https://github.com/wschwanghart/topotoolbox/blob/master/@GRIDobj/roughness.m
 -
 Provided by Ladybug 0.0.63
     
     input:
         _analysisType: Choose one of the terrain analysis types:
                        0 - Slope
-                       1 - Aspect
-                       2 - Elevation
-                       3 - Visibility
-                       4 - Hillshade
-                       5 - TRI (Terrain Ruggedness Index by Riley)
-                       6 - TRI categories (Terrain Ruggedness Index categories by Riley)
-                       7 - Mean curvature
+                       1 - Grade
+                       2 - Aspect
+                       3 - Elevation
+                       4 - Visibility
+                       5 - Hillshade
+                       6 - TRI (Terrain Ruggedness Index by Riley)
+                       7 - TRI categories (Terrain Ruggedness Index categories by Riley)
+                       8 - SRF (Surface Roughness Factor by Hobson)
+                       9 - TPI (Topographic Position Index)
+                       10 - Mean curvature
         _terrain: A terrain surface or polysurface.
                   Add it by supplying the "terrain" output from the "Terrain Generator" or "Terrain Generator 2" components.
                   -
@@ -77,13 +85,13 @@ Provided by Ladybug 0.0.63
                 -
                 If not supplied, default North direction will be set to the Y-axis (0 degrees).
         sunVector_: Illuminance source direction.
-                    This input is only used for _analysisType = 4 (Hillshade).
+                    This input is only used for _analysisType = 5 (Hillshade).
                     -
                     If not supplied, default sunVector of (0, 2.37126, -2.37126) will be used (an Y+ vector angled at 45 degrees downwards).
         hypsoStrength_: Hypsometric strength - a factor which determines shading factor's intensity due to elevation differences of terrain vertices.
                         It ranges from 0 to 100.
                         -
-                        This input is only used for _analysisType = 4 (Hillshade).
+                        This input is only used for _analysisType = 5 (Hillshade).
                         -
                         If not supplied, default hypsoStrength of 50 will be used.
         refine_: Refines the "analysedTerrain" output's mesh to finer resolution (halves the Maximum edge length of the "analysedTerrain" mesh).
@@ -91,7 +99,7 @@ Provided by Ladybug 0.0.63
                  Final "analysedTerrain" output is created with a certain mesh resolution.
                  Depending on your terrain, sometimes a mesh resolution of higher precision is required.
                  Be cautious !!! Due to "analysedTerrain" mesh increased number of vertices-faces, setting refine_ to True, can result in much longer component runtime !!!
-                 Still if your PC configuration is strong enough, you can always set this input to "True". Except for the _analysisType = 6 (TRI categories). In that case the refine_ input will not make any effect on the final "analysedTerrain" mesh.
+                 Still if your PC configuration is strong enough, you can always set this input to "True". Except for the _analysisType = 7 (TRI categories). In that case the refine_ input will not make any effect on the final "analysedTerrain" mesh.
                  -
                  If not supplied, the refine_ input will be set to False by default.
         legendPar_: Optional legend parameters from the Ladybug "Legend Parameters" component.
@@ -116,7 +124,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Analysis"
 ghenv.Component.NickName = "TerrainAnalysis"
-ghenv.Component.Message = "VER 0.0.63\nOCT_04_2016"
+ghenv.Component.Message = "VER 0.0.63\nOCT_12_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -137,26 +145,32 @@ import gc
 def checkInputData(analysisType, terrainId, originPt, originPtElevation, north, sunVector, hypsometricStrength, refine):
     
     # check inputs
-    if (analysisType == None) or ((analysisType  < 0) or (analysisType  > 7)):
+    if (analysisType == None) or ((analysisType  < 0) or (analysisType  > 10)):
         analysisType = analysisTypeLabel = originPt = originPtElevation = northRad = northD = sunVector = hypsometricStrength = refine = exportValues = unitSystem = unitConversionFactor = legendUnit = None
         validInputData = False
-        printMsg = "Please supply a number from 0 to 7 to the \"_analysisGeometry\" input based on the analysis you would like to perform."
+        printMsg = "Please supply a number from 0 to 10 to the \"_analysisGeometry\" input based on the analysis you would like to perform."
         return analysisType, analysisTypeLabel, originPt, originPtElevation, northRad, northD, sunVector, hypsometricStrength, refine, exportValues, unitSystem, unitConversionFactor, legendUnit, validInputData, printMsg
     if (analysisType == 0):
         analysisTypeLabel = "Slope"
     elif (analysisType == 1):
-        analysisTypeLabel = "Aspect"
+        analysisTypeLabel = "Grade"
     elif (analysisType == 2):
-        analysisTypeLabel = "Elevation"
+        analysisTypeLabel = "Aspect"
     elif (analysisType == 3):
-        analysisTypeLabel = "Visibility"
+        analysisTypeLabel = "Elevation"
     elif (analysisType == 4):
-        analysisTypeLabel = "Hillshade"
+        analysisTypeLabel = "Visibility"
     elif (analysisType == 5):
-        analysisTypeLabel = "Terrain Ruggedness Index"
+        analysisTypeLabel = "Hillshade"
     elif (analysisType == 6):
-        analysisTypeLabel = "Terrain Ruggedness Index categories"
+        analysisTypeLabel = "Terrain Ruggedness Index"
     elif (analysisType == 7):
+        analysisTypeLabel = "Terrain Ruggedness Index categories"
+    elif (analysisType == 8):
+        analysisTypeLabel = "Surface Roughness Factor"
+    elif (analysisType == 9):
+        analysisTypeLabel = "Topographic Position Index"
+    elif (analysisType == 10):
         analysisTypeLabel = "Mean curvature"
     
     
@@ -245,15 +259,19 @@ def checkInputData(analysisType, terrainId, originPt, originPtElevation, north, 
     
     unitConversionFactor = lb_preparation.checkUnits()
     
-    if (analysisType == 0) or (analysisType == 1):
+    if (analysisType == 0) or (analysisType == 2):
         legendUnit = "degrees"
-    elif (analysisType == 2) or (analysisType == 3) or (analysisType == 5):
+    elif (analysisType == 1):
+        legendUnit = "percent"
+    elif (analysisType == 3) or (analysisType == 4) or (analysisType == 6) or (analysisType == 9):
         legendUnit = unitSystem
-    elif (analysisType == 4):
+    elif (analysisType == 5):
         legendUnit = "HSH"
-    elif (analysisType == 6):
-        legendUnit = "TRI category"
     elif (analysisType == 7):
+        legendUnit = "TRI category"
+    elif (analysisType == 8):
+        legendUnit = "unitless‎"
+    elif (analysisType == 10):
         legendUnit = "1/%s" % unitSystem
     
     validInputData = True
@@ -266,19 +284,35 @@ def createOutputDescriptions(analysisType, unitSystem):
     
     if _runIt:
         outputDescriptions = [
-        ["Terrain Slope analysis mesh.",  #analysedTerrain
+        ["Terrain Slope analysis mesh.\n" + \
+        "Slope is a measure of terrain steepness.",  #analysedTerrain
         
         "Terrain Slope values.\n" + \
-        "Each value represents an angle between normal and its horizontal projection, at each mesh vertex.\n" + \
+        "Each value represents an arc tangent of the division of a height per length run, at each terrain mesh vertex.\n" + \
+        "It ranges from 0 to 90.\n" + \
         "-\n" + \
         "In degrees."]  #values
         
         ,
         
-        ["Terrain Aspect (slope direction) analysis mesh.",  #analysedTerrain
+        ["Terrain Grade analysis mesh.\n" + \
+        "Grade, like Slope is a measure of terrain steepness. Unlike Slope it measures the terrain steepness in percent.",  #analysedTerrain
+        
+        "Terrain Grade values.\n" + \
+        "Each value represents the division of a height per length run at each terrain mesh vertex.\n" + \
+        "It ranges from 0 to 572957.\n" + \
+        "-\n" + \
+        "In percent."]  #values
+        
+        ,
+        
+        ["Terrain Aspect analysis mesh.\n" + \
+        "It basically represents the azimuth angle (direction) of the slope, measured clockwise in degrees from the north_.\n" + \
+        "Aspect can affect physical and biotic features of the terrain.",  #analysedTerrain
         
         "Terrain Aspect (slope direction) values.\n" + \
-        "Each value represents an angle between the slope direction projected normal and north vector, at each mesh vertex.\n" + \
+        "Each value represents an angle between the slope direction and north_, at each terrain mesh vertex.\n" + \
+        "It ranges from 0 to 360.\n" + \
         "-\n" + \
         "In degrees."]  #values
         
@@ -287,7 +321,8 @@ def createOutputDescriptions(analysisType, unitSystem):
         ["Terrain Elevation analysis mesh.",  #analysedTerrain
         
         "Terrain Elevation values.\n" + \
-        "Each value represents an elevation of each mesh vertex.\n" + \
+        "Each value represents an elevation of each terrain mesh vertex.\n" + \
+        "It ranges from 0 to 8848.\n" + \
         "-\n" + \
         "In %s." % unitSystem]  #values
         
@@ -296,8 +331,8 @@ def createOutputDescriptions(analysisType, unitSystem):
         ["Terrain Visibility analysis mesh.",  #analysedTerrain
         
         "Terrain Visibility values.\n" + \
-        "Each value represents the distance between the lifted _origin and each mesh vertex.\n" + \
-        "_origin is always lifted for 1.6 meters (5.25 feet) to depict the height of a human eyesight.\n" + \
+        "Each value represents the distance between the lifted _origin and each terrain mesh vertex.\n" + \
+        "_origin is always lifted for 1.6 meters (5.25 feet) to depict the average height of the human eyesight.\n" + \
         "If mesh vertex is not visible from the _origin (these are gray colored areas), then the distance will be: 0.\n" + \
         "-\n" + \
         "In %s." % unitSystem]  #values
@@ -305,46 +340,70 @@ def createOutputDescriptions(analysisType, unitSystem):
         ,
         
         ["Terrain Hillshade analysis mesh.\n" + \
-        "Hillshading is a useful way to depict the topographic relief of a terrain.\n" + \
+        "Hillshading is a useful way to depict the topographic relief of a terrain by illuminating it with a hypothetical light source (sunVector_).\n" + \
         "A somewhat better preview of the analysedTerrain mesh is given when the legendPar_ input is supplied with customColors_ consisted of two colors only (white and black for example).",  #analysedTerrain
         
-        "Terrain Hillshade values.\nEach value represents a hypsometrically shaded hillshade (HSH) which is calculated as Elevation shading factor subtracted from 1 and multiplied by the actual Hillshade. Actual Hillshade being the hypothetical illumination of each mesh vertex.\n" + \
+        "Terrain Hillshade values.\nEach value represents a hypsometrically shaded hillshade (HSH) which is calculated as Elevation shading factor subtracted from 1 and multiplied by the actual Hillshade. Actual Hillshade being the hypothetical illumination of each terrain mesh vertex.\n" + \
         "-\n" + \
         "In hypsometrically shaded hillshade (HSH) value."]  #values
         
         ,
         
-        ["Terrain Terrain Ruggedness Index (TRI) analysis mesh.",  #analysedTerrain
+        ["Terrain Ruggedness Index (TRI) analysis mesh.\n" + \
+        "TRI is an index used to depict terrain ruggedness.",  #analysedTerrain
         
-        "Terrain Terrain Ruggedness Index (TRI) values.\n" + \
-        "Each value represents difference between the elevation of the vertex and the mean of an 8-vertices neighborhood of surrounding vertices, at each mesh vertex.\n" + \
+        "Terrain Ruggedness Index (TRI) values.\n" + \
+        "Based on formula by Shawn J. Riley.\n" + \
         "-\n" + \
         "In %s." % unitSystem]  #values
         
         ,
         
-        ["Terrain Terrain Ruggedness Index (TRI) category analysis mesh.",  #analysedTerrain
+        ["Terrain Ruggedness Index (TRI) category analysis mesh.",  #analysedTerrain
         
-        "Terrain Terrain Ruggedness Index (TRI) category values.\n" + \
-        "Categories being the following:\n" + \
+        "Terrain Ruggedness Index (TRI) category values.\n" + \
+        "Categories depend on the TRI values (_analysisType = 6), with them being the following:\n" + \
         "-\n" + \
-        "- category 0 (<=8.94 m): Level.\n" + \
-        "- category 1 (8.94-10.77 m): Nearly level.\n" + \
-        "- category 2 (10.77-12.69 m): Slightly rugged.\n" + \
-        "- category 3 (12.69-15.46 m): Intermediately rugged.\n" + \
-        "- category 4 (15.46-22.29 m): Moderately rugged.\n" + \
-        "- category 5 (22.29-30.95 m): Highly rugged.\n" + \
-        "- category 6 (> 30.95 m): Extremely rugged.\n" + \
+        "- category 0 (TRI<=80 m): Level.\n" + \
+        "- category 1 (80<TRI<=116 m): Nearly level.\n" + \
+        "- category 2 (116<TRI<=161 m): Slightly rugged.\n" + \
+        "- category 3 (161<TRI<=239 m): Intermediately rugged.\n" + \
+        "- category 4 (239<TRI<=497 m): Moderately rugged.\n" + \
+        "- category 5 (497<TRI<=958 m): Highly rugged.\n" + \
+        "- category 6 (>958 m): Extremely rugged.\n" + \
+        "-\n" + \
+        "Quite often the terrain you analyze might fall into the first TRI category. Mountain summits, vulcano craters and other significantly rugged and cragged topographies might consist of more TRI categories.\n" + \
         "-\n" + \
         "Unitless."]  #values
         
         ,
         
+        ["Surface Roughness Factor (SRF) analysis mesh.\n" + \
+        "SRF is an index used to depict terrain ruggedness.",  #analysedTerrain
+        
+        "Surface Roughness Factor (SRF) values.\n" + \
+        "Based on formula by Hobson (1972).\n" + \
+        "-\n" + \
+        "In %s." % unitSystem]  #values
+        
+        ,
+        
+        ["Topographic Position Index (TPI) analysis mesh.\n" + \
+        "TPI is another index used to depict terrain ruggedness.",  #analysedTerrain
+        
+        "Topographic Position Index (TPI) values.\n" + \
+        "Each value represents the difference between vertex elevation and mean elevation of its surrounding 8 vertices in 3x3 cells (vertex) window.\n" + \
+        "-\n" + \
+        "In %s." % unitSystem]  #values
+        
+        ,
+        
         ["Terrain Mean curvature analysis mesh.\n" + \
-        "It is useful indicator of abrupt change in the terrain curvature.",  #analysedTerrain
+        "It is depicts an abrupt change in terrain's curvature.\n" + \
+        "It can be a useful indicator of areas affected by erosion-deposition and flow acceleration.",  #analysedTerrain
         
         "Terrain Mean curvature values.\n" + \
-        "Each value represents mean curvature value at each mesh vertex.\n" + \
+        "Each value represents mean curvature value at each terrain mesh vertex.\n" + \
         "-\n" + \
         "In 1/%s." % unitSystem]  #values
         ]
@@ -385,17 +444,17 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
     terrainSrfControlPts = terrainSrf.Points
     terrainSrfControlPtsCoordinates = [pt.Location for pt in terrainSrfControlPts]
     distanceBetweenFirstSecondControlPt = terrainSrfControlPtsCoordinates[int((len(terrainSrfControlPtsCoordinates)/2)-4)].DistanceTo(terrainSrfControlPtsCoordinates[int(len(terrainSrfControlPtsCoordinates)/2-5)])
-    # for analysisType 5, 6 only:
+    # for analysisType 6, 7 only:
     bb = terrainBrep.GetBoundingBox(False)
     bb_bottom_Xdirection_edge = bb.GetEdges()[0]
     bb_bottom_Ydirection_edge = bb.GetEdges()[1]
     numberOfRows = int( (bb_bottom_Ydirection_edge.Length/distanceBetweenFirstSecondControlPt) )  # if "refine_" input set to False
     numberOfColumns = int( (bb_bottom_Xdirection_edge.Length/distanceBetweenFirstSecondControlPt) )  # if "refine_" input set to False
     
-    if refine and (analysisType != 6):  # "refine_ == True" will not affect the TRI categories (analysisType = 6)
-        # if refine_ input set to True, limit the meshParam.MaximumEdgeLength (this is for analysisType 0 to 4 and 7)
+    if refine and (analysisType != 7):  # "refine_ == True" will not affect the TRI categories (analysisType = 7)
+        # if refine_ input set to True, limit the meshParam.MaximumEdgeLength (this is for analysisType 0 to 5 and 10)
         meshParam.MaximumEdgeLength = int(distanceBetweenFirstSecondControlPt) / 2
-        # for analysisType 5 and 6
+        # for analysisType 6 and 7
         numberOfRows = 2 * numberOfRows  # for "refine_" input set to True, double the numberOfRows
         numberOfColumns = 2 * numberOfColumns  # for "refine_" input set to True, double the numberOfColumns
     
@@ -406,7 +465,7 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
     
     
     originPtZ = originPt.Z
-    # for _analysisStyle == 2,5,6
+    # for _analysisStyle == 3,6,7 (not needed for 5)
     def calculateVertexElevation(vertexZ):
         vertexElevation = (vertexZ-originPtZ)+originPtElevation
         return vertexElevation
@@ -418,15 +477,26 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             success, u, v = terrainSrf.ClosestPoint(vertex)
             surfaceNormal = terrainSrf.NormalAt(u,v)
             projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
-            slopeAngleR = Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
-            slopeAngleD = math.degrees(slopeAngleR)
+            slopeAngleR = math.radians(90) - Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
+            slopeAngleD = math.degrees(slopeAngleR)  # in degrees
             slopeAngles.append(slopeAngleD)
-        customColors2 = customColors[:]
-        customColors2.reverse()
-        colors = lb_visualization.gradientColor(slopeAngles, lowB, highB, customColors2)
+        colors = lb_visualization.gradientColor(slopeAngles, lowB, highB, customColors)
     
     
     elif (analysisType == 1):
+        # grade
+        gradePercents = []
+        for vertex in terrainMesh_vertices:
+            success, u, v = terrainSrf.ClosestPoint(vertex)
+            surfaceNormal = terrainSrf.NormalAt(u,v)
+            projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
+            slopeAngleR = math.radians(90) - Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
+            gradePercent = math.tan(slopeAngleR)*100  # in percent
+            gradePercents.append(gradePercent)
+        colors = lb_visualization.gradientColor(gradePercents, lowB, highB, customColors)
+    
+    
+    elif (analysisType == 2):
         # aspect (slope direction)
         Yaxis = Rhino.Geometry.Vector3d(0,1,0)
         slopeDirections = []
@@ -438,22 +508,22 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,1)))
             # counter clockwise
             #slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,-1)))
-            slopeDirectionD = math.degrees(slopeDirectionR)
+            slopeDirectionD = math.degrees(slopeDirectionR)  # in degrees
             correctedSlopeDirectionD_forNorth = correctSrfAzimuthDforNorth(northRad, slopeDirectionD)
             slopeDirections.append(correctedSlopeDirectionD_forNorth)
         colors = lb_visualization.gradientColor(slopeDirections, lowB, highB, customColors)
     
     
-    elif (analysisType == 2):
+    elif (analysisType == 3):
         # elevation
         elevations = []
         for vertex in terrainMesh_vertices:
-            vertexElevation = calculateVertexElevation(vertex.Z)
+            vertexElevation = calculateVertexElevation(vertex.Z)  # in rhino document units
             elevations.append(vertexElevation)
         colors = lb_visualization.gradientColor(elevations, lowB, highB, customColors)
     
     
-    elif (analysisType == 3):
+    elif (analysisType == 4):
         # visibility
         hittedPts = []
         hittedLines = []
@@ -463,16 +533,24 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         eachMeshVertexIndex_notHitted = []
         colors = [None]*len(terrainMesh_vertices)
         
+        # project _origin to terrainMesh. This is done due to inconsistency between "origin" output for "type = 0 or 1", and "origin" output for "type = 2 or 3" for "Terrain Generator 2" component
+        safeHeightDummy = 10000/unitConversionFactor  # in meters
+        highLiftedOrigin = Rhino.Geometry.Point3d(originPt.X, originPt.Y, (originPt.Z+safeHeightDummy))
+        ray = Rhino.Geometry.Ray3d(highLiftedOrigin, Rhino.Geometry.Vector3d(0,0,-1))
+        rayIntersectParam = Rhino.Geometry.Intersect.Intersection.MeshRay(terrainMesh, ray)
+        locationPt = ray.PointAt(rayIntersectParam)
+        # lift the locationPt for average eye height
         eyeHeightRhinoUnits = 1.6 / unitConversionFactor  # (1.6 meters, 5.25 feet)
-        liftedOriginPt = Rhino.Geometry.Point3d(originPt.X, originPt.Y, originPt.Z + eyeHeightRhinoUnits)  # lift the originPt (_origin) for average eye height
+        liftedOriginPt = Rhino.Geometry.Point3d(locationPt.X, locationPt.Y, locationPt.Z + eyeHeightRhinoUnits)
+        
         for index,vertex in enumerate(terrainMesh_vertices):
             liftedVertex = Rhino.Geometry.Point3d(vertex.X, vertex.Y, vertex.Z + 0.01)  # lift each mesh vertex due to Intersection.MeshLine
             line = Rhino.Geometry.Line(liftedOriginPt, liftedVertex)
             intersectionPts, intersectionFaceIndex = Rhino.Geometry.Intersect.Intersection.MeshLine(terrainMesh,line)
             if len(intersectionPts) != 0:
                 # terrainMesh hitted
-                hittedPts.append(liftedVertex)
-                hittedLines.append(line)
+                #hittedPts.append(liftedVertex)
+                #hittedLines.append(line)
                 colors[index] = System.Drawing.Color.FromArgb(70,70,70)  # set it to gray color
                 distanceToEachMeshVertex_all.append(0)  # if vertex can not be seen from liftedOriginPt, then set the distance between a vertex and liftedOriginPt to 0
             else:
@@ -490,7 +568,7 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             colors[notHittedVertexIndex] = colors_notHitted[dummyIndex]
     
     
-    elif (analysisType == 4):
+    elif (analysisType == 5):
         # hillshade
         # based on: http://edndoc.esri.com/arcobjects/9.2/net/shared/geoprocessing/spatial_analyst_tools/how_hillshade_works.htm
         # http://www.jennessent.com/downloads/DEM%20Surface%20Tools%20for%20ArcGIS_A4.pdf
@@ -537,28 +615,30 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         colors = lb_visualization.gradientColor(hypsometricallyShadedHillshadeL, lowB, highB, customColors)
     
     
-    elif (analysisType == 5) or (analysisType == 6) or (analysisType == 8):
-        # TRI (Terrain Ruggedness Index by Riley)  and  TRI categories (Terrain Ruggedness Index categories by Riley)
+    elif (analysisType == 6) or (analysisType == 7) or (analysisType == 8) or (analysisType == 9):
+        # TRI, TRI categories, SRF, TPI
         # based on: http://download.osgeo.org/qgis/doc/reference-docs/Terrain_Ruggedness_Index.pdf
         # http://gis.stackexchange.com/a/6059/65002
+        # https://github.com/wschwanghart/topotoolbox/blob/master/@GRIDobj/roughness.m
         def calculate_TRI_category(TRI_rhinoUnits):
             TRI_meters = TRI_rhinoUnits/unitConversionFactor
             
-            if TRI_meters <=math.sqrt(80):
+            if TRI_meters <=80:
                 TRI_category = 0
-            elif math.sqrt(80)<TRI_meters<=math.sqrt(116):
+            elif 80<TRI_meters<=116:
                 TRI_category = 1
-            elif math.sqrt(116)<TRI_meters<=math.sqrt(161):
+            elif 116<TRI_meters<=161:
                 TRI_category = 2
-            elif math.sqrt(161)<TRI_meters<=math.sqrt(239):
+            elif 161<TRI_meters<=239:
                 TRI_category = 3
-            elif math.sqrt(239)<TRI_meters<=math.sqrt(497):
+            elif 239<TRI_meters<=497:
                 TRI_category = 4
-            elif math.sqrt(497)<TRI_meters<=math.sqrt(958):
+            elif 497<TRI_meters<=958:
                 TRI_category = 5
-            elif TRI_meters>math.sqrt(958):
+            elif TRI_meters>958:
                 TRI_category = 6
             return TRI_category
+        
         
         # TPI categories based on: "GIS-Based Automated Landform Classification and Topographic, Landcover and Geologic Attributes of Landforms Around the Yazoren Polje", S. Tagil, J. Jenness, Journal of applied sciences 8, 2008
         # http://scialert.net/qredirect.php?doi=jas.2008.910.921&linkid=pdf
@@ -610,6 +690,7 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             return rowOfIndex
         
         TRI_List = []
+        SRF_List = []
         TPI_List = []
         TRI_category_List = []
         TPI_category_List = []
@@ -634,47 +715,55 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             neighboringVertexElevations_plus_centralVertexElevation = neighboringVertexElevations + [centralVertexElevation]
             neighboringVertexNormals_plus_centralVertexNormal = neighboringVertexNormals + [centralVertexNormal]
             
-            #SRF_rhinoUnits = math.sqrt( (sum([normal.X  for normal in neighboringVertexNormals_plus_centralVertexNormal]))**2 + (sum([normal.Y  for normal in neighboringVertexNormals_plus_centralVertexNormal]))**2 + (sum([normal.Z  for normal in neighboringVertexNormals_plus_centralVertexNormal]))**2 ) / len(neighboringVertexElevations_plus_centralVertexElevation)  # Hobson’s Surface Roughness Factor
             TRI_rhinoUnits = math.sqrt( sum([(centralVertexElevation-ptsZ)**2  for ptsZ in neighboringVertexElevations]) )  # in rhino document units
             TRI_List.append(TRI_rhinoUnits)
             
             TRI_category = calculate_TRI_category(TRI_rhinoUnits)  # unitless
             TRI_category_List.append(TRI_category)
-            """
-            TPI_rhinoUnits = centralVertexElevation - sum(neighboringVertexElevations)/len(neighboringVertexElevations)  # unitless
-            TPI_List.append(TPI_rhinoUnits)
             
+            SRF_unitless = math.sqrt( (sum([normal.X  for normal in neighboringVertexNormals_plus_centralVertexNormal]))**2 + (sum([normal.Y  for normal in neighboringVertexNormals_plus_centralVertexNormal]))**2 + (sum([normal.Z  for normal in neighboringVertexNormals_plus_centralVertexNormal]))**2 ) / len(neighboringVertexElevations_plus_centralVertexElevation)  # unitless
+            SRF_List.append(SRF_unitless)
+            
+            TPI_rhinoUnits = centralVertexElevation - sum(neighboringVertexElevations)/len(neighboringVertexElevations)  # in rhino document units
+            TPI_List.append(TPI_rhinoUnits)
+            """
+            # TPI cagories
             averageElevationOfCellsWindow = sum(neighboringVertexElevations_plus_centralVertexElevation) / len(neighboringVertexElevations_plus_centralVertexElevation)
             SD = math.sqrt(  sum( [(elevation - averageElevationOfCellsWindow)**2  for elevation in neighboringVertexElevations_plus_centralVertexElevation] ) / (len(neighboringVertexElevations_plus_centralVertexElevation) - 1)  )  # standard deviation of the elevation, in rhino document units
             projectedCentralVertexNormal = Rhino.Geometry.Vector3d(centralVertexNormal.X, centralVertexNormal.Y, 0)
-            slopeAngleR = Rhino.Geometry.Vector3d.VectorAngle(centralVertexNormal, projectedCentralVertexNormal)
+            slopeAngleR = math.radians(90) - Rhino.Geometry.Vector3d.VectorAngle(centralVertexNormal, projectedCentralVertexNormal)
             slopeAngleD = math.degrees(slopeAngleR)
             TPI_category = calculate_TPI_category(TPI_rhinoUnits, SD, slopeAngleD)  # unitless
             TPI_category_List.append(TPI_category)
             """
         
-        if (analysisType == 5):
+        if (analysisType == 6):
             colors = lb_visualization.gradientColor(TRI_List, lowB, highB, customColors)
             terrainMesh_colored = lb_meshpreparation.meshFromPoints(numberOfRows, numberOfColumns, ptsOnTerrainSrf, colors)
-            del terrainMesh_vertices; del ptsOnTerrainSrf; del colors; del TRI_category_List; del TPI_List
+            del terrainMesh_vertices; del ptsOnTerrainSrf; del colors; del TRI_category_List; del SRF_List; del TPI_List
             
             return terrainMesh_colored, TRI_List, TRI_List
-        elif (analysisType == 6):
+        elif (analysisType == 7):
             colors = lb_visualization.gradientColor(TRI_category_List, lowB, highB, customColors)
             terrainMesh_colored = lb_meshpreparation.meshFromPoints(numberOfRows, numberOfColumns, ptsOnTerrainSrf, colors)
-            del terrainMesh_vertices; del ptsOnTerrainSrf; del colors; del TRI_List; del TPI_List
+            del terrainMesh_vertices; del ptsOnTerrainSrf; del colors; del TRI_List; del SRF_List; del TPI_List
             
             return terrainMesh_colored, TRI_category_List, TRI_category_List
         elif (analysisType == 8):
-            # for TPI values
+            colors = lb_visualization.gradientColor(SRF_List, lowB, highB, customColors)
+            terrainMesh_colored = lb_meshpreparation.meshFromPoints(numberOfRows, numberOfColumns, ptsOnTerrainSrf, colors)
+            del terrainMesh_vertices; del ptsOnTerrainSrf; del colors; del TRI_List; del TRI_category_List; del TPI_List
+            
+            return terrainMesh_colored, SRF_List, SRF_List
+        elif (analysisType == 9):
             colors = lb_visualization.gradientColor(TPI_List, lowB, highB, customColors)
             terrainMesh_colored = lb_meshpreparation.meshFromPoints(numberOfRows, numberOfColumns, ptsOnTerrainSrf, colors)
-            del terrainMesh_vertices; del ptsOnTerrainSrf; del colors; del TRI_List; del TRI_category_List
+            del terrainMesh_vertices; del ptsOnTerrainSrf; del colors; del TRI_List; del TRI_category_List; del SRF_List
             
             return terrainMesh_colored, TPI_List, TPI_List
     
     
-    elif (analysisType == 7):
+    elif (analysisType == 10):
         # mean curvature
         MeanCurvatures = []
         for vertex in terrainMesh_vertices:
@@ -686,7 +775,7 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
     
     
     
-    # color the terrainMesh with generated colors for every analysisType except 5 and 6 types
+    # color the terrainMesh with generated colors for every analysisType except 6,7,8,9 types
     terrainMesh.VertexColors.Clear()
     for i in xrange(len(terrainMesh_vertices)):
         terrainMesh.VertexColors.Add(colors[i])
@@ -698,17 +787,20 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         return terrainMesh, slopeAngles, slopeAngles
     elif (analysisType == 1):
         del terrainMesh_vertices; del colors
-        return terrainMesh, slopeDirections, slopeDirections
+        return terrainMesh, gradePercents, gradePercents
     elif (analysisType == 2):
         del terrainMesh_vertices; del colors
-        return terrainMesh, elevations, elevations
+        return terrainMesh, slopeDirections, slopeDirections
     elif (analysisType == 3):
         del terrainMesh_vertices; del colors
-        return terrainMesh, distanceToEachMeshVertex_all, distanceToEachMeshVertex_notHitted
+        return terrainMesh, elevations, elevations
     elif (analysisType == 4):
         del terrainMesh_vertices; del colors
+        return terrainMesh, distanceToEachMeshVertex_all, distanceToEachMeshVertex_notHitted
+    elif (analysisType == 5):
+        del terrainMesh_vertices; del colors
         return terrainMesh, hypsometricallyShadedHillshadeL, hypsometricallyShadedHillshadeL
-    elif (analysisType == 7):
+    elif (analysisType == 10):
         del terrainMesh_vertices; del colors
         return terrainMesh, MeanCurvatures, MeanCurvatures
 
@@ -737,11 +829,11 @@ def joinTerrainStand_withTerrainMesh(terrainId, terrainMesh):
         # color the terrainMesh_withStand with terrainMesh colors
         terrainMesh_Colors = list(terrainMesh.VertexColors)
         
-        # fix for error on line 637 (success = terrainMesh_withStand.VertexColors.SetColor(vertexIndex2,color))
+        # fix for error on line 850 (success = terrainMesh_withStand.VertexColors.SetColor(vertexIndex2,color))
         terrainMesh_withStand.VertexColors.Clear()
         for i in xrange(len(list(terrainMesh_withStand.Vertices))):
-            terrainMesh_withStand.VertexColors.Add(System.Drawing.Color.FromArgb(255,255,255))  # dummy color due to error on line 637
-        # end of fix for erro on line 637
+            terrainMesh_withStand.VertexColors.Add(System.Drawing.Color.FromArgb(255,255,255))  # dummy color due to error on line 850
+        # end of fix for erro on line 850
         
         terrainMesh_Vertices_Point3f = list(terrainMesh.Vertices)
         terrainMesh_Vertices_Point3d = [Rhino.Geometry.Point3d(point3f)  for point3f in terrainMesh_Vertices_Point3f]
@@ -783,12 +875,13 @@ def createTitleLegend(analysisType, terrainMesh_withWithoutStand, legendValues, 
     titleLabelOrigin = lb_visualization.BoundingBoxPar[5]
     titleLabelOrigin.Y = titleLabelOrigin.Y - lb_visualization.BoundingBoxPar[2]/15
     
-    if (analysisType == 4):
+    if (analysisType == 5):
         titleLabelText = "Terrain %s analysis\nsunVector: (%0.2f,%0.2f,%0.2f), hypsoStrength: %s\nnorth: %s, refine: %s" % (analysisTypeLabel, sunVector.X, sunVector.Y, sunVector.Z, str(hypsometricStrength), str(northD), refine)
-    elif (analysisType == 5) or (analysisType == 6):
-        titleLabelText = "Terrain %s analysis\nnorth: %s, refine: %s, for fixed cells window: 3x3" % (analysisTypeLabel, northD, refine)
+    elif (analysisType == 6) or (analysisType == 7) or (analysisType == 8) or (analysisType == 9):
+        titleLabelText = "%s analysis\nnorth: %s, refine: %s, for fixed 3x3 cells window" % (analysisTypeLabel, northD, refine)
     else:
         titleLabelText = "Terrain %s analysis\nnorth: %s, refine: %s" % (analysisTypeLabel, northD, refine)
+    
     titleLabelMeshes = lb_visualization.text2srf([titleLabelText], [titleLabelOrigin], legendFont, titleFontSize*1.2, legendBold, None, 6)[0]
     titleLabelMesh = Rhino.Geometry.Mesh()
     for mesh in titleLabelMeshes:
@@ -819,7 +912,7 @@ def createTitleLegend(analysisType, terrainMesh_withWithoutStand, legendValues, 
 
 def bakingGrouping(analysisType, analysisTypeLabel, terrainMesh_withWithoutStand, titleLabelMesh, legendMesh, legendBasePt, originPt):
     
-    if (analysisType == 4):
+    if (analysisType == 5):
         # for Hillshade
         layerName = "%s_north=%s_refine=%s_sunVector=%0.2f,%0.2f,%0.2f_hypsoStrength=%s" % (analysisTypeLabel, northD, refine, sunVector.X, sunVector.Y, sunVector.Z, hypsometricStrength)
     else:
