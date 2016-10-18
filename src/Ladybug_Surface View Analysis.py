@@ -90,7 +90,10 @@ def checkInputs():
                 viewPoints.append(rc.Geometry.Point3d(point))
                 if viewMethod ==  1: checkData = False
             except:
-                viewPoints.append(rc.Geometry.Point3d(rs.coerce3dpoint(point)))
+                try:
+                    viewPoints.append(rc.Geometry.Point3d(rs.coerce3dpoint(point)))
+                except:
+                    checkData = False
     
     if checkData == False:
         warning = "_testPtsOrPlanes can be either points or planes but not both."
@@ -229,8 +232,8 @@ else:
 
 if initCheck == True:
     checkData, viewRes, viewMethod, viewPoints, viewPtNormals, parallel = checkInputs()
-    viewPatchBasePt = viewPoints[0]
     if checkData == True and _runIt == True:
+        viewPatchBasePt = viewPoints[0]
         viewVectors, viewPatches, patchAreaFacs = checkViewResolution(viewRes, viewPatchBasePt, lb_preparation)
         srfViewFactorsInit, viewVecSrfIndexInit = main(_testSrfs, context_, viewVectors, patchAreaFacs, viewPoints, viewPtNormals, viewMethod, parallel)
         

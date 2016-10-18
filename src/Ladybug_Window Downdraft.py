@@ -38,11 +38,12 @@ Provided by Ladybug 0.0.63
      Returns:
         draftAirTemp: The air temperature of the draft 10 cm off of the floor in degrees Celcius.
         draftAirVeloc: The velocity of the draft 10 cm off of the floor in m/s.
+        airFlowPlanes: The planes in which the governing downdraft is flowing.
 """
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_12_2016'
+ghenv.Component.Message = 'VER 0.0.63\nOCT_18_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -126,6 +127,8 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
         intRays(count)
     
     # For the points that are in the wake, find the height of the glazing at the point's downdraft location.
+    airFlowPlanes = []
+    
     for ptCount, ptDict in enumerate(ptIntList):
         for srf in ptDict.keys():
             intSrf = windowSrfs[srf]
@@ -134,7 +137,8 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
             if directAng < 90:
                 normalPlaneVec = rc.Geometry.Vector3d(directVec.X, directVec.Y, 0)
                 intPlane = rc.Geometry.Plane(testPts[ptCount], normalPlaneVec)
-                intPlane.Rotate(math.pi/2, rc.Geometry.Vector3d.ZAxis)
+                intPlane.Rotate((math.pi/2)+sc.doc.ModelAngleToleranceRadians, rc.Geometry.Vector3d.ZAxis)
+                airFlowPlanes.append(intPlane)
                 try:
                     intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
                     startPtZ = intCurve.PointAtStart.Z
@@ -146,6 +150,7 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
                     glzHeight = (srfBB.Max.Z - srfBB.Min.Z)*conversionFactor
                     ptDict[srf].append(glzHeight)
             else:
+                airFlowPlanes.append(None)
                 ptDict[srf].append(1)
     
     # Compute the temperature difference.
@@ -181,7 +186,7 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
             draftAirTemps.append(min(ptTemplists[lCount]))
     
     
-    return draftSpeeds, draftAirTemps
+    return draftSpeeds, draftAirTemps, airFlowPlanes
 
 #If Ladybug is not flying or is an older version, give a warning.
 initCheck = True
@@ -208,4 +213,6 @@ else:
 
 
 if initCheck == True and _testPts[0] != None and _windowSrfs[0] != None and _runIt == True:
-    draftAirVeloc, draftAirTemp = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_)
+    draftAirVeloc, draftAirTemp, airFlowPlanes = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_)
+
+ghenv.Component.Params.Output[3].Hidden= True
