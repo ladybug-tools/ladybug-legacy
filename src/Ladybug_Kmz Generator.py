@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Kmz Generator"
 ghenv.Component.NickName = 'KmzGenerator'
-ghenv.Component.Message = 'VER 0.0.63\nSEP_30_2016'
+ghenv.Component.Message = 'VER 0.0.63\nOCT_12_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -88,9 +88,16 @@ def moveGeometry(geometry, terrain, basePoint):
     centroid = rc.Geometry.AreaMassProperties.Compute(geometry).Centroid
     pointOnPlane = rc.Geometry.Point3d(centroid.X, centroid.Y, basePoint.Z)
     
-    pointOnTerrain_geometry = findEarthPoint(terrain, pointOnPlane)
+    try:
+        pointOnTerrain_geometry = findEarthPoint(terrain, pointOnPlane)[0]
+    except IndexError:
+        pointOnTerrain_geometry = rc.Geometry.Point3d(centroid.X, centroid.Y, basePoint.Z)
+        warning = "Some geometries are outside the terrain area.\n" + \
+        "You should move them manually after the baking."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, warning)
     
-    vec1 = rc.Geometry.Vector3d(pointOnTerrain_geometry[0])
+    vec1 = rc.Geometry.Vector3d(pointOnTerrain_geometry)
     vec2 = rc.Geometry.Vector3d(pointOnPlane)
     vec3 = rc.Geometry.Vector3d.Add(vec1, -vec2)
     
@@ -150,7 +157,7 @@ def main():
     # location or point3d
     try:
         latitude, longitude, elevation = eval(_basePointGeo)
-        basePointGeo = Rhino.Geometry.Point3d(lat, lon, elevation)
+        basePointGeo = rc.Geometry.Point3d(latitude, longitude, elevation)
     except:
         locationName, latitude, longitude, timeZone, elevation = lb_preparation.decomposeLocation(_basePointGeo)
         basePointGeo = rc.Geometry.Point3d(latitude, longitude, elevation)
