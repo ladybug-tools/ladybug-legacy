@@ -124,7 +124,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Analysis"
 ghenv.Component.NickName = "TerrainAnalysis"
-ghenv.Component.Message = "VER 0.0.63\nOCT_12_2016"
+ghenv.Component.Message = "VER 0.0.63\nOCT_31_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -476,9 +476,16 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         for vertex in terrainMesh_vertices:
             success, u, v = terrainSrf.ClosestPoint(vertex)
             surfaceNormal = terrainSrf.NormalAt(u,v)
-            projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
-            slopeAngleR = math.radians(90) - Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
-            slopeAngleD = math.degrees(slopeAngleR)  # in degrees
+            # check if slopeAngleD = 0
+            vectorsParallel = Rhino.Geometry.Vector3d.IsParallelTo(surfaceNormal, Rhino.Geometry.Vector3d(0,0,1), 0.01)
+            if vectorsParallel == 1:  # surfaceNormal and Rhino.Geometry.Vector3d(0,0,1) are parallel
+                slopeAngleD = 0
+            else:
+                projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
+                surfaceNormal_projectedSurfaceNormal_AngleR = Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
+                if surfaceNormal_projectedSurfaceNormal_AngleR < 0.001: surfaceNormal_projectedSurfaceNormal_AngleR = 0
+                slopeAngleR = math.radians(90) - surfaceNormal_projectedSurfaceNormal_AngleR
+                slopeAngleD = math.degrees(slopeAngleR)  # in degrees
             slopeAngles.append(slopeAngleD)
         colors = lb_visualization.gradientColor(slopeAngles, lowB, highB, customColors)
     
@@ -489,9 +496,16 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         for vertex in terrainMesh_vertices:
             success, u, v = terrainSrf.ClosestPoint(vertex)
             surfaceNormal = terrainSrf.NormalAt(u,v)
-            projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
-            slopeAngleR = math.radians(90) - Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
-            gradePercent = math.tan(slopeAngleR)*100  # in percent
+            # check if slopeAngleD = 0
+            vectorsParallel = Rhino.Geometry.Vector3d.IsParallelTo(surfaceNormal, Rhino.Geometry.Vector3d(0,0,1), 0.01)
+            if vectorsParallel == 1:  # surfaceNormal and Rhino.Geometry.Vector3d(0,0,1) are parallel
+                gradePercent = 0
+            else:
+                projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
+                surfaceNormal_projectedSurfaceNormal_AngleR = Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
+                if surfaceNormal_projectedSurfaceNormal_AngleR < 0.001: surfaceNormal_projectedSurfaceNormal_AngleR = 0
+                slopeAngleR = math.radians(90) - surfaceNormal_projectedSurfaceNormal_AngleR
+                gradePercent = math.tan(slopeAngleR)*100  # in percent
             gradePercents.append(gradePercent)
         colors = lb_visualization.gradientColor(gradePercents, lowB, highB, customColors)
     
@@ -503,12 +517,18 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         for vertex in terrainMesh_vertices:
             success, u, v = terrainSrf.ClosestPoint(vertex)
             surfaceNormal = terrainSrf.NormalAt(u,v)
-            projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
-            # clockwise
-            slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,1)))
-            # counter clockwise
-            #slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,-1)))
-            slopeDirectionD = math.degrees(slopeDirectionR)  # in degrees
+            # check if surfaceNormal == +Z axis
+            vectorsParallel = Rhino.Geometry.Vector3d.IsParallelTo(surfaceNormal, Rhino.Geometry.Vector3d(0,0,1), 0.01)
+            if vectorsParallel == 1:  # surfaceNormal and Rhino.Geometry.Vector3d(0,0,1) are parallel
+                slopeDirectionD = 0
+            else:
+                projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
+                # clockwise
+                slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,1)))
+                # counter clockwise
+                #slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,-1)))
+                if slopeDirectionR < 0.001: slopeDirectionR = 0
+                slopeDirectionD = math.degrees(slopeDirectionR)  # in degrees
             correctedSlopeDirectionD_forNorth = correctSrfAzimuthDforNorth(northRad, slopeDirectionD)
             slopeDirections.append(correctedSlopeDirectionD_forNorth)
         colors = lb_visualization.gradientColor(slopeDirections, lowB, highB, customColors)
@@ -594,14 +614,26 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
         for vertex in terrainMesh_vertices:
             success, u, v = terrainSrf.ClosestPoint(vertex)
             surfaceNormal = terrainSrf.NormalAt(u,v)
-            projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
-            slopeAngleR = Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
-            slopeAngleD = math.degrees(slopeAngleR)
-            # clockwise
-            slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,1)))
-            # counter clockwise
-            #slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,-1)))
-            slopeDirectionD = math.degrees(slopeDirectionR)
+            # check if slopeAngleD = 0 and slopeDirectionD = 0
+            vectorsParallel = Rhino.Geometry.Vector3d.IsParallelTo(surfaceNormal, Rhino.Geometry.Vector3d(0,0,1), 0.01)
+            if vectorsParallel == 1:  # surfaceNormal and Rhino.Geometry.Vector3d(0,0,1) are parallel
+                slopeAngleR = 0
+                slopeAngleD = 0
+                slopeDirectionD = 0
+            else:
+                projectedSurfaceNormal = Rhino.Geometry.Vector3d(surfaceNormal.X, surfaceNormal.Y, 0)
+                surfaceNormal_projectedSurfaceNormal_AngleR = Rhino.Geometry.Vector3d.VectorAngle(surfaceNormal, projectedSurfaceNormal)
+                if surfaceNormal_projectedSurfaceNormal_AngleR < 0.001: surfaceNormal_projectedSurfaceNormal_AngleR = 0
+                slopeAngleR = math.radians(90) - surfaceNormal_projectedSurfaceNormal_AngleR
+                slopeAngleD = math.degrees(slopeAngleR)  # in degrees
+                
+                # clockwise
+                slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,1)))
+                # counter clockwise
+                #slopeDirectionR = Rhino.Geometry.Vector3d.VectorAngle(projectedSurfaceNormal, Yaxis, Rhino.Geometry.Plane(Rhino.Geometry.Point3d(0,0,0), Rhino.Geometry.Vector3d(0,0,-1)))
+                if slopeDirectionR < 0.001: slopeDirectionR = 0
+                slopeDirectionD = math.degrees(slopeDirectionR)  # in degrees
+            
             correctedSlopeDirectionD_forNorth = correctSrfAzimuthDforNorth(northRad, slopeDirectionD)
             correctedSlopeDirectionR_forNorth = math.radians(correctedSlopeDirectionD_forNorth)
             
@@ -725,7 +757,10 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             SRF_List.append(SRF_unitless)
             
             TPI_rhinoUnits = centralVertexElevation - sum(neighboringVertexElevations)/len(neighboringVertexElevations)  # in rhino document units
-            TPI_List.append(TPI_rhinoUnits)
+            averageVertexElevations = sum(neighboringVertexElevations_plus_centralVertexElevation) / len(neighboringVertexElevations_plus_centralVertexElevation)
+            TPI2 = (averageVertexElevations - min(neighboringVertexElevations_plus_centralVertexElevation)) / (max(neighboringVertexElevations_plus_centralVertexElevation) - min(neighboringVertexElevations_plus_centralVertexElevation))  # unitless, also called ERR (Elevation–Relief Ratio (Pike and Wilson, 1971)), source: Olaya, V. 2009: Basic land-surface parameters. In: Geomorphometry, Hengl, T. & Reuter, H. I.
+            #TPI_List.append(TPI_rhinoUnits)
+            TPI_List.append(TPI2)
             """
             # TPI cagories
             averageElevationOfCellsWindow = sum(neighboringVertexElevations_plus_centralVertexElevation) / len(neighboringVertexElevations_plus_centralVertexElevation)
@@ -899,7 +934,8 @@ def createTitleLegend(analysisType, terrainMesh_withWithoutStand, legendValues, 
     legendMeshes = [legendSrfs] + lb_preparation.flattenList(legendTextSrfs)
     legendMesh = Rhino.Geometry.Mesh()
     for mesh in legendMeshes:
-        legendMesh.Append(mesh)
+        if isinstance(mesh, Rhino.Geometry.Mesh):
+            legendMesh.Append(mesh)
     
     # hide origin, legendBasePt output
     ghenv.Component.Params.Output[3].Hidden = True
