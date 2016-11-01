@@ -148,8 +148,81 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             return -1, -1
         
         return titleStatement, patternList
+        
+        
+def unpackPatternList(patternList, analysisPeriod):
+    """This is a helper function. It is mainly used to generate lists for windSpeeds and windDirections
+       output of this component.
+       input(patternList) = a list
+       output(result) = a tuple of lists"""
+    
+    # Simple unpacking of the list
+    if type(patternList[0]) == list:
+        finalPattern = [val for sublist in patternList for val in sublist]
+    else:
+        finalPattern = patternList
+        
+    # Getting total hours of the year from analysis period
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+    
+    # Making a new hourlist as per analysisPeriod. Basically, adding 0s for all hours that are not
+    # part of analysisPeriod and making a new list.
+    hourList = []
+    first = int(HOYS[0])
+    if first != 1:
+        diff = first - 1
+        for i in range(diff):
+            hourList.append(0)
+    hourList.extend(HOYS)
+    last = HOYS[-1]
+    if last != 8760:
+        diff = 8760 - last
+        for i in range(diff):
+            hourList.append(0)
+    
+    # Making the list for windSpeeds output
+    windSpeeds = []
+    # Creating header for the list
+    windSpeeds.extend(_hourlyWindSpeed[0:5])
+    if len(_analysisPeriod_) == 0:
+        windSpeeds.extend(_hourlyWindSpeed[5:7])
+    else:
+        windSpeeds.extend(_analysisPeriod_)
+    # Adding data to the list
+    for i in range(8760):
+        if hourList[i] == 0:
+            finalPattern[i] = None
+    for i in range(len(finalPattern)):
+        if finalPattern[i] == True:
+            i += 7
+            windSpeeds.append(_hourlyWindSpeed[i])
+        else:
+            windSpeeds.append(0)
+    
+    # Making the list for windDirections output
+    windDirections = []
+    # Creating header for the list
+    windDirections.extend(_hourlyWindDirection[0:5])
+    if len(_analysisPeriod_) == 0:
+        windDirections.extend(_hourlyWindDirection[5:7])
+    else:
+        windDirections.extend(_analysisPeriod_)
+    # Adding data to the list
+    for i in range(8760):
+        if hourList[i] == 0:
+            finalPattern[i] = None
+    for i in range(len(finalPattern)):
+        if finalPattern[i] == True:
+            i += 7
+            windDirections.append(_hourlyWindDirection[i])
+        else:
+            windDirections.append(None)
+            
+    return windSpeeds, windDirections
 
 
+    
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                   analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
                   scale, legendPar, bakeIt, maxFrequency):
@@ -223,7 +296,12 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 # send all data and statement to a function and return back
                 # True, False Pattern and condition statement
                 titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement)
-            
+                # Unpacking the paternList for output of windSpeeds and windDirections
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_)
+                windSpeeds = unpackedList[0]
+                windDirections = unpackedList[1]
+
+                
             if titleStatement != -1 and True not in patternList:
                 warning = 'No hour meets the conditional statement.' 
                 print warning
@@ -232,7 +310,12 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             if titleStatement == -1:
                 patternList = [[True]] * 8760
+                # Unpacking the paternList for output of windSpeeds and windDirections
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_)
+                windSpeeds = unpackedList[0]
+                windDirections = unpackedList[1]
                 titleStatement = False
+
             
            # check the scale
             try:
@@ -621,7 +704,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
                         else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
         
-            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurveFinal
+            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurveFinal
 
     else:
         warning =  "You should first let the Ladybug fly..."
@@ -636,7 +719,7 @@ if _runIt:
                   _scale_, legendPar_, bakeIt_, maxFrequency_)
     
     if result!= -1:
-        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurve = result
+        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurve = result
         
         legend = DataTree[Object]()
         calmRoseMesh = DataTree[Object]()
