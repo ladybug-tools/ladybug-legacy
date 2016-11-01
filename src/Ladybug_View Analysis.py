@@ -72,7 +72,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nOCT_22_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -137,10 +137,11 @@ def restoreComponentInputs():
 def checkViewType(lb_preparation):
     #Assign default values.
     viewVecs, viewType, patchAreas, geoBlockView = [], -1, [], False
+    
     try:
         viewType = int(_viewTypeOrPoints[0])
         if viewType >= 0 and viewType <= 4:
-            if viewType <= 3: geoBlockView = True
+            if viewType >= 3: geoBlockView = True
         else:
             warning = "_viewTypeOrPoints must be between 0 and 3."
             print warning
