@@ -152,38 +152,30 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         return titleStatement, patternList
         
         
-def unpackPatternList(patternList, analysisPeriod):
+def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection):
     """This is a helper function. It is mainly used to generate lists for windSpeeds and windDirections
        output of this component.
-       input(patternList) = a list
+       input(patternList) = a list with True and False values based on conditional statement
+       input (analysisPeriod) = Data from _analysisPeriod_ input of this component
+       input (_hourlyWindSpeed) = Data from _hourlyWindSpeed input of this component
+       input (_hourlyWindDirection) = Data from _hourlyWindDirection input of this component
        output(result) = a tuple of lists"""
     
-    # Simple unpacking of the list
+    #Trimming headers from weather data input and making new lists out of them
+    speedData = _hourlyWindSpeed[7:]
+    directionData = _hourlyWindDirection[7:]
+    
+    # Simple unpacking of the list in a new local variable finalPattern.
     if type(patternList[0]) == list:
         finalPattern = [val for sublist in patternList for val in sublist]
     else:
         finalPattern = patternList
         
-    # Getting total hours of the year from analysis period
+    # Getting total hours of the year from the analysis period
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
-    
-    # Making a new hourlist as per analysisPeriod. Basically, adding 0s for all hours that are not
-    # part of analysisPeriod and making a new list.
-    hourList = []
-    first = int(HOYS[0])
-    if first != 1:
-        diff = first - 1
-        for i in range(diff):
-            hourList.append(0)
-    hourList.extend(HOYS)
-    last = HOYS[-1]
-    if last != 8760:
-        diff = 8760 - last
-        for i in range(diff):
-            hourList.append(0)
-    
-    # Making the list for windSpeeds output
+
+    # Making a new list for windSpeeds output
     windSpeeds = []
     # Creating header for the list
     windSpeeds.extend(_hourlyWindSpeed[0:5])
@@ -192,17 +184,14 @@ def unpackPatternList(patternList, analysisPeriod):
     else:
         windSpeeds.extend(_analysisPeriod_)
     # Adding data to the list
-    for i in range(8760):
-        if hourList[i] == 0:
-            finalPattern[i] = None
-    for i in range(len(finalPattern)):
-        if finalPattern[i] == True:
-            i += 7
-            windSpeeds.append(_hourlyWindSpeed[i])
+    for i in range(len(HOYS)):
+        j = int(HOYS[i])-1 # Here, -1 is important. So that, counting starts from index 0.
+        if finalPattern[j] == True:
+            windSpeeds.append(speedData[j])
         else:
-            windSpeeds.append(0)
+            pass
     
-    # Making the list for windDirections output
+    # Making a new list for windDirections output
     windDirections = []
     # Creating header for the list
     windDirections.extend(_hourlyWindDirection[0:5])
@@ -211,16 +200,13 @@ def unpackPatternList(patternList, analysisPeriod):
     else:
         windDirections.extend(_analysisPeriod_)
     # Adding data to the list
-    for i in range(8760):
-        if hourList[i] == 0:
-            finalPattern[i] = None
-    for i in range(len(finalPattern)):
-        if finalPattern[i] == True:
-            i += 7
-            windDirections.append(_hourlyWindDirection[i])
+    for i in range(len(HOYS)):
+        j = int(HOYS[i])-1 # Here, -1 is important. So that, counting starts from index 0.
+        if finalPattern[j] == True:
+            windDirections.append(directionData[j])
         else:
-            windDirections.append(None)
-            
+            pass
+
     return windSpeeds, windDirections
 
 
@@ -299,7 +285,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 # True, False Pattern and condition statement
                 titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement)
                 # Unpacking the paternList for output of windSpeeds and windDirections
-                unpackedList = unpackPatternList(patternList, _analysisPeriod_)
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_, _hourlyWindSpeed, _hourlyWindDirection)
                 windSpeeds = unpackedList[0]
                 windDirections = unpackedList[1]
 
@@ -313,7 +299,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             if titleStatement == -1:
                 patternList = [[True]] * 8760
                 # Unpacking the paternList for output of windSpeeds and windDirections
-                unpackedList = unpackPatternList(patternList, _analysisPeriod_)
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_, _hourlyWindSpeed, _hourlyWindDirection)
                 windSpeeds = unpackedList[0]
                 windDirections = unpackedList[1]
                 titleStatement = False
