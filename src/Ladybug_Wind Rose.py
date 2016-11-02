@@ -52,7 +52,9 @@ Provided by Ladybug 0.0.63
         windRoseMesh: A mesh representing the wind speed from different directions for all hours analyzed.
         windRoseCrvs: A set of guide curves that mark the number of hours corresponding to the windRoseMesh.
         windRoseCenPts: The center point(s) of wind rose(s).  Use this to move the wind roses in relation to one another using the grasshopper "move" component.
-        legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        windSpeeds: Wind speed data for the wind rose displayed in the Rhino scene.
+        windDirections: Wind direction data for the wind rose displayed in the Rhino scene.
+        legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
         legendBasePts: The legend base point(s), which can be used to move the legend in relation to the rose with the grasshopper "move" component.
         title: The title for the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
 """
