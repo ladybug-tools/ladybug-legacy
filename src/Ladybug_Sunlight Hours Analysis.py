@@ -224,7 +224,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
         
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
         if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[6]
-        elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[5]
+        elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[6]
         
         colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
         
