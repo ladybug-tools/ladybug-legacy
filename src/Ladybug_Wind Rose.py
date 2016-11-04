@@ -41,6 +41,7 @@ Provided by Ladybug 0.0.63
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
+        showFrequency_: Connect boolean and set it to True to display frequencies on the wind rose.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -208,7 +209,6 @@ def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWind
             pass
 
     return windSpeeds, windDirections
-
 
     
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
@@ -384,6 +384,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             calmFreq = (100*len(calmHour)/len(studyHours))/numOfDirections
             
+            
             # draw the basic geometry for windRose
             
             ## draw the first polygon for calm period of the year
@@ -399,6 +400,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             freqCrvs = []
             minFreq = calmFreq
+
             try:
                 maxFreq = float(maxFrequency)%100
                 if maxFreq ==0: maxFreq == 100
@@ -504,7 +506,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         numRanges = legendText[:-1]
                         if len(numRanges) == 1:
                             numRanges.insert(0, 0.0)
-                        
+
                         # do it for the calm period
                         # calculate the frequency for calm
                         freqInCenter = []
@@ -531,7 +533,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                 
                         centerMesh = rc.Geometry.Mesh()
                         cenMeshColors = []
-                        
                         
                         for crvNum in range(len(centerFrqPts)):
                             avr = avrValues[crvNum]
@@ -608,15 +609,43 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                     totalFr = totalFr + fr
                     
                     segments.Flip(True, True, True)
-                    
                     segments = lb_visualization.colorMesh(segmentsColors, segments)
                     centerMesh = lb_visualization.colorMesh(cenMeshColors, centerMesh)
-                    
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
-                    
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
-                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
+                    
+                    # Adding frequencies to the wind Rose
+                    # Making a list of frequecies to display on wind rose and rounding them
+                    freqTextList = []
+                    for item in windFreq:
+                        freqTextList.append(str(round(item, 2)))
+                    # Measuring the distance between the north point and the center of the wind rose.
+                    # This radial distance is crucial for position of frequencies
+                    point01 = cenPt
+                    point02 = compassTextPts[0]
+                    distance = rc.Geometry.Point3d.DistanceTo(point02, point01)
+                    factor = -20 + distance
+                    # Making first point for frequency display. This is the first point
+                    newPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*factor)
+                    # Point container for othe points
+                    freqTextPts = [newPoint]
+                    angleList = [x*22.5 for x in range(17)]
+                    angleList = angleList[1:]
+                    # Based on angles new points are created
+                    for angle in angleList:
+                        newVector = rc.Geometry.Vector3d(northVector)*factor #Factor is important here
+                        newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+                        addPoint = rc.Geometry.Point3d.Add(point01, newVector)
+                        freqTextPts.append(addPoint)
+                        
+                    if showFrequency_ == True:
+                        freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/1.5, legendBold)
+                    else:
+                        freqTextCrvs = []
+                        
+                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
+                    numberCrvs = numberCrvs + freqTextCrvs
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
                     # let's move it move it move it!
