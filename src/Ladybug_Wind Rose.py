@@ -41,7 +41,8 @@ Provided by Ladybug 0.0.63
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
-        showFrequency_: Connect boolean and set it to True to display frequencies on the wind rose.
+        showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction
+        frequencyOffset_: The offset of frequecy display on wind rose. This input only accepts floats. The default offset is 1.12
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -81,6 +82,7 @@ import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
+
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -210,7 +212,20 @@ def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWind
 
     return windSpeeds, windDirections
 
-    
+
+def freqOffset(frequencyOffset_):
+    """This function sets the offset value for frequency display on wind rose
+    input(frequencyOffset_) = input from this component
+    output(offset) = a float value"""
+    if frequencyOffset_ == None:
+        offset = 1.12
+        return offset
+    else:
+        offset = frequencyOffset_
+        return offset
+                        
+                        
+
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                   analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
                   scale, legendPar, bakeIt, maxFrequency):
@@ -625,7 +640,8 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     point01 = cenPt
                     point02 = compassTextPts[0]
                     distance = rc.Geometry.Point3d.DistanceTo(point02, point01)
-                    factor = -20 + distance
+                    offset = freqOffset(frequencyOffset_)
+                    factor = offset * distance
                     # Making first point for frequency display. This is the first point
                     newPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*factor)
                     # Point container for othe points
@@ -640,7 +656,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         freqTextPts.append(addPoint)
                         
                     if showFrequency_ == True:
-                        freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/1.5, legendBold)
+                        freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/1.5, legendBold, plane = None, justificationIndex = 1 )
                     else:
                         freqTextCrvs = []
                         
