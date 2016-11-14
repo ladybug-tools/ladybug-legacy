@@ -295,47 +295,34 @@ def main(cenPt, context, radius, merge):
     # calculate the mask
     planarSrfs, crvsOnSky, skyDome, joinedContext = getSkyMask(cenPt, context, BBSky, BBRadius, merge)
     
-    
     # separate sky components
     maskedSkyDome = []
     unmaskedSkyDome = []
-    areaList = []
+    zValue = []
     brepList = []
     for faceCount in range(skyDome.Faces.Count):
-
         surface = skyDome.Faces.ExtractFace(faceCount)
         srfCenPt = rc.Geometry.AreaMassProperties.Compute(surface).Centroid
+        zValue.append(srfCenPt.Z)
         srfCenPt = rc.Geometry.Point3d(surface.ClosestPoint(srfCenPt))
         
         if not surface.IsValid:
             surface = surface.Faces.ExtractFace(0)
-        
         # Making a list of breps in the skyDome
         brepList.append(surface)
-        # Getting area for each breps
-        area = rc.Geometry.Brep.GetArea(surface)
-        areaList.append(area)
-        # Making a dictionary of brep : area
-        brepDict = dict(zip(brepList, areaList))
-        
-        # Following is the original method for separating maskedSky and unmaskedSky breps
-#        if isMeshFaceVisible(cenPt, [srfCenPt], joinedContext):
-#            unmaskedSkyDome.append(surface)
-#        else:
-#            maskedSkyDome.append(surface)
-    
-    # sorting the dictionary so that the brep with the largest area remains last in the
+        # Making a dictionary of brep : zValue of srfCenPt
+        brepDict = dict(zip(brepList, zValue))
+
+    # sorting the dictionary so that the brep with the largest zValue remains last in the
     # dictionary
     sortedDict = sorted(brepDict.items(), key = operator.itemgetter(1))
-    # The brep with largest area is assumed to be the unmaskedSkyDome
-    unmaskedSkyDome.append(sortedDict[-1][0])
+    # The brep with smallest zValue for srfCenPt is assumed to be the unmaskedSkyDome
+    unmaskedSkyDome.append(sortedDict[0][0])
     # And the rest are added to the maskedSkyDome
-    for item in range(len(sortedDict)-1):
-        maskedSkyDome.append(sortedDict[item][0])
-    
-    # join!
-    #maskedSkyDome = list(rc.Geometry.Brep.JoinBreps(maskedSkyDome, sc.doc.ModelAbsoluteTolerance))
-    
+    i = 1
+    while i < len(sortedDict):
+        maskedSkyDome.append(sortedDict[i][0])
+        i += 1
     # scale everything
     scaleT = rc.Geometry.Transform.Scale(cenPt, radius/BBRadius)
     for geo in planarSrfs + list(crvsOnSky) + maskedSkyDome + unmaskedSkyDome:
