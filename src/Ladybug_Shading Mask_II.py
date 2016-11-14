@@ -54,6 +54,7 @@ import math
 import System
 import scriptcontext as sc
 import System.Threading.Tasks as tasks
+import operator
 
 def calculateBB(geometries, restricted = True):
     
@@ -145,9 +146,8 @@ def isMeshFaceVisible(cenPt, pts, context):
     for pt in pts:
         line = rc.Geometry.Line(cenPt, pt)
         intPts, pattern = rc.Geometry.Intersect.Intersection.MeshLine(context, line)
-        
         if len(intPts) <= 1: visiblePts.append(pt)
-    
+
     if len(visiblePts)/len(pts) == 0: return False
     return True
 
@@ -261,6 +261,7 @@ def getSkyMask(cenPt, context, sky, skyRadius, merge):
         print "Split failed!"
         skyDome = sky
     
+   
     
     return planarSrfs, crvsOnSky, skyDome, joinedContext
 
@@ -298,19 +299,39 @@ def main(cenPt, context, radius, merge):
     # separate sky components
     maskedSkyDome = []
     unmaskedSkyDome = []
-    
+    areaList = []
+    brepList = []
     for faceCount in range(skyDome.Faces.Count):
+
         surface = skyDome.Faces.ExtractFace(faceCount)
         srfCenPt = rc.Geometry.AreaMassProperties.Compute(surface).Centroid
         srfCenPt = rc.Geometry.Point3d(surface.ClosestPoint(srfCenPt))
         
         if not surface.IsValid:
             surface = surface.Faces.ExtractFace(0)
-            
-        if isMeshFaceVisible(cenPt, [srfCenPt], joinedContext):
-            unmaskedSkyDome.append(surface)
-        else:
-            maskedSkyDome.append(surface)
+        
+        # Making a list of breps in the skyDome
+        brepList.append(surface)
+        # Getting area for each breps
+        area = rc.Geometry.Brep.GetArea(surface)
+        areaList.append(area)
+        # Making a dictionary of brep : area
+        brepDict = dict(zip(brepList, areaList))
+        
+        # Following is the original method for separating maskedSky and unmaskedSky breps
+#        if isMeshFaceVisible(cenPt, [srfCenPt], joinedContext):
+#            unmaskedSkyDome.append(surface)
+#        else:
+#            maskedSkyDome.append(surface)
+    
+    # sorting the dictionary so that the brep with the largest area remains last in the
+    # dictionary
+    sortedDict = sorted(brepDict.items(), key = operator.itemgetter(1))
+    # The brep with largest area is assumed to be the unmaskedSkyDome
+    unmaskedSkyDome.append(sortedDict[-1][0])
+    # And the rest are added to the maskedSkyDome
+    for item in range(len(sortedDict)-1):
+        maskedSkyDome.append(sortedDict[item][0])
     
     # join!
     #maskedSkyDome = list(rc.Geometry.Brep.JoinBreps(maskedSkyDome, sc.doc.ModelAbsoluteTolerance))
