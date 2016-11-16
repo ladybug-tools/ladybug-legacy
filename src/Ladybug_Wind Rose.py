@@ -487,11 +487,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         for h in calmHour:
                             calmValues.append(selList[h])
                             allValues.append(selList[h])
-                            
-                        #######################################
-                        #answer = unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
-                        #######################################
-                        
+
                         # get the legend done
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(allValues
                                 , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
