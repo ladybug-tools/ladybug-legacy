@@ -312,7 +312,7 @@ def main(cenPt, context, radius, merge):
         brepList.append(surface)
         # Making a dictionary of brep : zValue of srfCenPt
         brepDict = dict(zip(brepList, zValue))
-
+        
     # sorting the dictionary so that the brep with the largest zValue remains last in the
     # dictionary
     sortedDict = sorted(brepDict.items(), key = operator.itemgetter(1))
@@ -323,6 +323,7 @@ def main(cenPt, context, radius, merge):
     while i < len(sortedDict):
         maskedSkyDome.append(sortedDict[i][0])
         i += 1
+        
     # scale everything
     scaleT = rc.Geometry.Transform.Scale(cenPt, radius/BBRadius)
     for geo in planarSrfs + list(crvsOnSky) + maskedSkyDome + unmaskedSkyDome:
