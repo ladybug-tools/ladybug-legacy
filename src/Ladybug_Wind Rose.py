@@ -41,6 +41,8 @@ Provided by Ladybug 0.0.63
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
+        showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction
+        frequencyOffset_: The offset of frequecy display on wind rose. This input only accepts floats. The default offset is 1.12
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -52,7 +54,9 @@ Provided by Ladybug 0.0.63
         windRoseMesh: A mesh representing the wind speed from different directions for all hours analyzed.
         windRoseCrvs: A set of guide curves that mark the number of hours corresponding to the windRoseMesh.
         windRoseCenPts: The center point(s) of wind rose(s).  Use this to move the wind roses in relation to one another using the grasshopper "move" component.
-        legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        windSpeeds: Wind speed data for the wind rose displayed in the Rhino scene.
+        windDirections: Wind direction data for the wind rose displayed in the Rhino scene.
+        legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
         legendBasePts: The legend base point(s), which can be used to move the legend in relation to the rose with the grasshopper "move" component.
         title: The title for the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
 """
@@ -78,6 +82,7 @@ import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
+
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -148,7 +153,78 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             return -1, -1
         
         return titleStatement, patternList
+        
+        
+def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection):
+    """This is a helper function. It is mainly used to generate lists for windSpeeds and windDirections
+       output of this component.
+       input(patternList) = a list with True and False values based on conditional statement
+       input (analysisPeriod) = Data from _analysisPeriod_ input of this component
+       input (_hourlyWindSpeed) = Data from _hourlyWindSpeed input of this component
+       input (_hourlyWindDirection) = Data from _hourlyWindDirection input of this component
+       output(result) = a tuple of lists"""
+    
+    #Trimming headers from weather data input and making new lists out of them
+    speedData = _hourlyWindSpeed[7:]
+    directionData = _hourlyWindDirection[7:]
+    
+    # Simple unpacking of the list in a new local variable finalPattern.
+    if type(patternList[0]) == list:
+        finalPattern = [val for sublist in patternList for val in sublist]
+    else:
+        finalPattern = patternList
+        
+    # Getting total hours of the year from the analysis period
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
 
+    # Making a new list for windSpeeds output
+    windSpeeds = []
+    # Creating header for the list
+    windSpeeds.extend(_hourlyWindSpeed[0:5])
+    if len(_analysisPeriod_) == 0:
+        windSpeeds.extend(_hourlyWindSpeed[5:7])
+    else:
+        windSpeeds.extend(_analysisPeriod_)
+    # Adding data to the list
+    for i in range(len(HOYS)):
+        j = int(HOYS[i])-1 # Here, -1 is important. So that, counting starts from index 0.
+        if finalPattern[j] == True:
+            windSpeeds.append(speedData[j])
+        else:
+            pass
+    
+    # Making a new list for windDirections output
+    windDirections = []
+    # Creating header for the list
+    windDirections.extend(_hourlyWindDirection[0:5])
+    if len(_analysisPeriod_) == 0:
+        windDirections.extend(_hourlyWindDirection[5:7])
+    else:
+        windDirections.extend(_analysisPeriod_)
+    # Adding data to the list
+    for i in range(len(HOYS)):
+        j = int(HOYS[i])-1 # Here, -1 is important. So that, counting starts from index 0.
+        if finalPattern[j] == True:
+            windDirections.append(directionData[j])
+        else:
+            pass
+
+    return windSpeeds, windDirections
+
+
+def freqOffset(frequencyOffset_):
+    """This function sets the offset value for frequency display on wind rose
+    input(frequencyOffset_) = input from this component
+    output(offset) = a float value"""
+    if frequencyOffset_ == None:
+        offset = 1.12
+        return offset
+    else:
+        offset = frequencyOffset_
+        return offset
+                        
+                        
 
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                   analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
@@ -223,7 +299,12 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 # send all data and statement to a function and return back
                 # True, False Pattern and condition statement
                 titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement)
-            
+                # Unpacking the paternList for output of windSpeeds and windDirections
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_, _hourlyWindSpeed, _hourlyWindDirection)
+                windSpeeds = unpackedList[0]
+                windDirections = unpackedList[1]
+
+                
             if titleStatement != -1 and True not in patternList:
                 warning = 'No hour meets the conditional statement.' 
                 print warning
@@ -232,7 +313,12 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             if titleStatement == -1:
                 patternList = [[True]] * 8760
+                # Unpacking the paternList for output of windSpeeds and windDirections
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_, _hourlyWindSpeed, _hourlyWindDirection)
+                windSpeeds = unpackedList[0]
+                windDirections = unpackedList[1]
                 titleStatement = False
+
             
            # check the scale
             try:
@@ -313,6 +399,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             calmFreq = (100*len(calmHour)/len(studyHours))/numOfDirections
             
+            
             # draw the basic geometry for windRose
             
             ## draw the first polygon for calm period of the year
@@ -328,6 +415,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             freqCrvs = []
             minFreq = calmFreq
+
             try:
                 maxFreq = float(maxFrequency)%100
                 if maxFreq ==0: maxFreq == 100
@@ -433,7 +521,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         numRanges = legendText[:-1]
                         if len(numRanges) == 1:
                             numRanges.insert(0, 0.0)
-                        
+
                         # do it for the calm period
                         # calculate the frequency for calm
                         freqInCenter = []
@@ -460,7 +548,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                 
                         centerMesh = rc.Geometry.Mesh()
                         cenMeshColors = []
-                        
                         
                         for crvNum in range(len(centerFrqPts)):
                             avr = avrValues[crvNum]
@@ -537,15 +624,44 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                     totalFr = totalFr + fr
                     
                     segments.Flip(True, True, True)
-                    
                     segments = lb_visualization.colorMesh(segmentsColors, segments)
                     centerMesh = lb_visualization.colorMesh(cenMeshColors, centerMesh)
-                    
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
-                    
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
-                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
+                    
+                    # Adding frequencies to the wind Rose
+                    # Making a list of frequecies to display on wind rose and rounding them
+                    freqTextList = []
+                    for item in windFreq:
+                        freqTextList.append(str(round(item, 2)))
+                    # Measuring the distance between the north point and the center of the wind rose.
+                    # This radial distance is crucial for position of frequencies
+                    point01 = cenPt
+                    point02 = compassTextPts[0]
+                    distance = rc.Geometry.Point3d.DistanceTo(point02, point01)
+                    offset = freqOffset(frequencyOffset_)
+                    factor = offset * distance
+                    # Making first point for frequency display. This is the first point
+                    newPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*factor)
+                    # Point container for othe points
+                    freqTextPts = [newPoint]
+                    angleList = [x*22.5 for x in range(17)]
+                    angleList = angleList[1:]
+                    # Based on angles new points are created
+                    for angle in angleList:
+                        newVector = rc.Geometry.Vector3d(northVector)*factor #Factor is important here
+                        newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+                        addPoint = rc.Geometry.Point3d.Add(point01, newVector)
+                        freqTextPts.append(addPoint)
+                        
+                    if showFrequency_ == True:
+                        freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/1.5, legendBold, plane = None, justificationIndex = 1 )
+                    else:
+                        freqTextCrvs = []
+                        
+                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
+                    numberCrvs = numberCrvs + freqTextCrvs
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
                     # let's move it move it move it!
@@ -621,7 +737,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
                         else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
         
-            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurveFinal
+            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurveFinal
 
     else:
         warning =  "You should first let the Ladybug fly..."
@@ -636,7 +752,7 @@ if _runIt:
                   _scale_, legendPar_, bakeIt_, maxFrequency_)
     
     if result!= -1:
-        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurve = result
+        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurve = result
         
         legend = DataTree[Object]()
         calmRoseMesh = DataTree[Object]()
