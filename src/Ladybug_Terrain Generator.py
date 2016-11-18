@@ -35,7 +35,6 @@ Provided by Ladybug 0.0.63
     
     Args:
         _location: It accepts two type of inputs.
-        _basePoint_: Input a point here to georeference the terrain model.
         a) latitude, longitude and elevation that represent WSG84 coordinates of the base point. You can achieve these type of coordinates from Google Maps or similar.
         e.g. 40.821796, 14.426439, 990
         -
@@ -43,6 +42,7 @@ Provided by Ladybug 0.0.63
         _radius_: A radius to make the terrain 3D model in Rhino model units. The default is set to 100.
         -
         If you provide a big radius, this could require lots of time (also a couple of minutes).
+        _basePoint_: Input a point here to georeference the terrain model.
         type_: Select the type of output:
         0 = rectangular mesh
         1 = rectangular surface
@@ -83,7 +83,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Generator"
 ghenv.Component.NickName = 'TerrainGenerator'
-ghenv.Component.Message = 'VER 0.0.63\nSEP_30_2016'
+ghenv.Component.Message = 'VER 0.0.63\nOCT_31_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -98,7 +98,9 @@ import socket
 import System
 import os
 import clr
+import io
 from math import pi, log, tan, atan, exp, sqrt
+
 
 clr.AddReference("Grasshopper")
 import Grasshopper.Kernel as gh
@@ -150,7 +152,7 @@ def divideSrf(srf, numDivision):
     return pts
 
 
-def terrainGen(pts, xf, run):
+def terrainGen(pts, xf, run, name):
     if len(pts) > 257:
         warning = 'Your request is too big. The upper limit of _numDivision_ is 15.'
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
@@ -169,8 +171,6 @@ def terrainGen(pts, xf, run):
     # Temporary file
     # I should change this part here, the alternative way is to use urllib.request,
     # but it doesn't exist in GH. However this method works and it is fast enough.
-    appdata = os.getenv("APPDATA")
-    name = os.path.join(appdata, "Ladybug\\", "elevation.txt")
     if len(pts) <= 257:
         if run:
             try:
@@ -299,18 +299,38 @@ def mdPath(folder):
                 os.mkdir(directory)
             except Exception:
                 appdata = os.getenv("APPDATA")
-                directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
+                try:
+                    directory = os.path.join(appdatal, "Ladybug\IMG_Google\\")
+                except:
+                    directory = os.path.join(appdata[:3], "Ladybug\IMG_Google\\")
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
                 w = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(w, "Invalid Folder, you can find images here: {}".format(directory))
     else:
         appdata = os.getenv("APPDATA")
-        directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
-        if not os.path.exists(directory): os.makedirs(directory)
+        try:
+            directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
+        except:
+            directory = os.path.join(appdata[:3], "Ladybug\IMG_Google\\")
+        if not os.path.exists(directory):
+            os.makedirs(directory)
     
     return directory
 
 
 def main():
+    
+    # Make sure that the file exists
+    appdata = os.getenv("APPDATA")
+    try:
+        name = os.path.join(appdata, "Ladybug\\", "elevation.txt")
+    except:
+        name = os.path.join(appdata[:3], "Ladybug\\", "elevation.txt")
+    dummyFile = io.FileIO(name, "w")
+    dummyFile.close()
+    
+    
     earth_radius = 6378137
     equator_circumference = 2 * pi * earth_radius
     initial_resolution = equator_circumference / 256.0
@@ -370,7 +390,7 @@ def main():
         for i in range(len(tiles)):
             points_srf = divideSrf(tiles[i], numDivision)
             try:
-                points, elevations = terrainGen(points_srf, xf, _runIt)
+                points, elevations = terrainGen(points_srf, xf, _runIt, name)
                 ptCenter = centerPtsGeo(tiles[i])
                 pointGeo = xf * ptCenter
                 points_for_srf.extend(points_srf)
@@ -446,6 +466,7 @@ else:
 
 
 check = checkInputs(_location)
+
 if check and initCheck:
     if checkInternetConnection():
         result = main()
