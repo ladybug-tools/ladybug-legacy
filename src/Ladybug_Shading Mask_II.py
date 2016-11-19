@@ -54,6 +54,7 @@ import math
 import System
 import scriptcontext as sc
 import System.Threading.Tasks as tasks
+import operator
 
 def calculateBB(geometries, restricted = True):
     
@@ -145,9 +146,8 @@ def isMeshFaceVisible(cenPt, pts, context):
     for pt in pts:
         line = rc.Geometry.Line(cenPt, pt)
         intPts, pattern = rc.Geometry.Intersect.Intersection.MeshLine(context, line)
-        
         if len(intPts) <= 1: visiblePts.append(pt)
-    
+
     if len(visiblePts)/len(pts) == 0: return False
     return True
 
@@ -261,6 +261,7 @@ def getSkyMask(cenPt, context, sky, skyRadius, merge):
         print "Split failed!"
         skyDome = sky
     
+   
     
     return planarSrfs, crvsOnSky, skyDome, joinedContext
 
@@ -294,27 +295,35 @@ def main(cenPt, context, radius, merge):
     # calculate the mask
     planarSrfs, crvsOnSky, skyDome, joinedContext = getSkyMask(cenPt, context, BBSky, BBRadius, merge)
     
-    
     # separate sky components
     maskedSkyDome = []
     unmaskedSkyDome = []
-    
+    zValue = []
+    brepList = []
     for faceCount in range(skyDome.Faces.Count):
         surface = skyDome.Faces.ExtractFace(faceCount)
         srfCenPt = rc.Geometry.AreaMassProperties.Compute(surface).Centroid
+        zValue.append(srfCenPt.Z)
         srfCenPt = rc.Geometry.Point3d(surface.ClosestPoint(srfCenPt))
         
         if not surface.IsValid:
             surface = surface.Faces.ExtractFace(0)
-            
-        if isMeshFaceVisible(cenPt, [srfCenPt], joinedContext):
-            unmaskedSkyDome.append(surface)
-        else:
-            maskedSkyDome.append(surface)
-    
-    # join!
-    #maskedSkyDome = list(rc.Geometry.Brep.JoinBreps(maskedSkyDome, sc.doc.ModelAbsoluteTolerance))
-    
+        # Making a list of breps in the skyDome
+        brepList.append(surface)
+        # Making a dictionary of brep : zValue of srfCenPt
+        brepDict = dict(zip(brepList, zValue))
+        
+    # sorting the dictionary so that the brep with the largest zValue remains last in the
+    # dictionary
+    sortedDict = sorted(brepDict.items(), key = operator.itemgetter(1))
+    # The brep with smallest zValue for srfCenPt is assumed to be the unmaskedSkyDome
+    unmaskedSkyDome.append(sortedDict[0][0])
+    # And the rest are added to the maskedSkyDome
+    i = 1
+    while i < len(sortedDict):
+        maskedSkyDome.append(sortedDict[i][0])
+        i += 1
+        
     # scale everything
     scaleT = rc.Geometry.Transform.Scale(cenPt, radius/BBRadius)
     for geo in planarSrfs + list(crvsOnSky) + maskedSkyDome + unmaskedSkyDome:
