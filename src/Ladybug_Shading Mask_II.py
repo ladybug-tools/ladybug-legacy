@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.63
         merge_: A boolean. Set it to True to merge maskedSky surfaces
     Returns:
         maskedSrfOnGround: A list of surfaces. These are masked horizontal projections of maskedSky surfaces. They're useful when the skyDome is viewed from the top.
-        maskedCrvsOnSky: A list of Curves. This are edge curves for maskedSky surfaces.
+        maskedCrvsOnSky: A list of Curves. These are edge curves for maskedSky surfaces.
         maskedSkyDome: A list of surfaces. The portion of sky not blocked by the context geometry
         unmaskedSkyDome: A list of surfaces. The portion of sky blocked by the context geometry
         percMasked: Percentage of the sky blocked by the context geometry
