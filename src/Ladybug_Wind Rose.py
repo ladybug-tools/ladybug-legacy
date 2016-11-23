@@ -43,6 +43,8 @@ Provided by Ladybug 0.0.63
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
         showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction
         frequencyOffset_: The offset of frequecy display on wind rose. This input only accepts floats. The default offset is 1.12
+        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction
+        averageVelocityOffset_: The offset of average wind velocities display on wind rose. This input only accepts floats. The default offset is 1.12
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -213,18 +215,28 @@ def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWind
     return windSpeeds, windDirections
 
 
-def freqOffset(frequencyOffset_):
+def getOffset(frequencyOffset_, averageVelocityOffset_ ):
     """This function sets the offset value for frequency display on wind rose
     input(frequencyOffset_) = input from this component
-    output(offset) = a float value"""
-    if frequencyOffset_ == None:
-        offset = 1.12
-        return offset
+    input(averageVelocityOffset_) = input from this component
+    output = a list of offset value for frequency display and average velocity display"""
+    if frequencyOffset_ == None and averageVelocityOffset_ == None:
+        freqOffset = 1.12
+        velOffset = 1.12
+        return [freqOffset, velOffset]
+    if frequencyOffset_ != None and averageVelocityOffset_ == None:
+        freqOffset = frequencyOffset_
+        velOffset = 1.12
+        return [freqOffset, velOffset]
+    if frequencyOffset_ == None and averageVelocityOffset_ != None:
+        freqOffset = 1.12
+        velOffset = averageVelocityOffset_
+        return [freqOffset, velOffset]
     else:
-        offset = frequencyOffset_
-        return offset
-                        
-                        
+        freqOffset = frequencyOffset_
+        velOffset = averageVelocityOffset_
+        return [freqOffset, velOffset]
+
 
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                   analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
@@ -487,6 +499,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         for h in calmHour:
                             calmValues.append(selList[h])
                             allValues.append(selList[h])
+                        
 
                         # get the legend done
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(allValues
@@ -629,39 +642,143 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
-                    
+
                     # Adding frequencies to the wind Rose
                     # Making a list of frequecies to display on wind rose and rounding them
                     freqTextList = []
                     for item in windFreq:
                         freqTextList.append(str(round(item, 2)))
+                        
+                    # Getting wind speeds and wind directions
+                    wind_Speeds, wind_Directions = unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
+                    wind_Directions = [int(x) for x in windDirections[7:]]
+                    wind_Speeds = wind_Speeds[7:]
+                    # Generating angle ranges to catch wind speeds
+                    angleRanges = [[0, 11]]
+                    angleList = [x*22.5 for x in range(17)]
+                    angleList = angleList[1:]
+                    for angle in angleList:
+                        angleRange = []
+                        start = angle - 11.25
+                        angleRange.append(int(start))
+                        stop = angle + 11.25
+                        angleRange.append(int(stop))
+                        angleRanges.append(angleRange)
+                    angleRanges = angleRanges[:-1]
+                    angleRanges.append([348, 360])
+                    
+                    # Generating empty velocitybins
+                    velocityBins = [] 
+                    for i in range(len(angleList)):
+                        velocityBins.append([])
+                    i = 0
+                    # Now catching velocities in respective bins
+                    while i < len(wind_Directions):
+                        
+                        if wind_Directions[i] in range(angleRanges[0][0], angleRanges[0][1]):
+                            velocityBins[0].append(wind_Speeds[i])
+                            
+                        if wind_Directions[i] in range(angleRanges[1][0], angleRanges[1][1]):
+                            velocityBins[1].append(wind_Speeds[i])
+                            
+                        if wind_Directions[i] in range(angleRanges[2][0], angleRanges[2][1]):
+                            velocityBins[2].append(wind_Speeds[i])
+
+                        if wind_Directions[i] in range(angleRanges[3][0], angleRanges[3][1]):
+                            velocityBins[3].append(wind_Speeds[i])  
+                            
+                        if wind_Directions[i] in range(angleRanges[4][0], angleRanges[4][1]):
+                            velocityBins[4].append(wind_Speeds[i])                             
+
+                        if wind_Directions[i] in range(angleRanges[5][0], angleRanges[5][1]):
+                            velocityBins[5].append(wind_Speeds[i])                              
+
+                        if wind_Directions[i] in range(angleRanges[6][0], angleRanges[6][1]):
+                            velocityBins[6].append(wind_Speeds[i])                              
+
+                        if wind_Directions[i] in range(angleRanges[7][0], angleRanges[7][1]):
+                            velocityBins[7].append(wind_Speeds[i])                              
+
+                        if wind_Directions[i] in range(angleRanges[8][0], angleRanges[8][1]):
+                            velocityBins[8].append(wind_Speeds[i])                          
+                     
+                        if wind_Directions[i] in range(angleRanges[9][0], angleRanges[9][1]):
+                            velocityBins[9].append(wind_Speeds[i])  
+
+                        if wind_Directions[i] in range(angleRanges[10][0], angleRanges[10][1]):
+                            velocityBins[10].append(wind_Speeds[i])     
+
+                        if wind_Directions[i] in range(angleRanges[11][0], angleRanges[11][1]):
+                            velocityBins[11].append(wind_Speeds[i])
+
+                        if wind_Directions[i] in range(angleRanges[12][0], angleRanges[12][1]):
+                            velocityBins[12].append(wind_Speeds[i])
+                            
+                        if wind_Directions[i] in range(angleRanges[13][0], angleRanges[13][1]):
+                            velocityBins[13].append(wind_Speeds[i])                            
+                            
+                        if wind_Directions[i] in range(angleRanges[14][0], angleRanges[14][1]):
+                            velocityBins[14].append(wind_Speeds[i])                            
+                            
+                        if wind_Directions[i] in range(angleRanges[15][0], angleRanges[15][1]):
+                            velocityBins[15].append(wind_Speeds[i])                            
+                            
+                        if wind_Directions[i] in range(angleRanges[16][0], angleRanges[16][1]):
+                            velocityBins[0].append(wind_Speeds[i])                                                      
+                        
+                        i += 1
+                        
+                    # Calculating averages velocities for all the directions
+                    velTextList = []
+                    for item in velocityBins:
+                        average = str(round(sum(item) / len(item), 2))
+                        velTextList.append(average)                        
+                        
                     # Measuring the distance between the north point and the center of the wind rose.
                     # This radial distance is crucial for position of frequencies
                     point01 = cenPt
                     point02 = compassTextPts[0]
                     distance = rc.Geometry.Point3d.DistanceTo(point02, point01)
-                    offset = freqOffset(frequencyOffset_)
-                    factor = offset * distance
-                    # Making first point for frequency display. This is the first point
-                    newPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*factor)
-                    # Point container for othe points
-                    freqTextPts = [newPoint]
-                    angleList = [x*22.5 for x in range(17)]
-                    angleList = angleList[1:]
-                    # Based on angles new points are created
+                    freqOffset = getOffset(frequencyOffset_, averageVelocityOffset_ )[0]
+                    velOffset = getOffset(frequencyOffset_, averageVelocityOffset_ )[1]                    
+                    freqFactor = freqOffset * distance
+                    velFactor = velOffset * distance
+                    
+                    # Making first point for frequency and velocity display. This is the first point
+                    freqFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*freqFactor)
+                    velFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*velFactor)                    
+                    # Point container for othe points for frequency display and average velocity display
+                    freqTextPts = [freqFirstPoint]
+                    velTextPts = [velFirstPoint]
+
+                    # Based on angles new points for frequency display are created
                     for angle in angleList:
-                        newVector = rc.Geometry.Vector3d(northVector)*factor #Factor is important here
+                        newVector = rc.Geometry.Vector3d(northVector)*freqFactor #Factor is important here
                         newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
                         addPoint = rc.Geometry.Point3d.Add(point01, newVector)
                         freqTextPts.append(addPoint)
                         
-                    if showFrequency_ == True:
+                    # Based on angles new points for velocity display are created
+                    for angle in angleList:
+                        newVector = rc.Geometry.Vector3d(northVector)*velFactor #Factor is important here
+                        newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+                        addPoint = rc.Geometry.Point3d.Add(point01, newVector)
+                        velTextPts.append(addPoint)                        
+                    
+                    # Making curves for frequency display
+                    if showFrequency_ == True and numOfDirections == 16:
                         freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/1.5, legendBold, plane = None, justificationIndex = 1 )
                     else:
                         freqTextCrvs = []
                         
+                    # Making curves for average display
+                    if showAverageVelocity_ == True and numOfDirections == 16:
+                        velTextCrvs = lb_visualization.text2srf(velTextList, velTextPts, 'Times New Romans', textSize/1.5, legendBold, plane = None, justificationIndex = 1 )
+                    else:
+                        velTextCrvs = []
+                        
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
-                    numberCrvs = numberCrvs + freqTextCrvs
+                    numberCrvs = numberCrvs + freqTextCrvs + velTextCrvs
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
                     # let's move it move it move it!
