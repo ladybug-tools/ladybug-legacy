@@ -83,7 +83,7 @@ class CheckIn():
             if (" " in defaultFolder):
                 msg = "Default file path can't have white space. Please set the path to another folder." + \
                       "\nLadybug failed to fly! :("
-                print msg
+                print(msg)
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
                 sc.sticky["Ladybug_DefaultFolder"] = ""
                 self.letItFly = False
@@ -95,7 +95,7 @@ class CheckIn():
                     except:
                         msg = "Cannot create default folder! Try a different filepath" + \
                               "\nLadybug failed to fly! :("
-                        print msg
+                        print(msg)
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
                         sc.sticky["Ladybug_DefaultFolder"] = ""
                         self.letItFly = False
@@ -107,25 +107,57 @@ class CheckIn():
         
         #set up default pass
         if not self.folderIsSetByUser:
-            if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
-                # folder already exists so it is all fine
-                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-            elif os.access(os.path.dirname("c:\\"), os.F_OK):
-                #the folder does not exists but write privileges are given so it is fine
-                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-            else:
-                # let's use the user folder
-                appdata = False
-                try:
-                    appdata = rc.RhinoApp.GetDataDirectory(True, False)
-                except AttributeError:
-                    appdata = os.getenv("APPDATA")
-                    
-                # make sure appdata doesn't have space
-                assert appdata, 'Failed to set up the folder.\n' \
-                    'Try to set it up manually using defaultFolder_ input.'
+            # Differenciate on platform used
+            # If windows
+            # Normally would use sys.platform but it will return 'cli' since
+            # this is IronPython.
+            # The shortcoming of os.name is that it returns "posix" for both
+            # Mac and Linux, here we don't care (and anyways, rhino isn't on linux)
+            if os.name =='nt':
+                if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
+                    # folder already exists so it is all fine
+                    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+                elif os.access(os.path.dirname("c:\\"), os.F_OK):
+                    #the folder does not exists but write privileges are given so it is fine
+                    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+                else:
+                    # let's use the user folder
+                    appdata = False
+                    try:
+                        appdata = rc.RhinoApp.GetDataDirectory(True, False)
+                    except AttributeError:
+                        appdata = os.getenv("APPDATA")
+                        
+                    # make sure appdata doesn't have space
+                    assert appdata, 'Failed to set up the folder.\n' \
+                        'Try to set it up manually using defaultFolder_ input.'
 
-                sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
+                    sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
+
+            # If macOS
+            elif os.name == 'posix':
+                default_path = os.path.expanduser('~/ladybug/')
+                # folder already exists and there is write privileges, or
+                # there's write privileges for the parent folder
+                if (os.path.exists(default_path) and  os.access(os.path.dirname(default_path), os.F_OK)) or (os.access(os.path.expanduser('~'), os.F_OK)):
+                    sc.sticky["Ladybug_DefaultFolder"] = default_path
+                else:
+                     # let's use the Rhino AppData folder
+                    try:
+                        appdata = rc.RhinoApp.GetDataDirectory(True, False)
+                    except AttributeError:
+                        appdata = False
+
+                    assert appdata, 'Failed to set up the folder.\n' \
+                        'Try to set it up manually using defaultFolder_ input.'
+
+                    sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "ladybug/")
+
+            else:
+                raise PlatformError("Unsupported platform {}. Isn't Rhino only available for Windows and Mac?".format(sys.platform))
+
+
+
         
         self.updateCategoryIcon()
     
@@ -168,7 +200,7 @@ class CheckIn():
         versionFile = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "versions.txt")
         client = System.Net.WebClient()
         client.DownloadFile(url, versionFile)
-        with open("c:/ladybug/versions.txt", "r")as vf:
+        with open(versionFile, "r")as vf:
             versions= eval("\n".join(vf.readlines()))
 
         if LB:
@@ -178,7 +210,7 @@ class CheckIn():
                 msg = "There is a newer version of Ladybug available to download! " + \
                       "We strongly recommend you to download the newer version from Food4Rhino: " + \
                       "http://www.food4rhino.com/project/ladybug-honeybee"
-                print msg
+                print(msg)
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
         if HB:
             honeybeeVersion = versions['Honeybee']
@@ -187,7 +219,7 @@ class CheckIn():
                 msg = "There is a newer version of Honeybee available to download! " + \
                       "We strongly recommend you to download the newer version from Food4Rhino: " + \
                       "http://www.food4rhino.com/project/ladybug-honeybee"
-                print msg
+                print(msg)
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
             
         if OpenStudio:
@@ -3744,7 +3776,7 @@ class ComfortModels(object):
             es = 2.7150305 * math.log(tk)
             for count, i in enumerate(g):
                 es = es + (i * (tk**(count-2)))
-            es = math.exp(es)*0.01	# convert Pa to hPa
+            es = math.exp(es)*0.01  # convert Pa to hPa
             return es
         
         #Do a series of checks to be sure that the input values are within the bounds accepted by the model.
@@ -6576,11 +6608,21 @@ if checkIn.letItFly:
         greeting = "Hi{}!\n" \
                    "Ladybug is Flying! Vviiiiiiizzz...\n\n" \
                    "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
+        # Try to infer the username
+        # If windows
+        username = ''
+        if os.name == 'nt':
+            try:
+                username = ' ' + os.getenv('USERNAME')
+            except:
+                pass
+        elif os.name == 'posix':
+            try:
+                username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+            except:
+                pass           
         
-        try:
-            print greeting.format(' ' + os.getenv('USERNAME'))
-        except:
-            print greeting.format('')
+        print greeting.format(username)
             
         # push ladybug component to back
         ghenv.Component.OnPingDocument().SelectAll()
