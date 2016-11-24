@@ -40,14 +40,14 @@ Provided by Ladybug 0.0.63
                          -
                          If not supplied, location's latitude will be used as default value.
                          -
-                         In degrees ().
+                         In degrees (°).
         arrayAzimuthAngle_: The orientation angle (clockwise from the true north) of the PV/SWH array plane's normal vector. (range 0-360)
                             -
                             To get the maximal amount of energy, input the "optimalAzimuth" output from "Tilt And Orientation Factor"'s component.
                             -
                             If not supplied, the following values will be used as default: 180 (due south) for northern hemisphere, 0 (due north) for southern hemisphere.
                             -
-                            In degrees().
+                            In degrees(°).
         tiltedArrayHeight_: The height of the array, measured in the tilted plane.
                             It is depends on the height/width of the PV module/SWH collector. It also depends on the way modules/collectors are positioned in PV/SWH array (vertically or horizontally).
                             It can vary from 1 to 2.3 meters x number of modules/collectors in a single PV/SWH column.
@@ -103,7 +103,7 @@ Provided by Ladybug 0.0.63
                                Use Honeybee "Read EP Result" component or any other one to generate it.
                                -
                             2) In case of SWH array: Thermal heating energy (or electrical energy) required to heat domestic hot water and/or space heating load and/or space cooling load.
-                               Use Ladybug "Domestic hot water" or "Hot water" components to calculate it.
+                               Use Ladybug "Residential Hot Water" or "Commercial Public Apartment Hot Water" components to calculate it (simply plugin their "heatingLoadPerHour" outputs).
                                -
                                The purpose of this input is to divide the energy loads to each PV/SWH array rows.
                             -
@@ -126,7 +126,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_PV SWH System Size"
 ghenv.Component.NickName = "PV_SWH_SystemSize"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = "VER 0.0.63\nNOV_24_2016"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -543,7 +543,7 @@ def printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea
     if moduleEfficiency != None:  # _PVmoduleSettings inputted:
         PVSWHmoduleSystemSettings = "Data taken from _PVmoduleSettings:\nModule efficiency: %s\nModule active area percent: %s" % (moduleEfficiency, moduleActiveAreaPercent)
     else:  # _SWHsystemSettings inputted:
-        PVSWHmoduleSystemSettings = "Data taken from _SWHsystemSettings:\nCollector optical efficiency (-): %s\nCollector thermal loss (W/m2/C): %s\nCollector active area percent: %s" % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
+        PVSWHmoduleSystemSettings = "Data taken from _SWHsystemSettings:\nCollector optical efficiency (-): %s\nCollector thermal loss (W/m2/°C): %s\nCollector active area percent: %s" % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
     if minimalSpacingPeriod1 == minimalSpacingPeriod2:
         minimalSpacingPeriodString = "%s" % (minimalSpacingPeriod1)
     else:
@@ -553,20 +553,20 @@ def printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea
 Input data:
 
 Location: %s
-Latitude (): %s
-Longitude (): %s
-North (): %s
+Latitude (°): %s
+Longitude (°): %s
+North (°): %s
 
 System size (kW): %0.2f
 Surface area (m2): %0.2f
 Surface active area (m2):
-Array tilt angle (): %0.2f
-Array azimuth angle (): %0.2f
+Array tilt angle (°): %0.2f
+Array azimuth angle (°): %0.2f
 Tilted array height (m): %0.2f
 Number of rows: %0.2f
 Skew rows distance (m): %0.2f
 Minimal spacing period: %s
-Base surface tilt angle(): %0.2f
+Base surface tilt angle(°): %0.2f
 Array origin point: %0.2f, %0.2f
 Array origin corner: %s (%s)
 
@@ -599,7 +599,7 @@ if sc.sticky.has_key("ladybug_release"):
             if validInputData:
                 PV_SWHsurface, minimalSpacing, minimalSpacingDate = main(srfArea, arrayTiltR, arrayAzimuthR, arrayAzimuthVec, tiltedArrayHeight, numberOfRows, days, months, hours, sunAltitudeR_L, sunAzimuthR_L, skewRowsDistance, arrayOriginPt, groundTiltR, arrayOriginCorner)
                 printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea, arrayTiltR, arrayAzimuthR, tiltedArrayHeight, numberOfRows, skewRowsDistance, minimalSpacingPeriod1, minimalSpacingPeriod2, groundTiltR, baseSurfaceUV, arrayOriginCorner, moduleEfficiency, moduleActiveAreaPercent, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
-                PV_SWHsurfacesArea = srfArea
+                PV_SWHsurfacesArea = srfArea; energyLoadPerRowPerHour = energyLoadPerRowPerHourDataTree
             else:
                 print printMsg
                 ghenv.Component.AddRuntimeMessage(level, printMsg)
