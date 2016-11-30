@@ -3185,6 +3185,7 @@ class ComfortModels(object):
             res = []
             def fn(t):
                 if t > 200: t = 200
+                if t < -200: t = 200
                 return (set - self.comfPierceSET(ta-t, tr-t, stillAirThreshold, rh, met, clo, wme));
             f1 = fn(a)
             if abs(f1) <= epsilon: res.append(a)
