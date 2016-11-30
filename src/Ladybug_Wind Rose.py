@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.63
         _analysisPeriod_: An optional analysis period from the Analysis Period component.
         conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the wind rose. To use this input correctly, hourly data, such as temperature or humidity, must be plugged into the annualHourlyData_ input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
                               The current version of this component accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
-                              For the WindBoundaryProfile component, the variable "a" always represents windSpeed. For example, if you have hourly dry bulb temperature connected as the second list, and relative humidity connected as the third list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<b<23 and c<80 (without quotation marks).
+                              For the WindBoundaryProfile component, the variable "a" always represents windSpeed. For example, if you have hourly dry bulb temperature connected as the second list, and relative humidity connected as the third list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<b<23 and c<80 (without quotation marks). This also accepts output from Ladybug_Beaufort Ranges component.
         _numOfDirections_: A number of cardinal directions with which to divide up the data in wind rose. Values must be greater than 4 since you can have no fewer than 4 cardinal directions.
         _centerPoint_: Input a point here to change the location of the wind rose in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
@@ -65,7 +65,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_01_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -249,7 +249,7 @@ observation05 = "This wind is the at the limit of agreeable wind on land"
 observation06 = "In this wind umbrellas are used with difficulty. Foreces of the wind are felt on the body. This wind is typically noisy"
 observation07 = "In this wind, inconvenience is caused when walking. It is difficult to walk steadily. Hair are blown straight"
 observation08 = "This wind generally impedes progress. Normal walking becomes difficult. Tough to maintain balance in gusts"
-observation09 = "In this wind, people are blown over by gusts. It is impossible to face wind; ear ache and headache happens. Some structural damage occurs. Roof tiles are blown over and tree braches are broken. Hazardous for pedestrians."
+observation09 = "In this wind, people are blown over by gusts." + '\n' + "It is impossible to face wind; ear ache and headache happens." + '\n' + "Some structural damage occurs." + '\n' + "Roof tiles are blown over and tree braches are broken. Hazardous for pedestrians."
 observation10 = "Such wind is seldom experienced inland. Trees are uprooted. Considerable structural damage occurs"
 beaufortObservations = [observation00, observation01, observation02, observation03, observation04, observation05, observation06, observation07, observation08, observation09, observation10]
 
@@ -271,7 +271,8 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
     for item in beaufortRanges:
         statement = str(item[0]) + "<a<" + str(item[1])
         matchStatement.append(statement)
-        
+    
+    # If Ladybug_Beaufort Ranges is Connected
     if conditionalStatement in matchStatement:
         for item in matchStatement:
             if conditionalStatement == item:
@@ -280,9 +281,11 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
                 separator = '...                         ...                         ...'
                 velTextList = velTextList
     
+    # If anything is attached to the conditionalStatement_
     if conditionalStatement != None:
         
-        if conditionalStatement not in matchStatement and len(conditionalStatement) < 5 :
+        # If a conditional statement is attached for wind but it is not one of the beaufort ranges
+        if conditionalStatement not in matchStatement and len(conditionalStatement) < 8 :
             separator = '...                         ...                         ...'
             dummyRange = [(0,3), (3, 16), (16, 34), (34, 55), (55, 80), (80, 108), (108, 139), (139, 172), (172, 208), (208, 245), (245, 284)]
             beaufortObservationNumber = []
@@ -317,12 +320,15 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
             for item in getBeaufortNumbers:
                 add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
                 summary += add
-            
-        if conditionalStatement not in matchStatement and len(conditionalStatement) > 4:
+        
+        # If a conditional statement is attached and it involves a condition for annual hourly data
+        # This is design decision, when annual hourly data is connected, beaufort numbers and summary will be turned off
+        if conditionalStatement not in matchStatement and len(conditionalStatement) > 7:
             summary = " "
             separator = " "
             velTextList = velTextList
-        
+            
+    # If nothing is attached to the conditional statement
     if conditionalStatement == None:
         summary = " "
         separator = " "
@@ -520,7 +526,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             freqCrvs = []
             minFreq = calmFreq
-
+                
             try:
                 maxFreq = float(maxFrequency)%100
                 if maxFreq ==0: maxFreq == 100
@@ -531,7 +537,15 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 
             except: maxFreq = max(windFreq) + calmFreq
             
+
+                
             step = (maxFreq-minFreq)/10
+            if step == 0:
+                warning = 'Either no hour meets these inputs. You are advised to try a different set of inputs please.' 
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1      
+                
             comment2 = 'Each closed polyline shows frequency of ' + "%.1f"%step + '%. = ' + `int(step * len(studyHours)/100)` + ' hours.'
             print comment2
             for freq in rs.frange(minFreq, maxFreq + step, step):
@@ -713,6 +727,8 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         # This is where we define summary to add to the bottom of the wind rose text, separator, and list of average wind velocities
                         summary , separator, velTextList = getAverageWindVelocities(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
                         
+                        # If the user has not turned on average wind velocities, then no point in showing summary at the bottom.
+                        # Therefore, they're turned off here. This is a design decision
                         if showAverageVelocity_ == True and numOfDirections == 16:
                             summary = summary
                             separator = separator
