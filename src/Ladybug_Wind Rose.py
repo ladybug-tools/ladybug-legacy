@@ -140,7 +140,6 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             else:
                 titleStatement = titleStatement + '\n' + statementCopy 
             finalStatement = finalStatement + ' ' + statemntPart
-        print titleStatement
         
         # check for the pattern
         patternList = []
@@ -236,6 +235,94 @@ def getOffset(frequencyOffset_, averageVelocityOffset_ ):
         freqOffset = frequencyOffset_
         velOffset = averageVelocityOffset_
         return [freqOffset, velOffset]
+
+
+# Following are beaufort ranges and related observations based on following link
+# https://github.com/devngc/References/tree/master/Beaufort%20Scale
+beaufortRanges = [(0, 0.2), (0.3, 1.5), (1.6, 3.3), (3.4, 5.4), (5.5, 7.9), (8.0, 10.7), (10.8, 13.8), (13.9, 17.1), (17.2, 20.7), (20.8, 24.4), (24.5, 28.4)]
+observation00 = "Totally calm"
+observation01 = "This wind is not really noticeable"
+observation02 = "This wind will be felt on the face of a pedestrian on the ground" 
+observation03 = "This wind can extend a light flag" 
+observation04 = "This wind can raise dust and loose paper. It can also disarrange hair and move clothng flaps"
+observation05 = "This wind is the at the limit of agreeable wind on land"
+observation06 = "In this wind umbrellas are used with difficulty. Foreces of the wind are felt on the body. This wind is typically noisy"
+observation07 = "In this wind, inconvenience is caused when walking. It is difficult to walk steadily. Hair are blown straight"
+observation08 = "This wind generally impedes progress. Normal walking becomes difficult. Tough to maintain balance in gusts"
+observation09 = "In this wind, people are blown over by gusts. It is impossible to face wind; ear ache and headache happens. Some structural damage occurs. Roof tiles are blown over and tree braches are broken. Hazardous for pedestrians."
+observation10 = "Such wind is seldom experienced inland. Trees are uprooted. Considerable structural damage occurs"
+beaufortObservations = [observation00, observation01, observation02, observation03, observation04, observation05, observation06, observation07, observation08, observation09, observation10]
+
+
+def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, velTextList):
+    """This function generates summary to add at the bottom of wind rose diagram
+    in case the user connects Ladybug_Beaufort Ranges in conditionalStatement_.
+    If Ladybug_Beaufort Ranges is not connected and simple conditional statement is used,
+    this function will add a nnumber(beaufort range number) to average velocities being displayed on wind rose.
+    also, the function will output summary to be appended at the bottom of text to explain what those beaufort numbers mean.
+    input[conditionalStatement_] = Data from component input named conditionalStatement_
+    input[beaufortRanges] = A list of tuples containing beaufort ranges
+    input[beaufortObservations] = A list of strings containing observations in beaufort scale
+    input[velTextList] = A list of strings representing average wind velocities coming from different directions
+    output[summary] = A string that will be added at the bottom of wind rose is beaufortRanges are used
+    output[separator] = A string of dots to be added at the bottom of wind rose to separate summary from the rest of strings"""
+    conditionalStatement = conditionalStatement_
+    matchStatement = []
+    for item in beaufortRanges:
+        statement = str(item[0]) + "<a<" + str(item[1])
+        matchStatement.append(statement)
+        
+    if conditionalStatement in matchStatement:
+        for item in matchStatement:
+            if conditionalStatement == item:
+                i = matchStatement.index(item)
+                summary = beaufortObservations[i]
+                separator = '...                         ...                         ...'
+                velTextList = velTextList
+    
+                
+    if conditionalStatement not in matchStatement and len(conditionalStatement) < 5:
+        separator = '...                         ...                         ...'
+        dummyRange = [(0,3), (3, 16), (16, 34), (34, 55), (55, 80), (80, 108), (108, 139), (139, 172), (172, 208), (208, 245), (245, 284)]
+        beaufortObservationNumber = []
+        for vel in velTextList:
+            velocity = round(float(vel), 1)
+            for item in dummyRange:
+                tempCatch = []
+                start = item[0]
+                end = item[1]
+                if velocity in [round(x * 0.1, 1) for x in range(start, end)]:
+                    catch = str(dummyRange.index(item))
+                    beaufortObservationNumber.append(catch)
+                else:
+                    pass
+        
+        velPlusBeaufort = []
+        i = 0
+        while i < len(velTextList):
+            add = velTextList[i] + "[" + beaufortObservationNumber[i] + "]"
+            velPlusBeaufort.append(add)
+            i += 1
+        velTextList = velPlusBeaufort
+        
+        getBeaufortNumbers = []
+        for item in beaufortObservationNumber:
+            if item not in getBeaufortNumbers:
+                getBeaufortNumbers.append(item)
+            else:
+                pass
+
+        summary = ""
+        for item in getBeaufortNumbers:
+            add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
+            summary += add
+        
+    if conditionalStatement not in matchStatement and len(conditionalStatement) > 4:
+        summary = " "
+        separator = " "
+        velTextList = velTextList
+    
+    return summary , separator, velTextList
 
 
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
@@ -511,6 +598,116 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         # color legend surfaces
                         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
                         
+                        
+                        def getAverageWindVelocities(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection):
+                            """If Ladybug_Beafort Ranges is connected to the conditionalStatement_ or if no annualHourly data is
+                            connected, this function will produce average wind velocity values with Beaufort range number in bracket.
+                            If If Ladybug_Beafort Ranges is not connected to the conditionalStatement_ and if annualHourly data is connected
+                            as well, this function  will only provide average velocity values to be displayed on wind rose.
+                            input(patternList) = a list with True and False values based on conditional statement
+                            input (analysisPeriod) = Data from _analysisPeriod_ input of this component
+                            input (_hourlyWindSpeed) = Data from _hourlyWindSpeed input of this component
+                            input (_hourlyWindDirection) = Data from _hourlyWindDirection input of this component
+                            output[summary] = A string that will be added at the bottom of wind rose is beaufortRanges are used
+                            output[separator] = A string of dots to be added at the bottom of wind rose to separate summary from the rest of strings
+                            output[velTextList] = A list of strings containing average velocity values to be displayed on the wind rose."""
+                               
+                            # Getting wind speeds and wind directions
+                            wind_Speeds, wind_Directions = unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
+                            wind_Directions = [int(x) for x in windDirections[7:]]
+                            wind_Speeds = wind_Speeds[7:]
+                            # Generating angle ranges to catch wind speeds
+                            angleRanges = [[0, 11]]
+                            angleList = [x*22.5 for x in range(17)]
+                            angleList = angleList[1:]
+                            for angle in angleList:
+                                angleRange = []
+                                start = angle - 11.25
+                                angleRange.append(int(start))
+                                stop = angle + 11.25
+                                angleRange.append(int(stop))
+                                angleRanges.append(angleRange)
+                            angleRanges = angleRanges[:-1]
+                            angleRanges.append([348, 360])
+                            
+                            # Generating empty velocitybins
+                            velocityBins = [] 
+                            for i in range(len(angleList)):
+                                velocityBins.append([])
+                            i = 0
+                            # Now catching velocities in respective bins
+                            while i < len(wind_Directions):
+                                
+                                if wind_Directions[i] in range(angleRanges[0][0], angleRanges[0][1]):
+                                    velocityBins[0].append(wind_Speeds[i])
+                                    
+                                if wind_Directions[i] in range(angleRanges[1][0], angleRanges[1][1]):
+                                    velocityBins[1].append(wind_Speeds[i])
+                                    
+                                if wind_Directions[i] in range(angleRanges[2][0], angleRanges[2][1]):
+                                    velocityBins[2].append(wind_Speeds[i])
+        
+                                if wind_Directions[i] in range(angleRanges[3][0], angleRanges[3][1]):
+                                    velocityBins[3].append(wind_Speeds[i])  
+                                    
+                                if wind_Directions[i] in range(angleRanges[4][0], angleRanges[4][1]):
+                                    velocityBins[4].append(wind_Speeds[i])                             
+        
+                                if wind_Directions[i] in range(angleRanges[5][0], angleRanges[5][1]):
+                                    velocityBins[5].append(wind_Speeds[i])                              
+        
+                                if wind_Directions[i] in range(angleRanges[6][0], angleRanges[6][1]):
+                                    velocityBins[6].append(wind_Speeds[i])                              
+        
+                                if wind_Directions[i] in range(angleRanges[7][0], angleRanges[7][1]):
+                                    velocityBins[7].append(wind_Speeds[i])                              
+        
+                                if wind_Directions[i] in range(angleRanges[8][0], angleRanges[8][1]):
+                                    velocityBins[8].append(wind_Speeds[i])                          
+                             
+                                if wind_Directions[i] in range(angleRanges[9][0], angleRanges[9][1]):
+                                    velocityBins[9].append(wind_Speeds[i])  
+        
+                                if wind_Directions[i] in range(angleRanges[10][0], angleRanges[10][1]):
+                                    velocityBins[10].append(wind_Speeds[i])     
+        
+                                if wind_Directions[i] in range(angleRanges[11][0], angleRanges[11][1]):
+                                    velocityBins[11].append(wind_Speeds[i])
+        
+                                if wind_Directions[i] in range(angleRanges[12][0], angleRanges[12][1]):
+                                    velocityBins[12].append(wind_Speeds[i])
+                                    
+                                if wind_Directions[i] in range(angleRanges[13][0], angleRanges[13][1]):
+                                    velocityBins[13].append(wind_Speeds[i])                            
+                                    
+                                if wind_Directions[i] in range(angleRanges[14][0], angleRanges[14][1]):
+                                    velocityBins[14].append(wind_Speeds[i])                            
+                                    
+                                if wind_Directions[i] in range(angleRanges[15][0], angleRanges[15][1]):
+                                    velocityBins[15].append(wind_Speeds[i])                            
+                                    
+                                if wind_Directions[i] in range(angleRanges[16][0], angleRanges[16][1]):
+                                    velocityBins[0].append(wind_Speeds[i])                                                      
+                                
+                                i += 1
+                                
+                            # Calculating averages velocities for all the directions
+                            velTextList = []
+                            for item in velocityBins:
+                                try:
+                                    average = str(round(sum(item) / len(item), 2))
+                                except Exception:
+                                    average = str(0)
+                                velTextList.append(average)
+                                
+                            summary , separator, velTextList = beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, velTextList)
+                            return summary , separator, velTextList
+                        
+                        
+                        # This is where we define summary to add to the bottom of the wind rose text, separator, and list of average wind velocities
+                        summary , separator, velTextList = getAverageWindVelocities(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
+                        
+                        # Creating custom heading for the windrose
                         customHeading = customHeading + listInfo[i][1] + \
                                         '\n'+lb_preparation.hour2Date(lb_preparation.date2Hour(stMonth, stDay, stHour)) + ' - ' + \
                                         lb_preparation.hour2Date(lb_preparation.date2Hour(endMonth, endDay, endHour)) + \
@@ -524,10 +721,10 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             if analysisPeriod != [(1, 1, 1), (12, 31, 24)] and analysisPeriod != []:
                                 additStr = "%.1f" % (len(allValues)) + ' hours of analysis period ' + ("%.1f" % len(HOYS)) + ' hours' + \
                                             ' (' + ("%.2f" % (len(allValues)/len(HOYS) * 100)) + '%).'
-                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + additStr
+                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + additStr + '\n' + separator + '\n' + summary
                             else:
-                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
-                        
+                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + separator + '\n' + summary
+                       
                         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
                         
                         # find the freq of the numbers in each segment
@@ -642,98 +839,17 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
-
+                   
                     # Adding frequencies to the wind Rose
                     # Making a list of frequecies to display on wind rose and rounding them
                     freqTextList = []
                     for item in windFreq:
                         freqTextList.append(str(round(item, 2)))
-                        
-                    # Getting wind speeds and wind directions
-                    wind_Speeds, wind_Directions = unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
-                    wind_Directions = [int(x) for x in windDirections[7:]]
-                    wind_Speeds = wind_Speeds[7:]
-                    # Generating angle ranges to catch wind speeds
-                    angleRanges = [[0, 11]]
+                    
+                    # Making a list of angles to rotate vecotrs
                     angleList = [x*22.5 for x in range(17)]
                     angleList = angleList[1:]
-                    for angle in angleList:
-                        angleRange = []
-                        start = angle - 11.25
-                        angleRange.append(int(start))
-                        stop = angle + 11.25
-                        angleRange.append(int(stop))
-                        angleRanges.append(angleRange)
-                    angleRanges = angleRanges[:-1]
-                    angleRanges.append([348, 360])
-                    
-                    # Generating empty velocitybins
-                    velocityBins = [] 
-                    for i in range(len(angleList)):
-                        velocityBins.append([])
-                    i = 0
-                    # Now catching velocities in respective bins
-                    while i < len(wind_Directions):
-                        
-                        if wind_Directions[i] in range(angleRanges[0][0], angleRanges[0][1]):
-                            velocityBins[0].append(wind_Speeds[i])
-                            
-                        if wind_Directions[i] in range(angleRanges[1][0], angleRanges[1][1]):
-                            velocityBins[1].append(wind_Speeds[i])
-                            
-                        if wind_Directions[i] in range(angleRanges[2][0], angleRanges[2][1]):
-                            velocityBins[2].append(wind_Speeds[i])
 
-                        if wind_Directions[i] in range(angleRanges[3][0], angleRanges[3][1]):
-                            velocityBins[3].append(wind_Speeds[i])  
-                            
-                        if wind_Directions[i] in range(angleRanges[4][0], angleRanges[4][1]):
-                            velocityBins[4].append(wind_Speeds[i])                             
-
-                        if wind_Directions[i] in range(angleRanges[5][0], angleRanges[5][1]):
-                            velocityBins[5].append(wind_Speeds[i])                              
-
-                        if wind_Directions[i] in range(angleRanges[6][0], angleRanges[6][1]):
-                            velocityBins[6].append(wind_Speeds[i])                              
-
-                        if wind_Directions[i] in range(angleRanges[7][0], angleRanges[7][1]):
-                            velocityBins[7].append(wind_Speeds[i])                              
-
-                        if wind_Directions[i] in range(angleRanges[8][0], angleRanges[8][1]):
-                            velocityBins[8].append(wind_Speeds[i])                          
-                     
-                        if wind_Directions[i] in range(angleRanges[9][0], angleRanges[9][1]):
-                            velocityBins[9].append(wind_Speeds[i])  
-
-                        if wind_Directions[i] in range(angleRanges[10][0], angleRanges[10][1]):
-                            velocityBins[10].append(wind_Speeds[i])     
-
-                        if wind_Directions[i] in range(angleRanges[11][0], angleRanges[11][1]):
-                            velocityBins[11].append(wind_Speeds[i])
-
-                        if wind_Directions[i] in range(angleRanges[12][0], angleRanges[12][1]):
-                            velocityBins[12].append(wind_Speeds[i])
-                            
-                        if wind_Directions[i] in range(angleRanges[13][0], angleRanges[13][1]):
-                            velocityBins[13].append(wind_Speeds[i])                            
-                            
-                        if wind_Directions[i] in range(angleRanges[14][0], angleRanges[14][1]):
-                            velocityBins[14].append(wind_Speeds[i])                            
-                            
-                        if wind_Directions[i] in range(angleRanges[15][0], angleRanges[15][1]):
-                            velocityBins[15].append(wind_Speeds[i])                            
-                            
-                        if wind_Directions[i] in range(angleRanges[16][0], angleRanges[16][1]):
-                            velocityBins[0].append(wind_Speeds[i])                                                      
-                        
-                        i += 1
-                        
-                    # Calculating averages velocities for all the directions
-                    velTextList = []
-                    for item in velocityBins:
-                        average = str(round(sum(item) / len(item), 2))
-                        velTextList.append(average)                        
-                        
                     # Measuring the distance between the north point and the center of the wind rose.
                     # This radial distance is crucial for position of frequencies
                     point01 = cenPt
