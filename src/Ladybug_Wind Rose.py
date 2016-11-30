@@ -280,44 +280,50 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
                 separator = '...                         ...                         ...'
                 velTextList = velTextList
     
-                
-    if conditionalStatement not in matchStatement and len(conditionalStatement) < 5:
-        separator = '...                         ...                         ...'
-        dummyRange = [(0,3), (3, 16), (16, 34), (34, 55), (55, 80), (80, 108), (108, 139), (139, 172), (172, 208), (208, 245), (245, 284)]
-        beaufortObservationNumber = []
-        for vel in velTextList:
-            velocity = round(float(vel), 1)
-            for item in dummyRange:
-                tempCatch = []
-                start = item[0]
-                end = item[1]
-                if velocity in [round(x * 0.1, 1) for x in range(start, end)]:
-                    catch = str(dummyRange.index(item))
-                    beaufortObservationNumber.append(catch)
+    if conditionalStatement != None:
+        
+        if conditionalStatement not in matchStatement and len(conditionalStatement) < 5 :
+            separator = '...                         ...                         ...'
+            dummyRange = [(0,3), (3, 16), (16, 34), (34, 55), (55, 80), (80, 108), (108, 139), (139, 172), (172, 208), (208, 245), (245, 284)]
+            beaufortObservationNumber = []
+            for vel in velTextList:
+                velocity = round(float(vel), 1)
+                for item in dummyRange:
+                    tempCatch = []
+                    start = item[0]
+                    end = item[1]
+                    if velocity in [round(x * 0.1, 1) for x in range(start, end)]:
+                        catch = str(dummyRange.index(item))
+                        beaufortObservationNumber.append(catch)
+                    else:
+                        pass
+            
+            velPlusBeaufort = []
+            i = 0
+            while i < len(velTextList):
+                add = velTextList[i] + "[" + beaufortObservationNumber[i] + "]"
+                velPlusBeaufort.append(add)
+                i += 1
+            velTextList = velPlusBeaufort
+            
+            getBeaufortNumbers = []
+            for item in beaufortObservationNumber:
+                if item not in getBeaufortNumbers:
+                    getBeaufortNumbers.append(item)
                 else:
                     pass
+    
+            summary = ""
+            for item in getBeaufortNumbers:
+                add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
+                summary += add
+            
+        if conditionalStatement not in matchStatement and len(conditionalStatement) > 4:
+            summary = " "
+            separator = " "
+            velTextList = velTextList
         
-        velPlusBeaufort = []
-        i = 0
-        while i < len(velTextList):
-            add = velTextList[i] + "[" + beaufortObservationNumber[i] + "]"
-            velPlusBeaufort.append(add)
-            i += 1
-        velTextList = velPlusBeaufort
-        
-        getBeaufortNumbers = []
-        for item in beaufortObservationNumber:
-            if item not in getBeaufortNumbers:
-                getBeaufortNumbers.append(item)
-            else:
-                pass
-
-        summary = ""
-        for item in getBeaufortNumbers:
-            add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
-            summary += add
-        
-    if conditionalStatement not in matchStatement and len(conditionalStatement) > 4:
+    if conditionalStatement == None:
         summary = " "
         separator = " "
         velTextList = velTextList
@@ -707,6 +713,13 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         # This is where we define summary to add to the bottom of the wind rose text, separator, and list of average wind velocities
                         summary , separator, velTextList = getAverageWindVelocities(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
                         
+                        if showAverageVelocity_ == True and numOfDirections == 16:
+                            summary = summary
+                            separator = separator
+                        else:
+                            summary = ""
+                            separator = ""
+                       
                         # Creating custom heading for the windrose
                         customHeading = customHeading + listInfo[i][1] + \
                                         '\n'+lb_preparation.hour2Date(lb_preparation.date2Hour(stMonth, stDay, stHour)) + ' - ' + \
