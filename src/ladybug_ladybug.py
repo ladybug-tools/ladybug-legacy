@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_03_2016'
+ghenv.Component.Message = 'VER 0.0.63\nNOV_29_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -3184,6 +3184,7 @@ class ComfortModels(object):
             # root-finding only
             res = []
             def fn(t):
+                if t > 200: t = 200
                 return (set - self.comfPierceSET(ta-t, tr-t, stillAirThreshold, rh, met, clo, wme));
             f1 = fn(a)
             if abs(f1) <= epsilon: res.append(a)
