@@ -24,7 +24,7 @@ Use this component to compute the floor-level downdraft air temperature and velo
 _
 The model used in this component comes from physical measurements of window downdraft conducted and published here:
 _
-Heiselberg, P. Draft Risk from Cold Vertical Surfaces. Building and Environment, 29 (1994): 297-301.
+Heiselberg, P. “Draft Risk from Cold Vertical Surfaces.” Building and Environment, 29 (1994): 297-301.
 -
 Provided by Ladybug 0.0.63
     
@@ -43,7 +43,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_18_2016'
+ghenv.Component.Message = 'VER 0.0.63\nNOV_24_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -57,6 +57,7 @@ import Rhino as rc
 import scriptcontext as sc
 import copy
 import System.Threading.Tasks as tasks
+import Grasshopper.Kernel as gh
 import copy
 
 def getSrfCenPtandNormal(surface):
@@ -192,6 +193,7 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
 initCheck = True
 
 #Ladybug check.
+w = gh.GH_RuntimeMessageLevel.Warning
 if not sc.sticky.has_key('ladybug_release') == True:
     initCheck = False
     print "You should first let Ladybug fly..."
