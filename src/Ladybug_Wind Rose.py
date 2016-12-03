@@ -42,9 +42,9 @@ Provided by Ladybug 0.0.63
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
         showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction
-        frequencyOffset_: The offset of frequecy display on wind rose. This input only accepts floats. The default offset is 1.12
-        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction
-        averageVelocityOffset_: The offset of average wind velocities display on wind rose. This input only accepts floats. The default offset is 1.12
+        frequencyOffset_: The offset of frequecy display on wind rose. This input only accepts floats. The default offset is 1.15
+        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction. If a conditional statement for wind is provided, beaufort number is plotted(in square brackets) along with the average velocities. This number indicates the effect caused by wind of average velocity coming from that partcular direcction.
+        averageVelocityOffset_: The offset of average wind velocities display on wind rose. This input only accepts floats. The default offset is 1.15
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -65,7 +65,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_01_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_02_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -157,13 +157,16 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         
         
 def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection):
-    """This is a helper function. It is mainly used to generate lists for windSpeeds and windDirections
-       output of this component.
-       input(patternList) = a list with True and False values based on conditional statement
-       input (analysisPeriod) = Data from _analysisPeriod_ input of this component
-       input (_hourlyWindSpeed) = Data from _hourlyWindSpeed input of this component
-       input (_hourlyWindDirection) = Data from _hourlyWindDirection input of this component
-       output(result) = a tuple of lists"""
+    """
+    This is a helper function. It is mainly used to generate lists for windSpeeds and windDirections
+    output of this component.
+    
+    input(patternList) = a list with True and False values based on conditional statement
+    input (analysisPeriod) = Data from _analysisPeriod_ input of this component
+    input (_hourlyWindSpeed) = Data from _hourlyWindSpeed input of this component
+    input (_hourlyWindDirection) = Data from _hourlyWindDirection input of this component
+    output(result) = a tuple of lists
+    """
     
     #Trimming headers from weather data input and making new lists out of them
     speedData = _hourlyWindSpeed[7:]
@@ -215,20 +218,23 @@ def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWind
 
 
 def getOffset(frequencyOffset_, averageVelocityOffset_ ):
-    """This function sets the offset value for frequency display on wind rose
+    """
+    This function sets the offset value for frequency display and average wind velocities on the wind rose
+    
     input(frequencyOffset_) = input from this component
     input(averageVelocityOffset_) = input from this component
-    output = a list of offset value for frequency display and average velocity display"""
+    output = a list of offset value for frequency display and average velocity display
+    """
     if frequencyOffset_ == None and averageVelocityOffset_ == None:
-        freqOffset = 1.12
-        velOffset = 1.12
+        freqOffset = 1.15
+        velOffset = 1.15
         return [freqOffset, velOffset]
     if frequencyOffset_ != None and averageVelocityOffset_ == None:
         freqOffset = frequencyOffset_
-        velOffset = 1.12
+        velOffset = 1.15
         return [freqOffset, velOffset]
     if frequencyOffset_ == None and averageVelocityOffset_ != None:
-        freqOffset = 1.12
+        freqOffset = 1.15
         velOffset = averageVelocityOffset_
         return [freqOffset, velOffset]
     else:
@@ -237,35 +243,116 @@ def getOffset(frequencyOffset_, averageVelocityOffset_ ):
         return [freqOffset, velOffset]
 
 
-# Following are beaufort ranges and related observations based on following link
+# Checking whether the wind speed data is in m/s or in mph
+if _hourlyWindSpeed[3] == "m/s":
+    beaufortRanges = [(0, 0.3), (0.3, 1.5), (1.6, 3.3), (3.4, 5.5), (5.5, 7.9), (8.0, 10.7), (10.8, 13.8), (13.9, 17.1), (17.2, 20.7), (20.8, 24.4), (24.5, 28.4), (28.5, 32.6) , (32.7, 100)]
+
+elif _hourlyWindSpeed[3] == "mph":
+    beaufortRanges = [(0, 1), (1, 3), (4, 7), (8 , 12), (13, 18), (19, 24), (25, 31), (32, 38), (39, 46), (47, 54), (55, 63), (64, 72), (73, 150)]
+
+# Beaufort observations.
+# These observations are taken from following links;
 # https://github.com/devngc/References/tree/master/Beaufort%20Scale
-beaufortRanges = [(0, 0.2), (0.3, 1.5), (1.6, 3.3), (3.4, 5.4), (5.5, 7.9), (8.0, 10.7), (10.8, 13.8), (13.9, 17.1), (17.2, 20.7), (20.8, 24.4), (24.5, 28.4)]
-observation00 = "Totally calm"
-observation01 = "This wind is not really noticeable"
-observation02 = "This wind will be felt on the face of a pedestrian on the ground" 
-observation03 = "This wind can extend a light flag" 
-observation04 = "This wind can raise dust and loose paper. It can also disarrange hair and move clothng flaps"
-observation05 = "This wind is the at the limit of agreeable wind on land"
-observation06 = "In this wind umbrellas are used with difficulty. Foreces of the wind are felt on the body. This wind is typically noisy"
-observation07 = "In this wind, inconvenience is caused when walking. It is difficult to walk steadily. Hair are blown straight"
-observation08 = "This wind generally impedes progress. Normal walking becomes difficult. Tough to maintain balance in gusts"
-observation09 = "In this wind, people are blown over by gusts." + '\n' + "It is impossible to face wind; ear ache and headache happens." + '\n' + "Some structural damage occurs." + '\n' + "Roof tiles are blown over and tree braches are broken. Hazardous for pedestrians."
-observation10 = "Such wind is seldom experienced inland. Trees are uprooted. Considerable structural damage occurs"
-beaufortObservations = [observation00, observation01, observation02, observation03, observation04, observation05, observation06, observation07, observation08, observation09, observation10]
+# https://en.wikipedia.org/wiki/Beaufort_scale 
+
+Calm = """This wind is totally calm. 
+Smoke rises vertically."""
+Light_Air = """At this speed, smoke drift indicates wind direction.
+However, Leaves and wind vanes are still stationary."""
+Light_Breeze = """At this speed, wind is felt on exposed skin. 
+Leaves rustle and wind vanes begin to move.""" 
+Gentle_Breeze = """At this speed, leaves and small twigs constantly move.
+Light flag can be extended.""" 
+Moderate_Breeze = """At this speed, dust and loose paper are raised.
+Small branches begin to move.
+Hair and clothing flaps disarranged."""
+Fresh_Breeze = """This is the limit of agreeable wind on land.
+At this speed, branches of moderate size move.
+Leaves in small trees also begin to sway."""
+Strong_Breeze = """At this speed, large branches move.
+Whistling can be heard in overhead wires.
+Use of umbrellas become difficult.
+Force of the wind felt on the body.
+Frequent blinking happens.
+Empty plastic bins flip over"""
+Near_Gale = """At this speed, whole trees are in motion.
+Effort is needed to walk against the wind.
+Hair are blown straight."""
+Gale = """At this speed, twigs begin to break from trees.
+Cars veer on road.
+Progress on foot is seriously impeded.
+Great difficulty with balance in gusts."""
+Strong_Gale = """At this speed, trees are broken off or uprooted.
+Structural damage likely.
+People are blown over by gusts.
+Impossible to face this wind.
+Headache, earache happens and breathing is difficult.
+Hazardous for the pedestrians."""
+Voilent_Storm = """At this speed, widespread vegetation and
+structural damage likely."""
+Hurricane = """At this wind, severe widespread damage to vegetaton and structures.
+Debris and unsecured objects are hurled about."""
+
+# This dictionary is used when Ladybug_Beaufort Ranges is connected
+beaufortObservationsNoOffset = {0: Calm, 1: Light_Air, 2: Light_Breeze, 3: Gentle_Breeze, 4: Moderate_Breeze, 5: Fresh_Breeze, 6: Strong_Breeze, 7: Near_Gale, 8: Gale, 9: Strong_Gale, 10: Voilent_Storm, 11: Hurricane}
+
+Calm = """This wind is totally calm. 
+        Smoke rises vertically."""
+Light_Air = """At this speed, smoke drift indicates wind direction.
+        However, Leaves and wind vanes are still stationary."""
+Light_Breeze = """At this speed, wind is felt on exposed skin. 
+        Leaves rustle and wind vanes begin to move.""" 
+Gentle_Breeze = """At this speed, leaves and small twigs constantly move.
+        Light flag can be extended.""" 
+Moderate_Breeze = """At this speed, dust and loose paper are raised.
+        Small branches begin to move.
+        Hair and clothing flaps disarranged."""
+Fresh_Breeze = """This is the limit of agreeable wind on land.
+        At this speed, branches of moderate size move.
+        Leaves in small trees also begin to sway."""
+Strong_Breeze = """At this speed, large branches move.
+        Whistling can be heard in overhead wires.
+        Use of umbrellas become difficult.
+        Force of the wind felt on the body.
+        Frequent blinking happens.
+        Empty plastic bins flip over"""
+Near_Gale = """At this speed, whole trees are in motion.
+        Effort is needed to walk against the wind.
+        Hair are blown straight."""
+Gale = """At this speed, twigs begin to break from trees.
+        Cars veer on road.
+        Progress on foot is seriously impeded.
+        Great difficulty with balance in gusts."""
+Strong_Gale = """At this speed, trees are broken off or uprooted.
+        Structural damage likely.
+        People are blown over by gusts.
+        Impossible to face this wind.
+        Headache, earache happens and breathing is difficult.
+        Hazardous for the pedestrians."""
+Voilent_Storm = """At this speed, widespread vegetation and
+        structural damage likely."""
+Hurricane = """At this wind, severe widespread damage to vegetaton and structures.
+        Debris and unsecured objects are hurled about."""
+
+# This dictionary is used when Ladybug_Beaufort Ranges is not connected and regular conditional statement is used
+beaufortObservations = {0: Calm, 1: Light_Air, 2: Light_Breeze, 3: Gentle_Breeze, 4: Moderate_Breeze, 5: Fresh_Breeze, 6: Strong_Breeze, 7: Near_Gale, 8: Gale, 9: Strong_Gale, 10: Voilent_Storm, 11: Hurricane}
 
 
 def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, velTextList):
-    """This function generates summary to add at the bottom of wind rose diagram
+    """
+    This function generates summary to add at the bottom of wind rose diagram
     in case the user connects Ladybug_Beaufort Ranges in conditionalStatement_.
     If Ladybug_Beaufort Ranges is not connected and simple conditional statement is used,
     this function will add a nnumber(beaufort range number) to average velocities being displayed on wind rose.
     also, the function will output summary to be appended at the bottom of text to explain what those beaufort numbers mean.
+    
     input[conditionalStatement_] = Data from component input named conditionalStatement_
     input[beaufortRanges] = A list of tuples containing beaufort ranges
     input[beaufortObservations] = A list of strings containing observations in beaufort scale
     input[velTextList] = A list of strings representing average wind velocities coming from different directions
     output[summary] = A string that will be added at the bottom of wind rose is beaufortRanges are used
-    output[separator] = A string of dots to be added at the bottom of wind rose to separate summary from the rest of strings"""
+    output[separator] = A string of dots to be added at the bottom of wind rose to separate summary from the rest of strings
+    """
     conditionalStatement = conditionalStatement_
     matchStatement = []
     for item in beaufortRanges:
@@ -277,7 +364,9 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
         for item in matchStatement:
             if conditionalStatement == item:
                 i = matchStatement.index(item)
-                summary = beaufortObservations[i]
+                for key in beaufortObservationsNoOffset.keys():
+                    if key == i:
+                        summary = beaufortObservationsNoOffset[key]
                 separator = '...                         ...                         ...'
                 velTextList = velTextList
     
@@ -287,7 +376,16 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
         # If a conditional statement is attached for wind but it is not one of the beaufort ranges
         if conditionalStatement not in matchStatement and len(conditionalStatement) < 8 :
             separator = '...                         ...                         ...'
-            dummyRange = [(0,3), (3, 16), (16, 34), (34, 55), (55, 80), (80, 108), (108, 139), (139, 172), (172, 208), (208, 245), (245, 284)]
+            
+            # If wind velocities are in m/s
+            if beaufortRanges[-1][1] != 150:
+                dummyRange = [(0,3), (3, 16), (16, 34), (34, 55), (55, 80), (80, 108), (108, 139), (139, 172), (172, 208), (208, 245), (245, 285), (285, 327), (327, 1000)]
+            
+            # If wind velocities are in mph
+            if beaufortRanges[-1][1] == 150:
+                dummyRange = [(0, 10), (10, 40), (40, 80), (80 , 130), (130, 190), (190, 250), (250, 320), (320, 390), (390, 470), (470, 550), (550, 640), (640, 730), (730, 1500)]
+            
+            # Getting a list of all the beaufort numbers applicable to given criteria
             beaufortObservationNumber = []
             for vel in velTextList:
                 velocity = round(float(vel), 1)
@@ -301,6 +399,7 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
                     else:
                         pass
             
+            # Adding beaufort numbers to average velocities
             velPlusBeaufort = []
             i = 0
             while i < len(velTextList):
@@ -309,13 +408,15 @@ def beaufortScale(conditionalStatement_, beaufortRanges, beaufortObservations, v
                 i += 1
             velTextList = velPlusBeaufort
             
+            # Taking unique beaufort numbers for adding summary at the bottom
             getBeaufortNumbers = []
             for item in beaufortObservationNumber:
                 if item not in getBeaufortNumbers:
                     getBeaufortNumbers.append(item)
                 else:
                     pass
-    
+                    
+            # Making summary
             summary = ""
             for item in getBeaufortNumbers:
                 add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
@@ -868,7 +969,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
-                   
+                    
                     # Adding frequencies to the wind Rose
                     # Making a list of frequecies to display on wind rose and rounding them
                     freqTextList = []
