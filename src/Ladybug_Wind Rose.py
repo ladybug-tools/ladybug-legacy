@@ -257,40 +257,40 @@ elif _hourlyWindSpeed[3] == "mph":
 
 Calm = """This wind is totally calm. 
 Smoke rises vertically."""
-Light_Air = """At this speed, smoke drift indicates wind direction.
+Light_Air = """At this wind speed, smoke drift indicates wind direction.
 However, Leaves and wind vanes are still stationary."""
-Light_Breeze = """At this speed, wind is felt on exposed skin. 
+Light_Breeze = """At this wind speed, wind is felt on exposed skin. 
 Leaves rustle and wind vanes begin to move.""" 
-Gentle_Breeze = """At this speed, leaves and small twigs constantly move.
+Gentle_Breeze = """At this wind speed, leaves and small twigs constantly move.
 Light flag can be extended.""" 
-Moderate_Breeze = """At this speed, dust and loose paper are raised.
+Moderate_Breeze = """At this wind speed, dust and loose paper are raised.
 Small branches begin to move.
 Hair and clothing flaps disarranged."""
 Fresh_Breeze = """This is the limit of agreeable wind on land.
-At this speed, branches of moderate size move.
+At this wind speed, branches of moderate size move.
 Leaves in small trees also begin to sway."""
-Strong_Breeze = """At this speed, large branches move.
+Strong_Breeze = """At this wind speed, large branches move.
 Whistling can be heard in overhead wires.
 Use of umbrellas become difficult.
 Force of the wind felt on the body.
 Frequent blinking happens.
 Empty plastic bins flip over"""
-Near_Gale = """At this speed, whole trees are in motion.
+Near_Gale = """At this wind speed, whole trees are in motion.
 Effort is needed to walk against the wind.
 Hair are blown straight."""
-Gale = """At this speed, twigs begin to break from trees.
+Gale = """At this wind speed, twigs begin to break from trees.
 Cars veer on road.
 Progress on foot is seriously impeded.
 Great difficulty with balance in gusts."""
-Strong_Gale = """At this speed, trees are broken off or uprooted.
+Strong_Gale = """At this wind speed, trees are broken off or uprooted.
 Structural damage likely.
 People are blown over by gusts.
 Impossible to face this wind.
 Headache, earache happens and breathing is difficult.
 Hazardous for the pedestrians."""
-Voilent_Storm = """At this speed, widespread vegetation and
+Voilent_Storm = """At this wind speed, widespread vegetation and
 structural damage likely."""
-Hurricane = """At this wind, severe widespread damage to vegetaton and structures.
+Hurricane = """At this wind speed, severe widespread damage to vegetaton and structures.
 Debris and unsecured objects are hurled about."""
 
 # This dictionary is used when Ladybug_Beaufort Ranges is connected
@@ -298,40 +298,40 @@ beaufortObservationsNoOffset = {0: Calm, 1: Light_Air, 2: Light_Breeze, 3: Gentl
 
 Calm = """This wind is totally calm. 
         Smoke rises vertically."""
-Light_Air = """At this speed, smoke drift indicates wind direction.
+Light_Air = """At this wind speed, smoke drift indicates wind direction.
         However, Leaves and wind vanes are still stationary."""
-Light_Breeze = """At this speed, wind is felt on exposed skin. 
+Light_Breeze = """At this wind speed, wind is felt on exposed skin. 
         Leaves rustle and wind vanes begin to move.""" 
-Gentle_Breeze = """At this speed, leaves and small twigs constantly move.
+Gentle_Breeze = """At this wind speed, leaves and small twigs constantly move.
         Light flag can be extended.""" 
-Moderate_Breeze = """At this speed, dust and loose paper are raised.
+Moderate_Breeze = """At this wind speed, dust and loose paper are raised.
         Small branches begin to move.
         Hair and clothing flaps disarranged."""
 Fresh_Breeze = """This is the limit of agreeable wind on land.
-        At this speed, branches of moderate size move.
+        At this wind speed, branches of moderate size move.
         Leaves in small trees also begin to sway."""
-Strong_Breeze = """At this speed, large branches move.
+Strong_Breeze = """At this wind speed, large branches move.
         Whistling can be heard in overhead wires.
         Use of umbrellas become difficult.
         Force of the wind felt on the body.
         Frequent blinking happens.
         Empty plastic bins flip over"""
-Near_Gale = """At this speed, whole trees are in motion.
+Near_Gale = """At this wind speed, whole trees are in motion.
         Effort is needed to walk against the wind.
         Hair are blown straight."""
-Gale = """At this speed, twigs begin to break from trees.
+Gale = """At this wind speed, twigs begin to break from trees.
         Cars veer on road.
         Progress on foot is seriously impeded.
         Great difficulty with balance in gusts."""
-Strong_Gale = """At this speed, trees are broken off or uprooted.
+Strong_Gale = """At this wind speed, trees are broken off or uprooted.
         Structural damage likely.
         People are blown over by gusts.
         Impossible to face this wind.
         Headache, earache happens and breathing is difficult.
         Hazardous for the pedestrians."""
-Voilent_Storm = """At this speed, widespread vegetation and
+Voilent_Storm = """At this wind speed, widespread vegetation and
         structural damage likely."""
-Hurricane = """At this wind, severe widespread damage to vegetaton and structures.
+Hurricane = """At this wind speed, severe widespread damage to vegetaton and structures.
         Debris and unsecured objects are hurled about."""
 
 # This dictionary is used when Ladybug_Beaufort Ranges is not connected and regular conditional statement is used
