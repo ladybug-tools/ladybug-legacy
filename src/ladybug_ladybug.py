@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nNOV_29_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_04_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2017,7 +2017,7 @@ class MeshPreparation(object):
         for m in meshList: joinedMesh.Append(m)
         return joinedMesh
     
-    def parallel_makeSurfaceMesh(self, brep, gridSize, parallel = True):
+    def parallel_makeSurfaceMesh(self, brep, gridSize, parallel = False):
         ## mesh breps
         def makeMeshFromSrf(i):
             try:
@@ -2046,7 +2046,7 @@ class MeshPreparation(object):
         
         return mesh
     
-    def parallel_makeContextMesh(self, brep, parallel = True):
+    def parallel_makeContextMesh(self, brep, parallel = False):
         ## mesh breps
         def makeMeshFromSrf(i):
             try:
