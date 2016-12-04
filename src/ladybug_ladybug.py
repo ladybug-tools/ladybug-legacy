@@ -2022,7 +2022,7 @@ class MeshPreparation(object):
         def makeMeshFromSrf(i):
             try:
                 mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
-                inputBrep.Dispose()
+                brep[i].Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
                 pass
@@ -2051,7 +2051,7 @@ class MeshPreparation(object):
         def makeMeshFromSrf(i):
             try:
                 mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
-                inputBrep.Dispose()
+                brep[i].Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
                 pass
