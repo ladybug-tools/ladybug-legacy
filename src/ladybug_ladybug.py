@@ -2017,11 +2017,11 @@ class MeshPreparation(object):
         for m in meshList: joinedMesh.Append(m)
         return joinedMesh
     
-    def parallel_makeSurfaceMesh(self, brep, gridSize):
+    def parallel_makeSurfaceMesh(self, brep, gridSize, parallel = True):
         ## mesh breps
-        def makeMeshFromSrf(i, inputBrep):
+        def makeMeshFromSrf(i):
             try:
-                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(inputBrep, meshParam)
+                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
                 inputBrep.Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
@@ -2038,21 +2038,19 @@ class MeshPreparation(object):
         rc.Geometry.MeshingParameters.GridAspectRatio.__set__(meshParam, aspectRatio)
     
         ## Call the mesh function
-        if 1 < 0: #parallel: # for some reason parallel meshing gives error
+        if parallel:
             tasks.Parallel.ForEach(xrange(len(brep)),makeMeshFromSrf)
         else:
             for i in range(len(mesh)):
-                makeMeshFromSrf(i, brep[i])
-
-        meshGeometries = mesh
+                makeMeshFromSrf(i)
         
-        return meshGeometries
+        return mesh
     
-    def parallel_makeContextMesh(self, brep):
+    def parallel_makeContextMesh(self, brep, parallel = True):
         ## mesh breps
-        def makeMeshFromSrf(i, inputBrep):
+        def makeMeshFromSrf(i):
             try:
-                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(inputBrep, meshParam)
+                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
                 inputBrep.Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
@@ -2068,14 +2066,13 @@ class MeshPreparation(object):
         rc.Geometry.MeshingParameters.GridAmplification.__set__(meshParam, 1.5)
     
         ## Call the mesh function
-        if 1 < 0: #parallel: # for some reason parallel meshing gives error
+        if parallel:
             tasks.Parallel.ForEach(xrange(len(brep)),makeMeshFromSrf)
         else:
             for i in range(len(mesh)):
-                makeMeshFromSrf(i, brep[i])
-
-        meshGeometries = mesh
-        return meshGeometries
+                makeMeshFromSrf(i)
+        
+        return mesh
 
     def parallel_testPointCalculator(self, analysisSrfs, disFromBase, parallel = True):
         # Mesh functions should be modified and be written interrelated as a class
