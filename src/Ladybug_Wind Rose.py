@@ -65,7 +65,6 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -731,7 +730,10 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     # Calculating averages velocities for all the directions
                     velTextList = []
                     for item in velocityBins:
-                        average = str(round(sum(item) / len(item), 2))
+                        try:
+                            average = str(round(sum(item) / len(item), 2))
+                        except Exception:
+                            average = str(0)
                         velTextList.append(average)                        
                         
                     # Measuring the distance between the north point and the center of the wind rose.
