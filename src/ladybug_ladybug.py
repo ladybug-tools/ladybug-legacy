@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nNOV_29_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_04_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2017,12 +2017,12 @@ class MeshPreparation(object):
         for m in meshList: joinedMesh.Append(m)
         return joinedMesh
     
-    def parallel_makeSurfaceMesh(self, brep, gridSize):
+    def parallel_makeSurfaceMesh(self, brep, gridSize, parallel = False):
         ## mesh breps
-        def makeMeshFromSrf(i, inputBrep):
+        def makeMeshFromSrf(i):
             try:
-                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(inputBrep, meshParam)
-                inputBrep.Dispose()
+                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
+                brep[i].Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
                 pass
@@ -2038,22 +2038,20 @@ class MeshPreparation(object):
         rc.Geometry.MeshingParameters.GridAspectRatio.__set__(meshParam, aspectRatio)
     
         ## Call the mesh function
-        if 1 < 0: #parallel: # for some reason parallel meshing gives error
+        if parallel:
             tasks.Parallel.ForEach(xrange(len(brep)),makeMeshFromSrf)
         else:
             for i in range(len(mesh)):
-                makeMeshFromSrf(i, brep[i])
-
-        meshGeometries = mesh
+                makeMeshFromSrf(i)
         
-        return meshGeometries
+        return mesh
     
-    def parallel_makeContextMesh(self, brep):
+    def parallel_makeContextMesh(self, brep, parallel = False):
         ## mesh breps
-        def makeMeshFromSrf(i, inputBrep):
+        def makeMeshFromSrf(i):
             try:
-                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(inputBrep, meshParam)
-                inputBrep.Dispose()
+                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
+                brep[i].Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
                 pass
@@ -2068,14 +2066,13 @@ class MeshPreparation(object):
         rc.Geometry.MeshingParameters.GridAmplification.__set__(meshParam, 1.5)
     
         ## Call the mesh function
-        if 1 < 0: #parallel: # for some reason parallel meshing gives error
+        if parallel:
             tasks.Parallel.ForEach(xrange(len(brep)),makeMeshFromSrf)
         else:
             for i in range(len(mesh)):
-                makeMeshFromSrf(i, brep[i])
-
-        meshGeometries = mesh
-        return meshGeometries
+                makeMeshFromSrf(i)
+        
+        return mesh
 
     def parallel_testPointCalculator(self, analysisSrfs, disFromBase, parallel = True):
         # Mesh functions should be modified and be written interrelated as a class
