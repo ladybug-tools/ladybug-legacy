@@ -452,11 +452,11 @@ def beaufortScale(conditionalStatement_, _hourlyWindSpeed, beaufortObservationsN
 
 
 def makeRanges(numDirections):
-    """This component takes compassText and outputs a list of ranges to be used for
+    """This component takes numOfDirections and outputs a list of ranges to be used for
     average velocity and frequency calculation.
     input(numDirections) : Number of directions for windRose
-    output (compassAngles) : A list of compass angles based on numOfDirections
-    output (angleRanges) : A list of angle ranges
+    output (compassAngles) : A list of compass angles based on numOfDirections to be used for rotation of vectors
+    output (angleRanges) : A list of angle ranges to be used for radial display of frequencies and average wind velocities
     """
     compassAngles = [(360/numDirections)*i for i in range(numDirections+1)]
     angleRanges = []
