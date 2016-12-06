@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.63
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
         showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction
-        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction. If a conditional statement for wind is provided, beaufort number is plotted(in square brackets) along with the average velocities. This number indicates the effect caused by wind of average velocity coming from that partcular direcction.
+        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction. If a conditional statement is connected to the conditionalStatement_ input, a beaufort number is plotted(in square brackets) along with the average velocities. This number indicates the effect caused by wind of average velocity coming from that partcular direction.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -57,7 +57,7 @@ Provided by Ladybug 0.0.63
         legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
         legendBasePts: The legend base point(s), which can be used to move the legend in relation to the rose with the grasshopper "move" component.
         title: The title for the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
-        ---------------- : Separator
+        ---------------- : ...
         windSpeeds: Wind speed data for the wind rose displayed in the Rhino scene.
         windDirections: Wind direction data for the wind rose displayed in the Rhino scene.
         averageVelocities: A list containing average wind velocity for all wind rose directions.
@@ -66,7 +66,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_05_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -230,7 +230,7 @@ def getOffset(showFrequency_, showAverageVelocity_):
     freqOffset = 1.25
     if showFrequency_ == True and showAverageVelocity_ == True:
         freqOffset = 1.25
-    elif showFrequency_ == True and showAverageVelocity_ == False:
+    elif showFrequency_ == True and showAverageVelocity_ == False or showAverageVelocity_ == None :
         freqOffset = 1.12
     return [freqOffset, velOffset]
         
@@ -384,7 +384,7 @@ def beaufortScale(conditionalStatement_, _hourlyWindSpeed, beaufortObservationsN
                 return summary , separator, velTextList      
 
         # If a conditional statement is attached for wind, but it is not one of the beaufort ranges
-        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange and len(conditionalStatement) < 8 :
+        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange:
             separator = '...                         ...                         ...'
             
             # If wind velocities are in m/s
@@ -434,14 +434,7 @@ def beaufortScale(conditionalStatement_, _hourlyWindSpeed, beaufortObservationsN
             for item in getBeaufortNumbers:
                 add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
                 summary += add
-        
-        # If a conditional statement is attached and it involves a condition for annual hourly data
-        # This is design decision, when annual hourly data is connected, beaufort numbers and summary will be turned off
-        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange and len(conditionalStatement) > 7:
-            summary = " "
-            separator = " "
-            velTextList = velTextList
-            
+                
     # If nothing is attached to the conditional statement
     if conditionalStatement == None:
         summary = " "
@@ -475,8 +468,8 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                   analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
                   scale, legendPar, bakeIt, maxFrequency):
                       
-    # This vairable is used to control the display of frequencies and average velocities in case annualHourly data is connected
-    annualData = annualHourlyData
+    # This list is used to catch titlebasePt for all wind roses
+    catchTitleBasePts = []
     
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
@@ -568,7 +561,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 windDirections = unpackedList[1]
                 titleStatement = False
 
-            
            # check the scale
             try:
                 if float(scale)!=0:
@@ -679,7 +671,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 
             step = (maxFreq-minFreq)/10
             if step == 0:
-                warning = 'Either no hour meets these inputs. You are advised to try a different set of inputs please.' 
+                warning = 'No hour meets these inputs. You are advised to try a different set of inputs please.' 
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1      
@@ -692,9 +684,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             # initial compass for BB
             textSize = 10
             compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *(maxFreq) * scale, roseAngles, 1.5*textSize)
-            
-            
-            
+
             # initiate legend parameters
             overwriteScale = False
             if legendPar == []: overwriteScale = True
@@ -744,7 +734,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         for h in calmHour:
                             calmValues.append(selList[h])
                             allValues.append(selList[h])
-                        
 
                         # get the legend done
                         # This moves the legend to the right
@@ -757,7 +746,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         
                         # color legend surfaces
                         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-                        
                         
                         def getDirectionData(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection, windFreq, numOfDirections):
                             """The main role of this function is to produce lists of average velocities and frequencies to be displayed
@@ -842,67 +830,13 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                 
                         # If the user has not turned on average wind velocities, then no point in showing summary at the bottom.
                         # Therefore, they're turned off here. This is a design decision
-                        if showAverageVelocity_ == True and annualData == []:
+                        if showAverageVelocity_ == True:
                             summary = summary
                             separator = separator
                         else:
                             summary = ""
                             separator = ""
                             
-                        # Making a list of angles to rotate vecotrs
-                        angleList, angleRanges = makeRanges(numOfDirections)
-                        angleList = angleList[1:]
-    
-                        # Measuring the distance between the north point and the center of the wind rose.
-                        # This radial distance is crucial for position of frequencies
-                        point01 = cenPt
-                        point02 = compassTextPts[0]
-                        distance = rc.Geometry.Point3d.DistanceTo(point02, point01)
-                        freqOffset = getOffset(showFrequency_, showAverageVelocity_)[0]
-                        velOffset = getOffset(showFrequency_, showAverageVelocity_)[1]                 
-                        freqFactor = freqOffset * distance
-                        velFactor = velOffset * distance                        
-                        
-                        # Making first point for frequency and velocity display. This is the first point
-                        freqFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*freqFactor)
-                        velFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*velFactor)                    
-                        # Point container for othe points for frequency display and average velocity display
-                        freqTextPts = [freqFirstPoint]
-                        velTextPts = [velFirstPoint]
-    
-                        # Based on angles new points for frequency display are created
-                        for angle in angleList:
-                            newVector = rc.Geometry.Vector3d(northVector)*freqFactor #Factor is important here
-                            newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
-                            addPoint = rc.Geometry.Point3d.Add(point01, newVector)
-                            freqTextPts.append(addPoint)
-                            
-                        # Based on angles new points for velocity display are created
-                        for angle in angleList:
-                            newVector = rc.Geometry.Vector3d(northVector)*velFactor #Factor is important here
-                            newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
-                            addPoint = rc.Geometry.Point3d.Add(point01, newVector)
-                            velTextPts.append(addPoint)                        
-                        
-                        # Making curves for frequency display
-                        if showFrequency_ == True and annualData == []:
-                            freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
-                        else:
-                            freqTextCrvs = []
-                            
-                        # Making curves for average display
-                        if showAverageVelocity_ == True and annualData == []:
-                            velTextCrvs = lb_visualization.text2srf(velTextList, velTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
-                        else:
-                            velTextCrvs = []
-                        
-                        # Adding frequencies and average velocities to update bounding boxes
-                        if annualData == []:
-                            geometries = compassCrvs + freqTextCrvs + velTextCrvs
-                            lb_visualization.calculateBB(geometries, True)
-                        else:
-                            pass
-
                         # Creating custom heading for the windrose
                         customHeading = customHeading + listInfo[i][1] + \
                                         '\n'+lb_preparation.hour2Date(lb_preparation.date2Hour(stMonth, stDay, stHour)) + ' - ' + \
@@ -920,6 +854,21 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                 customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + additStr + '\n' + separator + '\n' + summary
                             else:
                                 customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + separator + '\n' + summary
+                        
+                        
+                        # Now we are moving the titlebasePt in order to make room for radial display of frequencies and average velocities
+                        # This list is defined at the beginning of main(). Here, we're adding titlebasePt for boundingboxes of all wind roses
+                        catchTitleBasePts.append(lb_visualization.BoundingBoxPar[-2])
+                        # No matter how many points are added. We're only interested in the first one
+                        catch = catchTitleBasePts[0]
+                        # Here we're setting the distance to push titleText down
+                        yCor = catch.Y * 0.3
+                        # Now making a new point
+                        vector = rc.Geometry.Vector3d(0, yCor, 0)
+                        movedPoint = rc.Geometry.Point3d.Add(catch, vector)                 
+                        box = list(lb_visualization.BoundingBoxPar)
+                        box[-2] = movedPoint
+                        lb_visualization.BoundingBoxPar = tuple(box)
                         
                         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
 
@@ -1035,6 +984,53 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
+
+                    # Making a list of angles to rotate vecotrs
+                    angleList, angleRanges = makeRanges(numOfDirections)
+                    angleList = angleList[1:]
+
+                    # Measuring the distance between the north point and the center of the wind rose.
+                    # This radial distance is crucial for position of frequencies
+                    point01 = cenPt
+                    point02 = compassTextPts[0]
+                    distance = rc.Geometry.Point3d.DistanceTo(point02, point01)
+                    freqOffset = getOffset(showFrequency_, showAverageVelocity_)[0]
+                    velOffset = getOffset(showFrequency_, showAverageVelocity_)[1]                 
+                    freqFactor = freqOffset * distance
+                    velFactor = velOffset * distance
+                    
+                    # Making first point for frequency and velocity display. This is the first point
+                    freqFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*freqFactor)
+                    velFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*velFactor)                    
+                    # Point container for othe points for frequency display and average velocity display
+                    freqTextPts = [freqFirstPoint]
+                    velTextPts = [velFirstPoint]
+
+                    # Based on angles new points for frequency display are created
+                    for angle in angleList:
+                        newVector = rc.Geometry.Vector3d(northVector)*freqFactor #Factor is important here
+                        newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+                        addPoint = rc.Geometry.Point3d.Add(point01, newVector)
+                        freqTextPts.append(addPoint)
+                        
+                    # Based on angles new points for velocity display are created
+                    for angle in angleList:
+                        newVector = rc.Geometry.Vector3d(northVector)*velFactor #Factor is important here
+                        newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+                        addPoint = rc.Geometry.Point3d.Add(point01, newVector)
+                        velTextPts.append(addPoint)                        
+                    
+                    # Making curves for frequency display
+                    if showFrequency_ == True:
+                        freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
+                    else:
+                        freqTextCrvs = []
+                        
+                    # Making curves for average display
+                    if showAverageVelocity_ == True:
+                        velTextCrvs = lb_visualization.text2srf(velTextList, velTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
+                    else:
+                        velTextCrvs = []
 
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
                     numberCrvs = numberCrvs + freqTextCrvs + velTextCrvs
