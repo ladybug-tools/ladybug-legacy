@@ -24,7 +24,7 @@ Use this component to compute the floor-level downdraft air temperature and velo
 _
 The model used in this component comes from physical measurements of window downdraft conducted and published here:
 _
-Heiselberg, P. “Draft Risk from Cold Vertical Surfaces.” Building and Environment, 29 (1994): 297-301.
+Heiselberg, P. Draft Risk from Cold Vertical Surfaces. Building and Environment, 29 (1994): 297-301.
 -
 Provided by Ladybug 0.0.63
     
@@ -43,7 +43,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nNOV_24_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
