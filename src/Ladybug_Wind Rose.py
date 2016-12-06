@@ -855,21 +855,24 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             else:
                                 customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + separator + '\n' + summary
                         
-                        
-                        # Now we are moving the titlebasePt in order to make room for radial display of frequencies and average velocities
-                        # This list is defined at the beginning of main(). Here, we're adding titlebasePt for boundingboxes of all wind roses
-                        catchTitleBasePts.append(lb_visualization.BoundingBoxPar[-2])
-                        # No matter how many points are added. We're only interested in the first one
-                        catch = catchTitleBasePts[0]
-                        # Here we're setting the distance to push titleText down
-                        yCor = catch.Y * 0.3
-                        # Now making a new point
-                        vector = rc.Geometry.Vector3d(0, yCor, 0)
-                        movedPoint = rc.Geometry.Point3d.Add(catch, vector)                 
-                        box = list(lb_visualization.BoundingBoxPar)
-                        box[-2] = movedPoint
-                        lb_visualization.BoundingBoxPar = tuple(box)
-                        
+                        # If the user has asked to see average velocities and frequencies both, we shall push the title text down a bit
+                        if showAverageVelocity_ == True and showFrequency_ == True:
+                            # Now we are moving the titlebasePt in order to make room for radial display of frequencies and average velocities
+                            # This list is defined at the beginning of main(). Here, we're adding titlebasePt for boundingboxes of all wind roses
+                            catchTitleBasePts.append(lb_visualization.BoundingBoxPar[-2])
+                            # No matter how many points are added. We're only interested in the first one
+                            catch = catchTitleBasePts[0]
+                            # Here we're setting the distance to push titleText down
+                            yCor = catch.Y * 0.3
+                            # Now making a new point
+                            vector = rc.Geometry.Vector3d(0, yCor, 0)
+                            movedPoint = rc.Geometry.Point3d.Add(catch, vector)                 
+                            box = list(lb_visualization.BoundingBoxPar)
+                            box[-2] = movedPoint
+                            lb_visualization.BoundingBoxPar = tuple(box)
+                        # Else, let it be the way it is
+                        else:
+                            pass
                         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
 
                         # find the freq of the numbers in each segment
