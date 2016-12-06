@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
-        showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction
+        showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction. If showAverageVelocity_ is False or no boolean is connected to it, then the frequencies will be shown right after the direcctions. If showAverageVelocity_ is True, then the frequencies will be shown after average velocity values. 
         showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction. If a conditional statement is connected to the conditionalStatement_ input, a beaufort number is plotted(in square brackets) along with the average velocities. This number indicates the effect caused by wind of average velocity coming from that partcular direction.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
@@ -273,7 +273,7 @@ Impossible to face this wind.
 Headache, earache happens and breathing is difficult.
 Hazardous for the pedestrians."""
 Voilent_Storm = """At this wind speed, widespread vegetation and
-structural damage likely."""
+structural damage is likely."""
 Hurricane = """At this wind speed, severe widespread damage to vegetaton and structures.
 Debris and unsecured objects are hurled about."""
 
@@ -314,7 +314,7 @@ Strong_Gale = """At this wind speed, trees are broken off or uprooted.
         Headache, earache happens and breathing is difficult.
         Hazardous for the pedestrians."""
 Voilent_Storm = """At this wind speed, widespread vegetation and
-        structural damage likely."""
+        structural damage is likely."""
 Hurricane = """At this wind speed, severe widespread damage to vegetaton and structures.
         Debris and unsecured objects are hurled about."""
 
@@ -383,8 +383,8 @@ def beaufortScale(conditionalStatement_, _hourlyWindSpeed, beaufortObservationsN
                 velTextList = velTextList
                 return summary , separator, velTextList      
 
-        # If a conditional statement is attached for wind, but it is not one of the beaufort ranges
-        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange:
+        # If a conditional statement is attached for wind, but it is not one of the beaufort ranges and showAverageVelocity is True
+        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange and showAverageVelocity_ == True:
             separator = '...                         ...                         ...'
             
             # If wind velocities are in m/s
@@ -435,6 +435,13 @@ def beaufortScale(conditionalStatement_, _hourlyWindSpeed, beaufortObservationsN
                 add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
                 summary += add
                 
+        # If a conditional statement is attached for wind, but it is not one of the beaufort ranges and showAverageVelocity is not True
+        # then, the conditional statement will still work. However, the summary would not be provided since showAverageVelocity it not on
+        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange and showAverageVelocity_ != True:
+            summary = " "
+            separator = " "
+            velTextList = velTextList
+        
     # If nothing is attached to the conditional statement
     if conditionalStatement == None:
         summary = " "
@@ -827,15 +834,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             else:
                                 item = float(item)
                                 averageVelocityOutput.append(item)    
-                                
-                        # If the user has not turned on average wind velocities, then no point in showing summary at the bottom.
-                        # Therefore, they're turned off here. This is a design decision
-                        if showAverageVelocity_ == True:
-                            summary = summary
-                            separator = separator
-                        else:
-                            summary = ""
-                            separator = ""
                             
                         # Creating custom heading for the windrose
                         customHeading = customHeading + listInfo[i][1] + \
