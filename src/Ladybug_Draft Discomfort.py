@@ -20,9 +20,9 @@
 
 
 """
-Use this component to calculate discomfort from cold drafts.  Note that this model assumes the draft is hitting bare skin.  The original tests used to create the model involved blowing cold air on the back of people's necks but this model has also been used for draft on bare hands and ankles.
+Use this component to calculate discomfort from cold drafts on the back of the neck (arguably the most sensitive part of the human body to cold drafts).  This model was derived from empircal tests that involved blowing cold air on the back of subjects's necks who were otherwise at thermally neutral conditions by the pmv standard.  
 _
-The formula in this component has been used to make the ASHRAE 55 and EN-12521 standards.  The paper in which it was published can be found here:
+This model used to be the standard endorsed by ASHRAE 55 and EN-12521 for all draft cases but has since been replaced with a model that more accurately targets draft discomfort at foot level. The paper in which this model was published can be found here:
 _
 Fanger, P.O., Melikov, A.K., Hanzawa, H., Ring, J. Air Turbulence and Sensation of Draught. Energy and Buildings 12, no. 1 (1988): 2139.
 -
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Draft Discomfort"
 ghenv.Component.NickName = 'draftComf'
-ghenv.Component.Message = 'VER 0.0.63\nSEP_12_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_06_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
