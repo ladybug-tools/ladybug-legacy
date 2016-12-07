@@ -66,7 +66,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_06_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_07_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -742,9 +742,14 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             calmValues.append(selList[h])
                             allValues.append(selList[h])
 
+                        # If the user has asked to see average velocities and frequencies both, then we shall push the legend to the right a bit
+                        if showFrequency_ == True and showAverageVelocity_ == True:
+                            lb_visualization.BoundingBoxPar[0].X = lb_visualization.BoundingBoxPar[0].X * 1.1
+                        # Else, let it be the way it is
+                        else:
+                            lb_visualization.BoundingBoxPar[0].X = lb_visualization.BoundingBoxPar[0].X * 1
+                        
                         # get the legend done
-                        # This moves the legend to the right
-                        lb_visualization.BoundingBoxPar[0].X = lb_visualization.BoundingBoxPar[0].X * 1.1
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(allValues
                                 , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
 
