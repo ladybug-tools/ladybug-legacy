@@ -742,7 +742,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             calmValues.append(selList[h])
                             allValues.append(selList[h])
 
-                        # If the user has asked to see average velocities and frequencies both, we shall push the legend to the right a bit
+                        # If the user has asked to see average velocities and frequencies both, then we shall push the legend to the right a bit
                         if showFrequency_ == True and showAverageVelocity_ == True:
                             lb_visualization.BoundingBoxPar[0].X = lb_visualization.BoundingBoxPar[0].X * 1.1
                         # Else, let it be the way it is
