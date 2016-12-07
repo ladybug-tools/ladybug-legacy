@@ -154,6 +154,9 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
                 airFlowPlanes.append(None)
                 ptDict[srf].append(1)
     
+    # Set a "spread factor" to ensure conservation of mass in the flow of air to the sides
+    spreadFac = .97
+    
     # Compute the temperature difference.
     glassAirDelta = airTemp - winSrfTemp
     
@@ -172,8 +175,8 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
             else: windSpd = velMaxFar(glassAirDelta, windowHgt)
             floorAirTemp = calcFloorAirTemp(airTemp, dist, glassAirDelta)
             
-            ptVelLists[ptCount].append((windSpd*angFac))
-            ptTemplists[ptCount].append(airTemp-((airTemp-floorAirTemp)*angFac))
+            ptVelLists[ptCount].append((windSpd*((angFac/(1/spreadFac))+(1-spreadFac))))
+            ptTemplists[ptCount].append(airTemp-((airTemp-floorAirTemp)*((angFac/(1/spreadFac))+(1-spreadFac))))
     
     # Make final lists that just have the larger of the downdraft terms.
     draftSpeeds = []
