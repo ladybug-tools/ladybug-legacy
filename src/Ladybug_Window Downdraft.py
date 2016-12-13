@@ -22,9 +22,10 @@
 """
 Use this component to compute the floor-level downdraft air temperature and velocity at a given set of points that are located close to a cold surface such as a window.  The draft conditions produced by this model are assumed to be 10 cm off of the floor.
 _
-The model used in this component comes from physical measurements of window downdraft conducted and published here:
+The model used in this component comes from physical measurements of window downdraft that were further validated using several CFD experiments.  Ther are published in these papers:
 _
-Heiselberg, P. Draft Risk from Cold Vertical Surfaces. Building and Environment, 29 (1994): 297-301.
+Heiselberg, P. (1994). Draft Risk from Cold Vertical Surfaces. Building and Environment, 29: 297-301.
+Manz, H. and Frank, T. (2003). "Analysis of Thermal Comfort near Cold Vertical Surfaces by Means of Computational Fluid Dynamics." Indoor Built Environment. 13: 233-242.
 -
 Provided by Ladybug 0.0.63
     
@@ -43,7 +44,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_06_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_13_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -83,13 +84,13 @@ def calcFloorAirTemp(airTemp, dist, deltaT):
     return airTemp - ((0.3-(0.034*dist))*deltaT)
 
 def velMaxClose(deltaT, windowHgt):
-    return 0.055*(math.sqrt(deltaT*windowHgt))
+    return 0.083*(math.sqrt(deltaT*windowHgt))
 
 def velMaxMid(dist, deltaT, windowHgt):
-    return 0.095*((math.sqrt(deltaT*windowHgt))/(dist+1.32))
+    return 0.143*((math.sqrt(deltaT*windowHgt))/(dist+1.32))
 
 def velMaxFar(deltaT, windowHgt):
-    return 0.028*(math.sqrt(deltaT*windowHgt))
+    return 0.043*(math.sqrt(deltaT*windowHgt))
 
 def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
     # Check Rhino model units.
