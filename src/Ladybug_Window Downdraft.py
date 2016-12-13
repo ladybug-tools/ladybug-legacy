@@ -143,13 +143,13 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
                 airFlowPlanes.append(intPlane)
                 try:
                     intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
-                    startPtZ = intCurve.PointAtStart.Z
+                    startPtZ = testPts[ptCount].Z
                     endPtZ = intCurve.PointAtEnd.Z
                     glzHeight  = (abs(endPtZ-startPtZ))*conversionFactor
                     ptDict[srf].append(glzHeight)
                 except:
                     srfBB = intSrf.GetBoundingBox(True)
-                    glzHeight = (srfBB.Max.Z - srfBB.Min.Z)*conversionFactor
+                    glzHeight = (srfBB.Max.Z - testPts[ptCount].Z)*conversionFactor
                     ptDict[srf].append(glzHeight)
             else:
                 airFlowPlanes.append(None)
