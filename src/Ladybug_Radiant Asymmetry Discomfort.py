@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Radiant Asymmetry Discomfort"
 ghenv.Component.NickName = 'radAsymmetry'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_27_2016'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -110,7 +110,7 @@ def clacRadAsymmDiscomf(radTempDif, asymmType, PPDThresh = 5):
 
 
 
-if len(_radTempDifference) and _radAsymmType:
+if len(_radTempDifference) and _radAsymmType != None:
     if PPDThreshold_ == None: PPDThreshold = 5
     else: PPDThreshold = PPDThreshold_
     PPD, comfOrNot = clacRadAsymmDiscomf(_radTempDifference, _radAsymmType, PPDThreshold)
