@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_04_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_01_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2552,43 +2552,146 @@ class ResultVisualization(object):
         return stMonth, stDay, stHour, endMonth, endDay, endHour
     
     
-    def colorMesh(self, colors, meshList, unweld = True):
-        
+    def colorMesh(self, colors, meshList, unweld = True, meshStruct=0):
         joinedMesh = rc.Geometry.Mesh()
-        try:
-            for face in range(meshList[0].Faces.Count):
-                joinedMesh.Append(meshList[0].Faces[face]) #join the mesh
-        except:
+        
+        if meshStruct == 0:
             try:
-                for face in meshList: joinedMesh.Append(face)
+                for face in range(meshList[0].Faces.Count):
+                    joinedMesh.Append(meshList[0].Faces[face]) #join the mesh
+            except:
+                try:
+                    for face in meshList: joinedMesh.Append(face)
+                except:
+                    joinedMesh.Append(meshList)
+            if unweld: joinedMesh.Unweld(0, False)
+        elif meshStruct == 1:
+            try:
+                for mesh in meshList:
+                    joinedMesh.Append(meshList)
             except:
                 joinedMesh.Append(meshList)
-        
-        if unweld: joinedMesh.Unweld(0, False)
-        
         
         if joinedMesh.Faces.Count == 0:
             print "Invalid Mesh!"
             return -1
-            
-        try:
-            assert joinedMesh.Faces.Count == len(colors)
-        except:
-            print 'number of mesh:' + `joinedMesh.Faces.Count` + ' != number of values:' + `len(colors)`
-            return -1
-            
+        
+        if meshStruct == 0:
+            try:
+                assert joinedMesh.Faces.Count == len(colors)
+            except:
+                print 'number of mesh:' + `joinedMesh.Faces.Count` + ' != number of values:' + `len(colors)`
+                return -1
+        elif meshStruct == 1:
+            try:
+                assert joinedMesh.Vertices.Count == len(colors)
+            except:
+                print 'number of mesh:' + `joinedMesh.Vertices.Count` + ' != number of values:' + `len(colors)`
+                return -1
+        
         # make a monotonemesh
         joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.White)
         #color the mesh based on the results
-        for srfCount in range (joinedMesh.Faces.Count):
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].A] = colors[srfCount]
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].B] = colors[srfCount]
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].C] = colors[srfCount]
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].D] = colors[srfCount]
+        if meshStruct == 0:
+            for srfCount in range (joinedMesh.Faces.Count):
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].A] = colors[srfCount]
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].B] = colors[srfCount]
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].C] = colors[srfCount]
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].D] = colors[srfCount]
+        elif meshStruct == 1:
+            for count, color in enumerate(colors):
+                joinedMesh.VertexColors[count] = color
+        
         return joinedMesh
     
-    def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
+    def create3DColoredMesh(self, inputMesh, analysisResult, domain, colors, meshStruct=0):
+        """
+        Creates a new 3D mesh based on input values
+        Thanks to David Mans for providing the VB example of the code
+        """
+        mappedValues = []
+        def remapValues():
+            tmin = domain.T0
+            tmax = domain.T1
+            omin = min(analysisResult)
+            omax = max(analysisResult)
+            
+            for v in analysisResult:
+                try: mappedValues.append( (v-omin) * (tmax-tmin) /(omax-omin) + tmin)
+                except: mappedValues.append(tmin)
+        
+        remapValues()
+        
+        inputMesh.Normals.ComputeNormals()
+        if meshStruct == 0:
+            mtv = inputMesh.TopologyVertices
+            inputMesh.FaceNormals.ComputeFaceNormals()
+            inputMesh.FaceNormals.UnitizeFaceNormals()
+        values = []
+        
+        if meshStruct == 0:
+            # collect the values and average  them for each vertices
+            for i in range(mtv.Count):
+                faceIds = mtv.ConnectedFaces(i) #always an array of 4
+                
+                v = 0
+                for j in range(faceIds.Count):
+                    v += mappedValues[faceIds[j]]
+                v/=(faceIds.Count) #average the value
+                values.append(v)
+            
+            vo = []
+            fo = []
+            vc = []
+            
+            k = 0
+            for i in range(inputMesh.Faces.Count):
+                tv = inputMesh.Faces.GetTopologicalVertices(i)
+                
+                if tv[2] == tv[3]: count=3
+                else: count = 4
+                
+                for j in range(count):
+                    ti = mtv.MeshVertexIndices(tv[j])
+                    
+                    #average normals
+                    n = inputMesh.Normals[ti[0]]
+                    for t in ti[1:]:
+                        n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
+                    
+                    n.Unitize()
+                    
+                    v = values[tv[j]]
+                    n = rc.Geometry.Vector3d(v * n.X, v * n.Y, v * n.Z)
+                    vo.append(rc.Geometry.Point3d.Add(inputMesh.Vertices[ti[0]], n))
+                    vc.append(colors[i])
+                
+                if count == 3:
+                    fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2))    
+                else:
+                    fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2, k + 3))
+                k += count
+            
+            # construct mesh using vertices and faces
+            mo = rc.Geometry.Mesh()
+            for ver in vo: mo.Vertices.Add(ver)
+            for c in vc: mo.VertexColors.Add(c)
+            mo.Faces.AddFaces(fo)
+            
+            return mo
+        
+        elif meshStruct == 1:
+            for count, ver in enumerate(inputMesh.Vertices):
+                n = inputMesh.Normals[count]
+                scn = rc.Geometry.Vector3d.Multiply(mappedValues[count], n)
+                newPt = rc.Geometry.Point3d.Add(ver, scn)
+                newVer = rc.Geometry.Point3f(newPt.X, newPt.Y, newPt.Z)
+                inputMesh.Vertices[count] = newVer
+            
+            return inputMesh
     
+    
+    def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
         # make a deep copy of colors so colors isn't popped twice once for legend colors and once for mesh colors
         
         copyColors = list(colors)

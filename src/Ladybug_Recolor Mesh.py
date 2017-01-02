@@ -51,13 +51,13 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Recolor Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_25_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_01_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
-#compatibleLBVersion = VER 0.0.59\nAUG_25_2016
+#compatibleLBVersion = VER 0.0.59\nJAN_01_2017
 
 import scriptcontext as sc
 import Rhino as rc
@@ -70,81 +70,6 @@ import Grasshopper.Kernel as gh
 
 
 def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, legendTitle, bakeIt, layerName, lowBoundColor, highBoundColor):
-    
-    def create3DColoredMesh(inputMesh, analysisResult, domain, colors):
-        """
-        Creates a new 3D mesh based on input values
-        Thanks to David Mans for providing the VB example of the code
-        """
-        mappedValues = []
-        def remapValues():
-            tmin = domain.T0
-            tmax = domain.T1
-            omin = min(analysisResult)
-            omax = max(analysisResult)
-            
-            for v in analysisResult:
-                try: mappedValues.append( (v-omin) * (tmax-tmin) /(omax-omin) + tmin)
-                except: mappedValues.append(tmin)
-
-        remapValues()
-        
-        mtv = inputMesh.TopologyVertices
-        inputMesh.Normals.ComputeNormals()
-        inputMesh.FaceNormals.ComputeFaceNormals()
-        inputMesh.FaceNormals.UnitizeFaceNormals()
-        values = []
-        
-        # collect the values and average  them for each vertices
-        for i in range(mtv.Count):
-            faceIds = mtv.ConnectedFaces(i) #always an array of 4
-            
-            v = 0
-            for j in range(faceIds.Count):
-                v += mappedValues[faceIds[j]]
-            v/=(faceIds.Count) #average the value
-            values.append(v)
-        
-        vo = []
-        fo = []
-        vc = []
-        
-        k = 0
-        for i in range(inputMesh.Faces.Count):
-            tv = inputMesh.Faces.GetTopologicalVertices(i)
-            
-            if tv[2] == tv[3]: count=3
-            else: count = 4
-            
-            for j in range(count):
-                ti = mtv.MeshVertexIndices(tv[j])
-                
-                #average normals
-                n = inputMesh.Normals[ti[0]]
-                for t in ti[1:]:
-                    n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
-                
-                n.Unitize()
-                
-                v = values[tv[j]]
-                n = rc.Geometry.Vector3d(v * n.X, v * n.Y, v * n.Z)
-                vo.append(rc.Geometry.Point3d.Add(inputMesh.Vertices[ti[0]], n))
-                vc.append(colors[i])
-            
-            if count == 3:
-                fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2))    
-            else:
-                fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2, k + 3))
-            k += count
-        
-        # construct mesh using vertices and faces
-        mo = rc.Geometry.Mesh()
-        for ver in vo: mo.Vertices.Add(ver)
-        for c in vc: mo.VertexColors.Add(c)
-        mo.Faces.AddFaces(fo)
-        
-        return mo
-
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -165,24 +90,26 @@ def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, lege
         # copy the custom code here
         # check inputs
         if inputMesh and len(analysisResult)!=0:
-            if inputMesh.Faces.Count != len(analysisResult):
-                warning = 'length of the results [=' + str(len(analysisResult)) + '] is not equal to the number of mesh faces [=' + str(inputMesh.Faces.Count) + '].'
+            if inputMesh.Faces.Count == len(analysisResult):
+                meshStruct = 0
+            elif inputMesh.Vertices.Count == len(analysisResult):
+                meshStruct = 1
+            else:
+                warning = 'length of the results [=' + str(len(analysisResult)) + '] is not equal to the number of mesh faces [=' + str(inputMesh.Faces.Count) + '] or mesh vertices[=' + str(inputMesh.Vertices.Count) + '].'
                 print warning
                 w = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(w, warning)
                 return -1
             
             lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
-            
             colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors,lowBoundColor,highBoundColor)
-            
-            coloredChart = lb_visualization.colorMesh(colors, inputMesh)
+            coloredChart = lb_visualization.colorMesh(colors, inputMesh, True, meshStruct)
             
             if heightDomain!=None:
-                coloredChart = create3DColoredMesh(inputMesh, analysisResult, heightDomain, colors)
-                
+                coloredChart = lb_visualization.create3DColoredMesh(coloredChart, analysisResult, heightDomain, colors, meshStruct)
+            
             lb_visualization.calculateBB([coloredChart], True)
-                
+            
             if not legendTitle:  legendTitle = 'unknown units  '
             if not analysisTitle: analysisTitle = '\nno title'
             
