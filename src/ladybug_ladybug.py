@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_01_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -261,7 +261,6 @@ class CheckIn():
             currentTemplateVersion = versions['Template']
             
             return self.isNewerVersionAvailable(currentTemplateVersion, templateVersion)
-            
 
 checkIn = CheckIn(defaultFolder_)
 
@@ -319,7 +318,6 @@ class versionCheck(object):
                     isInputMissing = True
         
         return isInputMissing
-
 
 class Preparation(object):
     """ Set of functions to prepare the environment for running the studies"""
@@ -1473,7 +1471,6 @@ class Preparation(object):
     def fahrenheitToCelsius(self, F):
         return (5/9)*(F-32)
 
-
 class Sunpath(object):
     """
     The sun-path Class is a Python version of RADIANCE sun-path script by Greg Ward. RADIANCE source code can be accessed at:
@@ -1696,7 +1693,6 @@ class Sunpath(object):
         
         return lines
 
-
 class Vector:
     
     def __init__(self, items):
@@ -1738,10 +1734,8 @@ class Vector:
             self.v = [i * other for i in self.v]
         return self
 
-
 class Sun:
     pass
-
 
 class Coeff:
     A = None
@@ -1749,7 +1743,6 @@ class Coeff:
     C = None
     D = None
     E = None
-
 
 class Sky:
     def __init__(self):
@@ -1765,13 +1758,9 @@ class Sky:
         self.turbidity = turbidity
         
         self.sun = Sun()
-        
         self.setTime()
-        
         self.setSunPosition()
-        
         self.setZenitalAbsolutes()
-        
         self.setCoefficents()
     
     def info(self):
@@ -2009,7 +1998,6 @@ class Sky:
         
         return self.colorAvg
 
-
 class MeshPreparation(object):
     
     def joinMesh(self, meshList):
@@ -2178,7 +2166,6 @@ class MeshPreparation(object):
                 mesh.Faces.AddFace(k-1+(i-1)*v, k-1+i*v, k-1+i*v+1, k-1+(i-1)*v+1)
         
         return mesh
-
 
 class RunAnalysisInsideGH(object):
     #
@@ -2489,11 +2476,9 @@ class RunAnalysisInsideGH(object):
         averageView = sum(viewResult)/len(viewResult)
             
         return viewResult, averageView, ptVisibility
-        
 
 class ExportAnalysis2Radiance(object):
     pass
-        
 
 class ResultVisualization(object):
     # This wasn't agood idea since multiple studies have different Bounding boxes
@@ -2550,7 +2535,6 @@ class ResultVisualization(object):
             else: print startDay, ' - ', endingDay
              
         return stMonth, stDay, stHour, endMonth, endDay, endHour
-    
     
     def colorMesh(self, colors, meshList, unweld = True, meshStruct=0):
         joinedMesh = rc.Geometry.Mesh()
@@ -2690,14 +2674,10 @@ class ResultVisualization(object):
             
             return inputMesh
     
-    
     def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
         # make a deep copy of colors so colors isn't popped twice once for legend colors and once for mesh colors
-        
         copyColors = list(colors)
-        
         if highB == 'max': highB = max(values)
-            
         if lowB == 'min': lowB = min(values)
         
         # this function inputs values, and custom colors and outputs gradient colors
@@ -2719,17 +2699,12 @@ class ResultVisualization(object):
             return color
         
         # Calculate num of colors
-        
         if (highBoundColor != None):
-            
             # Subtract a color to make room for the highBoundColor
-            
             copyColors.pop()
     
         if (lowBoundColor != None):
-            
             # Subtract a color to make room for the lowBoundColor
-            
             copyColors.pop()
         
         numofColors = len(colors)
@@ -2745,24 +2720,16 @@ class ResultVisualization(object):
         
         for num in numP:
             for i in range(numofColors):
-                
                 if  colorBounds[i] <= num <= colorBounds[i + 1]:
-    
                     if (num == 1) and (highBoundColor != None) :
-                        
                         colorTemp.append(highBoundColor)
                         break
-                        
                     elif (num == 0) and (lowBoundColor != None):
-                        
                         colorTemp.append(lowBoundColor)
                         break
-                        
                     else:
-                        
                         colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
                         break
-                            
         color = colorTemp
         
         return color
@@ -2799,7 +2766,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False, contourLegend=False):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -2842,25 +2809,55 @@ class ResultVisualization(object):
         legendHeight = legendWidth = (BBYlength/10) * legendScale
         if  textSize == None:
             textSize = (legendHeight/3) * legendScale
-        
-        try:
-            numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
-        except:
-            if highB - lowB < 10**(-12):
-                numbers = [lowB]; numOfSeg = 1
-            else:
-                numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
         if decimalPlaces == None: decimalPlaces = 2
         
-        ### Create the numbers in the legend.
-        if len(numbers) < numOfSeg: numbers.append(highB)
-        elif len(numbers) > numOfSeg: numbers = numbers[:-1]
-        formatString = "%."+str(decimalPlaces)+"f"
-        numbersStr = [(formatString % x) for x in numbers]
-        if greaterLessThan: pass
+        if contourLegend == False:
+            #Generate the numbers.
+            try:
+                numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
+            except:
+                if highB - lowB < 10**(-12):
+                    numbers = [lowB]; numOfSeg = 1
+                else:
+                    numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
+            
+            ### Create the numbers in the legend.
+            if len(numbers) < numOfSeg: numbers.append(highB)
+            elif len(numbers) > numOfSeg: numbers = numbers[:-1]
+            formatString = "%."+str(decimalPlaces)+"f"
+            numbersStr = [(formatString % x) for x in numbers]
+            if greaterLessThan: pass
+            else:
+                numbersStr[0] = "<" + numbersStr[0]
+                numbersStr[-1] = numbersStr[-1] + "<"
         else:
-            numbersStr[0] = "<=" + numbersStr[0]
-            numbersStr[-1] = numbersStr[-1] + "<="
+            #Generate the numbers.
+            try:
+                numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -2), 6))
+            except:
+                if highB - lowB < 10**(-12):
+                    numbers = [lowB]; numOfSeg = 1
+                else:
+                    numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
+            
+            ### Create the numbers in the legend.
+            numbers.insert(0,lowB)
+            formatString = "%."+str(decimalPlaces)+"f"
+            numbersStr = [(formatString % x) for x in numbers]
+            finalStr = []
+            if greaterLessThan: pass
+            else:
+                for count, num in enumerate(numbersStr):
+                    if count == 0:
+                        finalStr.append("<" + numbersStr[0])
+                    elif count == len(numbersStr)-1:
+                        finalStr.append(numbersStr[-1] + "<")
+                    else:
+                        finalStr.append(numbersStr[count] + "<x<" + numbersStr[count+1])
+                numbersStr = finalStr
+            numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
+            if len(numbers) < numOfSeg: numbers.append(highB)
+        
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
         
@@ -2878,7 +2875,7 @@ class ResultVisualization(object):
             [meshAndCrv.append(c) for c in legendRes[1]]
             return meshAndCrv
         else: return -1
-        
+    
     def textJustificationEnumeration(self, justificationIndex):
         #justificationIndices:
         # 0 - bottom left (default)
