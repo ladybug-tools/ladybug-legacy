@@ -54,13 +54,13 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_01_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
-#compatibleLBVersion = VER 0.0.59\nJAN_01_2017
+#compatibleLBVersion = VER 0.0.59\nJAN_02_2017
 
 import scriptcontext as sc
 import Rhino as rc
@@ -195,6 +195,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     contourColors = []
     labelText = []
     labelTextPts = []
+    startTrigger = False
     
     #Generate colored regions.
     if contourType == 0 or contourType == 1 or contourType == None:
@@ -202,11 +203,19 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[0])[-1]
             finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[0])
             contourMesh.append(finalSplitMesh)
+            startTrigger = True
         except:
             pass
         for count in range(len(intPlanes)-1):
             try:
-                if count == len(intPlanes)-2:
+                if startTrigger == False:
+                    finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[-1]
+                    finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
+                    contourMesh.append(finalSplitMesh)
+                    startTrigger = True
+                    initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
+                    finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intPlanes[count])[0]
+                elif count == len(intPlanes)-2:
                     finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
                 else:
                     initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
