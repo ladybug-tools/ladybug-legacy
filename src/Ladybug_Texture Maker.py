@@ -44,27 +44,31 @@ Provided by Ladybug 0.0.63
         "viewStudyMesh" of "Ladybug_View Analysis"
         .
         and so on..
+        transparency_: An optional number between 0 and 1 to set the opacity/transparency of the image.  Note that Rhino may not display this transparency but rendering programs like V-Ray will be able to render it.
         folder_: The folder into which you would like to write the image file. This should be a complete file path to the folder. If no folder is provided, the images will be written to C:/USERNAME/AppData/Roaming/Ladybug/LB_TextureMesh.
         name_: The file name that you would like the image to be saved as. If no input is provided it will be created automatically.
-        _runIt: Set to "True" to run the component and generate textures and meshes.
+        _layerName_: An optional text string to set the name of the layer onto which the image-mapped mesh will be baked.
+        softBake_: Set to "True" to run the component and bake the mesh with image material.  However, if this component runs again, the old geometry in the Rhino scene will be overwritten by new geometry, allowing you to make things like rendered animations.
+        _bakeIt: Set to "True" to run the component, generate texture images, and bake the mesh into the scene with the image as a material.
     Returns:
         readMe!: ...
         imagePath: Use this image as texture for the new mesh. Connect imagePath to "DB" input of "Human Create/Modify material" and its output to "Human Create/Modify Layers" to apply material to a layer.
-        mesh : A new mesh that you have to bake.
+        mesh : A new mesh that is structured to correctly accept the image map. This has been baked into the scene for you.
 """
 
 ghenv.Component.Name = "Ladybug_Texture Maker"
 ghenv.Component.NickName = 'Texture Maker'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_12_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_03_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
 
 import Rhino as rc
+import rhinoscriptsyntax as rs
 import clr
 import System
 import math
@@ -97,14 +101,25 @@ def mdPath(folder):
     return directory
 
 
-def checkInputs(analysisMesh, runIt):
-    if analysisMesh == [] or runIt == None:
-        return False
+def checkInputs(analysisMesh, runIt, alpha):
+    if alpha == None:
+        alpha = 255
     else:
-        return True
+        if alpha <=1 and alpha >=0:
+            alpha = int((1-alpha)*255)
+        else:
+            warning = "opacity_ must be between 0 and 1."
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    
+    if analysisMesh == [] or runIt == None or runIt == False:
+        return -1
+    else:
+        return alpha
 
 
-def vincenteBakingMesh(m, u, run):
+def vincenteBakingMesh(m, u, a):
     """ The author of this function is Vincente Soler. The original function is made by two VB.Net components.
     changes:
     - from VB.Net to Python
@@ -119,10 +134,10 @@ def vincenteBakingMesh(m, u, run):
     
     for i in range(c):
         path = GH_Path(i)
-        colorTree.Add(System.Drawing.Color.FromArgb(m.VertexColors[f[i].A].R, m.VertexColors[f[i].A].G, m.VertexColors[f[i].A].B), path)
-        colorTree.Add(System.Drawing.Color.FromArgb(m.VertexColors[f[i].B].R, m.VertexColors[f[i].B].G, m.VertexColors[f[i].B].B), path)
-        colorTree.Add(System.Drawing.Color.FromArgb(m.VertexColors[f[i].C].R, m.VertexColors[f[i].C].G, m.VertexColors[f[i].C].B), path)
-        colorTree.Add(System.Drawing.Color.FromArgb(m.VertexColors[f[i].D].R, m.VertexColors[f[i].D].G, m.VertexColors[f[i].D].B), path)
+        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].A].R, m.VertexColors[f[i].A].G, m.VertexColors[f[i].A].B), path)
+        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].B].R, m.VertexColors[f[i].B].G, m.VertexColors[f[i].B].B), path)
+        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].C].R, m.VertexColors[f[i].C].G, m.VertexColors[f[i].C].B), path)
+        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].D].R, m.VertexColors[f[i].D].G, m.VertexColors[f[i].D].B), path)
     
     # mod mesh
     m.TextureCoordinates.Clear()
@@ -162,35 +177,72 @@ def vincenteBakingMesh(m, u, run):
     g = System.Drawing.Graphics.FromImage(bmb)
     g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor
     g.DrawImage(bm, 0, 0, size * 4 + 1, size * 4 + 1)
-    if run:
-        bmb.Save(u)
+    
+    bmb.Save(u)
     
     return mesh
 
 
-def main():
+def main(analysisMesh, folder, name, layerName, alpha, softBake, softBakeMeshes):
     # make a folder for the images
-    directory = mdPath(folder_)
+    directory = mdPath(folder)
     
+    #Generate the image map textures.
     special_mesh = []
     imagePath = []
-    for i, m in enumerate(_analysisMesh):
-        if name_ != []:
+    for i, m in enumerate(analysisMesh):
+        if name != []:
             completePath = directory + name_[i] + '.png'
         else: completePath = directory + 'mesh_n_' + str(i) + '.png'
-        special_mesh.append(vincenteBakingMesh(m, completePath, _runIt))
+        special_mesh.append(vincenteBakingMesh(m, completePath, alpha))
         imagePath.append(completePath)
+    
+    # Bake the mesh into the Rhino scene and set the image map material.
+    for count, mesh in enumerate(special_mesh):
+        #Set up the layer to bake object onto.
+        if layerName == None: layerName = 'ImageMappedMesh'
+        layerT = rc.RhinoDoc.ActiveDoc.Layers #layer table
+        studyLayer = rc.DocObjects.Layer()
+        studyLayer.Name = layerName
+        studyLayer.IsVisible = True
+        studyLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, layerName, True)
+        if studyLayerIndex < 0: studyLayerIndex = layerT.Add(studyLayer)
+        
+        #Set up basic object attributes
+        attr = rc.DocObjects.ObjectAttributes()
+        attr.LayerIndex = studyLayerIndex
+        attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+        attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
+        
+        # Set up a Material and add it to the attributes.
+        materialT = rc.RhinoDoc.ActiveDoc.Materials #material table
+        material = rc.DocObjects.Material()
+        material.SetBitmapTexture(imagePath[count])
+        matIndex = materialT.Add(material)
+        attr.MaterialSource = rc.DocObjects.ObjectMaterialSource.MaterialFromObject
+        attr.MaterialIndex = matIndex
+        
+        #Bake the mesh into the scene.
+        rhinoMesh = rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
+        if softBake == True:
+            softBakeMeshes.append([rhinoMesh,matIndex])
     
     return imagePath, special_mesh
 
 
-check = checkInputs(_analysisMesh, _runIt)
-if check:
-    result = main()
+# Delete any old objects in memory
+try:
+    softBakeMeshes = sc.sticky["ladybug_SoftBakeMeshes"]
+    for item in softBakeMeshes:
+        rc.RhinoDoc.ActiveDoc.Objects.Delete(item[0], True)
+        rc.RhinoDoc.ActiveDoc.Materials.DeleteAt(item[1])
+except:
+    sc.sticky["ladybug_SoftBakeMeshes"] = []
+    softBakeMeshes = sc.sticky["ladybug_SoftBakeMeshes"]
+
+alpha = checkInputs(_analysisMesh, _bakeIt, transparency_)
+if alpha != -1:
+    result = main(_analysisMesh, folder_, name_, _layerName_, alpha, softBake_, softBakeMeshes)
     if result != -1:
         imagePath, mesh = result
-        if _runIt: print("Texture generated!")
-else:
-    pass
-    w = gh.GH_RuntimeMessageLevel.Warning
-    ghenv.Component.AddRuntimeMessage(w, "Please provide all inputs.")
+        print("Texture generated!")

@@ -58,7 +58,7 @@ ghenv.Component.Message = 'VER 0.0.63\nJAN_03_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 #compatibleLBVersion = VER 0.0.59\nJAN_02_2017
 
