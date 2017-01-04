@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_02_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_03_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -166,13 +166,13 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(analysisResult
             , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale
             , legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
-        legendSrfs, legendText, legendTextCrv, textPt = [], [], [], []
+        legendSrfs, legendTextCrv, textPt = [], [], []
     else:
         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(analysisResult
             , lowB, highB, numSeg+1, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale
             , legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan, True)
     
-    # generate legend colors
+    # generate legend colors.
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     
     # Generate intersection planes.
@@ -228,7 +228,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             except:
                 try:
                     finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
-                    finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[-1])
+                    finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
                     contourMesh.append(finalSplitMesh)
                 except: pass
     
@@ -321,6 +321,8 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             try:
                 legendText[count] = formatString % item
             except:pass
+        if contourType == 2:
+            legendText = []
         legendText.append(analysisTitle)
         textPt.append(titlebasePt)
         legendText.extend(labelText)
