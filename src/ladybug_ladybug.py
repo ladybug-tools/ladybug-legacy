@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_02_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2588,7 +2588,7 @@ class ResultVisualization(object):
         
         return joinedMesh
     
-    def create3DColoredMesh(self, inputMesh, analysisResult, domain, colors, meshStruct=0):
+    def create3DColoredMesh(self, inputMesh, analysisResult, domain, colors, meshStruct=0, meshNormals=[]):
         """
         Creates a new 3D mesh based on input values
         Thanks to David Mans for providing the VB example of the code
@@ -2607,10 +2607,10 @@ class ResultVisualization(object):
         remapValues()
         
         inputMesh.Normals.ComputeNormals()
+        inputMesh.FaceNormals.UnitizeFaceNormals()
         if meshStruct == 0:
             mtv = inputMesh.TopologyVertices
             inputMesh.FaceNormals.ComputeFaceNormals()
-            inputMesh.FaceNormals.UnitizeFaceNormals()
         values = []
         
         if meshStruct == 0:
@@ -2639,9 +2639,14 @@ class ResultVisualization(object):
                     ti = mtv.MeshVertexIndices(tv[j])
                     
                     #average normals
-                    n = inputMesh.Normals[ti[0]]
-                    for t in ti[1:]:
-                        n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
+                    if meshNormals == []:
+                        n = inputMesh.Normals[ti[0]]
+                        for t in ti[1:]:
+                            n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
+                    else:
+                        n = meshNormals[ti[0]]
+                        for t in ti[1:]:
+                            n = rc.Geometry.Vector3d.Add(n ,meshNormals[t])
                     
                     n.Unitize()
                     
@@ -2666,7 +2671,10 @@ class ResultVisualization(object):
         
         elif meshStruct == 1:
             for count, ver in enumerate(inputMesh.Vertices):
-                n = inputMesh.Normals[count]
+                if meshNormals == []:
+                    n = inputMesh.Normals[count]
+                else:
+                    n = meshNormals[count]
                 scn = rc.Geometry.Vector3d.Multiply(mappedValues[count], n)
                 newPt = rc.Geometry.Point3d.Add(ver, scn)
                 newVer = rc.Geometry.Point3f(newPt.X, newPt.Y, newPt.Z)
