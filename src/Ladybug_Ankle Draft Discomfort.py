@@ -26,7 +26,7 @@ The formula has been submitted to be incorporated in the ASHRAE 55 standard with
 _
 Schiavon, S., D. Rim, W. Pasut, W. Nazaroff. 2016. Sensation of draft at uncovered ankles for women exposed to displacement ventilation and underfloor air distribution systems. Building and Environment, 96, 228236.
 _
-Liu, S., S. Schiavon, A. Kabanshi, W. Nazaroff. 2016. Predicted percentage of dissatisfied with ankle draft. In preparation.
+Liu, S., S. Schiavon, A. Kabanshi, W. Nazaroff. 2016. Predicted percentage of dissatisfied with ankle draft. Accepted Author Manuscript. Indoor Environmental Quality. http://escholarship.org/uc/item/9076254n
 -
 Provided by Ladybug 0.0.63
     
@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ankle Draft Discomfort"
 ghenv.Component.NickName = 'ankleDraftComf'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_06_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_06_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
