@@ -54,13 +54,13 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_03_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
-#compatibleLBVersion = VER 0.0.59\nJAN_02_2017
+#compatibleLBVersion = VER 0.0.59\nJAN_05_2017
 
 import scriptcontext as sc
 import Rhino as rc
@@ -71,16 +71,27 @@ import Grasshopper.Kernel as gh
 from System import Object
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
-
+import copy
 
 def checkMeshPlanarity(mesh, basePlanePt):
     #Check the planarity.
     meshIsPlanar = True
     mesh.Normals.ComputeNormals()
+    mesh.FaceNormals.UnitizeFaceNormals()
     meshPlaneVec = mesh.Normals[0]
+    if meshPlaneVec.Z < 0:
+        meshPlaneVec.Reverse()
+    meshPlaneVecReverse = copy.copy(meshPlaneVec)
+    meshPlaneVecReverse.Reverse()
+    meshNormals = []
     for norm in mesh.Normals:
         if not norm.Equals(meshPlaneVec):
-            meshIsPlanar = False
+            meshNormals.append(norm)
+            if norm.Equals(meshPlaneVecReverse):
+                norm.Reverse()
+                meshNormals.append(norm)
+            else:
+                meshIsPlanar = False
     
     # Change the Mesh to be in the XYPlane.
     meshPlane = rc.Geometry.Plane(basePlanePt, meshPlaneVec)
@@ -88,7 +99,7 @@ def checkMeshPlanarity(mesh, basePlanePt):
         changeBasisTransform = rc.Geometry.Transform.ChangeBasis(rc.Geometry.Plane.WorldXY, meshPlane)
         mesh.Transform(changeBasisTransform)
     
-    return meshIsPlanar, mesh, meshPlane
+    return meshIsPlanar, mesh, meshPlane, meshNormals
 
 
 def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analysisTitle, legendTitle, bakeIt, layerName, lb_preparation, lb_visualization):
@@ -97,7 +108,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     
     # Check the mesh's planarity
     minPt = inputMesh.GetBoundingBox(rc.Geometry.Plane.WorldXY).Min
-    meshIsPlanar, inputMesh, meshPlane = checkMeshPlanarity(inputMesh, minPt)
+    meshIsPlanar, inputMesh, meshPlane, meshNormals = checkMeshPlanarity(inputMesh, minPt)
     if meshIsPlanar == False:
         warning = 'The connected inputMesh is not planar and this component only works for planar meshes.' + \
         '\n Try breaking up your mesh into planar pieces and feeding them individually into this component.'
@@ -144,12 +155,12 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     
     # Create a mesh with a height domain, which can then be contoured.
     if heightDomain!=None:
-        coloredChart = lb_visualization.create3DColoredMesh(inputMesh, analysisResult, heightDomain, blankColors, meshStruct)
+        coloredChart = lb_visualization.create3DColoredMesh(inputMesh, analysisResult, heightDomain, blankColors, meshStruct, meshNormals)
         contInterval = contIncr*(heightDomain.Max - heightDomain.Min)/(numSeg-1)
     else:
         heightD = rc.Geometry.Interval(0,(numSeg-1)*(1/conversionFac))
         contInterval = contIncr*(1/conversionFac)
-        coloredChart = lb_visualization.create3DColoredMesh(inputMesh, analysisResult, heightD, blankColors, meshStruct)
+        coloredChart = lb_visualization.create3DColoredMesh(inputMesh, analysisResult, heightD, blankColors, meshStruct, meshNormals)
     
     # Figure out some basic things about the Legend.
     lb_visualization.calculateBB([coloredChart], True)
