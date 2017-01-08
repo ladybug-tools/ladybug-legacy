@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Texture Maker"
 ghenv.Component.NickName = 'Texture Maker'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_03_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_07_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -74,12 +74,25 @@ import System
 import math
 import scriptcontext as sc
 import os
-
-clr.AddReference("Grasshopper")
 import Grasshopper.Kernel as gh
-from Grasshopper.Kernel.Data import GH_Path
-from Grasshopper import DataTree
 
+
+def checkInputs(analysisMesh, runIt, alpha):
+    if alpha == None:
+        alpha = 255
+    else:
+        if alpha <=1 and alpha >=0:
+            alpha = int((1-alpha)*255)
+        else:
+            warning = "opacity_ must be between 0 and 1."
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            return -1
+    
+    if analysisMesh == [] or runIt == None or runIt == False:
+        return -1
+    else:
+        return alpha
 
 def mdPath(folder):
     # make a folder for the images
@@ -100,26 +113,28 @@ def mdPath(folder):
     
     return directory
 
-
-def checkInputs(analysisMesh, runIt, alpha):
-    if alpha == None:
-        alpha = 255
-    else:
-        if alpha <=1 and alpha >=0:
-            alpha = int((1-alpha)*255)
-        else:
-            warning = "opacity_ must be between 0 and 1."
-            print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            return -1
+def makeTexture(size, colorTree):
+    sb = size * 2 - 1
+    bm = System.Drawing.Bitmap(size * 2, size * 2)
+    bmb = System.Drawing.Bitmap(size * 4, size * 4)
     
-    if analysisMesh == [] or runIt == None or runIt == False:
-        return -1
-    else:
-        return alpha
+    count = -1
+    for x in xrange(size):
+        for y in xrange(size):
+            count += 1
+            if count < len(colorTree):
+                bm.SetPixel((x * 2) + 0, sb - ((y * 2) + 0), colorTree[count][0])
+                bm.SetPixel((x * 2) + 1, sb - ((y * 2) + 0), colorTree[count][1])
+                bm.SetPixel((x * 2) + 1, sb - ((y * 2) + 1), colorTree[count][2])
+                bm.SetPixel((x * 2) + 0, sb - ((y * 2) + 1), colorTree[count][3])
+    
+    g = System.Drawing.Graphics.FromImage(bmb)
+    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor
+    g.DrawImage(bm, 0, 0, size * 4 + 1, size * 4 + 1)
+    
+    return bmb
 
-
-def vincenteBakingMesh(m, u, a):
+def vincenteBakingMesh(m, u, a, v):
     """ The author of this function is Vincente Soler. The original function is made by two VB.Net components.
     changes:
     - from VB.Net to Python
@@ -128,16 +143,16 @@ def vincenteBakingMesh(m, u, a):
     
     m.Unweld(0, False)
     # set a tree
-    colorTree = DataTree[System.Drawing.Color]()
+    colorTree = []
     c = m.Faces.Count
     f = m.Faces
     
     for i in range(c):
-        path = GH_Path(i)
-        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].A].R, m.VertexColors[f[i].A].G, m.VertexColors[f[i].A].B), path)
-        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].B].R, m.VertexColors[f[i].B].G, m.VertexColors[f[i].B].B), path)
-        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].C].R, m.VertexColors[f[i].C].G, m.VertexColors[f[i].C].B), path)
-        colorTree.Add(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].D].R, m.VertexColors[f[i].D].G, m.VertexColors[f[i].D].B), path)
+        colorTree.append([])
+        colorTree[i].append(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].A].R, m.VertexColors[f[i].A].G, m.VertexColors[f[i].A].B))
+        colorTree[i].append(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].B].R, m.VertexColors[f[i].B].G, m.VertexColors[f[i].B].B))
+        colorTree[i].append(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].C].R, m.VertexColors[f[i].C].G, m.VertexColors[f[i].C].B))
+        colorTree[i].append(System.Drawing.Color.FromArgb(a, m.VertexColors[f[i].D].R, m.VertexColors[f[i].D].G, m.VertexColors[f[i].D].B))
     
     # mod mesh
     m.TextureCoordinates.Clear()
@@ -156,31 +171,24 @@ def vincenteBakingMesh(m, u, a):
                 m.TextureCoordinates[f.B] = rc.Geometry.Point2f(((x * 2) + 1.5) / sb, ((y * 2) + 0.5) / sb)
                 m.TextureCoordinates[f.C] = rc.Geometry.Point2f(((x * 2) + 1.5) / sb, ((y * 2) + 1.5) / sb)
                 m.TextureCoordinates[f.D] = rc.Geometry.Point2f(((x * 2) + 0.5) / sb, ((y * 2) + 1.5) / sb)
-    mesh = m
     
     # make the texture
-    size = math.ceil(math.sqrt(colorTree.BranchCount))
-    sb = size * 2 - 1
-    bm = System.Drawing.Bitmap(size * 2, size * 2)
-    bmb = System.Drawing.Bitmap(size * 4, size * 4)
-    
-    count = -1
-    for x in xrange(size):
-        for y in xrange(size):
-            count += 1
-            if count < colorTree.BranchCount:
-                bm.SetPixel((x * 2) + 0, sb - ((y * 2) + 0), colorTree.Branch(count)[0])
-                bm.SetPixel((x * 2) + 1, sb - ((y * 2) + 0), colorTree.Branch(count)[1])
-                bm.SetPixel((x * 2) + 1, sb - ((y * 2) + 1), colorTree.Branch(count)[2])
-                bm.SetPixel((x * 2) + 0, sb - ((y * 2) + 1), colorTree.Branch(count)[3])
-    
-    g = System.Drawing.Graphics.FromImage(bmb)
-    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor
-    g.DrawImage(bm, 0, 0, size * 4 + 1, size * 4 + 1)
-    
+    size = math.ceil(math.sqrt(len(colorTree)))
+    bmb = makeTexture(size, colorTree)
     bmb.Save(u)
     
-    return mesh
+    # make the alpha channel.
+    if a != 255:
+        aColTree = []
+        aColor = System.Drawing.Color.FromArgb(a, a, a)
+        for count, colList in enumerate(colorTree):
+            aColTree.append([])
+            for val in colList:
+                aColTree[count].append(aColor)
+        abmb = makeTexture(size, aColTree)
+        abmb.Save(v)
+    
+    return m
 
 
 def main(analysisMesh, folder, name, layerName, alpha, softBake, softBakeMeshes):
@@ -190,11 +198,19 @@ def main(analysisMesh, folder, name, layerName, alpha, softBake, softBakeMeshes)
     #Generate the image map textures.
     special_mesh = []
     imagePath = []
+    alphaPath = []
+    aPath = None
     for i, m in enumerate(analysisMesh):
         if name != []:
             completePath = directory + name_[i] + '.png'
         else: completePath = directory + 'mesh_n_' + str(i) + '.png'
-        special_mesh.append(vincenteBakingMesh(m, completePath, alpha))
+        if alpha != 255:
+            if name != []:
+                aPath = directory + name_[i] + '_alpha.png'
+            else: aPath = directory + 'mesh_alpha_n_' + str(i) + '.png'
+            alphaPath.append(aPath)
+        
+        special_mesh.append(vincenteBakingMesh(m, completePath, alpha, aPath))
         imagePath.append(completePath)
     
     # Bake the mesh into the Rhino scene and set the image map material.
@@ -218,6 +234,8 @@ def main(analysisMesh, folder, name, layerName, alpha, softBake, softBakeMeshes)
         materialT = rc.RhinoDoc.ActiveDoc.Materials #material table
         material = rc.DocObjects.Material()
         material.SetBitmapTexture(imagePath[count])
+        if alpha != 255:
+            material.SetTransparencyTexture(alphaPath[count])
         matIndex = materialT.Add(material)
         attr.MaterialSource = rc.DocObjects.ObjectMaterialSource.MaterialFromObject
         attr.MaterialIndex = matIndex
@@ -227,7 +245,7 @@ def main(analysisMesh, folder, name, layerName, alpha, softBake, softBakeMeshes)
         if softBake == True:
             softBakeMeshes.append([rhinoMesh,matIndex])
     
-    return imagePath, special_mesh
+    return imagePath, alphaPath, special_mesh
 
 
 # Delete any old objects in memory
@@ -244,5 +262,5 @@ alpha = checkInputs(_analysisMesh, _bakeIt, transparency_)
 if alpha != -1:
     result = main(_analysisMesh, folder_, name_, _layerName_, alpha, softBake_, softBakeMeshes)
     if result != -1:
-        imagePath, mesh = result
+        imagePath, alphaPath, mesh = result
         print("Texture generated!")
