@@ -40,7 +40,7 @@ Component mainly based on:
 "DEM Surface Tools for ArcGIS", Jenness Enterprises, 2013.
 "How Hillshade works" article from Esri Developer Network
 "How to calculate Topographic Ruggedness Index in ArcGIS Desktop" article from gis.stackexchange.com
-"Terrain Roughness – 13 Ways" article from gis4geomorphology.com
+"Terrain Roughness  13 Ways" article from gis4geomorphology.com
 TopoToolbox "roughness" function by Wolfgang Schwanghart
 -
 http://www.jennessent.com/downloads/DEM%20Surface%20Tools%20for%20ArcGIS_A4.pdf
@@ -270,7 +270,7 @@ def checkInputData(analysisType, terrainId, originPt, originPtElevation, north, 
     elif (analysisType == 7):
         legendUnit = "TRI category"
     elif (analysisType == 8):
-        legendUnit = "unitless‎"
+        legendUnit = "unitless"
     elif (analysisType == 10):
         legendUnit = "1/%s" % unitSystem
     
@@ -758,7 +758,7 @@ def createAnalysedTerrainMesh(analysisType, terrainId, originPt, originPtElevati
             
             TPI_rhinoUnits = centralVertexElevation - sum(neighboringVertexElevations)/len(neighboringVertexElevations)  # in rhino document units
             averageVertexElevations = sum(neighboringVertexElevations_plus_centralVertexElevation) / len(neighboringVertexElevations_plus_centralVertexElevation)
-            TPI2 = (averageVertexElevations - min(neighboringVertexElevations_plus_centralVertexElevation)) / (max(neighboringVertexElevations_plus_centralVertexElevation) - min(neighboringVertexElevations_plus_centralVertexElevation))  # unitless, also called ERR (Elevation–Relief Ratio (Pike and Wilson, 1971)), source: Olaya, V. 2009: Basic land-surface parameters. In: Geomorphometry, Hengl, T. & Reuter, H. I.
+            TPI2 = (averageVertexElevations - min(neighboringVertexElevations_plus_centralVertexElevation)) / (max(neighboringVertexElevations_plus_centralVertexElevation) - min(neighboringVertexElevations_plus_centralVertexElevation))  # unitless, also called ERR (ElevationRelief Ratio (Pike and Wilson, 1971)), source: Olaya, V. 2009: Basic land-surface parameters. In: Geomorphometry, Hengl, T. & Reuter, H. I.
             #TPI_List.append(TPI_rhinoUnits)
             TPI_List.append(TPI2)
             """
