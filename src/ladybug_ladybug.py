@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_05_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_10_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2780,8 +2780,11 @@ class ResultVisualization(object):
         if lowB == 'min': lowB = min(results)
         if legendBasePoint == None: basePt = BoundingBoxP[0]
         else: basePt = legendBasePoint
-            
         BBYlength = BoundingBoxP[2]
+        
+        # Following variable is defined to get the maximum dimension of geometry
+        # This variable is used later on in this function to assign the width of the legend in case analysis geometry is a planar surface
+        maxBoundingValue = max([item if type(item) == float else 0.0 for item in BoundingBoxP])
         
         def legend(basePt, legendHeight, legendWidth, numofSeg):
             basePt = rc.Geometry.Point3d.Add(basePt, rc.Geometry.Vector3f(legendWidth, 0, 0))
@@ -2812,6 +2815,8 @@ class ResultVisualization(object):
             return legendSrf, textPt
         
         # check for user input
+        if BBYlength < 1:
+            BBYlength = int(maxBoundingValue)        
         if font == None:
             font = 'Verdana'
         legendHeight = legendWidth = (BBYlength/10) * legendScale
