@@ -2782,7 +2782,7 @@ class ResultVisualization(object):
         else: basePt = legendBasePoint
         BBYlength = BoundingBoxP[2]
         
-        # Following variable simple find maxmum float value from the dimension of geometry
+        # Following variable is defined to get the maximum dimension of geometry
         # This variable is used later on in this function to assign the width of the legend in case analysis geometry is a planar surface
         maxBoundingValue = max([item if type(item) == float else 0.0 for item in BoundingBoxP])
         
