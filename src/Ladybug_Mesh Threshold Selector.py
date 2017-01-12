@@ -48,7 +48,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_01_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_11_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -136,7 +136,6 @@ def main(percent, operator):
     if len(shadeNetFinal) == 0:
         warning = "No values meet the conditional statement."
         print warning
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
     #Remove the unnecessary cells from the shade mesh.
     newMesh = _inputMesh
