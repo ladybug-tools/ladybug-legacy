@@ -49,7 +49,7 @@ Provided by Ladybug 0.0.63
         -
         The default value is 0.
         _numOfTiles_: Set the number of tiles (e.g. 4, that means 4x4). If no input is connected this will be 3 (tiles: 3x3).
-        _numDivision_: Set the number of points for each tile. If no input is connected this will be 15 (grid: 16x16).
+        _numDivision_: Set the number of points for each tile. If no input is connected this will be 12 (grid: 13x13).
         _imgResolution_: Connect an integer number which manage the quality of single satellite image.
         -
         The following list shows the approximate level of detail you can expect to see at each _imgResolution_ level:
@@ -83,7 +83,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Generator"
 ghenv.Component.NickName = 'TerrainGenerator'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_31_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_12_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -98,7 +98,6 @@ import socket
 import System
 import os
 import clr
-import io
 from math import pi, log, tan, atan, exp, sqrt
 
 
@@ -300,7 +299,7 @@ def mdPath(folder):
             except Exception:
                 appdata = os.getenv("APPDATA")
                 try:
-                    directory = os.path.join(appdatal, "Ladybug\IMG_Google\\")
+                    directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
                 except:
                     directory = os.path.join(appdata[:3], "Ladybug\IMG_Google\\")
                 if not os.path.exists(directory):
@@ -319,17 +318,29 @@ def mdPath(folder):
     return directory
 
 
-def main():
-    
+def writeFile():
     # Make sure that the file exists
     appdata = os.getenv("APPDATA")
     try:
-        name = os.path.join(appdata, "Ladybug\\", "elevation.txt")
+        folder = os.path.join(appdata, "Ladybug")
+        name = os.path.join(folder, "elevation.txt")
+        
+        with open(name, "w") as f:
+            pass
     except:
-        name = os.path.join(appdata[:3], "Ladybug\\", "elevation.txt")
-    dummyFile = io.FileIO(name, "w")
-    dummyFile.close()
+        folder = os.path.join(appdata[:3], "Ladybug")
+        name = os.path.join(folder, "elevation.txt")
+        
+        with open(name, "w") as f:
+            pass
+        
+    if not "elevation.txt" in os.listdir(folder):
+        return -1
     
+    return name
+
+
+def main(name):
     
     earth_radius = 6378137
     equator_circumference = 2 * pi * earth_radius
@@ -345,7 +356,7 @@ def main():
         imgResolution = 18
     else: imgResolution = int(_imgResolution_) # make sure that it is an integer number
     if _numDivision_ == None:
-        numDivision = 15
+        numDivision = 12
     else: numDivision = int(_numDivision_)
     if _radius_ == None:
         radius = 100
@@ -384,6 +395,10 @@ def main():
     elevations_for_srf = []
     URLs = []
     imagePath = DataTree[System.Object]()
+    
+    # make a folder for the images
+    directory = mdPath(folder_)
+    
     if _runIt:
         pointsGeo, pointsZ, pointsXY, imagePath  = DataTree[System.Object](), DataTree[System.Object](), DataTree[System.Object](), DataTree[System.Object]()
         
@@ -404,7 +419,8 @@ def main():
                 pointsZ.AddRange(elevations, path)
                 pointsXY.AddRange(points_srf, path)
                 
-            except TypeError: return None, None, None, None, None, None, None, None
+            except TypeError: return -1
+            except: return -1
         
         # make 3D points
         # thanks to djordje for this advice
@@ -419,10 +435,6 @@ def main():
              vDegree = min(3, num - 1)
              terrain = Rhino.Geometry.NurbsSurface.CreateThroughPoints(cull_pts, num, num, uDegree, vDegree, False, False)
              origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToBreps([terrain.ToBrep()], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
-        
-        
-        # make a folder for the images
-        directory = mdPath(folder_)
         
         try:
             for i, u in enumerate(URLs):
@@ -439,6 +451,15 @@ def main():
         # check the grid size
         dimension = round(((radius * 2) / numOfTiles) / numDivision, 3)
         print("Size of the grid = {0} x {0}".format(dimension))
+        
+        # delete image from the folder
+        try:
+            folderDataList = os.listdir(directory)
+            if len(folderDataList) != 0:
+                for image in folderDataList:
+                    os.remove(os.path.join(directory, image))
+        except: pass
+        
         return None, None, None, None, None, tilesTree, None, None
     
     return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree, origin, elevation
@@ -467,11 +488,18 @@ else:
 
 check = checkInputs(_location)
 
+# write elevation.txt
+name = writeFile()
+
 if check and initCheck:
     if checkInternetConnection():
-        result = main()
-        if result != -1:
-            pointsGeo, pointsZ, pointsXY, imagePath, terrain, tiles, origin, elevation = result
+        if name != -1:
+            result = main(name)
+            if result != -1:
+                pointsGeo, pointsZ, pointsXY, imagePath, terrain, tiles, origin, elevation = result
+        else:
+            warning = "Something went wrong with IO permission."
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         warning = "Please enable your internet connection."
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
