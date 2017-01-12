@@ -47,17 +47,19 @@ Provided by Ladybug 0.0.63
         newMesh: A new mesh that has been re-colored based on the _analysisResult data.
         newLegend: A new legend that that corresponds to the colors of the newMesh. Connect this output to a grasshopper "Geo" component in order to preview this legend separately in the Rhino scene.  
         legendBasePt: The legend base point, which can be used to move the legend in relation to the newMesh with the grasshopper "move" component.
+        meshColors: The colors associated with each face of the newMesh.
+        legendColors: The colors associated with each segment of the newLegend.
 """
 
 ghenv.Component.Name = "Ladybug_Recolor Mesh"
 ghenv.Component.NickName = 'reColorMesh'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_25_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
-#compatibleLBVersion = VER 0.0.59\nAUG_25_2016
+#compatibleLBVersion = VER 0.0.59\nJAN_02_2017
 
 import scriptcontext as sc
 import Rhino as rc
@@ -69,185 +71,97 @@ AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
 
 
-def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, legendTitle, bakeIt, layerName, lowBoundColor, highBoundColor):
+def main(analysisResult, inputMesh, heightDomain, legendPar, analysisTitle, legendTitle, bakeIt, layerName, lowBoundColor, highBoundColor, lb_preparation, lb_visualization):
+    conversionFac = lb_preparation.checkUnits()
     
-    def create3DColoredMesh(inputMesh, analysisResult, domain, colors):
-        """
-        Creates a new 3D mesh based on input values
-        Thanks to David Mans for providing the VB example of the code
-        """
-        mappedValues = []
-        def remapValues():
-            tmin = domain.T0
-            tmax = domain.T1
-            omin = min(analysisResult)
-            omax = max(analysisResult)
-            
-            for v in analysisResult:
-                try: mappedValues.append( (v-omin) * (tmax-tmin) /(omax-omin) + tmin)
-                except: mappedValues.append(tmin)
-
-        remapValues()
-        
-        mtv = inputMesh.TopologyVertices
-        inputMesh.Normals.ComputeNormals()
-        inputMesh.FaceNormals.ComputeFaceNormals()
-        inputMesh.FaceNormals.UnitizeFaceNormals()
-        values = []
-        
-        # collect the values and average  them for each vertices
-        for i in range(mtv.Count):
-            faceIds = mtv.ConnectedFaces(i) #always an array of 4
-            
-            v = 0
-            for j in range(faceIds.Count):
-                v += mappedValues[faceIds[j]]
-            v/=(faceIds.Count) #average the value
-            values.append(v)
-        
-        vo = []
-        fo = []
-        vc = []
-        
-        k = 0
-        for i in range(inputMesh.Faces.Count):
-            tv = inputMesh.Faces.GetTopologicalVertices(i)
-            
-            if tv[2] == tv[3]: count=3
-            else: count = 4
-            
-            for j in range(count):
-                ti = mtv.MeshVertexIndices(tv[j])
-                
-                #average normals
-                n = inputMesh.Normals[ti[0]]
-                for t in ti[1:]:
-                    n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
-                
-                n.Unitize()
-                
-                v = values[tv[j]]
-                n = rc.Geometry.Vector3d(v * n.X, v * n.Y, v * n.Z)
-                vo.append(rc.Geometry.Point3d.Add(inputMesh.Vertices[ti[0]], n))
-                vc.append(colors[i])
-            
-            if count == 3:
-                fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2))    
-            else:
-                fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2, k + 3))
-            k += count
-        
-        # construct mesh using vertices and faces
-        mo = rc.Geometry.Mesh()
-        for ver in vo: mo.Vertices.Add(ver)
-        for c in vc: mo.VertexColors.Add(c)
-        mo.Faces.AddFaces(fo)
-        
-        return mo
-
-    # import the classes
-    if sc.sticky.has_key('ladybug_release'):
-        try:
-            if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
-        except:
-            warning = "You need a newer version of Ladybug to use this compoent." + \
-                     "Use updateLadybug component to update userObjects.\n" + \
-                     "If you have already updated userObjects drag Ladybug_Ladybug component " + \
-                     "into canvas and try again."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
-            
-        lb_preparation = sc.sticky["ladybug_Preparation"]()
-        lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
-        
-        conversionFac = lb_preparation.checkUnits()
-        # copy the custom code here
-        # check inputs
-        if inputMesh and len(analysisResult)!=0:
-            if inputMesh.Faces.Count != len(analysisResult):
-                warning = 'length of the results [=' + str(len(analysisResult)) + '] is not equal to the number of mesh faces [=' + str(inputMesh.Faces.Count) + '].'
-                print warning
-                w = gh.GH_RuntimeMessageLevel.Warning
-                ghenv.Component.AddRuntimeMessage(w, warning)
-                return -1
-            
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
-            
-            colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors,lowBoundColor,highBoundColor)
-            
-            coloredChart = lb_visualization.colorMesh(colors, inputMesh)
-            
-            if heightDomain!=None:
-                coloredChart = create3DColoredMesh(inputMesh, analysisResult, heightDomain, colors)
-                
-            lb_visualization.calculateBB([coloredChart], True)
-                
-            if not legendTitle:  legendTitle = 'unknown units  '
-            if not analysisTitle: analysisTitle = '\nno title'
-            
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(analysisResult
-                , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale
-                , legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
-            
-            # generate legend colors
-            legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors,lowBoundColor,highBoundColor)
-            
-            # color legend surfaces
-            legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-            
-            titlebasePt = lb_visualization.BoundingBoxPar[-2]
-            if legendFont == None: legendFont = 'Veranda'
-            if legendFontSize == None: legendFontSize = legendScale * (lb_visualization.BoundingBoxPar[2]/20)
-            titleTextCurve = lb_visualization.text2srf(["\n\n" + analysisTitle], [titlebasePt], legendFont, legendFontSize, legendBold)
-            
-            if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
-            
-            if bakeIt > 0:
-                formatString = "%."+str(decimalPlaces)+"f"
-                for count, item in enumerate(legendText):
-                    try:
-                        legendText[count] = formatString % item
-                    except:pass
-                legendText.append(analysisTitle)
-                textPt.append(titlebasePt)
-                studyLayerName = 'CUSTOM_PRESENTATION'
-                if layerName == None: layerName = 'Custom'
-                # check the study type
-                newLayerIndex, l = lb_visualization.setupLayers('Modified Version', 'LADYBUG', layerName, studyLayerName)
-                if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
-                else: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
-            return coloredChart, [legendSrfs, [lb_preparation.flattenList(legendTextCrv + titleTextCurve)]], legendBasePoint, colors, legendColors
-        else:
-            warning = 'Connect inputData!'
-            print warning
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, warning)
-            return -1
+    if inputMesh.Faces.Count == len(analysisResult):
+        meshStruct = 0
+    elif inputMesh.Vertices.Count == len(analysisResult):
+        meshStruct = 1
     else:
-        print "You should let the Ladybug fly first..."
+        warning = 'length of the results [=' + str(len(analysisResult)) + '] is not equal to the number of mesh faces [=' + str(inputMesh.Faces.Count) + '] or mesh vertices[=' + str(inputMesh.Vertices.Count) + '].'
+        print warning
         w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, "You should let the Ladybug fly first...")
+        ghenv.Component.AddRuntimeMessage(w, warning)
         return -1
     
-    conversionFac = lb_preparation.checkUnits()
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
+    colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors,lowBoundColor,highBoundColor)
+    coloredChart = lb_visualization.colorMesh(colors, inputMesh, True, meshStruct)
+    
+    if heightDomain!=None:
+        coloredChart = lb_visualization.create3DColoredMesh(coloredChart, analysisResult, heightDomain, colors, meshStruct)
+    
+    lb_visualization.calculateBB([coloredChart], True)
+    
+    if not legendTitle:  legendTitle = 'unknown units  '
+    if not analysisTitle: analysisTitle = '\nno title'
+    
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(analysisResult
+        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale
+        , legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
+    
+    # generate legend colors
+    legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors,lowBoundColor,highBoundColor)
+    
+    # color legend surfaces
+    legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
+    
+    titlebasePt = lb_visualization.BoundingBoxPar[-2]
+    if legendFont == None: legendFont = 'Veranda'
+    if legendFontSize == None: legendFontSize = legendScale * (lb_visualization.BoundingBoxPar[2]/20)
+    titleTextCurve = lb_visualization.text2srf(["\n\n" + analysisTitle], [titlebasePt], legendFont, legendFontSize, legendBold)
+    
+    if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
+    
+    if bakeIt > 0:
+        formatString = "%."+str(decimalPlaces)+"f"
+        for count, item in enumerate(legendText):
+            try:
+                legendText[count] = formatString % item
+            except:pass
+        legendText.append(analysisTitle)
+        textPt.append(titlebasePt)
+        studyLayerName = 'CUSTOM_PRESENTATION'
+        if layerName == None: layerName = 'Custom'
+        # check the study type
+        newLayerIndex, l = lb_visualization.setupLayers('Modified Version', 'LADYBUG', layerName, studyLayerName)
+        if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
+        else: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
+    return coloredChart, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], legendBasePoint, colors, legendColors
 
-if _inputMesh and len(_analysisResult)!=0:
+
+
+# import the classes
+initCheck = True
+if sc.sticky.has_key('ladybug_release'):
+    try:
+        if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = False
+    except:
+        warning = "You need a newer version of Ladybug to use this compoent." + \
+                 "Use updateLadybug component to update userObjects.\n" + \
+                 "If you have already updated userObjects drag Ladybug_Ladybug component " + \
+                 "into canvas and try again."
+        w = gh.GH_RuntimeMessageLevel.Warning
+        ghenv.Component.AddRuntimeMessage(w, warning)
+        initCheck = False
     
-    def openLegend(legendRes):
-        if len(legendRes)!=0:
-            meshAndCrv = []
-            meshAndCrv.append(legendRes[0])
-            [meshAndCrv.append(curve) for curveList in legendRes[1] for curve in curveList]
-            #print meshAndCrv
-            return meshAndCrv
-        else: return
-    
-    result = main(_analysisResult, _inputMesh, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_,lowBoundColor_,highBoundColor_)
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
+else:
+    print "You should let the Ladybug fly first..."
+    w = gh.GH_RuntimeMessageLevel.Warning
+    ghenv.Component.AddRuntimeMessage(w, "You should let the Ladybug fly first...")
+    initCheck = False
+
+
+
+if initCheck == True and _inputMesh and len(_analysisResult)!=0:
+    result = main(_analysisResult, _inputMesh, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_, lowBoundColor_, highBoundColor_, lb_preparation, lb_visualization)
     if result!= -1:
         newLegend= []
         newMesh = result[0]
-        [newLegend.append(item) for item in openLegend(result[1])]
+        [newLegend.append(item) for item in lb_visualization.openLegend(result[1])]
         legendBasePt = result[2]
         meshColors = result[3]
         legendColors = result[4]

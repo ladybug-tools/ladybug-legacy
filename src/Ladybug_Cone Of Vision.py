@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.63
     Args:
         type_ : This input sets the cone of vision, the cone is defined by four values that are vertical angle+, vertical angle-, horizontal angle+, horizontal angle-, distance limits.
         -
-        Connect a number from 0 to 9.
+        Connect a number from 0 to 9. The default is set to 0.
         -
         0 =     Human (50, 70, 62, 62, 10 meters)
         1 =     Peripheral vision (60, 70, 60, 60, 10 meters)
@@ -80,12 +80,12 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Cone Of Vision"
 ghenv.Component.NickName = 'ConeOfVision'
-ghenv.Component.Message = "VER 0.0.63\nOCT_07_2016"
+ghenv.Component.Message = "VER 0.0.63\nJAN_01_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 
@@ -189,7 +189,7 @@ def main():
     
     if type_ != None:
         vAngleUp, vAngleDown, hAngle, distanceLimit = type[type_]['vAngleUp'], type[type_]['vAngleDown'], type[type_]['hAngle'], type[type_]['distanceLimit']
-    else: vAngleUp, vAngleDown, hAngle, distanceLimit = (90, 70, 180, 10)
+    else: vAngleUp, vAngleDown, hAngle, distanceLimit = (50, 70, 62, 10)
     
     if _viewPoint_ == []:
         viewPoint = [rc.Geometry.Point3d.Origin]
@@ -207,11 +207,11 @@ def main():
         # remark for users
         if type_ != 3 and type_ != 4 and type_ != 5 and distanceLimit_ == None:
             remark = "Note that the distance limit you are using is not the real limit of normal human vision. It is only used for visualizing."
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, remark)
+            print remark
         
         if (type_ == 3 or type_ == 4 or type_ == 5) and distanceLimit_ != None:
             remark = "Please keep in mind that the default distanceLimit of 3, 4, 5 comes from \n U. S. Bureau of Land Management. Visual Resource Management Program (Course 8400-05) 2008."
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Remark, remark)
+            print remark
         
         if vAngleUp_ != None:
             if vAngleUp_ == 0.0:

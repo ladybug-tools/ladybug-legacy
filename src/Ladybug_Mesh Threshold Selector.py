@@ -22,7 +22,7 @@
 
 
 """
-Use this component to delete out unwanted areas of a shade after a shade benefit evaluation has been run.  This will help turn your shade evaluation results into an actual shade brep based on a percentage of beneficial shade cells that you decide.
+Use this component to select out the part of a colored mesh that meets a certain conditional statement.  This has multiple uses: The generation of a custom shade from a shade benefit analysis, Quantifying the daylight area from a daylight analysis, Selecting out the portion of a roof with enough solar radiation for PV panels, and much more.
 
 -
 Provided by Ladybug 0.0.63
@@ -30,6 +30,12 @@ Provided by Ladybug 0.0.63
     Args:
         _inputMesh: The mesh for which you would like to highlight the portion that meets a threshold.
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.
+        _operator_: A text string representing an operator for the the conditional statement.  The default is set to be greater than (>).  This must be an operator in python and examples include:
+            > - Greater Than
+            < - Less Than
+            >= - Greater or Equal
+            <= - Less or Equal
+            == - Equals
         percentToKeep_: A number between 0 and 100 that represents the percentage of the mesh faces that you would like to include in the resulting newColoredMesh.  By default, this is set to 25%.
         levelOfPerform_: An optional number that represents the threshold above which a given mesh face is included in the newColoredMesh.  An input here will override the percent input above.
     Returns:
@@ -42,7 +48,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_11_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -63,8 +69,7 @@ def checkTheInputs():
     else:
         checkData1 = False
         print "The number of faces in the _inputMesh does not equal the number of values in the _analysisResult.  Are you sure that you connected a mesh that matches your input data?"
-        w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, "The number of faces in the _inputMesh does not equal the number of values in the _analysisResult.  Are you sure that you connected a mesh that matches your input data?")
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "The number of faces in the _inputMesh does not equal the number of values in the _analysisResult.  Are you sure that you connected a mesh that matches your input data?")
     
     #Check to see if the user has hooked up a percent to keep and, if not, set it to 50%.
     if percentToKeep_ == None:
@@ -78,25 +83,35 @@ def checkTheInputs():
             checkData2 = False
             percent = None
             print "The percentToKeep_ must be a valude between 0 and 100."
-            w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "The percentToKeep_ must be a valude between 0 and 100.")
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "The percentToKeep_ must be a valude between 0 and 100.")
+    
+    # Check the operator.
+    if _operator_ == None:
+        operator = ">"
+    else:
+        operator = _operator_
+        if levelOfPerform_ == None and operator == "==":
+            warning = "The equality operator cannot be used with the percentToKeep_ method. \n Operatorhas been changed to be greater than."
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
     #If eveything is good, return a result that says this.
     checkData = False
     if checkData1 == True and checkData2 == True: checkData = True
     
-    return checkData, percent
+    return checkData, percent, operator
 
 
-def main(percent):
+def main(percent, operator):
     #Make a list to keep track of all of the faces in the test mesh.
     faceNumbers = range(len(_analysisResult))
     
     #Sort the list of net effect along with the face numbers list and reverse it so the most valuable cells are at the top.
     faceNumbersSort = [x for (y,x) in sorted(zip(_analysisResult, faceNumbers))]
-    faceNumbersSort.reverse()
     _analysisResult.sort()
-    _analysisResult.reverse()
+    if ">" in operator or operator == "==":
+        faceNumbersSort.reverse()
+        _analysisResult.reverse()
     
     #Remove the faces numbers that are harmful.
     faceNumbersHarm = []
@@ -114,8 +129,13 @@ def main(percent):
             else: faceNumbersHarm.append(faceNumbersSort[count])
     else:
         for count, num in enumerate(shadeNetEffectHelp):
-            if num > levelOfPerform_: shadeNetFinal.append(num)
+            if eval(str(num) + operator + str(levelOfPerform_)): shadeNetFinal.append(num)
             else: faceNumbersHarm.append(faceNumbersSort[count])
+    
+    # Check to see if no values meet the conditional statement.
+    if len(shadeNetFinal) == 0:
+        warning = "No values meet the conditional statement."
+        print warning
     
     #Remove the unnecessary cells from the shade mesh.
     newMesh = _inputMesh
@@ -149,8 +169,8 @@ def main(percent):
 
 checkData = False
 if _inputMesh != None and _analysisResult != [] and _analysisResult != [None]:
-    checkData, percent = checkTheInputs()
+    checkData, percent, operator = checkTheInputs()
 
 if checkData == True and _inputMesh and _analysisResult != []:
-    totalValue, areaMeetsThresh, newColoredMesh, newMeshOutline = main(percent)
+    totalValue, areaMeetsThresh, newColoredMesh, newMeshOutline = main(percent, operator)
 ghenv.Component.Params.Output[3].Hidden = True
