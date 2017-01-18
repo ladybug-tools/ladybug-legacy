@@ -60,13 +60,13 @@ Provided by Ladybug 0.0.63
         sunlightHoursMesh: A colored mesh of the test _geometry representing the hours of direct sunlight received by this input _geometry for the input sunVectors.
         sunlightHoursLegend: A legend for the sunlight hours study showing the number of hours that correspond to the colors of the sunlightHoursMesh. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePt: The legend base point, which can be used to move the legend in relation to the sunlight hours mesh with the grasshopper "move" component.
-        totalSunlightHours: The average number of hours of direct sunlight received by the test _geometry.
+        totalSunlightHours: The total of sunlight hours received at each test point multiplied by the mesh area that the test point represents. This single metric could be useful in comparing design options.
         sunIsVisible: A grafted data stream for each test point with a "1" for each hour of the sunVectors that the sun is visible and a "0" for each hour of the sunVectors when the sun is blocked.
 """
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_31_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_19_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
