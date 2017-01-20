@@ -31,7 +31,7 @@ It can also be used for coarsely-gridded shadow studies in the Rhino scene .  Fo
 Provided by Ladybug 0.0.63
     
     Args:
-        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees). In case you have provided rotation value for the North in the Sunpath component, there's no need to provide the same rotation value here. Doing this will give you erroneous results.
         _geometry: Geometry for which sunlight hours analysis will be conducted.  Geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         context_: Context geometry that could block sunlight to the test _geometry.  Conext geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         _gridSize_: A number in Rhino model units that represents the average size of a grid cell for sunlight hours analysis on the test _geometry.  This value should be smaller than the smallest dimension of the test _geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take.
@@ -60,13 +60,13 @@ Provided by Ladybug 0.0.63
         sunlightHoursMesh: A colored mesh of the test _geometry representing the hours of direct sunlight received by this input _geometry for the input sunVectors.
         sunlightHoursLegend: A legend for the sunlight hours study showing the number of hours that correspond to the colors of the sunlightHoursMesh. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
         legendBasePt: The legend base point, which can be used to move the legend in relation to the sunlight hours mesh with the grasshopper "move" component.
-        totalSunlightHours: The total of sunlight hours received at each test point multiplied by the mesh area that the test point represents. This single metric could be useful in comparing design options.
+        totalSunlightHours: The average number of hours of direct sunlight received by the test _geometry.
         sunIsVisible: A grafted data stream for each test point with a "1" for each hour of the sunVectors that the sun is visible and a "0" for each hour of the sunVectors when the sun is blocked.
 """
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_19_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_20_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -206,7 +206,10 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
             joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
             if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
             else: joinedContext = None
-                
+            
+            print conversionFac,
+            print "\n"*2
+            print meshSrfAreas
             hoursResults, totalHoursResults, sunVisibility = lb_runStudy_GH.parallel_sunlightHoursCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
                                             parallel, sunVectors_sunlightHour, conversionFac, northVector, timeStep)
         else:
