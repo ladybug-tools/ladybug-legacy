@@ -206,10 +206,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
             joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
             if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
             else: joinedContext = None
-            
-            print conversionFac,
-            print "\n"*2
-            print meshSrfAreas
+
             hoursResults, totalHoursResults, sunVisibility = lb_runStudy_GH.parallel_sunlightHoursCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
                                             parallel, sunVectors_sunlightHour, conversionFac, northVector, timeStep)
         else:
