@@ -31,7 +31,7 @@ It can also be used for coarsely-gridded shadow studies in the Rhino scene .  Fo
 Provided by Ladybug 0.0.63
     
     Args:
-        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees). In case you have provided rotation value for the North in the Sunpath component, there's no need to provide the same rotation value here. Doing this will give you erroneous results.
         _geometry: Geometry for which sunlight hours analysis will be conducted.  Geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         context_: Context geometry that could block sunlight to the test _geometry.  Conext geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         _gridSize_: A number in Rhino model units that represents the average size of a grid cell for sunlight hours analysis on the test _geometry.  This value should be smaller than the smallest dimension of the test _geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take.
@@ -66,7 +66,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_31_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_20_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -206,7 +206,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
             joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
             if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
             else: joinedContext = None
-                
+
             hoursResults, totalHoursResults, sunVisibility = lb_runStudy_GH.parallel_sunlightHoursCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
                                             parallel, sunVectors_sunlightHour, conversionFac, northVector, timeStep)
         else:
