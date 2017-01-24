@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_10_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_24_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2780,8 +2780,8 @@ class ResultVisualization(object):
         if lowB == 'min': lowB = min(results)
         if legendBasePoint == None: basePt = BoundingBoxP[0]
         else: basePt = legendBasePoint
+            
         BBYlength = BoundingBoxP[2]
-        
         # Following variable is defined to get the maximum dimension of geometry
         # This variable is used later on in this function to assign the width of the legend in case analysis geometry is a planar surface
         maxBoundingValue = max([item if type(item) == float else 0.0 for item in BoundingBoxP])
@@ -2816,7 +2816,7 @@ class ResultVisualization(object):
         
         # check for user input
         if BBYlength < 1:
-            BBYlength = int(maxBoundingValue)        
+            BBYlength = int(maxBoundingValue) 
         if font == None:
             font = 'Verdana'
         legendHeight = legendWidth = (BBYlength/10) * legendScale
@@ -3633,7 +3633,7 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD):
+    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD, opTemp=False):
         upTemper = initialGuessUp
         upDelta = 3
         if targetPPD == 10.0: targetPMV = 0.5
@@ -3657,7 +3657,10 @@ class ComfortModels(object):
             targetPMV = intersectPts[0].PointA.X
         
         while abs(upDelta) > 0.01:
-            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
+            if opTemp == True:
+                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+            else:
+                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
             upDelta = targetPMV - pmv
             upTemper = upTemper + upDelta
         
@@ -3666,7 +3669,10 @@ class ComfortModels(object):
         else: downTemper = initialGuessDown
         downDelta = 3
         while abs(downDelta) > 0.01:
-            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
+            if opTemp == True:
+                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+            else:
+                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
             downDelta = -targetPMV - pmv
             downTemper = downTemper + downDelta
         

@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.63
         _relativeHumidity: A number between 0 and 100 representing the relative humidity of the air in percentage.  This input can also accept a list of relative humidity values representing conditions at different times or the direct output of relativeHumidity from of the Import EPW component.
         barometricPressure_: A number representing the barometric pressure in Pascals.  If no value is connected here, the default pressure will be 101325 Pa, which is air pressure at sea level.  It is recommended that you connect the barometric pressure from the Import epw component here as the air pressure at sea level can cause some misleading results for cities at higher elevations.
         -------------------------: ...
-        meanRadTemperature_: A number representing the mean radiant temperature of the surrounding surfaces.  This value should be in degrees Celcius unless you have connected values in Farenheit to the dryBulbTemperature and you are seeing a chart in IP units.  If no value is plugged in here, this component will assume that the mean radiant temperature is equal to 23 C.  This input can also accept a list of temperatures and this will produce several comfort polygons (one for each mean radiant temperature).
+        meanRadTemperature_: A number representing the mean radiant temperature of the surrounding surfaces.  This value should be in degrees Celcius unless you have connected values in Farenheit to the dryBulbTemperature and you are seeing a chart in IP units.  If no value is plugged in here, this component will assume that the mean radiant temperature is the same as the connected dry bulb temperature (and the X-Axis of the Psychrometric Chart is for Operative Temperature instead of Dry Bulb Temperature).  This input can also accept a list of temperatures and this will produce several comfort polygons (one for each mean radiant temperature).
         windSpeed_: A number representing the wind speed of the air in meters per second.  If no value is plugged in here, this component will assume a very low wind speed of 0.05 m/s, characteristic of most indoor conditions.  This input can also accept a list of wind speeds representing conditions and this will produce several comfort polygons (one for each wind speed).
         metabolicRate_: A number representing the metabolic rate of the human subject in met.  This input can also accept text inputs for different activities.  Acceptable text inputs include Sleeping, Reclining, Sitting, Typing, Standing, Driving, Cooking, House Cleaning, Walking, Walking 2mph, Walking 3mph, Walking 4mph, Running 9mph, Lifting 10lbs, Lifting 100lbs, Shoveling, Dancing, and Basketball.  If no value is input here, the component will assume a metabolic rate of 1 met, which is the metabolic rate of a seated human being.  This input can also accept lists of metabolic rates and will produce multiple comfort polygons accordingly.
         clothingLevel_: A number representing the clothing level of the human subject in clo.  If no value is input here, the component will assume a clothing level of 1 clo, which is roughly the insulation provided by a 3-piece suit. A person dressed in shorts and a T-shirt has a clothing level of roughly 0.5 clo and a person in a thick winter jacket can have a clothing level as high as 2 to 4 clo.  This input can also accept lists of clothing levels and will produce multiple comfort polygons accordingly.
@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_23_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -280,6 +280,7 @@ def checkTheInputs():
     
     #Make sure that the lengths of the 4 other comfort parameters match and assign default values if nothing is connected.
     #Check lenth of the meanRadTemperature_ list and evaluate the contents.
+    opTemp = False
     checkData5 = False
     radTemp = []
     radMultVal = False
@@ -298,7 +299,8 @@ def checkTheInputs():
     else:
         checkData5 = True
         radTemp = [23]
-        print 'No value connected for meanRadTemperature_.  It will be assumed that the radiant temperature is equal to 23 degrees Celcius.'
+        opTemp = True
+        print 'No value connected for meanRadTemperature_.  It will be assumed that the radiant temperature is equal to the air temperature.'
     
     
     #Check lenth of the windSpeed_ list and evaluate the contents.
@@ -499,7 +501,7 @@ def checkTheInputs():
     
     
     #Let's return everything we need.
-    return checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLength2, PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals
+    return checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLength2, PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals, opTemp
 
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement):
@@ -573,7 +575,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
         return titleStatement, patternList
 
 
-def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, lb_visualization):
+def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, opTemp, lb_visualization):
     #Set a default text height if the user has not provided one.
     if legendFontSize == None:
         if IPTrigger: legendFontSize = 1
@@ -803,7 +805,10 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     
     #Make axis labels for the chart.
     xAxisLabels = []
-    xAxisTxt = ["Dry Bulb Temperature"]
+    if opTemp == True:
+        xAxisTxt = ["Operative Temperature"]
+    else:
+        xAxisTxt = ["Dry Bulb Temperature"]
     if mollierHX_ == True: xAxisPt = [rc.Geometry.Point3d(-5*legendFontSize, 15, 0)]
     else: xAxisPt = [rc.Geometry.Point3d(tempChartVals[0]-0.5, -4*legendFontSize, 0)]
     xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
@@ -1044,7 +1049,7 @@ def unionAllCurves(Curves):
     return res
 
 
-def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger):
+def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp):
     #Take just the top middle and bottom lines for making the comofrt range in order to speed up the calculation.
     relHumidLines = [relHumidLines[0], relHumidLines[5], relHumidLines[10]]
     
@@ -1063,7 +1068,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         upTemperPts = []
         downTemperPts = []
         for count, humidity in enumerate(range(0,150,50)):
-            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh)
+            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh, opTemp)
             if IPTrigger == True: upTemper, downTemper = C2F([upTemper])[0], C2F([downTemper])[0]
             
             if upTemper < maxTempe:
@@ -1384,7 +1389,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         #Calculate the upper boundary of Natural ventilation.
                         upTemperPts = []
                         for count, humidity in enumerate(range(0,150,50)):
-                            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh)
+                            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh, opTemp)
                             
                             if IPTrigger: upTemperSpatial, downTemperSpatial = C2F([upTemper])[0], C2F([downTemper])[0]
                             else: upTemperSpatial, downTemperSpatial = upTemper, downTemper
@@ -1715,7 +1720,7 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     return pointColors, colorLegends
 
 
-def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals):
+def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, calcLengthComf, PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals, opTemp):
     #Import the classes.
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -1740,7 +1745,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         # Generate the chart curves.
         if IPTrigger == True: scaleFactor = 1500*(9/5)
         else: scaleFactor = 1500
-        chartCurves, humidityLines, chartText, chartTextPt = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, lb_visualization)
+        chartCurves, humidityLines, chartText, chartTextPt = drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, opTemp, lb_visualization)
         
         #If there is annual hourly data, split it up.
         if annualHourlyData_ != []:
@@ -1862,7 +1867,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         
         # Calculate the comfort and strategy polygons.
         try:
-            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger)
+            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp)
             
             #Calculate how many hours are in each comfort or strategy and comfort polygons.
             totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList)
@@ -1968,7 +1973,7 @@ if _runIt == True:
     checkData, epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
     avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, \
     humidRatioLow, calcLengthComf, PPDComfortThresh, titleStatement, \
-    patternList, IPTrigger, farenheitVals = checkTheInputs()
+    patternList, IPTrigger, farenheitVals, opTemp = checkTheInputs()
 
 #If the inputs are good, run the function.
 if checkData == True:
@@ -1976,7 +1981,7 @@ if checkData == True:
     results = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
                    avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, \
                    humidRatioUp, humidRatioLow, calcLengthComf, \
-                   PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals)
+                   PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals, opTemp)
                    
     if results != -1:
         totalComfortPercent, totalComfortOrNot, strategyNames, strategyPercentOfTime, \
