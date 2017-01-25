@@ -28,7 +28,7 @@ http://www.energy.ca.gov/2013publications/CEC-400-2013-003/CEC-400-2013-003-CMF-
 http://www.nrel.gov/docs/fy04osti/35917.pdf
 http://www.retscreen.net/download.php/ang/120/0/Textbook_SWH.pdf
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         method_: A method by which the cold water temperature will be calculated:
@@ -91,12 +91,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Cold Water Temperature"
 ghenv.Component.NickName = "ColdWaterTemperature"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 import Grasshopper.Kernel as gh

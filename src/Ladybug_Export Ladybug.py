@@ -25,7 +25,7 @@ Code Developers of Ladybug and Honeybee can use this component to export Ladybug
 This eases and automates the steps before commiting new components to the Github.
 This component was written thanks to Giulio Piacentino a really helpful example.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.63
 
     Args:
         _components: Any output from a new Ladybug (or Honeybee) component that you wish to export. Right now, only one component can be connected at a time but you can input a "*" (without quotation marsk) to search all changed Ladybug components on a grasshopper canvas.
@@ -37,9 +37,9 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.62\nAPR_11_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_08_2017'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Developers"
+ghenv.Component.SubCategory = "6 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
@@ -260,7 +260,9 @@ def exportToFile(component, targetFolder, lb_preparation):
                 ff.write(fileName)
             return True
             
-    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 or component.Name.find("Dragonfly")>=0 or component.Name.find("Hydra")>=0:
+    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 \
+        or component.Name.find("Dragonfly")>=0 or component.Name.find("Hydra")>=0 \
+        or component.Name.find("Butterfly")>=0:
         
         fileName = component.Name + ".py"
         
@@ -323,11 +325,11 @@ def main(components, targetFolder):
     
     if not os.path.isdir(targetFolder): os.mkdir(targetFolder)
         
-    if components[0] == "*":
+    if str(components[0]) == "*":
         ghComps = getAllTheComponents()
     else:
         ghComps = getListOfConnectedComponents()
-    
+
     if len(ghComps)== 0: return "Found 0 components!"
     
     for ghComp in ghComps:

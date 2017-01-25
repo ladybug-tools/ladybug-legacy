@@ -23,26 +23,29 @@
 """
 Use this component to generate outline curves representing shadows cast by input _geometry for a given _sunVector.
 Note that, to see shadows cast onto a ground, a surface representing the ground plane must be included in the input _geometry.
+Connect output of Ladybug_Analysis period component to analysisPeriod_ on Ladybug_SunPath component. This will let you use a range of sunvectors. Using these range of sunvectors, you can turn this shadow study into a shadow range study.
 Also, please note that, for a list of input _geometry that is larger than 4 or 5 breps, the calculation time of this component can be very long.  Please keep the input geometry to small lists or be prepared to wait a long time.
 WARNING: This component is a proof of concept that will not work in every situation.  It is not ideal for analyzing curved surfaces and it is not able to calculate shadows for geometries that are intersecting each other.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _geometry: Breps representig test geometries that will cast shadows on each other.
         _sunVector: A sun vector from the Ladybug sunPath component.
+        
     Returns:
         readMe!: ...
-        shadow: Outline curves representing the shadows cast by the individual input Breps on other input Breps.  Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing shadows cast.
-        shade: Outline curves representing the the parts of individual input Breps that are not in the sun.  In other words, this is the self-shaded part of the Breps. Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing self-shaded areas.
+        shadow: Meshes representing the shadows cast by the individual input Breps on other input Breps.  Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing shadows cast.
+        shade: Meshes representing the the parts of individual input Breps that are not in the sun.  In other words, this is the self-shaded part of the Breps. Note that, if all input _geometry is planar, this output can be hooked up to a Grasshopper "Brep" component to give Breps representing self-shaded areas.
+
 """
 
 ghenv.Component.Name = "Ladybug_Shadow Study"
-ghenv.Component.NickName = 'shadowStudy'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.NickName = 'shadowRange'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
@@ -54,6 +57,7 @@ import System
 import System.Threading.Tasks as tasks
 import math
 
+
 tol = sc.doc.ModelAbsoluteTolerance
 
 def joinMesh(meshList):
@@ -64,7 +68,6 @@ def joinMesh(meshList):
 def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
         # Mesh functions should be modified and be written interrelated as a class
         movingDis = disFromBase
-    
         # preparing bulk lists
         testPoint = [[]] * len(analysisSrfs)
         srfNormals = [[]] * len(analysisSrfs)
@@ -94,6 +97,7 @@ def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
                     if srfNormals[i][face]:
                         movingVec = rc.Geometry.Vector3f.Multiply(movingDis,srfNormals[i][face])
                         testPoint[i][face] = rc.Geometry.Point3d.Add(rc.Geometry.Point3d(meshSrfCen[i][face]), movingVec)
+                        
                     # make mesh surface, calculate the area, dispose the mesh and mass area calculation
                     tempMesh = rc.Geometry.Mesh()
                     tempMesh.Vertices.Add(analysisSrfs[i].Vertices[analysisSrfs[i].Faces[face].A]) #0
@@ -117,9 +121,10 @@ def parallel_testPointCalculator(analysisSrfs, disFromBase, parallel = True):
         else:
             for i in range(len(analysisSrfs)):
                 srfPtCalculator(i)
-    
-        return testPoint, srfNormals, meshSrfEdges, meshes
 
+        return testPoint, srfNormals, meshSrfEdges, meshes
+        
+        
 def projectToPlane(geometry, plane, vector):
     
     def getTransform():
@@ -132,18 +137,16 @@ def projectToPlane(geometry, plane, vector):
         
         originalPlane = plane
         newPlane = rc.Geometry.Plane(originalPlane.Origin, -vector)
-    
+        
         z0 = originalPlane.ZAxis
         z1 = newPlane.ZAxis
         angle = rc.Geometry.Vector3d.VectorAngle(z0, z1)
-        
         intersect, axis = rc.Geometry.Intersect.Intersection.PlanePlane(originalPlane, newPlane)
         
         if intersect:
             P2 = rc.Geometry.Plane(originalPlane)
             P2.XAxis = axis.UnitTangent
             P2.YAxis = rc.Geometry.Vector3d.CrossProduct(P2.XAxis, P2.ZAxis)
-            
             beta = 0.5 * math.pi - angle
             factor = 1.0 / math.sin(beta)
             project = rc.Geometry.Transform.PlanarProjection(newPlane)
@@ -336,7 +339,6 @@ class createFace(object):
     
     def getOutlineCrvFromSun (self, sunVector):
         self.planeFromSun = rc.Geometry.Plane(self.centerPt, sunVector)
-        
         self.outlineCrvFromSun = []
         polylines = self.geometry.GetOutlines(self.planeFromSun)
         [self.outlineCrvFromSun.append(pl.ToNurbsCurve()) for pl in polylines]
@@ -351,6 +353,8 @@ class createFace(object):
 # for now I copy pasted this code but it should be re-written later
 # class for each surface can be made inside this function
 centerPts, srfNormals, listOfBoundaryLists, meshes = parallel_testPointCalculator(_geometry, 0)
+
+
 
 ### generate faces
 facesList = {}
@@ -426,6 +430,22 @@ if _sunVector!=None:
             shaded.append(toBeShadedFace.boundary)
 
 
-        shadow = shadowCrvsCollection
-        shade = shaded
-
+        shadowCurves = shadowCrvsCollection
+        shadeCurves = shaded
+        
+        shadow = []
+        shade = []
+        
+        meshingPar = rc.Geometry.MeshingParameters.Coarse
+        
+        for item in shadowCurves:
+            mesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(item, meshingPar)
+            shadow.append(mesh)
+            
+        for item in shadeCurves:
+            mesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(item, meshingPar)
+            shade.append(mesh)
+          
+print "If you want to see shadows in grey color, write [0,0,0(69)] without those brackets, in a panel and connect that to native grasshopper Custom Preview component."
+      
+      

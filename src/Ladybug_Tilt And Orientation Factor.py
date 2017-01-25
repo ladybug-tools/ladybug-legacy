@@ -25,7 +25,7 @@
 This component calculates the Optimal Tilt, Optimal Orientation and TOF (Tilt and Orientation Factor) for PV modules or Solar water heating collectors.
 TOF is a solar radiation at the actual tilt and orientation divided by the solar radiation at the optimum tilt and orientation.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -99,12 +99,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+ghenv.Component.SubCategory = "4 | Renewables"
+#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.Kernel as gh

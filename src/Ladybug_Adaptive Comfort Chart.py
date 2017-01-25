@@ -34,7 +34,7 @@ _
 The comfort models that make this component possible were translated to python from a series of validated javascript comfort models coded at the Berkely Center for the Built Environment (CBE).  The Adaptive model used by both the CBE Tool and this component was originally published in ASHARAE 55.
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the 'Read EP Result' or 'Import EPW' component.
@@ -66,6 +66,8 @@ Provided by Ladybug 0.0.62
         comfortableOrNot: A stream of 0's and 1's (or "False" and "True" values) indicating whether occupants are comfortable under the input conditions given the fact that these occupants tend to adapt themselves to the prevailing mean monthly temperature. 0 indicates that a person is not comfortable while 1 indicates that a person is comfortable.
         conditionOfPerson: A stream of interger values from -1 to +1 that correspond to each hour of the input data and indicate the following: -1 = The input conditions are too cold for occupants. 0 = The input conditions are comfortable for occupants. +1 = The input conditions are too hot for occupants.
         degreesFromTarget: A stream of temperature values in degrees Celcius indicating how far from the target temperature the conditions of the people are.  Positive values indicate conditions hotter than the target temperature while negative values indicate degrees below the target temperture.
+        prevailingTemp: A stream of temperature values in degrees Celcius indicating the prevailing outdoor temperature.  This is the temperture that determines the conditions occupants find comfortable and is either a monthly average temperature or a running mean of outdoor temperature.
+        targetTemperature: A stream of temperature values in degrees Celcius indicating the mean target temperture (or neutral temperature) that the most people will find most comfortable.
         --------------------------: ...
         chartCurvesAndTxt: The chart curves and text labels of the adaptive chart.
         adaptiveChartMesh: A colored mesh showing the number of input hours happen in each part of the adaptive chart.
@@ -79,7 +81,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.62\nMAR_24_2016'
+ghenv.Component.Message = 'VER 0.0.63\nSEP_19_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1132,6 +1134,8 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
     comfortableOrNotInit = []
     conditionOfPersonInit = []
     degreesFromTargetInit = []
+    prevailTempInit = []
+    targetTempInit = []
     comfPercentOfTimeInit = []
     percentHotColdInit = []
     legend = []
@@ -1295,6 +1299,8 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             newfarenheitPrevailVals = farenheitPrevailVals
         if patternList != []: annualHourlyDataSplit = newAnnualHourlyDataSplit
     
+    if windSpeed == []: windSpeed = [0]
+    
     windSpeedForChart = []
     if len(windSpeed)== calcLength:
         windSpeedInit = windSpeed[:]
@@ -1347,6 +1353,8 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         comfOr = []
         conditPer = []
         degTar = []
+        prevTemp = []
+        targTemp = []
         percHot = []
         perComf = []
         percCol = []
@@ -1356,12 +1364,17 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             degTar.extend([epwStr[0], epwStr[1], 'Degrees from Target Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
             comfOr.extend([epwStr[0], epwStr[1], 'Comfortable Or Not', 'Boolean', epwStr[4], runPeriod[0], runPeriod[1]])
             conditPer.extend([epwStr[0], epwStr[1], 'Adaptive Comfort', '-1 = Cold, 0 = Comfortable, 1 = Hot', epwStr[4], runPeriod[0], runPeriod[1]])
+            prevTemp.extend([epwStr[0], epwStr[1], 'Prevailing Outdoor Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
+            targTemp.extend([epwStr[0], epwStr[1], 'Adaptive Targer Temperature', 'C', epwStr[4], runPeriod[0], runPeriod[1]])
         
         for count, atemp in enumerate(airTemp):
             if ASHRAEorEN == True: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(atemp, radTemp[count], prevailTemp[count], winSpd[count], comfClass, levelOfConditioning)
             else: comfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortEN15251(atemp, radTemp[count], prevailTemp[count], winSpd[count], comfClass, levelOfConditioning)
             comfOr.append(int(comf))
             conditPer.append(condition)
+            degTar.append(distFromTarget)
+            prevTemp.append(prevailTemp[count])
+            targTemp.append(comfTemp)
             if condition == 1:
                 percHot.append(1)
                 perComf.append(0)
@@ -1369,25 +1382,29 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
             else:
                 percCol.append(1)
                 perComf.append(0)
-            degTar.append(distFromTarget)
+            
         
-        return comfOr, conditPer, degTar, percHot, perComf, percCol
+        return comfOr, conditPer, degTar, percHot, perComf, percCol, prevTemp, targTemp
     
     #Run each of the cases through the model to get a percentage of time comfortable.
     if len(windSpeed) != calcLength:
         for winSpd in windSpeed:
             winSpdList = [winSpd] * calcLength
-            comfOr, conditPer, degTar, percHot, perComf, percCol = runComfortModel(airTemp, radTemp, prevailTemp, winSpdList, comfClass, levelOfConditioning)
+            comfOr, conditPer, degTar, percHot, perComf, percCol, prevTemp, targTemp = runComfortModel(airTemp, radTemp, prevailTemp, winSpdList, comfClass, levelOfConditioning)
             comfortableOrNotInit.append(comfOr)
             conditionOfPersonInit.append(conditPer)
             degreesFromTargetInit.append(degTar)
+            prevailTempInit.append(prevTemp)
+            targetTempInit.append(targTemp)
             comfPercentOfTimeInit.append(sum(perComf)*100/len(airTemp))
             percentHotColdInit.append([sum(percHot)*100/len(airTemp), sum(percCol)*100/len(airTemp)])
     else:
-        comfOr, conditPer, degTar, percHot, perComf, percCol = runComfortModel(airTemp, radTemp, prevailTemp, windSpeed, comfClass, levelOfConditioning)
+        comfOr, conditPer, degTar, percHot, perComf, percCol, prevTemp, targTemp = runComfortModel(airTemp, radTemp, prevailTemp, windSpeed, comfClass, levelOfConditioning)
         comfortableOrNotInit.append(comfOr)
         conditionOfPersonInit.append(conditPer)
         degreesFromTargetInit.append(degTar)
+        prevailTempInit.append(prevTemp)
+        targetTempInit.append(targTemp)
         comfPercentOfTimeInit.append(sum(perComf)*100/len(airTemp))
         percentHotColdInit.append([sum(percHot)*100/len(airTemp), sum(percCol)*100/len(airTemp)])
     
@@ -1437,7 +1454,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, adaptiveChartMesh, legendSrfs, allText, allTextPt, textSize, legendFont, allCurves, decimalPlaces, True)
         else: lb_visualization.bakeObjects(newLayerIndex, adaptiveChartMesh, legendSrfs, allText, allTextPt, textSize, legendFont, allCurves, decimalPlaces, False)
     
-    return comfortableOrNotInit, conditionOfPersonInit, degreesFromTargetInit, comfPercentOfTimeInit, percentHotColdInit, chartCurvesAndTxt, adaptiveChartMesh, legend, legendBasePt, finalComfortPolygons, chartHourPoints, pointColors, colorLegends
+    return comfortableOrNotInit, conditionOfPersonInit, degreesFromTargetInit, prevailTempInit, targetTempInit, comfPercentOfTimeInit, percentHotColdInit, chartCurvesAndTxt, adaptiveChartMesh, legend, legendBasePt, finalComfortPolygons, chartHourPoints, pointColors, colorLegends
 
 
 
@@ -1478,13 +1495,15 @@ if initCheck == True:
 if checkData == True and _runIt == True:
     results = main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, ASHRAEorEN, comfClass, avgMonthOrRunMean, coldTimes, levelOfConditioning, includeColdTimes, titleStatement, patternList, IPTrigger, farenheitAirVals, farenheitRadVals, farenheitPrevailVals, lb_preparation, lb_comfortModels, lb_visualization)
     if results != -1:
-        comfortableOrNotInit, conditionOfPersonInit, degreesFromTargetInit, comfPercentOfTime, percentHotColdInit, chartCurvesAndTxt, adaptiveChartMesh, legend, legendBasePt, finalComfortPolygons, chartHourPoints, pointColorsInit, colorLegendsInit = results
+        comfortableOrNotInit, conditionOfPersonInit, degreesFromTargetInit, prevailTempInit, targetTempInit, comfPercentOfTime, percentHotColdInit, chartCurvesAndTxt, adaptiveChartMesh, legend, legendBasePt, finalComfortPolygons, chartHourPoints, pointColorsInit, colorLegendsInit = results
         
         #Unpack the data tree of comfort polygons.
         comfortPolygons = DataTree[Object]()
         comfortableOrNot = DataTree[Object]()
         conditionOfPerson = DataTree[Object]()
         degreesFromTarget = DataTree[Object]()
+        prevailingTemp = DataTree[Object]()
+        targetTemperature = DataTree[Object]()
         percentHotCold = DataTree[Object]()
         hourPointColors = DataTree[Object]()
         hourPointLegend = DataTree[Object]()
@@ -1496,6 +1515,10 @@ if checkData == True and _runIt == True:
             for item in dataList: conditionOfPerson.Add(item, GH_Path(listCount))
         for listCount, dataList in enumerate(degreesFromTargetInit):
             for item in dataList: degreesFromTarget.Add(item, GH_Path(listCount))
+        for listCount, dataList in enumerate(prevailTempInit):
+            for item in dataList: prevailingTemp.Add(item, GH_Path(listCount))
+        for listCount, dataList in enumerate(targetTempInit):
+            for item in dataList: targetTemperature.Add(item, GH_Path(listCount))
         for listCount, dataList in enumerate(percentHotColdInit):
             for item in dataList: percentHotCold.Add(item, GH_Path(listCount))
         for listCount, dataList in enumerate(pointColorsInit):
@@ -1503,5 +1526,5 @@ if checkData == True and _runIt == True:
         for listCount, dataList in enumerate(colorLegendsInit):
             for item in dataList: hourPointLegend.Add(item, GH_Path(listCount))
 
-ghenv.Component.Params.Output[13].Hidden = True
 ghenv.Component.Params.Output[15].Hidden = True
+ghenv.Component.Params.Output[17].Hidden = True

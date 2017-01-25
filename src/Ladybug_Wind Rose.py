@@ -22,10 +22,10 @@
 
 
 """
-Use this component to make a windRose in the Rhino scene.
+Use this component to make a windRose in the Rhino scene. In this wind rose diagram, each wedge represents the percentage of time the wind came from that direction during the analysis period you choose. You will note that each wedge is also colored. These colors relate directly with the legend displayed on the right. The colors in a wedge conveys the relative percentage of time the wind coming from that direction was within that speed range.
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _north_: Input a vector to be used as a true North direction for the wind rose or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -35,12 +35,14 @@ Provided by Ladybug 0.0.62
         _analysisPeriod_: An optional analysis period from the Analysis Period component.
         conditionalStatement_: This input allows users to remove data that does not fit specific conditions or criteria from the wind rose. To use this input correctly, hourly data, such as temperature or humidity, must be plugged into the annualHourlyData_ input. The conditional statement input here should be a valid condition statement in Python, such as "a>25" or "b<80" (without quotation marks).
                               The current version of this component accepts "and" and "or" operators. To visualize the hourly data, only lowercase English letters should be used as variables, and each letter alphabetically corresponds to each of the lists (in their respective order): "a" always represents the 1st list, "b" always represents the 2nd list, etc.
-                              For the WindBoundaryProfile component, the variable "a" always represents windSpeed. For example, if you have hourly dry bulb temperature connected as the second list, and relative humidity connected as the third list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<b<23 and c<80 (without quotation marks).
+                              For the WindBoundaryProfile component, the variable "a" always represents windSpeed. For example, if you have hourly dry bulb temperature connected as the second list, and relative humidity connected as the third list (both to the annualHourlyData_ input), and you want to plot the data for the time period when temperature is between 18C and 23C, and humidity is less than 80%, the conditional statement should be written as 18<b<23 and c<80 (without quotation marks). This also accepts output from Ladybug_Beaufort Ranges component.
         _numOfDirections_: A number of cardinal directions with which to divide up the data in wind rose. Values must be greater than 4 since you can have no fewer than 4 cardinal directions.
         _centerPoint_: Input a point here to change the location of the wind rose in the Rhino scene.  The default is set to the Rhino model origin (0,0,0).
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
+        showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction. If showAverageVelocity_ is False or no boolean is connected to it, then the frequencies will be shown right after the direcctions. If showAverageVelocity_ is True, then the frequencies will be shown after average velocity values. 
+        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction. If a conditional statement is connected to the conditionalStatement_ input, a beaufort number is plotted(in square brackets) along with the average velocities. This number indicates the effect caused by wind of average velocity coming from that partcular direction.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -52,14 +54,19 @@ Provided by Ladybug 0.0.62
         windRoseMesh: A mesh representing the wind speed from different directions for all hours analyzed.
         windRoseCrvs: A set of guide curves that mark the number of hours corresponding to the windRoseMesh.
         windRoseCenPts: The center point(s) of wind rose(s).  Use this to move the wind roses in relation to one another using the grasshopper "move" component.
-        legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
         legendBasePts: The legend base point(s), which can be used to move the legend in relation to the rose with the grasshopper "move" component.
-        title: The title for the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        title: The title for the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
+        ---------------- : ...
+        windSpeeds: Wind speed data for the wind rose displayed in the Rhino scene.
+        windDirections: Wind direction data for the wind rose displayed in the Rhino scene.
+        averageVelocities: A list containing average wind velocity for all wind rose directions.
+        frequencies: A list containing frequency of time the wind is coming from a particular direction for all wind rose directions.
 """
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_02_2016'
+ghenv.Component.Message = 'VER 0.0.63\nDEC_07_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -78,6 +85,7 @@ import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
+
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -133,7 +141,6 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             else:
                 titleStatement = titleStatement + '\n' + statementCopy 
             finalStatement = finalStatement + ' ' + statemntPart
-        print titleStatement
         
         # check for the pattern
         patternList = []
@@ -148,11 +155,329 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             return -1, -1
         
         return titleStatement, patternList
+        
+        
+def unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection):
+    """
+    This is a helper function. It is mainly used to generate lists for windSpeeds and windDirections
+    output of this component.
+    
+    input(patternList) : a list with True and False values based on conditional statement
+    input (analysisPeriod) : Data from _analysisPeriod_ input of this component
+    input (_hourlyWindSpeed) : Data from _hourlyWindSpeed input of this component
+    input (_hourlyWindDirection) : Data from _hourlyWindDirection input of this component
+    output(result) = a tuple of lists
+    """
+    
+    #Trimming headers from weather data input and making new lists out of them
+    speedData = _hourlyWindSpeed[7:]
+    directionData = _hourlyWindDirection[7:]
+    
+    # Simple unpacking of the list in a new local variable finalPattern.
+    if type(patternList[0]) == list:
+        finalPattern = [val for sublist in patternList for val in sublist]
+    else:
+        finalPattern = patternList
+        
+    # Getting total hours of the year from the analysis period
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, 1)
+
+    # Making a new list for windSpeeds output
+    windSpeeds = []
+    # Creating header for the list
+    windSpeeds.extend(_hourlyWindSpeed[0:5])
+    if len(_analysisPeriod_) == 0:
+        windSpeeds.extend(_hourlyWindSpeed[5:7])
+    else:
+        windSpeeds.extend(_analysisPeriod_)
+    # Adding data to the list
+    for i in range(len(HOYS)):
+        j = int(HOYS[i])-1 # Here, -1 is important. So that, counting starts from index 0.
+        if finalPattern[j] == True:
+            windSpeeds.append(speedData[j])
+        else:
+            pass
+    
+    # Making a new list for windDirections output
+    windDirections = []
+    # Creating header for the list
+    windDirections.extend(_hourlyWindDirection[0:5])
+    if len(_analysisPeriod_) == 0:
+        windDirections.extend(_hourlyWindDirection[5:7])
+    else:
+        windDirections.extend(_analysisPeriod_)
+    # Adding data to the list
+    for i in range(len(HOYS)):
+        j = int(HOYS[i])-1 # Here, -1 is important. So that, counting starts from index 0.
+        if finalPattern[j] == True:
+            windDirections.append(directionData[j])
+        else:
+            pass
+
+    return windSpeeds, windDirections
+
+
+def getOffset(showFrequency_, showAverageVelocity_):
+    """
+    This function sets the offset value for frequency display and average wind velocities on the wind rose
+    
+    input(showFrequency_) : Bollean value
+    input(showAverageVelocity_) : Bollean value
+    output : a list of offset value for frequency display and average velocity display
+    """
+    velOffset = 1.12
+    freqOffset = 1.25
+    if showFrequency_ == True and showAverageVelocity_ == True:
+        freqOffset = 1.25
+    elif showFrequency_ == True and showAverageVelocity_ == False or showAverageVelocity_ == None :
+        freqOffset = 1.12
+    return [freqOffset, velOffset]
+        
+# Beaufort observations.
+# These observations are taken from following links;
+# https://github.com/devngc/References/tree/master/Beaufort%20Scale
+# https://en.wikipedia.org/wiki/Beaufort_scale 
+
+Calm = """This wind is totally calm. 
+Smoke rises vertically."""
+Light_Air = """At this wind speed, smoke drift indicates wind direction.
+However, Leaves and wind vanes are still stationary."""
+Light_Breeze = """At this wind speed, wind is felt on exposed skin.
+Leaves rustle and wind vanes begin to move.""" 
+Gentle_Breeze = """At this wind speed, leaves and small twigs constantly move.
+Light flag can be extended.""" 
+Moderate_Breeze = """At this wind speed, dust and loose paper are raised.
+Small branches begin to move.
+Hair and clothing flaps disarranged."""
+Fresh_Breeze = """This is the limit of agreeable wind on land.
+At this wind speed, branches of moderate size move.
+Leaves in small trees also begin to sway."""
+Strong_Breeze = """At this wind speed, large branches move.
+Whistling can be heard in overhead wires.
+Use of umbrellas become difficult.
+Force of the wind felt on the body.
+Frequent blinking happens.
+Empty plastic bins flip over"""
+Near_Gale = """At this wind speed, whole trees are in motion.
+Effort is needed to walk against the wind.
+Hair are blown straight."""
+Gale = """At this wind speed, twigs begin to break from trees.
+Cars veer on road.
+Progress on foot is seriously impeded.
+Great difficulty with balance in gusts."""
+Strong_Gale = """At this wind speed, trees are broken off or uprooted.
+Structural damage likely.
+People are blown over by gusts.
+Impossible to face this wind.
+Headache, earache happens and breathing is difficult.
+Hazardous for the pedestrians."""
+Voilent_Storm = """At this wind speed, widespread vegetation and
+structural damage is likely."""
+Hurricane = """At this wind speed, severe widespread damage to vegetaton and structures.
+Debris and unsecured objects are hurled about."""
+
+# This dictionary is used when Ladybug_Beaufort Ranges is connected
+beaufortObservationsNoOffset = {0: Calm, 1: Light_Air, 2: Light_Breeze, 3: Gentle_Breeze, 4: Moderate_Breeze, 5: Fresh_Breeze, 6: Strong_Breeze, 7: Near_Gale, 8: Gale, 9: Strong_Gale, 10: Voilent_Storm, 11: Hurricane}
+
+Calm = """This wind is totally calm. 
+        Smoke rises vertically."""
+Light_Air = """At this wind speed, smoke drift indicates wind direction.
+        However, Leaves and wind vanes are still stationary."""
+Light_Breeze = """At this wind speed, wind is felt on exposed skin. 
+        Leaves rustle and wind vanes begin to move.""" 
+Gentle_Breeze = """At this wind speed, leaves and small twigs constantly move.
+        Light flag can be extended.""" 
+Moderate_Breeze = """At this wind speed, dust and loose paper are raised.
+        Small branches begin to move.
+        Hair and clothing flaps disarranged."""
+Fresh_Breeze = """This is the limit of agreeable wind on land.
+        At this wind speed, branches of moderate size move.
+        Leaves in small trees also begin to sway."""
+Strong_Breeze = """At this wind speed, large branches move.
+        Whistling can be heard in overhead wires.
+        Use of umbrellas become difficult.
+        Force of the wind felt on the body.
+        Frequent blinking happens.
+        Empty plastic bins flip over"""
+Near_Gale = """At this wind speed, whole trees are in motion.
+        Effort is needed to walk against the wind.
+        Hair are blown straight."""
+Gale = """At this wind speed, twigs begin to break from trees.
+        Cars veer on road.
+        Progress on foot is seriously impeded.
+        Great difficulty with balance in gusts."""
+Strong_Gale = """At this wind speed, trees are broken off or uprooted.
+        Structural damage likely.
+        People are blown over by gusts.
+        Impossible to face this wind.
+        Headache, earache happens and breathing is difficult.
+        Hazardous for the pedestrians."""
+Voilent_Storm = """At this wind speed, widespread vegetation and
+        structural damage is likely."""
+Hurricane = """At this wind speed, severe widespread damage to vegetaton and structures.
+        Debris and unsecured objects are hurled about."""
+
+# This dictionary is used when Ladybug_Beaufort Ranges is not connected and regular conditional statement is connected
+beaufortObservations = {0: Calm, 1: Light_Air, 2: Light_Breeze, 3: Gentle_Breeze, 4: Moderate_Breeze, 5: Fresh_Breeze, 6: Strong_Breeze, 7: Near_Gale, 8: Gale, 9: Strong_Gale, 10: Voilent_Storm, 11: Hurricane}  
+
+def beaufortScale(conditionalStatement_, _hourlyWindSpeed, beaufortObservationsNoOffset, beaufortObservations,  velTextList):
+    """
+    This function generates summary to add at the bottom of wind rose diagram
+    in case the user connects Ladybug_Beaufort Ranges in conditionalStatement_.
+    If Ladybug_Beaufort Ranges is not connected and simple conditional statement is used,
+    this function will add a nnumber(beaufort range number) to average velocities being displayed on wind rose.
+    also, the function will output summary to be appended at the bottom of text to explain what those beaufort numbers mean.
+    
+    input(conditionalStatement_) : Data from component input named conditionalStatement_
+    input(_hourlyWindSpeed) : Wind speed input from component
+    input(beaufortObservationsNoOffset) : A list of strings containing observations in beaufort scale to be used when Ladybug_Beaufort Ranges is connected.
+    input(beaufortObservations) : A list of strings containing observations in beaufort scale to be used when Ladybug_Beaufort Ranges is not connected.
+    input(velTextList) : A list of strings representing average wind velocities coming from different directions
+    output(summary) : A string that will be added at the bottom of wind rose is beaufortRanges are used
+    output(separator) : A string of dots to be added at the bottom of wind rose to separate summary from the rest of strings
+    output(velTextList) : A list of strings representing average wind velocities coming from different directions. If regular conditional statement is
+    connected, beaufort number will be added to all values.
+    """
+    
+    dataType = _hourlyWindSpeed[3]
+    conditionalStatement = conditionalStatement_
+    # If anything is attached to the conditionalStatement_
+    if conditionalStatement != None:
+        
+        # Beaufort Ranges in m/s
+        beaufortmps = [(0, 0.3), (0.3, 1.5), (1.6, 3.3), (3.4, 5.5), (5.5, 7.9), (8.0, 10.7), (10.8, 13.8), (13.9, 17.1), (17.2, 20.7), (20.8, 24.4), (24.5, 28.4), (28.5, 32.6) , (32.7, 100)]
+        mpsCheckRange = [str(item[0]) + "<a<" + str(item[1]) for item in beaufortmps]
+        
+        # Beaufort Ranges in mph
+        beaufortmph = [(0, 1), (1, 3), (4, 7), (8 , 12), (13, 18), (19, 24), (25, 31), (32, 38), (39, 46), (47, 54), (55, 63), (64, 72), (73, 150)]
+        mphCheckRange = [str(item[0]) + "<a<" + str(item[1]) for item in beaufortmph]
+        
+        # Checking whether the wind speed data is in m/s or in mph
+        if dataType == "m/s":
+            checkRange = mpsCheckRange
+        
+        if dataType == "mph":
+            checkRange = mphCheckRange               
+
+        # If correct range from Ladybug_Beaufort Range component is connected
+        if conditionalStatement in checkRange:
+            
+            for item in checkRange:
+                if conditionalStatement == item:
+                    i = checkRange.index(item)
+                    for key in beaufortObservationsNoOffset.keys(): 
+                        if key == i:
+                            summary = beaufortObservationsNoOffset[key]
+                    separator = '...                         ...                         ...'
+                    velTextList = velTextList
+                    
+        # If correct range from Ladybug_Beaufort Range component is not connected
+        if conditionalStatement not in checkRange:
+            if conditionalStatement in mpsCheckRange or conditionalStatement in mphCheckRange:
+                warning = 'Unit of wind speed and beaufort range don not match. Please fix that.' 
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)              
+                summary = "No summary provided due to mismatch of units."
+                separator = '...                         ...                         ...'
+                velTextList = velTextList
+                return summary , separator, velTextList      
+
+        # If a conditional statement is attached for wind, but it is not one of the beaufort ranges and showAverageVelocity is True
+        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange and showAverageVelocity_ == True:
+            separator = '...                         ...                         ...'
+            
+            # If wind velocities are in m/s
+            if dataType == "m/s":
+                dummyRange = [(0,3), (3, 16), (16, 34), (34, 55), (55, 80), (80, 108), (108, 139), (139, 172), (172, 208), (208, 245), (245, 285), (285, 327), (327, 1000)]
+    
+            # If wind velocities are in mph
+            if dataType == "mph":
+                dummyRange = [(0, 10), (10, 40), (40, 80), (80 , 130), (130, 190), (190, 250), (250, 320), (320, 390), (390, 470), (470, 550), (550, 640), (640, 730), (730, 1500)]
+                
+            # Getting a list of all the beaufort numbers applicable to given criteria
+            beaufortObservationNumber = []
+            for vel in velTextList:
+                velocity = round(float(vel), 1)
+                for item in dummyRange:
+                    tempCatch = []
+                    start = item[0]
+                    end = item[1]
+                    if velocity in [round(x * 0.1, 1) for x in range(start, end)]:
+                        catch = str(dummyRange.index(item))
+                        beaufortObservationNumber.append(catch)
+                    else:
+                        pass
+            
+            # Adding beaufort numbers to average velocities
+            velPlusBeaufort = []
+            i = 0
+            while i < len(velTextList):
+                add = velTextList[i] + "[" + beaufortObservationNumber[i] + "]"
+                velPlusBeaufort.append(add)
+                i += 1
+            velTextList = velPlusBeaufort
+            
+            # Taking unique beaufort numbers for adding summary at the bottom
+            getBeaufortNumbers = []
+            for item in beaufortObservationNumber:
+                if item not in getBeaufortNumbers:
+                    getBeaufortNumbers.append(item)
+                else:
+                    pass
+            getBeaufortNumbers = [int(item) for item in getBeaufortNumbers]
+            getBeaufortNumbers.sort()
+            getBeaufortNumbers = [str(item) for item in getBeaufortNumbers]
+                    
+            # Making summary
+            summary = ""
+            for item in getBeaufortNumbers:
+                add = "[" + item + "] : " + beaufortObservations[int(item)] + '\n'
+                summary += add
+                
+        # If a conditional statement is attached for wind, but it is not one of the beaufort ranges and showAverageVelocity is not True
+        # then, the conditional statement will still work. However, the summary would not be provided since showAverageVelocity it not on
+        if conditionalStatement not in mpsCheckRange and conditionalStatement not in mphCheckRange and showAverageVelocity_ != True:
+            summary = " "
+            separator = " "
+            velTextList = velTextList
+        
+    # If nothing is attached to the conditional statement
+    if conditionalStatement == None:
+        summary = " "
+        separator = " "
+        velTextList = velTextList
+    
+    return summary , separator, velTextList
+
+
+def makeRanges(numDirections):
+    """This component takes numOfDirections and outputs a list of ranges to be used for
+    average velocity and frequency calculation.
+    input(numDirections) : Number of directions for windRose
+    output (compassAngles) : A list of compass angles based on numOfDirections to be used for rotation of vectors
+    output (angleRanges) : A list of angle ranges to be used for radial display of frequencies and average wind velocities
+    """
+    compassAngles = [(360/numDirections)*i for i in range(numDirections+1)]
+    angleRanges = []
+    angleRanges.append([0, (compassAngles[0] + compassAngles[1]) / 2])
+    i = 0
+    while i < len(compassAngles)-2:
+        catch = [(compassAngles[i] + compassAngles[i+1]) / 2, (compassAngles[i+1] + compassAngles[i+2]) / 2]
+        angleRanges.append(catch)
+        i += 1
+    angleRanges.append([(compassAngles[-1] + compassAngles[-2]) / 2, 361])
+    angleBins = [range(int(item[0]), int(item[1])) for item in angleRanges]
+    return compassAngles, angleBins
 
 
 def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                   analysisPeriod, conditionalStatement, numOfDirections, centerPoint,
                   scale, legendPar, bakeIt, maxFrequency):
+                      
+    # This list is used to catch titlebasePt for all wind roses
+    catchTitleBasePts = []
+    
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -223,7 +548,12 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 # send all data and statement to a function and return back
                 # True, False Pattern and condition statement
                 titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement)
-            
+                # Unpacking the paternList for output of windSpeeds and windDirections
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_, _hourlyWindSpeed, _hourlyWindDirection)
+                windSpeeds = unpackedList[0]
+                windDirections = unpackedList[1]
+
+                
             if titleStatement != -1 and True not in patternList:
                 warning = 'No hour meets the conditional statement.' 
                 print warning
@@ -232,8 +562,12 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             if titleStatement == -1:
                 patternList = [[True]] * 8760
+                # Unpacking the paternList for output of windSpeeds and windDirections
+                unpackedList = unpackPatternList(patternList, _analysisPeriod_, _hourlyWindSpeed, _hourlyWindDirection)
+                windSpeeds = unpackedList[0]
+                windDirections = unpackedList[1]
                 titleStatement = False
-            
+
            # check the scale
             try:
                 if float(scale)!=0:
@@ -313,6 +647,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             calmFreq = (100*len(calmHour)/len(studyHours))/numOfDirections
             
+            
             # draw the basic geometry for windRose
             
             ## draw the first polygon for calm period of the year
@@ -328,6 +663,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             
             freqCrvs = []
             minFreq = calmFreq
+                
             try:
                 maxFreq = float(maxFrequency)%100
                 if maxFreq ==0: maxFreq == 100
@@ -338,7 +674,15 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                 
             except: maxFreq = max(windFreq) + calmFreq
             
+
+                
             step = (maxFreq-minFreq)/10
+            if step == 0:
+                warning = 'No hour meets these inputs. You are advised to try a different set of inputs please.' 
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1      
+                
             comment2 = 'Each closed polyline shows frequency of ' + "%.1f"%step + '%. = ' + `int(step * len(studyHours)/100)` + ' hours.'
             print comment2
             for freq in rs.frange(minFreq, maxFreq + step, step):
@@ -347,15 +691,13 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             # initial compass for BB
             textSize = 10
             compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *(maxFreq) * scale, roseAngles, 1.5*textSize)
-            
-            
-            
+
             # initiate legend parameters
             overwriteScale = False
             if legendPar == []: overwriteScale = True
             elif legendPar[-1] == None: overwriteScale = True
             lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
-            
+
             numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
             compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
             lb_visualization.calculateBB(compassCrvs, True)
@@ -399,17 +741,106 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         for h in calmHour:
                             calmValues.append(selList[h])
                             allValues.append(selList[h])
+
+                        # If the user has asked to see average velocities and frequencies both, then we shall push the legend to the right a bit
+                        if showFrequency_ == True and showAverageVelocity_ == True:
+                            lb_visualization.BoundingBoxPar[0].X = lb_visualization.BoundingBoxPar[0].X * 1.1
+                        # Else, let it be the way it is
+                        else:
+                            lb_visualization.BoundingBoxPar[0].X = lb_visualization.BoundingBoxPar[0].X * 1
                         
                         # get the legend done
                         legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(allValues
                                 , lowB, highB, numSeg, listInfo[i][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
-                        
+
                         # generate legend colors
                         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
                         
                         # color legend surfaces
                         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
                         
+                        def getDirectionData(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection, windFreq, numOfDirections):
+                            """The main role of this function is to produce lists of average velocities and frequencies to be displayed
+                            on wind rose and to be provided to the user as a list.
+                            
+                            input(patternList) : a list with True and False values based on conditional statement
+                            input (analysisPeriod) : Data from _analysisPeriod_ input of this component
+                            input (_hourlyWindSpeed) : Data from _hourlyWindSpeed input of this component
+                            input (_hourlyWindDirection) : Data from _hourlyWindDirection input of this component
+                            input (windFreq) : A list of wind frequencies for all directions. This is a variable defined in main.
+                            input (numOfDirections) : Number of directions set for the wind rose
+                            output(summary) = A string that will be added at the bottom of wind rose is beaufortRanges are used
+                            output(separator) = A string of dots to be added at the bottom of wind rose to separate summary from the rest of strings
+                            output(velTextList) = A list of strings containing average velocity values to be displayed on the wind rose.
+                            output(freqTextList) = A list of strings containing frequency values to be displayed on the wind rose and to be provided to the
+                                                    user as a list.
+                            output(averageVelForOutput ) = A list of strings containing average velocity values to be provided to the user as a list.
+                            """
+                               
+                            # Making a list of frequecies to display on wind rose and rounding them
+                            freqTextList = []
+                            for item in windFreq:
+                                freqTextList.append(str(round(item, 2)))
+                                
+                            # Making a list of angles to rotate vecotrs
+                            angleList, angleRanges = makeRanges(numOfDirections)
+                            angleList = angleList[1:]                               
+                                       
+                            # Getting wind speeds and wind directions
+                            wind_Speeds, wind_Directions = unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
+                            wind_Directions = [int(x) for x in windDirections[7:]]
+                            wind_Speeds = wind_Speeds[7:]
+                            
+                            # Preparing velocity bins for average calculation
+                            catchVelocity = [[] for item in angleRanges]
+                            j = 0
+                            while j < len(wind_Directions):
+                                for item in angleRanges:
+                                    if wind_Directions[j] in item:
+                                        i = angleRanges.index(item)
+                                        catchVelocity[i].append(wind_Speeds[j])
+                                j += 1
+                            firstBin = catchVelocity[0] + catchVelocity[-1]
+                            velocityBins = catchVelocity[:-1]
+                            velocityBins[0] = firstBin
+                            
+                            # Calculating averages velocities for all the directions
+                            velTextList = []
+                            for item in velocityBins:
+                                try:
+                                    average = str(round(sum(item) / len(item), 2))
+                                except Exception:
+                                    average = str(0)
+                                velTextList.append(average)
+                            
+                            averageVelForOutput = velTextList
+                            summary , separator, velTextList = beaufortScale(conditionalStatement_, _hourlyWindSpeed, beaufortObservationsNoOffset, beaufortObservations,  velTextList)
+                            return summary , separator, velTextList, freqTextList, averageVelForOutput 
+                            
+                        # This is where we define summary to add to the bottom of the wind rose text, separator, and list of average wind velocities
+                        summary , separator, velTextList, freqTextList, averageVelocity  = getDirectionData(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection, windFreq, numOfDirections)
+                        
+                        # Preparing a list of frequencies for output
+                        frequencyOutput = []
+                        for item in freqTextList:
+                            if item == "0" or item == "0.00":
+                                item = 0.0
+                                frequencyOutput.append(item)
+                            else:
+                                item = float(item)
+                                frequencyOutput.append(item)
+                        
+                        # Preparing a list of averageVelocities for output
+                        averageVelocityOutput = []
+                        for item in averageVelocity:
+                            if item == "0" or item == "0.00":
+                                item = 0.0
+                                averageVelocityOutput.append(item)
+                            else:
+                                item = float(item)
+                                averageVelocityOutput.append(item)    
+                            
+                        # Creating custom heading for the windrose
                         customHeading = customHeading + listInfo[i][1] + \
                                         '\n'+lb_preparation.hour2Date(lb_preparation.date2Hour(stMonth, stDay, stHour)) + ' - ' + \
                                         lb_preparation.hour2Date(lb_preparation.date2Hour(endMonth, endDay, endHour)) + \
@@ -423,17 +854,35 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             if analysisPeriod != [(1, 1, 1), (12, 31, 24)] and analysisPeriod != []:
                                 additStr = "%.1f" % (len(allValues)) + ' hours of analysis period ' + ("%.1f" % len(HOYS)) + ' hours' + \
                                             ' (' + ("%.2f" % (len(allValues)/len(HOYS) * 100)) + '%).'
-                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + additStr
+                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + additStr + '\n' + separator + '\n' + summary
                             else:
-                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr
+                                customHeading = customHeading + '\n' + titleStatement + '\n' + resultStr + '\n' + separator + '\n' + summary
                         
+                        # If the user has asked to see average velocities and frequencies both, we shall push the title text down a bit
+                        if showAverageVelocity_ == True and showFrequency_ == True:
+                            # Now we are moving the titlebasePt in order to make room for radial display of frequencies and average velocities
+                            # This list is defined at the beginning of main(). Here, we're adding titlebasePt for boundingboxes of all wind roses
+                            catchTitleBasePts.append(lb_visualization.BoundingBoxPar[-2])
+                            # No matter how many points are added. We're only interested in the first one
+                            catch = catchTitleBasePts[0]
+                            # Here we're setting the distance to push titleText down
+                            yCor = catch.Y * 0.3
+                            # Now making a new point
+                            vector = rc.Geometry.Vector3d(0, yCor, 0)
+                            movedPoint = rc.Geometry.Point3d.Add(catch, vector)                 
+                            box = list(lb_visualization.BoundingBoxPar)
+                            box[-2] = movedPoint
+                            lb_visualization.BoundingBoxPar = tuple(box)
+                        # Else, let it be the way it is
+                        else:
+                            pass
                         titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[i]], lb_visualization.BoundingBoxPar, legendScale, customHeading, True, legendFont, legendFontSize, legendBold)
-                        
+
                         # find the freq of the numbers in each segment
                         numRanges = legendText[:-1]
                         if len(numRanges) == 1:
                             numRanges.insert(0, 0.0)
-                        
+
                         # do it for the calm period
                         # calculate the frequency for calm
                         freqInCenter = []
@@ -460,7 +909,6 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                 
                         centerMesh = rc.Geometry.Mesh()
                         cenMeshColors = []
-                        
                         
                         for crvNum in range(len(centerFrqPts)):
                             avr = avrValues[crvNum]
@@ -535,17 +983,63 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                                         segmentsColors.append(color[0])
                                         segments.Append(segment)
                                     totalFr = totalFr + fr
-                    
+                   
                     segments.Flip(True, True, True)
-                    
                     segments = lb_visualization.colorMesh(segmentsColors, segments)
                     centerMesh = lb_visualization.colorMesh(cenMeshColors, centerMesh)
-                    
                     legendText.append(titleStr)
                     textPt.append(titlebasePt)
-                    
                     compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 1.11 *maxFreq * scale, roseAngles, 1.5*textSize)
-                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
+
+                    # Making a list of angles to rotate vecotrs
+                    angleList, angleRanges = makeRanges(numOfDirections)
+                    angleList = angleList[1:]
+
+                    # Measuring the distance between the north point and the center of the wind rose.
+                    # This radial distance is crucial for position of frequencies
+                    point01 = cenPt
+                    point02 = compassTextPts[0]
+                    distance = rc.Geometry.Point3d.DistanceTo(point02, point01)
+                    freqOffset = getOffset(showFrequency_, showAverageVelocity_)[0]
+                    velOffset = getOffset(showFrequency_, showAverageVelocity_)[1]                 
+                    freqFactor = freqOffset * distance
+                    velFactor = velOffset * distance
+                    
+                    # Making first point for frequency and velocity display. This is the first point
+                    freqFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*freqFactor)
+                    velFirstPoint = rc.Geometry.Point3d.Add(point01, rc.Geometry.Vector3d(northVector)*velFactor)                    
+                    # Point container for othe points for frequency display and average velocity display
+                    freqTextPts = [freqFirstPoint]
+                    velTextPts = [velFirstPoint]
+
+                    # Based on angles new points for frequency display are created
+                    for angle in angleList:
+                        newVector = rc.Geometry.Vector3d(northVector)*freqFactor #Factor is important here
+                        newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+                        addPoint = rc.Geometry.Point3d.Add(point01, newVector)
+                        freqTextPts.append(addPoint)
+                        
+                    # Based on angles new points for velocity display are created
+                    for angle in angleList:
+                        newVector = rc.Geometry.Vector3d(northVector)*velFactor #Factor is important here
+                        newVector.Rotate(-math.radians(angle), rc.Geometry.Vector3d.ZAxis)
+                        addPoint = rc.Geometry.Point3d.Add(point01, newVector)
+                        velTextPts.append(addPoint)                        
+                    
+                    # Making curves for frequency display
+                    if showFrequency_ == True:
+                        freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
+                    else:
+                        freqTextCrvs = []
+                        
+                    # Making curves for average display
+                    if showAverageVelocity_ == True:
+                        velTextCrvs = lb_visualization.text2srf(velTextList, velTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
+                    else:
+                        velTextCrvs = []
+
+                    numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
+                    numberCrvs = numberCrvs + freqTextCrvs + velTextCrvs
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
                     # let's move it move it move it!
@@ -620,8 +1114,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
                         if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
                         else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
-        
-            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurveFinal
+                        
+            
+            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurveFinal, averageVelocityOutput, frequencyOutput
 
     else:
         warning =  "You should first let the Ladybug fly..."
@@ -636,8 +1131,8 @@ if _runIt:
                   _scale_, legendPar_, bakeIt_, maxFrequency_)
     
     if result!= -1:
-        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, allLegend, legendBasePoints, titleTextCurve = result
-        
+        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurve, averageVelocities, frequencies = result
+
         legend = DataTree[Object]()
         calmRoseMesh = DataTree[Object]()
         windRoseMesh = DataTree[Object]()
@@ -660,5 +1155,6 @@ if _runIt:
         
         ghenv.Component.Params.Output[4].Hidden = True
         ghenv.Component.Params.Output[6].Hidden = True
+        ghenv.Component.Params.Output[7].Hidden = False
 else:
     print 'Set runIt to True!'

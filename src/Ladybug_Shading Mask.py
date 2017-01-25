@@ -25,7 +25,7 @@ Use this component to see the portion of the sky dome that is masked by context 
 The component will generate separate meshs for the portions of the sky dome that are masked and visible.
 The component will also calculate the percentage of the sky that is masked by the context geometry and the percentage that is visible (the sky view factor).
 -output
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         _testPt: A view point for which one wants to see the portion of the sky masked by the context geometry surrounding this point.
@@ -42,12 +42,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.62\nFEB_15_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_01_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 

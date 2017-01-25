@@ -34,7 +34,7 @@ http://www.wiley.com/WileyCDA/WileyTitle/productCd-0470873663.html
 https://sam.nrel.gov/system/tdf/SimpleSolarWaterHeatingModel_SAM_0.pdf?file=1&type=node&id=69521
 http://www.sciencedirect.com/science/article/pii/S0960148114004807
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -124,12 +124,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating Surface"
 ghenv.Component.NickName = "SolarWaterHeatingSurface"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
-#compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+ghenv.Component.SubCategory = "4 | Renewables"
+#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
 import Grasshopper.Kernel as gh

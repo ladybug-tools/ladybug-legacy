@@ -30,7 +30,7 @@ If nothing inputed, the following PV module settings will be used by default:
 - temperatureCoefficient: -0.5 %/C
 - moduleActiveAreaPercent: 90%
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     input:
         moduleType_: Module type and mounting configuration:
@@ -67,13 +67,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Module"
 ghenv.Component.NickName = "PhotovoltaicsModule"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-#ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.Kernel as gh

@@ -33,7 +33,7 @@ _
 Users are also encouraged to use the 'Ladybug_Adaptive Comfort Chart' component or the Center for the Built Environment's (CBE) comfort tool to help visualize the differences between these parameters:
 Special thanks goes to the authors of the online CBE Thermal Comfort Tool who first coded the javascript: Hoyt Tyler, Schiavon Stefano, Piccioli Alberto, Moon Dustin, and Steinfeld Kyle. http://cbe.berkeley.edu/comforttool/
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.63
     
     Args:
         ASHRAEorEN_: Set to 'True' to have the Adpative components use the US (ASHRAE 55 2013) adaptive standard and set to 'False' to have the Adaptive components use the European (EN-15251) standard.  The default is set to use the US (ASHRAE 55 2013) standard.  Note that changing the standard will also change some of the inputs below.  The ASHRAE standard will use the average monthly temperature by default and the European standard will use a running mean temperature by default.  Also, the European standard uses building classes instead of 80 / 90 percent acceptability.
@@ -50,10 +50,10 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Parameters"
 ghenv.Component.NickName = 'AdaptComfortPar'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.60\nJUL_06_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass

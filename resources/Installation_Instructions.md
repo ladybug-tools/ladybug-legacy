@@ -22,9 +22,9 @@
 
 7. Install Daysim 4.0 for Windows to C:\DAYSIM by downloading it at [this link](http://daysim.ning.com/page/download) and running the exe.
 
-8. Install EnergyPlus 8.4.0 to C:\EnergyPlusV8-4-0 from [this link](https://github.com/NREL/EnergyPlus/releases/tag/v8.4.0).
+8. Install the Latest OpenStudio by downloading and running the .exe file from [this link](https://github.com/NREL/OpenStudio/releases/tag/v1.12.0).
 
-9. Finally, copy [falsecolor2.exe](http://pyrat.googlecode.com/files/falsecolor2.exe) to C:\Radiance\bin
+9. Finally, copy [falsecolor2.exe](https://dl.dropboxusercontent.com/u/16228160/honeybee/falsecolor2.zip) to C:\Radiance\bin
 
 
 
