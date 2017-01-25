@@ -83,7 +83,11 @@ Provided by Ladybug 0.0.63
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
+<<<<<<< HEAD
 ghenv.Component.Message = 'VER 0.0.63\nAUG_30_2016'
+=======
+ghenv.Component.Message = 'VER 0.0.62\nAPR_13_2016'
+>>>>>>> origin/master
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
