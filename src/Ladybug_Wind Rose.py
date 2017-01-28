@@ -57,6 +57,8 @@ Provided by Ladybug 0.0.63
         legend: A legend of the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
         legendBasePts: The legend base point(s), which can be used to move the legend in relation to the rose with the grasshopper "move" component.
         title: The title for the wind rose. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
+        averageVelocityMesh: Mesh output for average wind velocities displayed on WindRose. This will only output meshes if boolean value of True is provided to showAverageVelocity_.
+        frequencyMesh: Mesh output for frequencies displayed on WindRose. This will only output meshes if boolean value of True is provided to showFrequency_.
         ---------------- : ...
         windSpeeds: Wind speed data for the wind rose displayed in the Rhino scene.
         windDirections: Wind direction data for the wind rose displayed in the Rhino scene.
@@ -66,7 +68,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_07_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_29_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -78,7 +80,7 @@ except: pass
 import scriptcontext as sc
 import rhinoscriptsyntax as rs
 import Rhino as rc
-from System import Object
+import System
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
@@ -1026,20 +1028,29 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         addPoint = rc.Geometry.Point3d.Add(point01, newVector)
                         velTextPts.append(addPoint)                        
                     
-                    # Making curves for frequency display
+                    # Making meshes for frequency display
                     if showFrequency_ == True:
                         freqTextCrvs = lb_visualization.text2srf(freqTextList, freqTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
+                        freqTextMesh = rc.Geometry.Mesh()
+                        for item in freqTextCrvs:
+                            for mesh in item:
+                                freqTextMesh.Append(mesh)
+                        freqTextMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
                     else:
-                        freqTextCrvs = []
+                        freqTextMesh = []
                         
-                    # Making curves for average display
+                    # Making meshes for average display
                     if showAverageVelocity_ == True:
                         velTextCrvs = lb_visualization.text2srf(velTextList, velTextPts, 'Times New Romans', textSize/2, legendBold, plane = None, justificationIndex = 1 )
+                        velTextMesh = rc.Geometry.Mesh()
+                        for item in velTextCrvs:
+                            for mesh in item:
+                                velTextMesh.Append(mesh)
                     else:
-                        velTextCrvs = []
+                        velTextMesh = []
 
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
-                    numberCrvs = numberCrvs + freqTextCrvs + velTextCrvs
+                    numberCrvs = numberCrvs
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
                     # let's move it move it move it!
@@ -1115,9 +1126,8 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
                         else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
                         
+            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurveFinal, velTextMesh, freqTextMesh, averageVelocityOutput, frequencyOutput
             
-            return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurveFinal, averageVelocityOutput, frequencyOutput
-
     else:
         warning =  "You should first let the Ladybug fly..."
         print warning
@@ -1131,7 +1141,7 @@ if _runIt:
                   _scale_, legendPar_, bakeIt_, maxFrequency_)
     
     if result!= -1:
-        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurve, averageVelocities, frequencies = result
+        allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurve, averageVelocityMesh, frequencyMesh, averageVelocities, frequencies = result
 
         legend = DataTree[Object]()
         calmRoseMesh = DataTree[Object]()
@@ -1152,6 +1162,7 @@ if _runIt:
             windRoseCenPts.Add(cenPts[i],p)
             legendBasePts.Add(legendBasePoints[i],p)
             title.AddRange(titleTextCurve[i],p)
+ 
         
         ghenv.Component.Params.Output[4].Hidden = True
         ghenv.Component.Params.Output[6].Hidden = True
