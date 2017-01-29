@@ -81,6 +81,7 @@ import scriptcontext as sc
 import rhinoscriptsyntax as rs
 import Rhino as rc
 import System
+from System import Object
 from clr import AddReference
 AddReference('Grasshopper')
 import Grasshopper.Kernel as gh
