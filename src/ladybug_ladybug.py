@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_24_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_29_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -1580,11 +1580,8 @@ class Sunpath(object):
         sunVector = rc.Geometry.Vector3d(self.cenPt - basePoint.Location)
         sunVector.Unitize()
         
-        raduis = 3 * sunScale
-        sunSphere = rc.Geometry.Sphere(basePoint.Location, raduis)
-        sunSphereMesh = rc.Geometry.Mesh.CreateFromSphere(sunSphere, 10, 10)
-        return sunSphereMesh, sunVector, basePoint.Location
-
+        return None, sunVector, basePoint.Location
+    
     def drawDailyPath(self, month, day):
         # find the sun position for midnight, noon - 10 min, noon + 10 min!
         hours = [0, 11.9, 12.1]
@@ -2976,26 +2973,14 @@ class ResultVisualization(object):
                 
                 textSrfs.append(meshSrfs)
             
-            #if len(text[n].strip()) == len(srfs)+ extraSrfCount:
-            #    textSrfs.append(srfs)
-            #else:
-            #print len(text[n])
-            #print len(text[n].strip())
-            #print len(srfs)+ extraSrfCount
-            #print extraSrfCount
-            #textSrfs.append(projectedCrvs)
-                
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
             
         return textSrfs
     
     def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False, font = None, fontSize = None, fontBold = False):
         #Define a function to create surfaces from input curves.
-        
         if Heading==None: Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
-        
         stMonth, stDay, stHour, endMonth, endDay, endHour = self.readRunPeriod((listInfo[0][5], listInfo[0][6]), False)
-        
         period = `stDay`+ ' ' + self.monthList[stMonth-1] + ' ' + `stHour` + ':00' + \
                  " - " + `endDay`+ ' ' + self.monthList[endMonth-1] + ' ' + `endHour` + ':00'
         
@@ -3003,15 +2988,12 @@ class ResultVisualization(object):
         else: titleStr = '\n' + Heading + '\n' + listInfo[0][1] + '\n' + period
         
         if font == None: font = 'Veranda'
-        
         if fontSize == None: fontSize = (boundingBoxPar[2]/30) * legendScale
-        
         titlebasePt = boundingBoxPar[-2]
-        
         titleTextSrf = self.text2srf([titleStr], [titlebasePt], font, fontSize, fontBold)
         
         return titleTextSrf, titleStr, titlebasePt
-
+    
     def compassCircle(self, cenPt = rc.Geometry.Point3d.Origin, northVector = rc.Geometry.Vector3d.YAxis, radius = 200, angles = range(0,360,30), xMove = 
                         10, centerLine = False):
         baseCircle = rc.Geometry.Circle(cenPt, radius).ToNurbsCurve()
@@ -3059,6 +3041,153 @@ class ResultVisualization(object):
         lines.append(baseCircle)
         lines.append(outerCircle)
         return lines, textBasePts, compassText
+    
+    def angleCircle(self, cenPt=rc.Geometry.Point3d.Origin, northVector=rc.Geometry.Vector3d.YAxis, radius=200, projection=1, angles=range(10,90,10)):
+        # List to hold all geometry.
+        angleCrvs = []
+        angleTextPts = []
+        angleText = []
+        
+        # Generate the axis lines.
+        south = rc.Geometry.Point3d(cenPt.X,(cenPt.Y)-radius,cenPt.Z)
+        north = rc.Geometry.Point3d(cenPt.X,cenPt.Y+radius,cenPt.Z)
+        east = rc.Geometry.Point3d(cenPt.X+radius,cenPt.Y,cenPt.Z)
+        west = rc.Geometry.Point3d(cenPt.X-radius,cenPt.Y,cenPt.Z)
+        ns = rc.Geometry.Line(south,north)
+        ew = rc.Geometry.Line(east,west)
+        angleCrvs.extend([rc.Geometry.LineCurve(ns), rc.Geometry.LineCurve(ew)])
+        
+        #Rotate the north if necessary.
+        if northVector != rc.Geometry.Vector3d.YAxis:
+            rotateTransform = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.YAxis, northVector, cenPt)
+            ns.Transform(rotateTransform)
+            ew.Transform(rotateTransform)
+        
+        #Generate the angle circles.
+        for angle in angles:
+            if projection == 1:
+                angleCircle = rc.Geometry.Circle(cenPt, radius*math.cos(math.radians(angle)))
+            else:
+                angleCircle = rc.Geometry.Circle(cenPt, radius*(angle/90))
+            angleCrvs.append(angleCircle.ToNurbsCurve())
+            intPt = rc.Geometry.Intersect.Intersection.LineCircle(ns,angleCircle)
+            try:
+                angleTextPts.append(intPt[-1])
+                angleText.append(str(angle))
+            except:
+                pass
+        
+        return angleCrvs, angleTextPts, angleText
+    
+    def projectPointToStereo(self, point):
+        newX = point.X / (1 - point.Z)
+        newY = point.Y / (1 - point.Z)
+        newPt = rc.Geometry.Point3d(newX, newY, 0)
+        return newPt
+    
+    def projectMeshPointToStereo(self, point):
+        newX = point.X / (1 - point.Z)
+        newY = point.Y / (1 - point.Z)
+        newPt = rc.Geometry.Point3f(newX, newY, 0)
+        return newPt
+    
+    def projectMeshToStereo(self, mesh):
+        for count, vert in enumerate(mesh.Vertices):
+            newVert = self.projectMeshPointToStereo(vert)
+            mesh.Vertices[count] = newVert
+    
+    def projectCurveToStereo(self, curve):
+        degree = curve.Degree
+        if degree > 2:
+            newCrvPts = []
+            for pt in curve.GrevillePoints():
+                newCrvPts.append(self.projectPointToStereo(pt))
+            if curve.IsClosed:
+                newCrvPts.pop(-1)
+                newCrvPts.pop(0)
+            newCrv = rc.Geometry.NurbsCurve.CreateInterpolatedCurve(newCrvPts,int(degree),rc.Geometry.CurveKnotStyle.UniformPeriodic)
+        elif degree == 2:
+            end = self.projectPointToStereo(curve.PointAtEnd)
+            start = self.projectPointToStereo(curve.PointAtStart)
+            mid = self.projectPointToStereo(curve.PointAtNormalizedLength(0.5))
+            newCrv = rc.Geometry.Arc(start, mid, end)
+            newCrv = newCrv.ToNurbsCurve()
+        else:
+            end = self.projectPointToStereo(curve.PointAtEnd)
+            start = self.projectPointToStereo(curve.PointAtStart)
+            newCrv = rc.Geometry.LineCurve(start, end)
+        
+        return newCrv
+    
+    def projectGeo(self, geometry, projType, centPt=None, scale=200):
+        if scale == None:
+            scale = 1
+        
+        projGeo = []
+        for geo in geometry:
+            if projType == 2:
+                # STEREOGRAPHIC PROJECTION
+                # Move the mesh to the Rhino origin.
+                if centPt != None:
+                    moveVec = rc.Geometry.Vector3d(-centPt.X, -centPt.Y, -centPt.Z)
+                    moveTrans = rc.Geometry.Transform.Translation(moveVec)
+                    geo.Transform(moveTrans)
+                
+                # Scale the geomtry down to the unit sphere and mirror it.
+                if scale != 1:
+                    scaleTrans = rc.Geometry.Transform.Scale(rc.Geometry.Point3d.Origin, 1/scale)
+                    geo.Transform(scaleTrans)
+                mirTrans = rc.Geometry.Transform.Mirror(rc.Geometry.Plane.WorldXY)
+                geo.Transform(mirTrans)
+                
+                # Test what type of geomtry it is and project it.
+                try:
+                    geo = self.projectPointToStereo(geo)
+                except:
+                    try:
+                        self.projectMeshToStereo(geo)
+                    except:
+                        geo = self.projectCurveToStereo(geo)
+                
+                # Scale the geometery back up
+                if scale != 1:
+                    scaleTrans = rc.Geometry.Transform.Scale(rc.Geometry.Point3d.Origin, scale)
+                    geo.Transform(scaleTrans)
+                
+                # Move the mesh back if necessary.
+                if centPt != None:
+                    moveVec = rc.Geometry.Vector3d(centPt.X, centPt.Y, centPt.Z)
+                    moveTrans = rc.Geometry.Transform.Translation(moveVec)
+                    geo.Transform(moveTrans)
+                
+                projGeo.append(geo)
+            
+            elif projType == 1:
+                # ORTHOGRAPHIC PROEJCTION
+                if centPt != None:
+                    projPlane = rc.Geometry.Plane(centPt, rc.Geometry.Vector3d.ZAxis)
+                else:
+                    projPlane = rc.Geometry.Plane.WorldXY
+                projTransform = rc.Geometry.Transform.PlanarProjection(projPlane)
+                geo.Transform(projTransform)
+                projGeo.append(geo)
+            
+            else:
+                # NO PROJECTION
+                projGeo.append(geo)
+        
+        return projGeo
+    
+    def sunSpherePt(self, sunScale, sunPoint, projection, cenPt, scale):
+        raduis = 3 * sunScale
+        if projection == 1 or projection == 2:
+            sunPoint = self.projectGeo([sunPoint], projection, cenPt, scale)[0]
+            sunSphere = rc.Geometry.Circle(sunPoint, raduis).ToNurbsCurve()
+            sunSphereMesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(sunSphere, rc.Geometry.MeshingParameters.Coarse)
+        else:
+            sunSphere = rc.Geometry.Sphere(sunPoint, raduis)
+            sunSphereMesh = rc.Geometry.Mesh.CreateFromSphere(sunSphere, 10, 10)
+        return sunSphereMesh, sunPoint
     
     
     def setupLayers(self, result = 'No result', parentLayerName = 'LADYBUG', projectName = 'Option',
