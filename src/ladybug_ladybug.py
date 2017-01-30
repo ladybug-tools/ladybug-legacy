@@ -3073,7 +3073,10 @@ class ResultVisualization(object):
             intPt = rc.Geometry.Intersect.Intersection.LineCircle(ns,angleCircle)
             try:
                 angleTextPts.append(intPt[-1])
-                angleText.append(str(angle))
+                if projection == 1:
+                    angleText.append(str(angle))
+                else:
+                    angleText.append(str(90-angle))
             except:
                 pass
         

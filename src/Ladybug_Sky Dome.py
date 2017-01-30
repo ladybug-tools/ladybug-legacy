@@ -242,8 +242,9 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, projec
             legendText.append(titleStr)
             legendText.extend(compassText)
             textPt.extend(compassTextPts)
-            textPt.extend(angleTextPt)
-            legendText.extend(angleText)
+            if projection == 1 or projection == 2:
+                textPt.extend(angleTextPt)
+                legendText.extend(angleText)
             #Put all of the curves into one list.
             finalCrvs = []
             for crv in compassCrvs:
