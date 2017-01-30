@@ -3042,7 +3042,7 @@ class ResultVisualization(object):
         lines.append(outerCircle)
         return lines, textBasePts, compassText
     
-    def angleCircle(self, cenPt=rc.Geometry.Point3d.Origin, northVector=rc.Geometry.Vector3d.YAxis, radius=200, projection=1, angles=range(10,90,10)):
+    def angleCircle(self, cenPt=rc.Geometry.Point3d.Origin, northVector=rc.Geometry.Vector3d.YAxis, radius=200, projection=1, zMove=0, angles=range(10,90,10)):
         # List to hold all geometry.
         angleCrvs = []
         angleTextPts = []
@@ -3076,6 +3076,14 @@ class ResultVisualization(object):
                 angleText.append(str(angle))
             except:
                 pass
+        
+        # Move the Z if necessary.
+        if zMove !=0:
+            zTrans = rc.Geometry.Transform.Translation(0,0,zMove)
+            for crv in angleCrvs:
+                crv.Transform(zTrans)
+            for pt in angleTextPts:
+                pt.Transform(zTrans)
         
         return angleCrvs, angleTextPts, angleText
     

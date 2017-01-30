@@ -450,7 +450,6 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
         angleCrvs = []
         if projection == 1 or projection == 2:
             sunPathCrvs = lb_visualization.projectGeo(sunPathCrvs, projection, cenPt, scale)
-            
         
         legend = []; legendText = []; textPt = []; legendSrfs = None; title = []
         customHeading = '\n\n\n\nSun-Path Diagram - Latitude: ' + `latitude` + '\n'
@@ -565,6 +564,8 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         altitutdeMeshText = lb_visualization.text2srf(angleText, angleTextPt, 'Verdana', textSize/2, legendBold)
                         altitutdeMeshText = lb_preparation.flattenList(altitutdeMeshText)
                         angleCrvs.extend(altitutdeMeshText)
+                        legendText.extend(angleText)
+                        textPt.extend(angleTextPt)
                     
                     if baseCrvs: compassCrvsInit = compassCrvsInit + baseCrvs
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
@@ -622,6 +623,11 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                         cDuplicate = c.Duplicate()
                         cDuplicate.Translate(movingVector)
                         altCrvsTemps.append(cDuplicate)
+                        try:
+                            c.PointAtEnd
+                            crvsTemp.append(cDuplicate)
+                        except:
+                            pass
                     allSunPathCrvs.append(pathCrvsTemp)
                     allCompassCrvs.append(compCrvsTemp)
                     allAltCrvs.append(altCrvsTemps)
@@ -672,7 +678,10 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                 angleCrvs, angleTextPt, angleText = lb_visualization.angleCircle(cenPt, northVector, scale, projection)
                 altitutdeMeshText = lb_visualization.text2srf(angleText, angleTextPt, 'Verdana', textSize/2, legendBold)
                 altitutdeMeshText = lb_preparation.flattenList(altitutdeMeshText)
+                angleCrvsOnly = angleCrvs[:]
                 angleCrvs.extend(altitutdeMeshText)
+                legendText.extend(angleText)
+                textPt.extend(angleTextPt)
             
             if baseCrvs: compassCrvsInit = compassCrvsInit + baseCrvs
             numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
@@ -681,7 +690,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             legendText.extend(compassText)
             textPt.extend(compassTextPts)
             
-            if bakeIt > 0: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvsInit, decimalPlaces, lb_visualization)
+            if bakeIt > 0: bakePlease(None, sunsJoined, legendSrfs, legendText, textPt, legendFont, textSize, sunPathCrvs + compassCrvsInit + angleCrvsOnly, decimalPlaces, lb_visualization)
             
         else: return -1
         

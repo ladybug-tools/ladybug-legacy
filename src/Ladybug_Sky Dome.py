@@ -32,6 +32,10 @@ Provided by Ladybug 0.0.63
         _selectedSkyMtx: The output from the selectSkyMtx component.
         _centerPoint_: A point that sets the location of the sky domes.  The default is set to the Rhino origin (0,0,0).
         _scale_: Use this input to change the scale of the sky dome.  The default is set to 1.
+        _projection_: A number to set the projection of the sky hemisphere.  The default is set to draw a 3D hemisphere.  Choose from the following options:
+            0 = 3D hemisphere
+            1 = Orthographic (straight projection to the XY Plane)
+            2 = Stereographic (equi-angular projection to the XY Plane)
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         showTotalOnly_: Set to "True" to only show a sky dome with the total radiation.  The default is "False", which will produce 3 sky domes: one of diffuse radiation, one of direct radiation, and one of the total radiation.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
@@ -43,7 +47,8 @@ Provided by Ladybug 0.0.63
         readMe!: ...
         skyPatchesMesh:  A colored mesh representing the intensity of radiation for each of the sky patches of the sky dome.
         baseCrvs:  A set of guide curves that mark information on the sky dome.
-        legend: A legend for the sky dome. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.  
+        altitudeCrvs: A set of circular curves that denote the altitude.  Note that these will only appear when the _projection_ is set to something other than a 3D sun path.
+        legend: A legend for the sky dome. Connect this output to a grasshopper "Geo" component in order to preview the legend separately in the Rhino scene.
         legendBasePts: The legend base point(s), which can be used to move the legend(s) in relation to the sky domes with the grasshopper "move" component.
         skyPatchesCenPts: The center points of sky patches, which can be used to shape Rhino geometry in relation to radiation from different sky patches.
         skyPatchesAreas: The area of sky patches in Rhino model units.
@@ -53,11 +58,11 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_29_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nJAN_29_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -113,7 +118,7 @@ def skyPreparation(skyType):
         
 
 
-def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legendPar, showTotalOnly, bakeIt, skyType):
+def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, projection, legendPar, showTotalOnly, bakeIt, skyType):
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
     
@@ -123,7 +128,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         ghenv.Component.AddRuntimeMessage(w, "selectedSkyMtx is not a valid Ladybug sky information!")
         return -1
     
-    def visualizeData(i, northAngle, northVector, results, originalSkyDomeSrfs, legendTitle, legendPar, bakeIt):
+    def visualizeData(i, northAngle, northVector, results, originalSkyDomeSrfs, projection, legendTitle, legendPar, bakeIt):
         # creat moving vector for each sky
         movingVector = rc.Geometry.Vector3d(i * movingDist,0,0)
         
@@ -152,6 +157,12 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, 100 * scale, range(0, 360, 10), 1.2*textSize)
         numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.2)
         compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
+        angleCrvs = []
+        if projection == 1 or projection == 2:
+            angleCrvs, angleTextPt, angleText = lb_visualization.angleCircle(cenPt, northVector, 100*scale, projection, sc.doc.ModelAbsoluteTolerance*3)
+            altitutdeMeshText = lb_visualization.text2srf(angleText, angleTextPt, 'Verdana', textSize/2, legendBold)
+            altitutdeMeshText = lb_preparation.flattenList(altitutdeMeshText)
+            angleCrvs.extend(altitutdeMeshText)
         
         # move all the geometries to the right place
         [c.Translate(movingVector) for crv in legendTextCrv + [compassCrvs] for c in crv]
@@ -165,7 +176,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
             ptLocation.Translate(movingVector) # move it to the right place
             textPt[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
             ptCount += 1
-            
+        
         # generate legend colors
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         
@@ -193,24 +204,27 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
             if northAngle!=0: newPatch.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis, cenPt)
             newPatch.Translate(movingVector) # move it to the right place
             movedSkyPatches.append(newPatch)
-            MP = rc.Geometry.AreaMassProperties.Compute(newPatch)
+            
+            patchMeshed = rc.Geometry.Mesh.CreateFromBrep(newPatch, meshParam)[0] # create mesh
+            if projection == 1 or projection == 2:
+                patchMeshed = lb_visualization.projectGeo([patchMeshed], projection, cenPt, 100*scale)[0]
+            domeMeshed.Append(patchMeshed) # append to the main mesh
+            for face in range(patchMeshed.Faces.Count):
+                colForMesh.append(totalRadiationColors[patchCount]) #generate color list
+            
+            # thanks to rob guglielmetti for suggesting this
+            MP = rc.Geometry.AreaMassProperties.Compute(patchMeshed)
             patchCenPt = MP.Centroid
             area = MP.Area
             skyPatchCenPts.append(patchCenPt)
-            # thanks to rob guglielmetti for suggesting this
             skyPatchAreas.append(area)
             MP.Dispose()
-            patchMeshed = rc.Geometry.Mesh.CreateFromBrep(newPatch, meshParam) # create mesh
-            domeMeshed.Append(patchMeshed[0]) # append to the main mesh
-            for face in range(patchMeshed[0].Faces.Count):
-                colForMesh.append(totalRadiationColors[patchCount]) #generate color list
-            
+        
         placeName = listInfo[i][1]
         skyTypes = ['Total Radiation' + placeName[:3], 'Diffuse Radiation' + placeName[:3], 'Direct Radiation' + placeName[:3]]
         
         # color the meshed patches
         domeMeshed = lb_visualization.colorMesh(colForMesh, domeMeshed)
-        
         #Flip it so that the mesh faces are outward.
         domeMeshed.Flip(True, True, True)
         
@@ -228,9 +242,16 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
             legendText.append(titleStr)
             legendText.extend(compassText)
             textPt.extend(compassTextPts)
+            textPt.extend(angleTextPt)
+            legendText.extend(angleText)
             #Put all of the curves into one list.
             finalCrvs = []
             for crv in compassCrvs:
+                try:
+                    testPt = crv.PointAtEnd
+                    finalCrvs.append(crv)
+                except: pass
+            for crv in angleCrvs:
                 try:
                     testPt = crv.PointAtEnd
                     finalCrvs.append(crv)
@@ -242,7 +263,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
             if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, finalCrvs, decimalPlaces, True)
             else: lb_visualization.bakeObjects(newLayerIndex, domeMeshed, legendSrfs, legendText, textPt, textSize,  legendFont, finalCrvs, decimalPlaces, False)
             
-        return domeMeshed, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], compassCrvs, movedLegendBasePoint, skyPatchCenPts, skyPatchAreas, strResults, movedSkyPatches
+        return domeMeshed, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], compassCrvs, angleCrvs, movedLegendBasePoint, skyPatchCenPts, skyPatchAreas, strResults, movedSkyPatches
     
     
     # north direction
@@ -313,7 +334,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
     normLegend = False
     # palce holder for results
     # I'l replace all this lists of lists with dictionaries later
-    result = [[], [], [], [], [], [], [], []]
+    result = [[], [], [], [], [], [], [], [], []]
     
     # generate the skies
     for i in range(skyTypes):
@@ -331,7 +352,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
             normLegend = True
         
         # this was a stupid idea to separate this function
-        coloredSkyMesh, legend, compassCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues, movedSkySrfs = visualizeData(i, northAngle, northVector, separatedLists[i], skyDomeSrfs, legendTitles[i], legendPar, bakeIt)
+        coloredSkyMesh, legend, compassCrvs, angleCrvs, movedBasePt, skyPatchCenPts, skyPatchAreas, radValues, movedSkySrfs = visualizeData(i, northAngle, northVector, separatedLists[i], skyDomeSrfs, projection, legendTitles[i], legendPar, bakeIt)
         
         result[0].append(coloredSkyMesh)
         result[1].append(legend)
@@ -341,6 +362,7 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, legend
         result[5].append(skyPatchAreas)
         result[6].append(radValues)
         result[7].append(movedSkySrfs)
+        result[8].append(angleCrvs)
     
     return result
 
@@ -351,12 +373,13 @@ if _runIt and _selectedSkyMtx:
     skyGeometries = skyPreparation(skyType)
     
     if skyGeometries != -1:
-        result = main(north_, _selectedSkyMtx, skyGeometries, _centerPoint_, _scale_, legendPar_, showTotalOnly_, bakeIt_, skyType)
+        result = main(north_, _selectedSkyMtx, skyGeometries, _centerPoint_, _scale_, _projection_, legendPar_, showTotalOnly_, bakeIt_, skyType)
         
         if result!=-1:
             legend = DataTree[Object]()
             skyPatchesMesh = DataTree[Object]()
             baseCrvs = DataTree[Object]()
+            altitudeCrvs = DataTree[Object]()
             legendBasePts = DataTree[Object]()
             skyPatchesCenPts = DataTree[Object]()
             skyPatchesAreas = DataTree[Object]()
@@ -367,6 +390,7 @@ if _runIt and _selectedSkyMtx:
                 p = GH_Path(i)
                 skyPatchesMesh.Add(result[0][i], p)
                 baseCrvs.AddRange(result[2][i], p)
+                altitudeCrvs.AddRange(result[8][i], p)
                 legend.Add(leg[0], p)
                 legend.AddRange(leg[1], p)
                 legendBasePts.Add(result[3][i], p)
