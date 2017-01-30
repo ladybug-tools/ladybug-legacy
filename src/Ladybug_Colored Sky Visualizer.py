@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Trygve Wastvedt and Chris Mackey <Trygve.Wastvedt@gmail.com and Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2016, Trygve Wastvedt <Trygve.Wastvedt@gmail.com>, Chris Mackey <Chris@MackeyArchitecture.com>, and Byron Mardas <byronmardas@gmail.com>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
