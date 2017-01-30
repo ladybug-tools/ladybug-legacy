@@ -1199,11 +1199,11 @@ if _runIt:
             windRoseCenPts.Add(cenPts[i],p)
             legendBasePts.Add(legendBasePoints[i],p)
             title.AddRange(titleTextCurve[i],p)
-            if len(velTextMesh) > 0:
+            if len(velTextMeshOut) > 0:
                 averageVelocityMesh.AddRange(velTextMeshOut[i],p)
             else:
                 pass
-            if len(freqTextMesh) > 0:
+            if len(freqTextMeshOut) > 0:
                 frequencyMesh.AddRange(freqTextMeshOut[i],p)
             else:
                 pass
