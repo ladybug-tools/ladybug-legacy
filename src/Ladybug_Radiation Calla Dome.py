@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.63
         _horAngleStep_: An angle in degrees between 0 and 360 that represents the step for horizontal rotation. Smaller numbers will yeild a finer and smoother mesh with smoother colors.  The number input here should be smaller than 360 and divisible by 360.  The default is set to 10 degrees.
         _verAngleStep_: Angle in degrees step between 0 and 90 that represents the step for vertical rotation. Smaller numbers will yeild a finer and smoother mesh with smoother colors.  The number input here should be smaller than 90 and divisible by 90.  The default is set to 10 degrees.
         _centerPoint: Input a point here to chage the center point of the Calla Dome and move it around the Rhino scene.  The default is set to the Rhino origin (0,0,0).
-        _horScale_: Input a number here to change horizontal (XY) scale of the graph. The default value is set to 1.  Note that, for the dome representation, this input will change the scale of the entire dome (both horizontal and vertical).
+        _scale_: Input a number here to change horizontal (XY) scale of the graph. The default value is set to 1.  Note that, for the dome representation, this input will change the scale of the entire dome (both horizontal and vertical).
         _verScale_: Input a number here to change vertical (Z) scale of the graph. The default value is set to 1. Note that, for the dome representation, this input will have no effect.
         _projection_: A number to set the projection of the sky hemisphere.  The default is set to draw a 3D hemisphere.  Choose from the following options:
             0 = 3D hemisphere
@@ -447,7 +447,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
 
 if _runIt:
     north_ = 0
-    result = main(_selectedSkyMtx, _horAngleStep_, _verAngleStep_, _horScale_, _verScale_, _projection_,
+    result = main(_selectedSkyMtx, _horAngleStep_, _verAngleStep_, _scale_, None, _projection_,
                    north_, _centerPoint_, legendPar_, bakeIt_)
     maxPtAndValue = []
     if result!= -1:
