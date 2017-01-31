@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_29_2017'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_31_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -3068,7 +3068,7 @@ class ResultVisualization(object):
             if projection == 1:
                 angleCircle = rc.Geometry.Circle(cenPt, radius*math.cos(math.radians(angle)))
             else:
-                angleCircle = rc.Geometry.Circle(cenPt, radius*(angle/90))
+                angleCircle = rc.Geometry.Circle(cenPt, radius*(1/(math.tan(math.radians((90+angle)/2)))))
             angleCrvs.append(angleCircle.ToNurbsCurve())
             intPt = rc.Geometry.Intersect.Intersection.LineCircle(ns,angleCircle)
             try:
