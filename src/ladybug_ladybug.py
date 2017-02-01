@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_31_2017'
+ghenv.Component.Message = 'VER 0.0.63\nFEB_01_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2193,7 +2193,7 @@ class RunAnalysisInsideGH(object):
     def parallel_radCalculator(self, testPts, testVec, meshSrfArea, bldgMesh,
                                 contextMesh, parallel, cumSkyResult, TregenzaPatches,
                                 conversionFac, contextHeight = 2200000000000000,
-                                northVector = rc.Geometry.Vector3d.YAxis, transmittance=0):
+                                northVector = rc.Geometry.Vector3d.YAxis, transmittance=None):
         # preparing bulk lists
         # create an empty dictionary for each point
         intersectionMtx = {}
@@ -2239,23 +2239,29 @@ class RunAnalysisInsideGH(object):
                             if rc.Geometry.Intersect.Intersection.MeshRay(bldgMesh, ray) >= 0.0: check = 0;
                         
                         if check != 0 and contextMesh!=None: #and testPts[i].Z < contextHeight:
-                            #for bldg in contextMesh:
-                            if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh,ray) >= 0.0: check = transmittance;
+                            try:
+                                # There is only one context mesh and it is assumed to be opaque.
+                                if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh,ray) >= 0.0:
+                                    check = 0
+                            except:
+                                # There are several context meshes and eachhas a different transmittance.
+                                for meshCount, contMesh in enumerate(contextMesh):
+                                    if rc.Geometry.Intersect.Intersection.MeshRay(contMesh,ray) >= 0.0:
+                                        check = check*transmittance[meshCount]
                         
                         if check == 1:
                             radiation[i] = radiation[i] + (cumSkyResult[patchNum] * math.cos(vecAngle))
                             intersectionMtx[i][patchNum] =  {'isIntersect' : 1, 'vecAngle' : vecAngle}
                             groundRadiation[i] = 0
                         elif check != 0:
-                            radiation[i] = radiation[i] + ((cumSkyResult[patchNum] * math.cos(vecAngle))*transmittance)
-                            intersectionMtx[i][patchNum] =  {'isIntersect' : transmittance, 'vecAngle' : vecAngle}
+                            radiation[i] = radiation[i] + ((cumSkyResult[patchNum] * math.cos(vecAngle))*check)
+                            intersectionMtx[i][patchNum] =  {'isIntersect' : check, 'vecAngle' : vecAngle}
                             groundRadiation[i] = 0
                     patchNum += 1
                 
                 radResult[i] = (groundRadiation[i] + radiation[i]) #/sunUpHours
         
         except:
-            #print 'Error in Radiation calculation...'
             print "The calculation is terminated by user!"
             assert False
         

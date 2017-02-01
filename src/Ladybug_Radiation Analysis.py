@@ -70,11 +70,11 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_31_2017'
+ghenv.Component.Message = 'VER 0.0.63\nFEB_01_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nJAN_31_2017
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -126,28 +126,13 @@ def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
                     for mcount, trans in enumerate(transmitGroup):
                         if val == trans:
                             contextGroup[mcount].Append(contextSrfs[count])
-            allRadResults = []
-            allTotalResults = []
-            allIntMtx = []
-            for contCout, contextMesh in enumerate(contextGroup):
-                if len(cumSky_radiationStudy) == 145:
-                    radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, contextMesh,
-                                            parallel, cumSky_radiationStudy, lb_preparation.TregenzaPatchesNormalVectors, conversionFac, 2200000000000000, northVector, transmitGroup[contCout])
-                elif len(cumSky_radiationStudy) == 577:
-                    radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, contextMesh,
-                                            parallel, cumSky_radiationStudy, lb_preparation.getReinhartPatchesNormalVectors(), conversionFac, 2200000000000000, northVector, transmitGroup[contCout])
-                allRadResults.append(radResults)
-                allTotalResults.append(totalRadResults)
-                allIntMtx.append(intersectionMtx)
-            radResults = [sum(e)/len(e) for e in zip(*allRadResults)]
-            totalRadResults = sum(allTotalResults)/len(allTotalResults)
             
-            for pt in intersectionMtx.keys():
-                for vec in range(len(cumSky_radiationStudy)):
-                    avgInt = 0
-                    for mtx in allIntMtx:
-                        avgInt += mtx[pt][int(vec)]['isIntersect']
-                    intersectionMtx[pt][int(vec)]['isIntersect'] = avgInt/len(allIntMtx)
+            if len(cumSky_radiationStudy) == 145:
+                radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, contextGroup,
+                                        parallel, cumSky_radiationStudy, lb_preparation.TregenzaPatchesNormalVectors, conversionFac, 2200000000000000, northVector, transmitGroup)
+            elif len(cumSky_radiationStudy) == 577:
+                radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, contextGroup,
+                                        parallel, cumSky_radiationStudy, lb_preparation.getReinhartPatchesNormalVectors(), conversionFac, 2200000000000000, northVector, transmitGroup)
         else:
             if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
             else: joinedContext = None
@@ -246,12 +231,23 @@ def main(north, geometry, context, gridSize, disFromBase, contextTransmit, orien
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
     
+    # Check lengths of transmittance lists.
+    if contextTransmit != []:
+        if len(contextTransmit) == len(context):
+            pass
+        elif len(contextTransmit) == 1:
+            contextTransmit = [contextTransmit[0] for x in context]
+        else:
+            message = "The number of values in contextTransmit_ does not match the number of contex geomtries."
+            print message
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, message)
+            return -1
+    
     conversionFac = lb_preparation.checkUnits()
     # north direction
     northAngle, northVector = lb_preparation.angle2north(north)
-        
-    # read orientation study parameters
     
+    # read orientation study parameters
     runOrientation, rotateContext, rotationBasePt, angles = lb_preparation.readOrientationParameters(orientationStudyP)
     
     # mesh the test buildings
@@ -563,7 +559,5 @@ if _runIt:
               " and set up both the gridSize and the distance from base surface..."
         w = gh.GH_RuntimeMessageLevel.Warning
         ghenv.Component.AddRuntimeMessage(w, "Please connect the geometry or the context and set up both the gridSize and the distance from base surface...")
-    elif result == -1 and sc.sticky.has_key('ladybug_release'):
-        print "Canceled by user!"
         
 else: print 'Set runIt to True!'
