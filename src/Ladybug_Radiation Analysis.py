@@ -40,6 +40,7 @@ Provided by Ladybug 0.0.63
         context_: Context geometry that could block sunlight to the test _geometry.  Conext geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         _gridSize_: A number in Rhino model units that represents the average size of a grid cell for radiation analysis on the test surface(s).  This value should be smaller than the smallest dimension of the test geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take.
         _disFromBase: A number in Rhino model units that represents the offset distance of the test point grid from the input test _geometry.  Usually, the test point grid is offset by a small amount from the test _geometry in order to ensure that radiation analysis is done for the correct side of the test _geometry.  If the resulting radiation mesh of this component is offset to the wrong side of test _geometry, you should use the "Flip" Rhino command on the test _geometry before inputting it to this component.
+        contextTransmit_: A number or list of numbers that corresponds to the number of input context surfaces to denote the transmittance of the context.  Note that this number must be between 0 and 1.  The default assumes all context is opaque with a transmittance of 0.
         orientationStudyP_: Optional output from the "Orientation Study Parameter" component.  You can use an Orientation Study input here to answer questions like "What orientation of my building will give me the highest or lowest radiation gain for my analysis period?"  An Orientation Study will automatically rotate your input _geometry around several times and record the radiation results each time in order to output a list of values for totalRadiation and a grafted data stream for radiationResult.
         _selectedSkyMtx: The output from the selectSkyMtx component.
         _____________________: ...
@@ -69,11 +70,11 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_31_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nJAN_31_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -94,7 +95,132 @@ from Grasshopper.Kernel.Data import GH_Path
 if len(_selectedSkyMtx)!=0: cumSky_radiationStudy = _selectedSkyMtx
 else: cumSky_radiationStudy = []
 
-def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cumSky_radiationStudy, legendPar, parallel, runIt, bakeIt, workingDir, projectName):
+
+def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, contextTransmit, parallel, cumSky_radiationStudy, viewPoints_viewStudy, viewFields_Angles_D, sunVectors_sunlightHour, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH):
+    RADIANCE_radiationStudy = []
+    if len(RADIANCE_radiationStudy)!=0:
+        pass
+    elif cumSky_radiationStudy != None and (len(cumSky_radiationStudy) == 456 or len(cumSky_radiationStudy) == 1752) and analysisSrfs:
+        indexList, listInfo = lb_preparation.separateList(cumSky_radiationStudy, lb_preparation.strToBeFound)
+        selList = []
+        for i in range(1):
+            [selList.append(float(x)) for x in cumSky_radiationStudy[indexList[i]+7:indexList[i+1]]]
+            
+        cumSky_radiationStudy = selList
+        if parallel:
+            try:
+                for geo in analysisSrfs + contextSrfs: geo.EnsurePrivateCopy()
+            except:
+                pass
+        
+        # join the meshes and group them by transmitance.
+        joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
+        if contextTransmit != []:
+            transmitGroup = []
+            contextGroup = []
+            for count, val in enumerate(contextTransmit):
+                if not val in transmitGroup:
+                    transmitGroup.append(val)
+                    contextGroup.append(contextSrfs[count])
+                else:
+                    for mcount, trans in enumerate(transmitGroup):
+                        if val == trans:
+                            contextGroup[mcount].Append(contextSrfs[count])
+            allRadResults = []
+            allTotalResults = []
+            allIntMtx = []
+            for contCout, contextMesh in enumerate(contextGroup):
+                if len(cumSky_radiationStudy) == 145:
+                    radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, contextMesh,
+                                            parallel, cumSky_radiationStudy, lb_preparation.TregenzaPatchesNormalVectors, conversionFac, 2200000000000000, northVector, transmitGroup[contCout])
+                elif len(cumSky_radiationStudy) == 577:
+                    radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, contextMesh,
+                                            parallel, cumSky_radiationStudy, lb_preparation.getReinhartPatchesNormalVectors(), conversionFac, 2200000000000000, northVector, transmitGroup[contCout])
+                allRadResults.append(radResults)
+                allTotalResults.append(totalRadResults)
+                allIntMtx.append(intersectionMtx)
+            radResults = [sum(e)/len(e) for e in zip(*allRadResults)]
+            totalRadResults = sum(allTotalResults)/len(allTotalResults)
+            
+            for pt in intersectionMtx.keys():
+                for vec in range(len(cumSky_radiationStudy)):
+                    avgInt = 0
+                    for mtx in allIntMtx:
+                        avgInt += mtx[pt][int(vec)]['isIntersect']
+                    intersectionMtx[pt][int(vec)]['isIntersect'] = avgInt/len(allIntMtx)
+        else:
+            if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
+            else: joinedContext = None
+            
+            if len(cumSky_radiationStudy) == 145:
+                radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
+                                        parallel, cumSky_radiationStudy, lb_preparation.TregenzaPatchesNormalVectors, conversionFac, 2200000000000000, northVector)
+            elif len(cumSky_radiationStudy) == 577:
+                radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
+                                        parallel, cumSky_radiationStudy, lb_preparation.getReinhartPatchesNormalVectors(), conversionFac, 2200000000000000, northVector)
+                                    
+    else:
+        print "selectedSkyMtx failed to collect data! Use selectSkyMtx component to generate the selectedSkyMtx."
+        radResults = totalRadResults = None
+        
+        return [contextSrfs, analysisSrfs, testPoints, ptsNormals], -1, -1, -1
+    
+    results = radResults, None, None
+    totalResults = totalRadResults, None, None
+    
+    return results, totalResults, listInfo, intersectionMtx
+
+def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo, lb_preparation, lb_visualization, runOrientation):
+    
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
+    
+    colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
+    
+    # color mesh surfaces
+    analysisSrfs = lb_visualization.colorMesh(colors, analysisSrfs)
+    
+    ## generate legend
+    # calculate the boundingbox to find the legendPosition
+    if not (runOrientation and legendBasePoint==None):
+        lb_visualization.calculateBB([analysisSrfs, contextSrfs])
+    
+    # legend geometry
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
+    
+    # legend colors
+    legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
+    # color legend surfaces
+    legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
+    
+    customHeading = '\n\nRadiation Analysis'
+    if runOrientation:
+        try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
+        except: pass
+    titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[0]], lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize, legendBold)
+    
+    if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
+    
+    if bakeIt:
+        legendText.append(titleStr)
+        textPt.append(titlebasePt)
+        # check the study type
+        newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
+                                                        studyLayerName, checkTheName,
+                                                        runOrientation, angle, l)
+        if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
+        else: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
+    
+    return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
+
+def openLegend(legendRes):
+    if len(legendRes)!=0:
+        meshAndCrv = []
+        meshAndCrv.append(legendRes[0])
+        [meshAndCrv.append(c) for c in legendRes[1]]
+        return meshAndCrv
+    else: return
+
+def main(north, geometry, context, gridSize, disFromBase, contextTransmit, orientationStudyP, cumSky_radiationStudy, legendPar, parallel, runIt, bakeIt, workingDir, projectName):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -133,8 +259,6 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
         ## clean the geometry and bring them to rhinoCommon separated as mesh and Brep
         analysisMesh, analysisBrep = lb_preparation.cleanAndCoerceList(geometry)
         
-        #if len(analysisBrep)!=0 and gridSize == None: return -1
-        
         if gridSize == None:
             gridSize = 4/conversionFac
             originalTestPoints = []
@@ -146,18 +270,12 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
         analysisSrfs = analysisMesh + analysisMeshedBrep
         
         ## extract test points
-        #if not testPts or testPts[0] == None:
         testPoints, ptsNormals, meshSrfAreas = lb_mesh.parallel_testPointCalculator(analysisSrfs, float(disFromBase), parallel)
         originalTestPoints = testPoints
         testPoints = lb_preparation.flattenList(testPoints)
-        #print len(originalTestPoints), len(testPoints)
         
         ptsNormals = lb_preparation.flattenList(ptsNormals)
         meshSrfAreas = lb_preparation.flattenList(meshSrfAreas)
-        #else:
-        #    testPoints = testPts
-        #    if not len(testVec)==0:
-        #        print 'this is a place holder...'
     else:
         print "Please connect the geometry and set up both the gridSize and the distance from base surface..."
         analysisSrfs = testPoints = ptsNormals = meshSrfAreas = []
@@ -171,109 +289,17 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
         contextMeshedBrep = lb_mesh.parallel_makeContextMesh(contextBrep)
         
         ## Flatten the list of surfaces
-        contextMeshedBrep = lb_preparation.flattenList(contextMeshedBrep)
+        finalContextBrep = []
+        for meshList in contextMeshedBrep:
+            newMesh = rc.Geometry.Mesh()
+            for mesh in meshList:
+                newMesh.Append(mesh)
+            finalContextBrep.append(newMesh)
+        contextMeshedBrep = finalContextBrep
+        
         contextSrfs = contextMesh + contextMeshedBrep
     else: contextSrfs = []
-
-
-    def runAnalyses(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy, viewPoints_viewStudy, viewFields_Angles_D, sunVectors_sunlightHour, conversionFac):
-        RADIANCE_radiationStudy = []
-        if len(RADIANCE_radiationStudy)!=0:
-            pass
-        elif cumSky_radiationStudy != None and (len(cumSky_radiationStudy) == 456 or len(cumSky_radiationStudy) == 1752) and analysisSrfs:
-            indexList, listInfo = lb_preparation.separateList(cumSky_radiationStudy, lb_preparation.strToBeFound)
-            selList = []
-            for i in range(1):
-                [selList.append(float(x)) for x in cumSky_radiationStudy[indexList[i]+7:indexList[i+1]]]
-                
-            cumSky_radiationStudy = selList
-            if parallel:
-                try:
-                    for geo in analysisSrfs + contextSrfs: geo.EnsurePrivateCopy()
-                except:
-                    pass
-            
-            # join the meshes
-            joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
-            if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
-            else: joinedContext = None
-            if len(cumSky_radiationStudy) == 145:
-                radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
-                                        parallel, cumSky_radiationStudy, lb_preparation.TregenzaPatchesNormalVectors, conversionFac, 2200000000000000, northVector)
-            elif len(cumSky_radiationStudy) == 577:
-                radResults, totalRadResults, intersectionMtx = lb_runStudy_GH.parallel_radCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
-                                        parallel, cumSky_radiationStudy, lb_preparation.getReinhartPatchesNormalVectors(), conversionFac, 2200000000000000, northVector)
-                                        
-        else:
-            print "selectedSkyMtx failed to collect data! Use selectSkyMtx component to generate the selectedSkyMtx."
-            radResults = totalRadResults = None
-            
-            return [contextSrfs, analysisSrfs, testPoints, ptsNormals], -1, -1, -1
-        
-        viewPoints_viewStudy = []
-        if len(viewPoints_viewStudy)!= 0:
-            viewResults, totalViewResults = lb_runStudy_GH.parallel_viewCalculator(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs, parallel, viewPoints_viewStudy, viewFields_Angles_D, conversionFac)
-        else:
-            #print "No view study!"
-            viewResults = totalViewResults = None
     
-        if len(sunVectors_sunlightHour)!= 0:
-            hoursResults, totalHoursResults = lb_runStudy_GH.parallel_sunlightHoursCalculator(testPoints, ptsNormals, meshSrfAreas, analysisSrfs, contextSrfs,
-                                            parallel, sunVectors_sunlightHour, conversionFac, northVector)
-        else:
-            #print "No sunlight hours study!"
-            hoursResults = totalHoursResults = None
-            
-        #results = range(len(testPoints))
-        results = radResults, hoursResults, viewResults
-        totalResults = totalRadResults, totalHoursResults, totalViewResults
-        
-        return results, totalResults, listInfo, intersectionMtx
-    
-    
-    def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
-        
-        lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
-        
-        colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
-
-        # color mesh surfaces
-        analysisSrfs = lb_visualization.colorMesh(colors, analysisSrfs)
-        
-        ## generate legend
-        # calculate the boundingbox to find the legendPosition
-        if not (runOrientation and legendBasePoint==None):
-            lb_visualization.calculateBB([analysisSrfs, contextSrfs])
-        
-        # legend geometry
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
-        
-        # legend colors
-        legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
-        # color legend surfaces
-        legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
-
-        customHeading = '\n\nRadiation Analysis'
-        if runOrientation:
-            try: customHeading = customHeading + '\nRotation Angle: ' + `angle` + ' Degrees'
-            except: pass
-        titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle([listInfo[0]], lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize, legendBold)
-        
-        if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
-        
-        if bakeIt:
-            legendText.append(titleStr)
-            textPt.append(titlebasePt)
-            # check the study type
-            newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
-                                                            studyLayerName, checkTheName,
-                                                            runOrientation, angle, l)
-            if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)
-            else: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, False)
-        
-        return analysisSrfs, [legendSrfs, lb_preparation.flattenList(legendTextCrv + titleTextCurve)], l, legendBasePoint
-
-
     ## data for visualization
     legendTitles = ['kWh/m2', 'Hours', '%']
     try: legendTitles[0] = cumSky_radiationStudy[3]
@@ -341,9 +367,9 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
             viewFields_Angles_D = []
             sunVectors_sunlightHour = []
             results, eachTotalResult, listInfo, intersectionMtx = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                        analysisSrfs, mergedContextSrfs, parallel, cumSky_radiationStudy,
+                                        analysisSrfs, mergedContextSrfs, contextTransmit, parallel, cumSky_radiationStudy,
                                         viewPoints_viewStudy, viewFields_Angles_D,
-                                        sunVectors_sunlightHour, conversionFac)
+                                        sunVectors_sunlightHour, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH)
             
             #collect surfaces, results, and values
             orirntationStudyRes[angle] = {"angle" : angle,
@@ -412,7 +438,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
                         # so confusing!
                         resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(mergedContextSrfs, analysisSrfs,
                                           results[i], eachTotalResult[i], legendPar, legendTitles[i],
-                                          studyLayerNames[i], bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo)
+                                          studyLayerNames[i], bakeIt, CheckTheName, l[i], angles[angle + 1], listInfo, lb_preparation, lb_visualization, runOrientation)
                         resV += 1
             
     else:
@@ -420,10 +446,10 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
         angle = 0; l = [0, 0, 0]
         viewPoints_viewStudy = []; viewFields_Angles_D = []; sunVectors_sunlightHour = []
         results, totalResults, listInfo, intersectionMtx = runAnalyses(testPoints, ptsNormals, meshSrfAreas,
-                                analysisSrfs, contextSrfs, parallel, cumSky_radiationStudy,
+                                analysisSrfs, contextSrfs, contextTransmit, parallel, cumSky_radiationStudy,
                                 viewPoints_viewStudy, viewFields_Angles_D,
-                                sunVectors_sunlightHour, conversionFac)
-                                
+                                sunVectors_sunlightHour, conversionFac, northVector, lb_preparation, lb_mesh, lb_runStudy_GH)
+    
     if results!=-1 and len(results) == 4:
         contextSrfs, analysisSrfs, testPoints, ptsNormals = results
         return contextSrfs, analysisSrfs, testPoints, ptsNormals, originalTestPoints
@@ -433,7 +459,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
             totalResults = [totalResults] # make a list of the list so the same process can be applied to orientation study and normal run
         else:
             bakeIt = 0
-            
+        
         resultColored = []
         legendColored = []
         [resultColored.append([]) for x in range(len(results))]
@@ -444,10 +470,11 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
                 # Add an option for orientation study
                 resultColored[i], legendColored[i], l[i], legendBasePoint = resultVisualization(contextSrfs, analysisSrfs,
                               results[i], totalResults[0][i], legendPar, legendTitles[i],
-                              studyLayerNames[i], bakeIt, CheckTheName, 0, angles[-1], listInfo)
+                              studyLayerNames[i], bakeIt, CheckTheName, 0, angles[-1], listInfo, lb_preparation, lb_visualization, runOrientation)
                 resV += 1
-                
-                
+        
+        
+        
         # return outputs
         if runOrientation: contextSrfs = mergedContextSrfs
         if resV != 0:
@@ -456,26 +483,20 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP, cum
         else: return -1
         return -1
 
+
+
+
 if _runIt:
     
     if (len(_geometry)!=0 and _geometry[0] != None and _disFromBase):
         
-        result = main(north_, _geometry, context_, _gridSize_, _disFromBase,
+        result = main(north_, _geometry, context_, _gridSize_, _disFromBase, contextTransmit_,
                     orientationStudyP_, _selectedSkyMtx, legendPar_, parallel_,
                     _runIt, bakeIt_, workingDir_, projectName_)
         
         if result!= -1 and len(result) > 5:
-            def openLegend(legendRes):
-                if len(legendRes)!=0:
-                    meshAndCrv = []
-                    meshAndCrv.append(legendRes[0])
-                    [meshAndCrv.append(c) for c in legendRes[1]]
-                    return meshAndCrv
-                else: return
-            
             # Assign the result to GH component outputs
             contextMesh, analysisMesh, testPts_flatten, testVec_flatten = result[0], result[1], result[2], result[3]
-            
            
             # radiation
             radiationResult_flatten = result[4][0]
@@ -498,7 +519,7 @@ if _runIt:
                 totalRadiation.append(res[0])
                 totalSunlightHours.append(res[1])
                 totalView.append(res[2])
-             
+            
             legendBasePt = result[-3]
             originalTestPoints = result[-2]
             intMtx = result[-1]
@@ -546,4 +567,3 @@ if _runIt:
         print "Canceled by user!"
         
 else: print 'Set runIt to True!'
-

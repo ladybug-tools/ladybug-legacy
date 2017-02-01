@@ -2193,7 +2193,7 @@ class RunAnalysisInsideGH(object):
     def parallel_radCalculator(self, testPts, testVec, meshSrfArea, bldgMesh,
                                 contextMesh, parallel, cumSkyResult, TregenzaPatches,
                                 conversionFac, contextHeight = 2200000000000000,
-                                northVector = rc.Geometry.Vector3d.YAxis):
+                                northVector = rc.Geometry.Vector3d.YAxis, transmittance=0):
         # preparing bulk lists
         # create an empty dictionary for each point
         intersectionMtx = {}
@@ -2240,13 +2240,16 @@ class RunAnalysisInsideGH(object):
                         
                         if check != 0 and contextMesh!=None: #and testPts[i].Z < contextHeight:
                             #for bldg in contextMesh:
-                            if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh,ray) >= 0.0: check = 0;
+                            if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh,ray) >= 0.0: check = transmittance;
                         
-                        if check != 0:
+                        if check == 1:
                             radiation[i] = radiation[i] + (cumSkyResult[patchNum] * math.cos(vecAngle))
                             intersectionMtx[i][patchNum] =  {'isIntersect' : 1, 'vecAngle' : vecAngle}
-                            # print groundRadiation
-                            groundRadiation[i] = 0 #groundRadiation[i] + cumSkyResult[patchNum] * math.cos(vecAngle) * (groundRef/100) * 0.5
+                            groundRadiation[i] = 0
+                        elif check != 0:
+                            radiation[i] = radiation[i] + ((cumSkyResult[patchNum] * math.cos(vecAngle))*transmittance)
+                            intersectionMtx[i][patchNum] =  {'isIntersect' : transmittance, 'vecAngle' : vecAngle}
+                            groundRadiation[i] = 0
                     patchNum += 1
                 
                 radResult[i] = (groundRadiation[i] + radiation[i]) #/sunUpHours
