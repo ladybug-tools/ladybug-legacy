@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Sky Dome"
 ghenv.Component.NickName = 'SkyDome'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_29_2017'
+ghenv.Component.Message = 'VER 0.0.63\nFEB_03_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -202,15 +202,18 @@ def main(north, genCumSkyResult, originalSkyDomeSrfs, centerPoint, scale, projec
         for patchCount, patch in enumerate(skyDomeSrfs):
             newPatch = patch.DuplicateShallow() # make a copy so I can
             if northAngle!=0: newPatch.Rotate(northAngle, rc.Geometry.Vector3d.ZAxis, cenPt)
-            newPatch.Translate(movingVector) # move it to the right place
-            movedSkyPatches.append(newPatch)
             
             patchMeshed = rc.Geometry.Mesh.CreateFromBrep(newPatch, meshParam)[0] # create mesh
             if projection == 1 or projection == 2:
                 patchMeshed = lb_visualization.projectGeo([patchMeshed], projection, cenPt, 100*scale)[0]
-            domeMeshed.Append(patchMeshed) # append to the main mesh
+            
             for face in range(patchMeshed.Faces.Count):
                 colForMesh.append(totalRadiationColors[patchCount]) #generate color list
+            
+            patchMeshed.Translate(movingVector)
+            newPatch.Translate(movingVector) # move it to the right place
+            movedSkyPatches.append(newPatch)
+            domeMeshed.Append(patchMeshed) # append to the main mesh
             
             # thanks to rob guglielmetti for suggesting this
             MP = rc.Geometry.AreaMassProperties.Compute(patchMeshed)
@@ -399,7 +402,7 @@ if _runIt and _selectedSkyMtx:
                 skyPatchesAreas.AddRange(result[5][i], p)
                 values.AddRange(result[6][i], p)
                 skyPatchesAsBrep.AddRange(result[7][i], p)
-            ghenv.Component.Params.Output[4].Hidden = True
+            ghenv.Component.Params.Output[5].Hidden = True
             ghenv.Component.Params.Output[6].Hidden = True
             ghenv.Component.Params.Output[7].Hidden = True
 else:
