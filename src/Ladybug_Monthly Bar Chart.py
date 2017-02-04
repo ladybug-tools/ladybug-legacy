@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.63\nJAN_23_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1086,13 +1086,14 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
         except: pass
         legendBasePt.Transform(moveTransform)
         for geo in titleTxt:geo.Transform(moveTransform)
-        titleTxtPt.Transform(moveTransform)
         for lst in dataMesh:
             for geo in lst: geo.Transform(moveTransform)
         for lst in dataCurves:
             for geo in lst: geo.Transform(moveTransform)
         for lst in dataLabelPts:
             for geo in lst: geo.Transform(moveTransform)
+        for pt in allTextPt:
+            pt.Transform(moveTransform)
     
     if bakeIt_ > 0:
         #Make a single mesh for all data.
