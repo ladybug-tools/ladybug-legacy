@@ -481,8 +481,12 @@ def main(north, geometry, context, gridSize, disFromBase, contextTransmit, orien
 
 
 
-
 if _runIt:
+    
+    try:
+        test = contextTransmit_
+    except:
+        contextTransmit_ = []
     
     if (len(_geometry)!=0 and _geometry[0] != None and _disFromBase):
         
