@@ -41,6 +41,10 @@ Provided by Ladybug 0.0.63
             1 = Orthographic (straight projection to the XY Plane)
             2 = Stereographic (equi-angular projection to the XY Plane)
         _scale_: Use this input to change the scale of the sky dome.  The default is set to 1.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         contextMask: A mesh of the portion of the sky dome masked by the context_ geometry.
         skyMask: A mesh of the portion of the sky dome visible by the _centerPtOrPlane_ through the context_ geometry.
@@ -449,6 +453,34 @@ def main(viewMethod, testPt, viewPlane, skyDensity, contextMesh, scale, projecti
             strategyMask = lb_visualization.projectGeo([strategyMask], projection, testPt, scale)[0]
             strategyMask.Transform(zTransform)
     
+    #If the user has set bakeIt to true, bake the geometry.
+    if bakeIt_ > 0:
+        #Set up the new layer.
+        layerT = rc.RhinoDoc.ActiveDoc.Layers #layer table
+        parentLayer = rc.DocObjects.Layer()
+        parentLayer.Name = 'SKY_MASK'
+        parentLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, 'SKY_MASK', True)
+        if parentLayerIndex < 0:
+            parentLayerIndex = layerT.Add(parentLayer)
+        # Buil list of all meshes.
+        allMeshes = [unmaskedMesh]
+        if maskedMesh.IsValid:
+            allMeshes.append(maskedMesh)
+        if orientMask != None:
+            allMeshes.append(orientMask)
+        if strategyMask != None:
+            allMeshes.append(strategyMask)
+        # Bake the objects.
+        if bakeIt_ == 1:
+            lb_visualization.mesh2Hatch(allMeshes, parentLayerIndex)
+        else:
+            attr = rc.DocObjects.ObjectAttributes()
+            attr.LayerIndex = parentLayerIndex
+            attr.ColorSource = rc.DocObjects.ObjectColorSource.ColorFromObject
+            attr.PlotColorSource = rc.DocObjects.ObjectPlotColorSource.PlotColorFromObject
+            for mesh in allMeshes:
+                rc.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh, attr)
+    
     return maskedMesh, orientMask, strategyMask, unmaskedMesh, "%.2f"%percentageArea, "%.2f"%orientAreaPercent, "%.2f"%strategyAreaPercent, "%.2f"%percentageSky
 
 
@@ -487,4 +519,4 @@ if initCheck == True:
         results = main(viewMethod, centerPt, viewPlane, skyDensity, context_, 200*scale, _projection_, overhangProject_, leftFinProject_, rightFinProject_)
         if results!=-1:
             if viewMethod == 1: contextMask, orientationMask, strategyMask, skyMask, contextView, orientView, strategyView, skyView = results
-            else: contextMask, orientationMask, skyMask, strategyMask, contextExposure, orientExposure, strategyExposure, skyExposure = results
+            else: contextMask, orientationMask, strategyMask, skyMask, contextExposure, orientExposure, strategyExposure, skyExposure = results
