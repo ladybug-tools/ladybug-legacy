@@ -115,22 +115,25 @@ def main(percent, operator):
     
     #Remove the faces numbers that are harmful.
     faceNumbersHarm = []
-    shadeNetEffectHelp = []
-    for count, num in enumerate(_analysisResult):
-        if num > 0: shadeNetEffectHelp.append(num)
-        else: faceNumbersHarm.append(faceNumbersSort[count])
+    faceNumbersKept = []
     
     # Take the specified percent of the helpful cells.
     shadeNetFinal = []
     if levelOfPerform_ == None:
-        numToTake  = percent*(len(shadeNetEffectHelp))
-        for count, num in enumerate(shadeNetEffectHelp):
-            if count < numToTake: shadeNetFinal.append(num)
-            else: faceNumbersHarm.append(faceNumbersSort[count])
+        numToTake  = percent*(len(_analysisResult))
+        for count, num in enumerate(_analysisResult):
+            if count < numToTake:
+                shadeNetFinal.append(num)
+                faceNumbersKept.append(faceNumbersSort[count])
+            else:
+                faceNumbersHarm.append(faceNumbersSort[count])
     else:
-        for count, num in enumerate(shadeNetEffectHelp):
-            if eval(str(num) + operator + str(levelOfPerform_)): shadeNetFinal.append(num)
-            else: faceNumbersHarm.append(faceNumbersSort[count])
+        for count, num in enumerate(_analysisResult):
+            if eval(str(num) + operator + str(levelOfPerform_)):
+                shadeNetFinal.append(num)
+                faceNumbersKept.append(faceNumbersSort[count])
+            else:
+                faceNumbersHarm.append(faceNumbersSort[count])
     
     # Check to see if no values meet the conditional statement.
     if len(shadeNetFinal) == 0:
@@ -139,32 +142,33 @@ def main(percent, operator):
     
     #Remove the unnecessary cells from the shade mesh.
     newMesh = _inputMesh
+    areaList = []
+    for fnum in faceNumbersKept:
+        face = newMesh.Faces[fnum]
+        if face.IsQuad:
+            srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), rc.Geometry.Point3d(newMesh.Vertices[face.D]), sc.doc.ModelAbsoluteTolerance)
+        else:
+            srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), sc.doc.ModelAbsoluteTolerance)
+        areaList.append(rc.Geometry.AreaMassProperties.Compute(srfBrep).Area)
+    
+    # Delete unwanted faces.
     newMesh.Faces.DeleteFaces(faceNumbersHarm)
     
-    #Turn the new mesh into a brep snd get the area of each face.
-    meshBrep = rc.Geometry.Brep.CreateFromMesh(newMesh, True)
-    if meshBrep != None:
-        areaList = []
-        for surface in meshBrep.Faces:
-            areaList.append(rc.Geometry.AreaMassProperties.Compute(surface).Area)
-        
-        #Try to simplify the brep.
-        try:
-            edgeCrv = meshBrep.DuplicateEdgeCurves(True)
-            joinedCrv = rc.Geometry.Curve.JoinCurves(edgeCrv, sc.doc.ModelAbsoluteTolerance)
-        except:
-            joinedCrv = none
-        
-        #Calculate the total area and the energy saved by the new mesh.
-        totalArea = sum(areaList)
-        totalEnergyList = []
-        for count, area in enumerate(areaList):
-            totalEnergyList.append(shadeNetFinal[count]*area)
-        totalEnergy = sum(totalEnergyList)
-        
-        return totalEnergy, totalArea, newMesh, joinedCrv
-    else:
-        return 0, 0, None, None
+    #Try to simplify the brep.
+    try:
+        edgeCrv = newMesh.GetNakedEdges()
+        joinedCrv = rc.Geometry.Curve.JoinCurves(edgeCrv, sc.doc.ModelAbsoluteTolerance)
+    except:
+        joinedCrv = None
+    
+    #Calculate the total area and the energy saved by the new mesh.
+    totalArea = sum(areaList)
+    totalEnergyList = []
+    for count, area in enumerate(areaList):
+        totalEnergyList.append(shadeNetFinal[count]*area)
+    totalEnergy = sum(totalEnergyList)
+    
+    return totalEnergy, totalArea, newMesh, joinedCrv
 
 
 checkData = False
