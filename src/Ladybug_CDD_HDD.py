@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -28,7 +28,7 @@ By default, this component uses a more accurate calculation than the traditional
 You may check the formulas in this page: "http://www.vesma.com/ddd/ddcalcs.htm"
 If you rather to use the traditional method, set useDailyAvrMethod to True.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _hourlyDryBulbTemperature: Annual dry bulb temperature from the Import epw component (in degrees Celsius).
@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_CDD_HDD"
 ghenv.Component.NickName = "CDD_HDD"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"

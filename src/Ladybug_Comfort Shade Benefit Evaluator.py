@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com; Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com; mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -38,7 +38,7 @@ _
 The heating/temperture degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the temperture-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or temperture degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive temperture degree-days to give a net effect for the cell.
 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _location: The location output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_28_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

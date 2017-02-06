@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ Use this component to import climate data found in the .stat file that downloads
 Sepcifcally, this allows you to import the ASHRAE and Koppen climate zones as well as design temperatures representing the temperature extremes of the climate that should be used to design and size heating and cooling systems.
 Lastly, this component brings in the typical and extreme weeks of the year as ladybug analysis periods that can be plugged into the other ladybug components.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _statFile: A .stat file path on your system from the Open STAT file component (or typed out as a string).
@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.63
 """
 ghenv.Component.Name = "Ladybug_Import stat"
 ghenv.Component.NickName = 'importSTAT'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"

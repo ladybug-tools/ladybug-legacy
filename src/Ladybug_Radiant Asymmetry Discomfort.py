@@ -24,7 +24,7 @@ Use this component to calculate discomfort from radiant assymetry.
 _
 The comfort functions in this function come from Figure 5.2.4.1 of ASHRAE 55 2010.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
 
     Args:
         _radTempDifference: The temperature difference between one side of a pla
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Radiant Asymmetry Discomfort"
 ghenv.Component.NickName = 'radAsymmetry'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_27_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

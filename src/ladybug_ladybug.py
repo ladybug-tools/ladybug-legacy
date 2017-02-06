@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -31,7 +31,7 @@ along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nFEB_01_2017'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"

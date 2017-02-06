@@ -2,7 +2,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ _
 Heiselberg, P. (1994). Draft Risk from Cold Vertical Surfaces. Building and Environment, 29: 297-301.
 Manz, H. and Frank, T. (2003). "Analysis of Thermal Comfort near Cold Vertical Surfaces by Means of Computational Fluid Dynamics." Indoor Built Environment. 13: 233-242.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _testPts: The test points at which downdraft conditions will be evaluated.
@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nDEC_13_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

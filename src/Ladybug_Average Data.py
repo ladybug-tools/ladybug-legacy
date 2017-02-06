@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to select the data out of an annual hourly data stream (from the importEPW component) using the "Analysis Period" component.
 This componenent also averages or totals the connected hourly data for each day, month, and average hour of each month in the analysis period.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _annualHourlyData: An hourly data stream from the "Import epw" component.
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"

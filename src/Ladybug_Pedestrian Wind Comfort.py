@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com>
+# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com>
 # with assistance of Dr. Liam Harrington
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
@@ -28,7 +28,7 @@ Construction of a new building changes the wind microclimate in its vicinity. Th
 Based on Lawsons Pedestrian Comfort Criteria (1990)
 https://www.dropbox.com/s/t9pxhr45vwg2xd2/Wind_Microclimate.pdf?dl=0
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     input:
         _epwFile: Input an .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -138,7 +138,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Pedestrian Wind Comfort"
 ghenv.Component.NickName = "PedestrianWindComfort"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

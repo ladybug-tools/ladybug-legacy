@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ _
 This component is particularly useful if you are trying to create animations of Grasshopper geometry and want to automate the capturing of views.
 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
 
     Args:
         _fileName: The file name that you would like the image to be saved as.  Note that, for animations, you want to make sure that each saved images has a different filename otherwise the previous image will be overwritten by each successive image.
@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.63
 """
 ghenv.Component.Name = "Ladybug_Render View"
 ghenv.Component.NickName = 'renderView'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_18_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

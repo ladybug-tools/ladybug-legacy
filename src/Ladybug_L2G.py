@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -23,7 +23,7 @@
 """
 Use this component to convert the liquid volume from Liters to U.S. Gallons (not Imperial Gallons).
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _L: A value or list of values in Liters.
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_L2G"
 ghenv.Component.NickName = "L2G"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
