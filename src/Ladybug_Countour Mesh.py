@@ -203,6 +203,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     # Contour the mesh.
     contourMesh = []
     contourLines = []
+    contourLabels = []
     contourColors = []
     labelText = []
     labelTextPts = []
@@ -263,6 +264,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             labelSize = _labelSize_
         for count, plane in enumerate(intPlanes):
             contourLines.append([])
+            contourLabels.append([])
             theLines = rc.Geometry.Mesh.CreateContourCurves(coloredChart, plane)
             for line in theLines:
                 contourLines[count].append(line)
@@ -273,7 +275,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
                     labelText.append(numbersStr[count])
                     labelTextPts.append(ltextPt)
                     labelTextMesh = lb_visualization.text2srf([numbersStr[count]], [ltextPt], legendFont, labelSize, legendBold)[0]
-                    contourLines[count].extend(labelTextMesh)
+                    contourLabels[count].extend(labelTextMesh)
                 except:
                     pass
     
@@ -294,6 +296,10 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             for geo in crvList:
                 geo.Transform(planeTrans)
                 geo.Transform(crvMove)
+        for crvList in contourLabels:
+            for geo in crvList:
+                geo.Transform(planeTrans)
+                geo.Transform(crvMove)
     
     # color legend surfaces
     if contourType != 2:
@@ -310,6 +316,8 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     transfBack = rc.Geometry.Transform.ChangeBasis(meshPlane, rc.Geometry.Plane.WorldXY)
     for geo in contourMesh: geo.Transform(transfBack)
     for crvList in contourLines:
+        for geo in crvList: geo.Transform(transfBack)
+    for crvList in contourLabels:
         for geo in crvList: geo.Transform(transfBack)
     for geo in flattenedLegend: geo.Transform(transfBack)
     legendBasePoint.Transform(transfBack)
@@ -350,7 +358,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, joinedContMesh, legendSrfs, legendText, textPt, textSize, legendFont, flatContourLines, decimalPlaces, True)
         else: lb_visualization.bakeObjects(newLayerIndex, joinedContMesh, legendSrfs, legendText, textPt, textSize, legendFont, flatContourLines, decimalPlaces, False)
     
-    return contourMesh, contourLines, contourColors, [legendSrfs, flattenedLegend], legendBasePoint, legendColors
+    return contourMesh, contourLines, contourColors, contourLabels, [legendSrfs, flattenedLegend], legendBasePoint, legendColors
 
 
 
@@ -384,17 +392,21 @@ if initCheck == True and _inputMesh and len(_analysisResult)!=0:
         legend= []
         [legend.append(item) for item in lb_visualization.openLegend(result[3])]
         contourMesh = result[0]
-        legendBasePt = result[4]
-        legendColors = result[5]
+        legendBasePt = result[5]
+        legendColors = result[6]
         
+        contourLabelsInit = result[3]
         contourLinesInit = result[1]
         contourColorsInit = result[2]
         contourLines = DataTree[Object]()
         contourColors = DataTree[Object]()
+        contourLabels = DataTree[Object]()
         for count, datalist in enumerate(contourLinesInit):
             for item in datalist: contourLines.Add(item, GH_Path(count))
         for count, datalist in enumerate(contourColorsInit):
             for item in datalist: contourColors.Add(item, GH_Path(count))
+        for count, datalist in enumerate(contourLabelsInit):
+            for item in datalist: contourLabels.Add(item, GH_Path(count))
         
         # Hide output
         ghenv.Component.Params.Output[6].Hidden = True
