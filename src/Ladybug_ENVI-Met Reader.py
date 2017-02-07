@@ -113,6 +113,7 @@ import Grasshopper.Kernel as gh
 
 studyFolderDict = {'0':'atmosphere', '1':'pollutants', '2':'radiation', '3':'soil', '4':'surface'}
 
+# thanks to Giulio Piacentino and credit to Abraham Yezioro for fixed a small bug in inputDict
 inputsDict = {
 0: ["_outputFolder", "ENVI-Met output folder path. E.g. 'C:\...\\NewSimulation_output'."],
 1: ["_studyFolder_", "ENVI-Met sub-folder, connect a number from 0 to 4. Default value is 0.\n-\n0 = atmosphere\n1 = pollutants\n2 = radiation\n3 = soil\n4 = surface"],
