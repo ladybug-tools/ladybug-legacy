@@ -32,7 +32,7 @@ Special thanks goes to MIT.
 Provided by Ladybug 0.0.64
     
     Args:
-        _outputFolder: ENVI-Met output folder path. E.g. 'C:\...\NewSimulation_output'
+        _outputFolder: ENVI-Met output folder path. E.g. 'C:\...\\NewSimulation_output'
         _studyFolder_: ENVI-Met sub-folder, connect a number from 0 to 4. Default value is 0.
         -
         0 = atmosphere
@@ -114,7 +114,7 @@ import Grasshopper.Kernel as gh
 studyFolderDict = {'0':'atmosphere', '1':'pollutants', '2':'radiation', '3':'soil', '4':'surface'}
 
 inputsDict = {
-0: ["_outputFolder", "ENVI-Met output folder path. E.g. 'C:\...\NewSimulation_output'."],
+0: ["_outputFolder", "ENVI-Met output folder path. E.g. 'C:\...\\NewSimulation_output'."],
 1: ["_studyFolder_", "ENVI-Met sub-folder, connect a number from 0 to 4. Default value is 0.\n-\n0 = atmosphere\n1 = pollutants\n2 = radiation\n3 = soil\n4 = surface"],
 2: ["_selectItem_", "Connect an integer number which represent the index of the file you want to read. Plug a panel to 'outputFiles' to see them.\n" + \
 "-\nDefault value is 0, the first file in ENVI-Met model folder."],
