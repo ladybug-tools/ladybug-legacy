@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to make a windRose in the Rhino scene. In this wind rose diagram, each wedge represents the percentage of time the wind came from that direction during the analysis period you choose. You will note that each wedge is also colored. These colors relate directly with the legend displayed on the right. The colors in a wedge conveys the relative percentage of time the wind coming from that direction was within that speed range.
 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _north_: Input a vector to be used as a true North direction for the wind rose or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -41,8 +41,8 @@ Provided by Ladybug 0.0.63
         _scale_: Input a number here to change the scale of the wind rose.  The default is set to 1.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         maxFrequency_: An optional number between 1 and 100 that represents the maximum percentage of hours that the outer-most ring of the wind rose represents.  By default, this value is set by the wind direction with the largest number of hours (the highest frequency) but you may want to change this if you have several wind roses that you want to compare to each other.  For example, if you have wind roses for different months or seasons, which each have different maximum frequencies.
-        showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction. If showAverageVelocity_ is False or no boolean is connected to it, then the frequencies will be shown right after the direcctions. If showAverageVelocity_ is True, then the frequencies will be shown after average velocity values. 
-        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction. If a conditional statement is connected to the conditionalStatement_ input, a beaufort number is plotted(in square brackets) along with the average velocities. This number indicates the effect caused by wind of average velocity coming from that partcular direction.
+        showFrequency_: Connect boolean and set it to True to display frequency of wind coming from each direction. By default, these values will be displayed in gray color. 
+        showAverageVelocity_: Connect boolean and set it to True to display average wind velocity in m/s for wind coming from each direction. If a conditional statement is connected to the conditionalStatement_ input, a beaufort number is plotted(in square brackets) along with the average velocities. This number indicates the effect caused by wind of average velocity coming from that partcular direction. By default, these values will be displayed in black color.
         bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
             0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
             1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_30_2017'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1066,7 +1066,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         velTextMesh = []
     
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
-                    numberCrvs = numberCrvs + [freqTextMesh] + [velTextMesh]
+                    numberCrvs = numberCrvs 
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
                     
                     # let's move it move it move it!

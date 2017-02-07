@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2017, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -33,7 +33,7 @@ Human, Color Recognition, Sign Recognition, Word Recognition (horizontal angle)
 Human, Color Recognition, Optimal Video Display Area (vertical angle)
 Source: INO - CNR Istituto Nazionale di Ottica www.ino.it Titolo: Il processo della Visione e Stereoscopia Relatore: Luca Mercatelli 16 aprile 2010 Polo viale.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         type_ : This input sets the cone of vision, the cone is defined by four values that are vertical angle+, vertical angle-, horizontal angle+, horizontal angle-, distance limits.
@@ -80,7 +80,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Cone Of Vision"
 ghenv.Component.NickName = 'ConeOfVision'
-ghenv.Component.Message = "VER 0.0.63\nJAN_01_2017"
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

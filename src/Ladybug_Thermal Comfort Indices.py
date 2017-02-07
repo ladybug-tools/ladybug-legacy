@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com>
+# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com>
 # with assistance of Dr. Krzysztof Blazejczyk <k.blaz@twarda.pan.pl>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
@@ -44,7 +44,7 @@ Use this component to calculate various thermal comfort indices:
 - THI (Temperature Humidity Index)
 - PHS (Predicted Heat Strain)
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     input:
         _comfortIndex: Choose one of the comfort indices:
@@ -151,7 +151,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2017, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ https://developers.google.com/maps/pricing-and-plans/#details
 -
 Special thanks goes to Google Maps.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _address: Write a location address. For example,
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Location Finder"
 ghenv.Component.NickName = 'LocationFinder'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_31_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic and Jason Sensibaugh <djordjedspasic@gmail.com and sensij@yahoo.com> 
+# Copyright (c) 2013-2017, Djordje Spasic and Jason Sensibaugh <djordjedspasic@gmail.com and sensij@yahoo.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ Sources:
 http://www.nrel.gov/docs/fy14osti/60272.pdf
 https://pvpmc.sandia.gov
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -111,7 +111,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
 ghenv.Component.NickName = "PhotovoltaicsSurface"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -32,7 +32,7 @@ Lastly, the formulas to translate this radiation into an effective radiant field
 Arens, Edward; Huang, Li; Hoyt, Tyler; Zhou, Xin; Shiavon, Stefano. (2014). Modeling the comfort effects of short-wave solar radiation indoors.  Indoor Environmental Quality (IEQ).
 http://escholarship.org/uc/item/89m1h2dg#page-4
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _location: The location output from the "Ladybug_Import epw" component. This is used to determine the position of the sun.
@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.63
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"

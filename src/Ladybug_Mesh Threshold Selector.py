@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to select out the part of a colored mesh that meets a certain conditional statement.  This has multiple uses: The generation of a custom shade from a shade benefit analysis, Quantifying the daylight area from a daylight analysis, Selecting out the portion of a roof with enough solar radiation for PV panels, and much more.
 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.64
     
     Args:
         _inputMesh: The mesh for which you would like to highlight the portion that meets a threshold.
@@ -48,7 +48,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.63\nJAN_11_2017'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -115,22 +115,25 @@ def main(percent, operator):
     
     #Remove the faces numbers that are harmful.
     faceNumbersHarm = []
-    shadeNetEffectHelp = []
-    for count, num in enumerate(_analysisResult):
-        if num > 0: shadeNetEffectHelp.append(num)
-        else: faceNumbersHarm.append(faceNumbersSort[count])
+    faceNumbersKept = []
     
     # Take the specified percent of the helpful cells.
     shadeNetFinal = []
     if levelOfPerform_ == None:
-        numToTake  = percent*(len(shadeNetEffectHelp))
-        for count, num in enumerate(shadeNetEffectHelp):
-            if count < numToTake: shadeNetFinal.append(num)
-            else: faceNumbersHarm.append(faceNumbersSort[count])
+        numToTake  = percent*(len(_analysisResult))
+        for count, num in enumerate(_analysisResult):
+            if count < numToTake:
+                shadeNetFinal.append(num)
+                faceNumbersKept.append(faceNumbersSort[count])
+            else:
+                faceNumbersHarm.append(faceNumbersSort[count])
     else:
-        for count, num in enumerate(shadeNetEffectHelp):
-            if eval(str(num) + operator + str(levelOfPerform_)): shadeNetFinal.append(num)
-            else: faceNumbersHarm.append(faceNumbersSort[count])
+        for count, num in enumerate(_analysisResult):
+            if eval(str(num) + operator + str(levelOfPerform_)):
+                shadeNetFinal.append(num)
+                faceNumbersKept.append(faceNumbersSort[count])
+            else:
+                faceNumbersHarm.append(faceNumbersSort[count])
     
     # Check to see if no values meet the conditional statement.
     if len(shadeNetFinal) == 0:
@@ -139,32 +142,33 @@ def main(percent, operator):
     
     #Remove the unnecessary cells from the shade mesh.
     newMesh = _inputMesh
+    areaList = []
+    for fnum in faceNumbersKept:
+        face = newMesh.Faces[fnum]
+        if face.IsQuad:
+            srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), rc.Geometry.Point3d(newMesh.Vertices[face.D]), sc.doc.ModelAbsoluteTolerance)
+        else:
+            srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), sc.doc.ModelAbsoluteTolerance)
+        areaList.append(rc.Geometry.AreaMassProperties.Compute(srfBrep).Area)
+    
+    # Delete unwanted faces.
     newMesh.Faces.DeleteFaces(faceNumbersHarm)
     
-    #Turn the new mesh into a brep snd get the area of each face.
-    meshBrep = rc.Geometry.Brep.CreateFromMesh(newMesh, True)
-    if meshBrep != None:
-        areaList = []
-        for surface in meshBrep.Faces:
-            areaList.append(rc.Geometry.AreaMassProperties.Compute(surface).Area)
-        
-        #Try to simplify the brep.
-        try:
-            edgeCrv = meshBrep.DuplicateEdgeCurves(True)
-            joinedCrv = rc.Geometry.Curve.JoinCurves(edgeCrv, sc.doc.ModelAbsoluteTolerance)
-        except:
-            joinedCrv = none
-        
-        #Calculate the total area and the energy saved by the new mesh.
-        totalArea = sum(areaList)
-        totalEnergyList = []
-        for count, area in enumerate(areaList):
-            totalEnergyList.append(shadeNetFinal[count]*area)
-        totalEnergy = sum(totalEnergyList)
-        
-        return totalEnergy, totalArea, newMesh, joinedCrv
-    else:
-        return 0, 0, None, None
+    #Try to simplify the brep.
+    try:
+        edgeCrv = newMesh.GetNakedEdges()
+        joinedCrv = rc.Geometry.Curve.JoinCurves(edgeCrv, sc.doc.ModelAbsoluteTolerance)
+    except:
+        joinedCrv = None
+    
+    #Calculate the total area and the energy saved by the new mesh.
+    totalArea = sum(areaList)
+    totalEnergyList = []
+    for count, area in enumerate(areaList):
+        totalEnergyList.append(shadeNetFinal[count]*area)
+    totalEnergy = sum(totalEnergyList)
+    
+    return totalEnergy, totalArea, newMesh, joinedCrv
 
 
 checkData = False
