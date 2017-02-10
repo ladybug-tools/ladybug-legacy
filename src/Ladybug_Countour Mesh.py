@@ -390,7 +390,7 @@ if initCheck == True and _inputMesh and len(_analysisResult)!=0:
     result = main(_analysisResult, _inputMesh, _contourType_, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_, lb_preparation, lb_visualization)
     if result!= -1:
         legend= []
-        [legend.append(item) for item in lb_visualization.openLegend(result[3])]
+        [legend.append(item) for item in lb_visualization.openLegend(result[4])]
         contourMesh = result[0]
         legendBasePt = result[5]
         legendColors = result[6]
