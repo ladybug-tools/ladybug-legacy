@@ -2874,8 +2874,13 @@ class ResultVisualization(object):
                     else:
                         finalStr.append(numbersStr[count] + "<x<" + numbersStr[count+1])
                 numbersStr = finalStr
-            numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
-            if len(numbers) < numOfSeg: numbers.append(highB)
+            try:
+                numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
+                if len(numbers) < numOfSeg: numbers.append(highB)
+            except:
+                pass
+            if numOfSeg == 1:
+                numbersStr = [numbersStr[0]]
         
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
