@@ -151,7 +151,11 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         legendRange = highB - dataMin
     else:
         legendRange = fullRange
-    contIncr = legendRange/fullRange
+    if fullRange == 0:
+        fullRange = legendRange
+        contIncr = legendRange/numSeg
+    else:
+        contIncr = legendRange/fullRange
     
     # Create a mesh with a height domain, which can then be contoured.
     if heightDomain!=None:
@@ -193,7 +197,6 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             startVal = ((lowB-dataMin)/fullRange)*(heightDomain.Max - heightDomain.Min)
         else:
             startVal = ((lowB-dataMin)/fullRange)*(numSeg-1)*(1/conversionFac)
-        
         lastPt = rc.Geometry.Point3d(lastPt.X, lastPt.Y, startVal)
     intPlanes = [rc.Geometry.Plane(lastPt, rc.Geometry.Vector3d.ZAxis)]
     for count in range(int(numSeg)):
