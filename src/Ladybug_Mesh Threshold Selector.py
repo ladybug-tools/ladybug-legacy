@@ -159,7 +159,14 @@ def main(percent, operator):
         edgeCrv = newMesh.GetNakedEdges()
         joinedCrv = rc.Geometry.Curve.JoinCurves(edgeCrv, sc.doc.ModelAbsoluteTolerance)
     except:
-        joinedCrv = None
+        try:
+            edgeCrv = newMesh.GetNakedEdges()
+            nurbsCrvs = []
+            for curve in edgeCrv:
+                nurbsCrvs.append(curve.ToNurbsCurve())
+            joinedCrv = rc.Geometry.Curve.JoinCurves(nurbsCrvs, sc.doc.ModelAbsoluteTolerance)
+        except:
+            joinedCrv = None
     
     #Calculate the total area and the energy saved by the new mesh.
     totalArea = sum(areaList)
