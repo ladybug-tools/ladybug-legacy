@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_12_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -5227,6 +5227,7 @@ class ComfortModels(object):
             self.age = age  # in years
             if sex == "male": sex = 1
             elif sex == "female": sex = 2
+            elif sex == "average sex": sex = 3
             self.sex = sex
             self.ht = heightM  # in meters
             self.mbody = weight  # in kg
@@ -5264,6 +5265,8 @@ class ComfortModels(object):
                 he = eswpot
             elif self.sex == 2:
                 he = fec
+            elif self.sex == 3:
+                he = (eswpot + fec)/2
             self.h = he * (1.0 - self.eta)
             # sensible respiratory energy
             self.cair = 1010.0
@@ -5354,6 +5357,8 @@ class ComfortModels(object):
                             sw = swm
                         if self.sex == 2:
                             sw = swf
+                        if self.sex == 3:
+                            sw = (swm + swf)/2
                         eswphy = -sw * self.evap
                         he = 0.633 * self.hc / (self.p * self.cair)
                         fec = 1.0 / (1.0 + 0.92 * self.hc * rcl)
