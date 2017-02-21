@@ -40,7 +40,8 @@ Provided by Ladybug 0.0.64
         sex_: Person's sex.
               -
               1 or "male"
-              2 or "female".
+              2 or "female"
+              3 or "average sex".
               -
               If not supplied, "male" will be used as a default value.
         height_: Person's height.
@@ -190,11 +191,11 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Body Characteristics"
 ghenv.Component.NickName = "BodyCharacteristics"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = "VER 0.0.64\nFEB_13_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
-#compatibleLBVersion = VER 0.0.61\nDEC_05_2015
+#compatibleLBVersion = VER 0.0.64\nFEB_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -215,6 +216,8 @@ def main(age, sex, height, weight, bodyPosition, clothingInsulation, clothingAlb
                     sex = "male"
                 elif (sex.lower() == "female"):
                     sex = "female"
+                elif (sex.lower() == "average sex"):
+                    sex = "average sex"
                 else:
                     raise
             except Exception,e:
@@ -223,6 +226,8 @@ def main(age, sex, height, weight, bodyPosition, clothingInsulation, clothingAlb
                         sex = "male"
                     elif (int(sex) == 2):
                         sex = "female"
+                    elif (int(sex) == 3):
+                        sex = "average sex"
                     else:
                         raise
                 except Exception,e:
@@ -337,6 +342,8 @@ def main(age, sex, height, weight, bodyPosition, clothingInsulation, clothingAlb
         BMR = 9.99 * weight + 6.25 * heightCM - 5 * age - 161  # in calories/day (formula by Mifflin-St. Jeor)
         #BMR = 655.09 + (9.56*weight) + (1.84*heightCM) - (4.67*age)  # in calories/day  (formula by Harris Benedict)
         #BMR = 795 + 7.18*weight  # in calories/day  (formula by Owen)
+    elif (sex == "average sex"):
+        BMR = "It is not possible to calculate BMR with \"average sex\" chosen as the \"sex_\" input.\nUse either \"male\" of \"female\" inputs instead."
     
     
     # BMI formula by Adolphe Quetelet:
@@ -373,6 +380,8 @@ def main(age, sex, height, weight, bodyPosition, clothingInsulation, clothingAlb
             BMILevel = "Obese"
         elif (BMI >= 40):
             BMILevel = "Extreme obesity"
+    elif (sex == "average sex"):
+        BMILevel = "It is not possible to calculate BMILevel with \"average sex\" chosen as the \"sex_\" input.\nUse either \"male\" of \"female\" inputs instead."
     
     # printing
     print "Input data:\n\nAge (years): %0.2f\nSex: %s\nHeight (cm): %0.2f\nWeight (kg): %0.2f\nBody position: %s\nClothing insulation (clo): %s\nClothing albedo (percent): %s\nAcclimated: %s\nMetabolic rate (met): %0.2f\nActivity duration (minutes): %0.2f" % (age, sex, heightCM, weight, bodyPosition, clothingInsulation, clothingAlbedo, acclimated, metabolicRate, activityDuration)

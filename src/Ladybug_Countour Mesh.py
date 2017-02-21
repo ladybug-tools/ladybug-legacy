@@ -98,6 +98,10 @@ def checkMeshPlanarity(mesh, basePlanePt):
     if meshIsPlanar:
         changeBasisTransform = rc.Geometry.Transform.ChangeBasis(rc.Geometry.Plane.WorldXY, meshPlane)
         mesh.Transform(changeBasisTransform)
+    else:
+        meshNormals = [meshPlaneVec for i in range(mesh.Normals.Count)]
+        changeBasisTransform = rc.Geometry.Transform.ChangeBasis(rc.Geometry.Plane.WorldXY, meshPlane)
+        mesh.Transform(changeBasisTransform)
     
     return meshIsPlanar, mesh, meshPlane, meshNormals
 
@@ -114,7 +118,6 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         '\n Try breaking up your mesh into planar pieces and feeding them individually into this component.'
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        return -1
     
     # Check the mesh's structure.
     if inputMesh.Faces.Count == len(analysisResult):
@@ -126,6 +129,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         return -1
+    singleValMesh = False
     
     # Read the legend and generate a list of blank colors.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
@@ -151,7 +155,12 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         legendRange = highB - dataMin
     else:
         legendRange = fullRange
-    contIncr = legendRange/fullRange
+    if fullRange == 0 or fullRange < (legendRange/numSeg):
+        singleValMesh = True
+        fullRange = 1
+        contIncr = legendRange/numSeg
+    else:
+        contIncr = legendRange/fullRange
     
     # Create a mesh with a height domain, which can then be contoured.
     if heightDomain!=None:
@@ -193,7 +202,6 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             startVal = ((lowB-dataMin)/fullRange)*(heightDomain.Max - heightDomain.Min)
         else:
             startVal = ((lowB-dataMin)/fullRange)*(numSeg-1)*(1/conversionFac)
-        
         lastPt = rc.Geometry.Point3d(lastPt.X, lastPt.Y, startVal)
     intPlanes = [rc.Geometry.Plane(lastPt, rc.Geometry.Vector3d.ZAxis)]
     for count in range(int(numSeg)):
@@ -211,73 +219,85 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     
     #Generate colored regions.
     if contourType == 0 or contourType == 1 or contourType == None:
-        try:
-            finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[0])[-1]
-            finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[0])
-            contourMesh.append(finalSplitMesh)
-            startTrigger = True
-        except:
-            pass
-        for count in range(len(intPlanes)-1):
+        if singleValMesh == True:
+            val = analysisResult[0]
+            if lowB == 'min': lowB = val
+            if legendRange == 0:
+                legendRange = 1
+            colorIndex = int((val-lowB)/legendRange)
+            coloredChart.VertexColors.CreateMonotoneMesh(legendColors[colorIndex])
+            contourMesh.append(coloredChart)
+        else:
             try:
-                if startTrigger == False:
-                    finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[-1]
-                    finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
-                    contourMesh.append(finalSplitMesh)
-                    startTrigger = True
-                    initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
-                    finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intPlanes[count])[0]
-                elif count == len(intPlanes)-2:
-                    finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
-                else:
-                    initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
-                    finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intPlanes[count])[0]
-                try:
-                    finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
-                except:
-                    finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
+                finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[0])[-1]
+                finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[0])
                 contourMesh.append(finalSplitMesh)
+                startTrigger = True
             except:
+                pass
+            for count in range(len(intPlanes)-1):
                 try:
-                    finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
-                    finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
+                    if startTrigger == False:
+                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[-1]
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
+                        contourMesh.append(finalSplitMesh)
+                        startTrigger = True
+                        initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
+                        finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intPlanes[count])[0]
+                    elif count == len(intPlanes)-2:
+                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
+                    else:
+                        initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
+                        finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intPlanes[count])[0]
+                    try:
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
+                    except:
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
                     contourMesh.append(finalSplitMesh)
-                except: pass
+                except:
+                    try:
+                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
+                        contourMesh.append(finalSplitMesh)
+                    except: pass
     
     # Generate Labeled Contours
-    if contourType == 0 or contourType == 2 or contourType == None:
-        contourColors.append([System.Drawing.Color.Black])
-        if lowB != 'min' and highB != 'max':
-            numbers = rs.frange(lowB, highB, round((highB - lowB) / (numSeg -1), 6))
-        elif lowB != 'min':
-            numbers = rs.frange(lowB, dataMax, round((dataMax - lowB) / (numSeg -1), 6))
-        elif highB != 'max':
-            numbers = rs.frange(dataMin, highB, round((highB - dataMin) / (numSeg -1), 6))
-        else:
-            numbers = rs.frange(dataMin, dataMax, round((dataMax - dataMin) / (numSeg -1), 6))
-        if decimalPlaces == None: decimalPlaces = 2
-        formatString = "%."+str(decimalPlaces)+"f"
-        numbersStr = [(formatString % x) for x in numbers]
-        if _labelSize_ == None:
-            labelSize = textSize/5
-        else:
-            labelSize = _labelSize_
-        for count, plane in enumerate(intPlanes):
-            contourLines.append([])
-            contourLabels.append([])
-            theLines = rc.Geometry.Mesh.CreateContourCurves(coloredChart, plane)
-            for line in theLines:
-                contourLines[count].append(line)
-                try:
-                    pts = line.DivideByLength(labelSize, True)
-                    ptIndex = int(len(pts)/2)
-                    ltextPt = line.PointAt(pts[ptIndex])
-                    labelText.append(numbersStr[count])
-                    labelTextPts.append(ltextPt)
-                    labelTextMesh = lb_visualization.text2srf([numbersStr[count]], [ltextPt], legendFont, labelSize, legendBold)[0]
-                    contourLabels[count].extend(labelTextMesh)
-                except:
-                    pass
+    try:
+        if contourType == 0 or contourType == 2 or contourType == None:
+            contourColors.append([System.Drawing.Color.Black])
+            if lowB != 'min' and highB != 'max':
+                numbers = rs.frange(lowB, highB, round((highB - lowB) / (numSeg -1), 6))
+            elif lowB != 'min':
+                numbers = rs.frange(lowB, dataMax, round((dataMax - lowB) / (numSeg -1), 6))
+            elif highB != 'max':
+                numbers = rs.frange(dataMin, highB, round((highB - dataMin) / (numSeg -1), 6))
+            else:
+                numbers = rs.frange(dataMin, dataMax, round((dataMax - dataMin) / (numSeg -1), 6))
+            if decimalPlaces == None: decimalPlaces = 2
+            formatString = "%."+str(decimalPlaces)+"f"
+            numbersStr = [(formatString % x) for x in numbers]
+            if _labelSize_ == None:
+                labelSize = textSize/5
+            else:
+                labelSize = _labelSize_
+            for count, plane in enumerate(intPlanes):
+                contourLines.append([])
+                contourLabels.append([])
+                theLines = rc.Geometry.Mesh.CreateContourCurves(coloredChart, plane)
+                for line in theLines:
+                    contourLines[count].append(line)
+                    try:
+                        pts = line.DivideByLength(labelSize, True)
+                        ptIndex = int(len(pts)/2)
+                        ltextPt = line.PointAt(pts[ptIndex])
+                        labelText.append(numbersStr[count])
+                        labelTextPts.append(ltextPt)
+                        labelTextMesh = lb_visualization.text2srf([numbersStr[count]], [ltextPt], legendFont, labelSize, legendBold)[0]
+                        contourLabels[count].extend(labelTextMesh)
+                    except:
+                        pass
+    except:
+        legendSrfs = None
     
     if contourType == 3:
         for count, plane in enumerate(intPlanes):
@@ -322,7 +342,10 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     for geo in flattenedLegend: geo.Transform(transfBack)
     legendBasePoint.Transform(transfBack)
     if legendSrfs != None:
-        legendSrfs.Transform(transfBack)
+        try:
+            legendSrfs.Transform(transfBack)
+        except:
+            pass
     
     # If the user has requested to bake the geomtry, then bake it.
     if bakeIt > 0:
@@ -390,7 +413,7 @@ if initCheck == True and _inputMesh and len(_analysisResult)!=0:
     result = main(_analysisResult, _inputMesh, _contourType_, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_, lb_preparation, lb_visualization)
     if result!= -1:
         legend= []
-        [legend.append(item) for item in lb_visualization.openLegend(result[3])]
+        [legend.append(item) for item in lb_visualization.openLegend(result[4])]
         contourMesh = result[0]
         legendBasePt = result[5]
         legendColors = result[6]

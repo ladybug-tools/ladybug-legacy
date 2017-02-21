@@ -368,6 +368,10 @@ def main(viewMethod, testPt, viewPlane, skyDensity, contextMesh, scale, projecti
             if acceptAngleMax > 360:
                 acceptAngleMax = acceptAngleMax - 360
                 acceptAngleMin = acceptAngleMin - 360
+            if acceptAngleMax < 0:
+                acceptAngleMax = acceptAngleMax + 360
+                acceptAngleMin = acceptAngleMin + 360
+            
             strategyMasked, strategyUnmasked, visibleRays = finCalc(visibleRays, acceptAngleMin, acceptAngleMax)
             strategyRemoveIndices = filter(lambda a: a != -1, strategyMasked)
             visibleRemoveIndices = filter(lambda a: a != -1, strategyUnmasked)

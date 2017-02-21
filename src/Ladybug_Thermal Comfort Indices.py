@@ -90,7 +90,7 @@ Provided by Ladybug 0.0.64
                            If not supplied 50% will be used as a default (indoor conditions).
                            -
                            In percent (from 0% to 110%).
-        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing persons gravity center). It can be a single value or a list of values.
+        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing person’s gravity center). It can be a single value or a list of values.
                     Take the "windSpeed" output from "Import epw" component and plug it to "Wind Speed Calculator" component's "_windSpeed_tenMeters" input. Set the "heightAboveGround_" input to "1.1". Then plug in the data from "Wind Speed Calculator" component's "windSpeedAtHeight" output to this component's "windSpeed_" input.
                     In this way we converted the 10 meter wind speed from the .epw file to required 1.1m.
                     -
@@ -120,7 +120,7 @@ Provided by Ladybug 0.0.64
                               -
                               If not supplied, the following default values will be used:
                               --
-                              30 - age
+                              35 - age
                               "male" - sex
                               175 - height in centimeters
                               75 - weight in kilograms
@@ -151,11 +151,11 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = "VER 0.0.64\nFEB_13_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
-#compatibleLBVersion = VER 0.0.60\nDEC_29_2015
+#compatibleLBVersion = VER 0.0.64\nFEB_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
@@ -490,16 +490,16 @@ def Humidex(Ta, Tdp):
     if humidex < 30:
         effectHumidex = 0
         comfortable = 1
-    elif humidex >=30 and humidex < 35:
+    elif humidex >= 30 and humidex < 35:
         effectHumidex = 1
         comfortable = 0
-    elif humidex >=35 and humidex < 40:
+    elif humidex >= 35 and humidex < 40:
         effectHumidex = 2
         comfortable = 0
-    elif humidex >=40 and humidex < 45:
+    elif humidex >= 40 and humidex < 45:
         effectHumidex = 3
         comfortable = 0
-    elif humidex >=45 and humidex < 54:
+    elif humidex >= 45 and humidex < 54:
         effectHumidex = 4
         comfortable = 0
     elif humidex >= 54:
@@ -989,6 +989,20 @@ def heartRates(age, sex):
             HRrates = [77,84,90]
         elif age > 65:
             HRrates = [76,84,90]
+    elif sex == "average sex":
+        # average values (("male" + "female")/2) have been taken
+        if age <= 25:
+            HRrates = [75.5, 83.5,90]
+        elif age > 25 and age <= 35:
+            HRrates = [75,82.5,90]
+        elif age > 35 and age <= 45:
+            HRrates = [76.5,84,90]
+        elif age > 45 and age <= 55:
+            HRrates = [76.5,84,90]
+        elif age > 55 and age <= 65:
+            HRrates = [76,83,90]
+        elif age > 65:
+            HRrates = [74.5,82,90]
     
     return HRrates
 
