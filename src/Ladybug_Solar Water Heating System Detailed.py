@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ If nothing inputed, the following swh system will be used by default:
 - pipe length: 20 meters
 - unshaded
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     input:
         collectorOpticalEfficiency_: Fr(tau alpha) Collector's optical efficiency coefficient. Also called Collector heat removal factor. Varies based on collector's type. Some default values by type:
@@ -89,12 +89,12 @@ Provided by Ladybug 0.0.62
                          If not supplied, 0.1 (glazed flat plate) will be used.
                          -
                          Unitless.
-        skyViewFactor_: Continuous Sky View Factor - portion of the visible sky (dome). It defines the shading of the parts of diffuse irradiance. It ranges from 0 to 1.
-                        Import it from "Sunpath shading" component's "skyViewFactor" output.
-                        -
-                        If not supplied, 1 will be used as a default value (SWHsurface is unshaded).
-                        -
-                        Unitless.
+        skyExposureFactor_: Continuous Sky Exposure Factor - portion of the visible sky (dome). It defines the shading of the diffuse irradiance components. It ranges from 0 to 1.
+                            Import it from "Sunpath shading" component's "skyExposureFactor" output.
+                            -
+                            If not supplied, 1 will be used as a default value (SWHsurface is unshaded).
+                            -
+                            Unitless.
         beamIndexPerHour_: Transmission index of beam (direct) irradiance for each hour during a year. It ranges from 0-1.
                            Import it from "Sunpath shading" component's "beamIndexPerHour" output.
                            -
@@ -232,19 +232,19 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating System Detailed"
 ghenv.Component.NickName = "SolarWaterHeatingSystemDetailed"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 import Grasshopper.Kernel as gh
 import scriptcontext as sc
 
 
-def SWHsystemInputData(collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyViewFactor, beamIndexPerHour, maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, mechanicalRoomTemperature, pipeLength, pipeDiameterMM, pipeInsulationThicknessMM, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness):
+def SWHsystemInputData(collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyExposureFactor, beamIndexPerHour, maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, mechanicalRoomTemperature, pipeLength, pipeDiameterMM, pipeInsulationThicknessMM, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness):
     
     # collector inputs
     if (collectorOpticalEfficiency == None) or (collectorOpticalEfficiency <= 0) or (collectorOpticalEfficiency > 1):
@@ -265,8 +265,8 @@ def SWHsystemInputData(collectorOpticalEfficiency, collectorThermalLoss, collect
     if (IAMcoefficient == None):
         IAMcoefficient = 0.1  # default value for flat plate collectors
     
-    if (skyViewFactor == None) or (skyViewFactor < 0) or (skyViewFactor > 1):
-        skyViewFactor = 1  # default - no shading
+    if (skyExposureFactor == None) or (skyExposureFactor < 0) or (skyExposureFactor > 1):
+        skyExposureFactor = 1  # default - no shading
     
     if (len(beamIndexPerHour) == 0) or (beamIndexPerHour[0] is ""):
         beamIndexPerHourData = [1 for i in range(0,8760)]  # default - no shading
@@ -345,7 +345,7 @@ def SWHsystemInputData(collectorOpticalEfficiency, collectorThermalLoss, collect
     if (heatExchangerEffectiveness == None) or (heatExchangerEffectiveness <= 0):
         heatExchangerEffectiveness = 0.8  # default
     
-    SWHsystemSettings = [collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyViewFactor, beamIndexPerHourData, maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, mechanicalRoomTemperatureData, pipeLength, pipeDiameterMM, pipeInsulationThicknessMM, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness]
+    SWHsystemSettings = [collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyExposureFactor, beamIndexPerHourData, maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, mechanicalRoomTemperatureData, pipeLength, pipeDiameterMM, pipeInsulationThicknessMM, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness]
     # printing
     printOutputMsg = \
     """
@@ -377,7 +377,7 @@ Tank size (l): %s
 Tank loss (W/m2/C): %0.2f
 Height-diameter tank ratio (-): %0.2f
 Heat exchanger effectiveness (-): %0.2f
-    """ % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyViewFactor, sum(beamIndexPerHourData)/len(beamIndexPerHourData), maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, sum(mechanicalRoomTemperatureData)/len(mechanicalRoomTemperatureData), pipeLength, pipeDiameterMM, pipeInsulationThicknessMM, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness)
+    """ % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, workingFluidHeatCapacity, flowRatePerM2, IAMcoefficient, skyExposureFactor, sum(beamIndexPerHourData)/len(beamIndexPerHourData), maxWorkingTemperature, dischargeTemperature, deliveryWaterTemperature, avrJanuaryColdWaterTemperature, sum(mechanicalRoomTemperatureData)/len(mechanicalRoomTemperatureData), pipeLength, pipeDiameterMM, pipeInsulationThicknessMM, pipeInsulationConductivity, pumpPower, pumpEfficiency, tankSizeLiters, tankLoss, heightDiameterTankRatio, heatExchangerEffectiveness)
     
     print printOutputMsg
     
@@ -392,7 +392,7 @@ if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
-        SWHsystemSettings, validSWHsystemData, printMsg = SWHsystemInputData(collectorOpticalEfficiency_, collectorThermalLoss_, collectorActiveAreaPercent_, workingFluidHeatCapacity_, flowRatePerM2_, IAMcoefficient_, skyViewFactor_, beamIndexPerHour_, maxWorkingTemperature_, dischargeTemperature_, deliveryWaterTemperature_, avrJanuaryColdWaterTemperature_, mechanicalRoomTemperature_, pipeLength_, pipeDiameter_, pipeInsulationThickness_, pipeInsulationConductivity_, pumpPower_, pumpEfficiency_, tankSize_, tankLoss_, heightDiameterTankRatio_, heatExchangerEffectiveness_)
+        SWHsystemSettings, validSWHsystemData, printMsg = SWHsystemInputData(collectorOpticalEfficiency_, collectorThermalLoss_, collectorActiveAreaPercent_, workingFluidHeatCapacity_, flowRatePerM2_, IAMcoefficient_, skyExposureFactor_, beamIndexPerHour_, maxWorkingTemperature_, dischargeTemperature_, deliveryWaterTemperature_, avrJanuaryColdWaterTemperature_, mechanicalRoomTemperature_, pipeLength_, pipeDiameter_, pipeInsulationThickness_, pipeInsulationConductivity_, pumpPower_, pumpEfficiency_, tankSize_, tankLoss_, heightDiameterTankRatio_, heatExchangerEffectiveness_)
         if not validSWHsystemData:
             print printMsg
             ghenv.Component.AddRuntimeMessage(level, printMsg)

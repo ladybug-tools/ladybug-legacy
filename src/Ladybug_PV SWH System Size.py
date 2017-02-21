@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to generate the PVsurface or SWHsurface for "Photovoltaics surface" or "Solar Water Heating surface" components, based on initial PV or SWH system sizes.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     input:
         _location: The output from the "importEPW" or "constructLocation" component.  This is essentially a list of text summarizing a location on the earth.
@@ -103,7 +103,7 @@ Provided by Ladybug 0.0.62
                                Use Honeybee "Read EP Result" component or any other one to generate it.
                                -
                             2) In case of SWH array: Thermal heating energy (or electrical energy) required to heat domestic hot water and/or space heating load and/or space cooling load.
-                               Use Ladybug "Domestic hot water" or "Hot water" components to calculate it.
+                               Use Ladybug "Residential Hot Water" or "Commercial Public Apartment Hot Water" components to calculate it (simply plugin their "heatingLoadPerHour" outputs).
                                -
                                The purpose of this input is to divide the energy loads to each PV/SWH array rows.
                             -
@@ -126,13 +126,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_PV SWH System Size"
 ghenv.Component.NickName = "PV_SWH_SystemSize"
-ghenv.Component.Message = 'VER 0.0.62\nMAR_28_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-#ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
-ghenv.Component.SubCategory = "6 | WIP"
-#compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "4"
+ghenv.Component.SubCategory = "4 | Renewables"
+#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.Kernel as gh
@@ -600,7 +599,7 @@ if sc.sticky.has_key("ladybug_release"):
             if validInputData:
                 PV_SWHsurface, minimalSpacing, minimalSpacingDate = main(srfArea, arrayTiltR, arrayAzimuthR, arrayAzimuthVec, tiltedArrayHeight, numberOfRows, days, months, hours, sunAltitudeR_L, sunAzimuthR_L, skewRowsDistance, arrayOriginPt, groundTiltR, arrayOriginCorner)
                 printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea, arrayTiltR, arrayAzimuthR, tiltedArrayHeight, numberOfRows, skewRowsDistance, minimalSpacingPeriod1, minimalSpacingPeriod2, groundTiltR, baseSurfaceUV, arrayOriginCorner, moduleEfficiency, moduleActiveAreaPercent, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
-                PV_SWHsurfacesArea = srfArea
+                PV_SWHsurfacesArea = srfArea; energyLoadPerRowPerHour = energyLoadPerRowPerHourDataTree
             else:
                 print printMsg
                 ghenv.Component.AddRuntimeMessage(level, printMsg)

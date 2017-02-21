@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,25 +25,28 @@ Use this component to see the portion of the sky dome that is masked by context 
 The component will generate separate meshs for the portions of the sky dome that are masked and visible.
 The component will also calculate the percentage of the sky that is masked by the context geometry and the percentage that is visible (the sky view factor).
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     Args:
         _testPt: A view point for which one wants to see the portion of the sky masked by the context geometry surrounding this point.
-        _context: Context geometry surrounding the _testPt that could block the view to the sky.  Geometry must be a Brep or list of Breps.
-        scale: Use this input to change the scale of the sky dome.  The default is set to 1.
-        
+        _context: Context geometry surrounding the _testPt that could block the view to the sky.  Geometry must be a Brep or list of Breps. You are also advised to provide surfaces instead of solid objects. Providing surfces will make the calculation faster and accurate. So if you are using this component to check the percent of sky visible from a courtyard, please only provide surfaces immediate to the couryard and the not the whole building as a brep.
+        skyDensity_: An integer, that is greater than or equal to 0. This value is used to generate test points on skyDome. from which the maskedSky surfaces are derived. The default value is set to 1. Incresing this value will increase the calculation time. You are adviced to increase this number only if you are trying to analyze too many shading surfaces.
+        radius_: A float, that controls the radius of skyDome.
+        merge_: A boolean. Set it to True to merge maskedSky surfaces
     Returns:
-        masked: Shadow mask
-        unmasked: Unmasked portion of the sky
-        percMasked: Percentage of the sky masked
+        maskedSrfOnGround: A list of surfaces. These are masked horizontal projections of maskedSky surfaces. They're useful when the skyDome is viewed from the top.
+        maskedCrvsOnSky: A list of Curves. These are edge curves for maskedSky surfaces.
+        maskedSkyDome: A list of surfaces. The portion of sky not blocked by the context geometry
+        unmaskedSkyDome: A list of surfaces. The portion of sky blocked by the context geometry
+        percMasked: Percentage of the sky blocked by the context geometry
 """
 
 ghenv.Component.Name = "Ladybug_Shading Mask_II"
 ghenv.Component.NickName = 'shadingMaskII'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
@@ -54,6 +57,7 @@ import math
 import System
 import scriptcontext as sc
 import System.Threading.Tasks as tasks
+import operator
 
 def calculateBB(geometries, restricted = True):
     
@@ -75,7 +79,8 @@ def calculateBB(geometries, restricted = True):
                 else: bbox = rc.Geometry.BoundingBox.Union( bbox, geo.GetBoundingBox(restricted))
     
     return bbox
-
+    
+    
 def generateSkyGeo(cenPt, context):
     
     # find the bounding box
@@ -88,26 +93,27 @@ def generateSkyGeo(cenPt, context):
     
     # make sure the sphere is big enough
     radius = radius * 1.01
-    
+
     # rotation line axis
-    lineVector = rc.Geometry.Vector3d.ZAxis
-    lineVector.Reverse()
+    lineVector = rc.Geometry.Vector3d.XAxis
+#    lineVector.Reverse()
     lineAxis = rc.Geometry.Line(cenPt, lineVector)
     
     # base plane to draw the arc
-    basePlane = rc.Geometry.Plane(cenPt, rc.Geometry.Vector3d.XAxis)
+    basePlane = rc.Geometry.Plane(cenPt, rc.Geometry.Vector3d.ZAxis)
     baseVector = rc.Geometry.Vector3d.YAxis
         
-    sectionCrv = rc.Geometry.Arc(basePlane, radius, math.pi/2).ToNurbsCurve()
-    
-    sky  =rc.Geometry.RevSurface.Create(sectionCrv, lineAxis).ToBrep()
-        
+    sectionCrv = rc.Geometry.Arc(basePlane, radius, math.pi).ToNurbsCurve()
+    sky = rc.Geometry.RevSurface.Create(sectionCrv, lineAxis, 0 , math.pi).ToBrep()
+
     return sky, radius
+
 
 def joinMesh(meshList):
     joinedMesh = rc.Geometry.Mesh()
     for m in meshList: joinedMesh.Append(m)
     return joinedMesh
+
 
 def getMeshFaceVertices(meshFace, vertices):
     
@@ -131,6 +137,7 @@ def getMeshFaceVertices(meshFace, vertices):
         movedPts.append(movedPt)
     return pts, movedPts
 
+
 def isMeshFaceVisible(cenPt, pts, context):
     
     # check if the point is in the same plane as surface
@@ -146,7 +153,7 @@ def isMeshFaceVisible(cenPt, pts, context):
         line = rc.Geometry.Line(cenPt, pt)
         intPts, pattern = rc.Geometry.Intersect.Intersection.MeshLine(context, line)
         
-        if len(intPts) <= 1: visiblePts.append(pt)
+        if len(intPts) >= 1: visiblePts.append(pt)
     
     if len(visiblePts)/len(pts) == 0: return False
     return True
@@ -167,6 +174,7 @@ def movePointsToSkyDome(visiblePts, cenPt, skyRadius):
     
     return lines
 
+
 def projectToSkyAndXY(lines, centerPt, sky):
     projectLines = []
     for line in lines:
@@ -184,6 +192,7 @@ def projectToSkyAndXY(lines, centerPt, sky):
                 projectLines.append(lineProjectedToXY)
         
     return projectLines
+    
     
 def getSkyMask(cenPt, context, sky, skyRadius, merge):
 
@@ -255,7 +264,6 @@ def getSkyMask(cenPt, context, sky, skyRadius, merge):
     crvsOnSky = rc.Geometry.Curve.ProjectToBrep(segments, [sky], rc.Geometry.Vector3d.ZAxis, sc.doc.ModelAbsoluteTolerance)
     
     crvsOnSky = rc.Geometry.Curve.JoinCurves(crvsOnSky)
-    
     skyDome = sky.Faces[0].Split(crvsOnSky, sc.doc.ModelAbsoluteTolerance)
     if skyDome == None:
         print "Split failed!"
@@ -264,7 +272,20 @@ def getSkyMask(cenPt, context, sky, skyRadius, merge):
     
     return planarSrfs, crvsOnSky, skyDome, joinedContext
 
-def main(cenPt, context, radius, merge):
+
+def checkTheInputs():
+    skyDensity = 1
+    if skyDensity_ != None:
+        if skyDensity_ >= 0: skyDensity = skyDensity_
+        else:
+            warning = "skyDensity_ must be equal to or greater than 0."
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+            
+    return skyDensity
+
+
+def main(cenPt, context, skyDensity, radius, merge):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -294,37 +315,102 @@ def main(cenPt, context, radius, merge):
     # calculate the mask
     planarSrfs, crvsOnSky, skyDome, joinedContext = getSkyMask(cenPt, context, BBSky, BBRadius, merge)
     
-    
     # separate sky components
     maskedSkyDome = []
     unmaskedSkyDome = []
-    
+    surfaceList = []  
     for faceCount in range(skyDome.Faces.Count):
         surface = skyDome.Faces.ExtractFace(faceCount)
         srfCenPt = rc.Geometry.AreaMassProperties.Compute(surface).Centroid
-        srfCenPt = rc.Geometry.Point3d(surface.ClosestPoint(srfCenPt))
-        
         if not surface.IsValid:
             surface = surface.Faces.ExtractFace(0)
-            
-        if isMeshFaceVisible(cenPt, [srfCenPt], joinedContext):
-            unmaskedSkyDome.append(surface)
-        else:
-            maskedSkyDome.append(surface)
+        surfaceList.append(surface) 
+              
+    # Using skypatches to generate vectors for intersection with all skyDome surfaces
+    skyPatches = lb_preparation.generateSkyGeo(cenPt, skyDensity, radius)
+    vectorList = []
+    pointList = []
+    for patch in skyPatches:
+        center = rc.Geometry.AreaMassProperties.Compute(patch)
+        centerPt = center.Centroid
+        vector = rc.Geometry.Vector3d(centerPt - cenPt)
+        point = rc.Geometry.Point3d.Add(cenPt , vector)
+        line = rc.Geometry.Line(cenPt, point)
+        vectorList.append(vector)
     
-    # join!
-    #maskedSkyDome = list(rc.Geometry.Brep.JoinBreps(maskedSkyDome, sc.doc.ModelAbsoluteTolerance))
+    # Generating intersection points for all skyDome surfaces from vectors generated above
+    surfacePoints = []
+    for surface in surfaceList:
+        catchList = []
+        for vector in vectorList:
+            catch = []
+            catch = rc.Geometry.Intersect.Intersection.ProjectPointsToBreps([surface],[cenPt], vector, sc.doc.ModelAbsoluteTolerance)
+            if len(catch) > 0:
+                #print catch[0]
+                catchList.append(catch[0])
+            else:
+                pass
+        surfacePoints.append(catchList)
+    
+    # Making lines from all the intersecton points on skyDome surfaces and the testPt
+    lineList = []
+    for item in surfacePoints:
+        lines = []
+        for point in item:
+            line = rc.Geometry.Line(point, cenPt)
+            lines.append(line)
+        lineList.append(lines)
+    
+    # Calculating the number of points per skyDome surface that intersect with the context geometry
+    total = []
+    for item in lineList:
+        counter = 0
+        for line in item:
+            catch = []
+            catch = rc.Geometry.Intersect.Intersection.MeshLine(joinedContext, line)
+            if len(catch[0]) > 0:
+                #print catch[0]
+                counter += 1
+        total.append(counter)
+        
+    # Making a dictionary of skyDome surfaces : number of points on skyDome surfaces that intersects the context geometry
+    brepDict = dict(zip(surfaceList, total))
+    # Sorting the dictionary to that surface with the least number of point that intersect with the context geometry remains
+    # first on the list
+    sortedDict = sorted(brepDict.items(), key = operator.itemgetter(1))
+    # The surface on the skyDome with the least number of points that intersect with the context geometry are unmaskedSkyDome surfaces
+    unmaskedSkyDome.append(sortedDict[0][0])
+    # The rest are maskedSkyDome surfaces
+    i = 1
+    while i < len(sortedDict):
+        maskedSkyDome.append(sortedDict[i][0])
+        i += 1
+    
+    # Calculating percent of masked sky
+    skyArea = 0
+    for surface in surfaceList:
+        area = rc.Geometry.AreaMassProperties.Compute(surface).Area
+        skyArea += area
+        
+    maskedArea = 0
+    for surface in maskedSkyDome:
+        area = rc.Geometry.AreaMassProperties.Compute(surface).Area 
+        maskedArea += area
+        
+    coveredPercent = (maskedArea*100) / skyArea
+    coveredPercent = round(coveredPercent, 2)
     
     # scale everything
     scaleT = rc.Geometry.Transform.Scale(cenPt, radius/BBRadius)
     for geo in planarSrfs + list(crvsOnSky) + maskedSkyDome + unmaskedSkyDome:
         geo.Transform(scaleT)
     
-    return planarSrfs, crvsOnSky, maskedSkyDome, unmaskedSkyDome
+    return planarSrfs, crvsOnSky, maskedSkyDome, unmaskedSkyDome, coveredPercent
 
 
 if _testPt and len(_context)!=0 and _context[0]!=None:
-    results = main(_testPt, _context, radius_, merge_)
+    skyDensity = checkTheInputs()
+    results = main(_testPt, _context, skyDensity, radius_, merge_)
 
     if results!=-1:
-        maskedSrfOnGound, maskedCrvsOnSky, maskedSkyDome, unmaskedSkyDome = results
+        maskedSrfOnGround, maskedCrvsOnSky, maskedSkyDome, unmaskedSkyDome, percMasked = results

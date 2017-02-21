@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com; Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com; mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -23,22 +23,22 @@
 
 """
 This is a component for visualizing the desirability of shade in terms of comfort temperature by using solar vectors, a series of hourly temperatures (usually outdoor temperatures), and an assumed balance temperature.  The balance temperature represents the median temperture that people find comfortable, which can vary from climate to climate but is usually somewhere around 20C.
-
+_
 Solar vectors for hours when the temperature is above the balance point contribute positively to shade desirability while solar vectors for hours when the temperature is below the balance point contribute negatively.
-
+_
 The component outputs a colored mesh of the shade illustrating the net effect of shading each mesh face.  A higher saturation of blue indicates that shading the cell is very desirable.  A higher saturation of red indicates that shading the cell is harmful (blocking more winter sun than summer sun). Desaturated cells indicate that shading the cell will have relatively little effect on outdoor comfort or building performance.
-
+_
 The units for shade desirability are net temperture degree-days helped per unit area of shade if the test cell is blue.  If the test cell is red, the units are net heating degree-days harmed per unit area of shade.
-
+_
 The method used by this component is based off of the Shaderade method developed by Christoph Reinhart, Jon Sargent, Jeffrey Niemasz.  This component uses Shaderade's method for evaluating shade and window geometry in terms of solar vectors but substitutes Shaderade's energy simulation for an evaluation of heating and temperture degree-days about a balance temperature. 
-
+_
 A special thanks goes to them and their research.  A paper detailing the Shaderade method is available at:
-http://www.gsd.harvard.edu/research/gsdsquare/Publications/Shaderade_BS2011.pdf
-
+http://web.mit.edu/tito_/www/Publications/BS2011_Shaderade.pdf
+_
 The heating/temperture degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the temperture-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or temperture degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive temperture degree-days to give a net effect for the cell.
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     Args:
         _location: The location output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -135,11 +135,17 @@ def checkTheInputs():
             
             newShadesList = []
             for srf in allDataDict[path]["shadeSrfs"]:
-                if srf.Faces.Count == 1: newShadesList.append(srf)
-                else:
-                    for subSrf in srf.Faces:
-                        srfBrep = subSrf.ToBrep()
-                        newShadesList.append(srfBrep)
+                try:
+                    newSrf = rs.coercebrep(srf)
+                    if newSrf.Faces.Count == 1: newShadesList.append(newSrf)
+                    else:
+                        for subSrf in newSrf.Faces:
+                            srfBrep = subSrf.ToBrep()
+                            newShadesList.append(srfBrep)
+                except:
+                    newSrf = rs.coercemesh(srf)
+                    newShadesList.append(newSrf)
+            allDataDict[path]["shadeSrfs"] = newShadesList
     else:
         checkData2 = False
         print 'Connect a brep for both the _testRegion and the _testShade.'
@@ -335,7 +341,10 @@ def meshTheShade(gridSize, testShades):
     analysisMeshList = []
     
     for testShade in testShades:
-        analysisMesh = rc.Geometry.Mesh.CreateFromBrep(testShade, meshPar)[0]
+        try:
+            analysisMesh = rc.Geometry.Mesh.CreateFromBrep(testShade, meshPar)[0]
+        except:
+            analysisMesh = testShade
         
         #Generate breps of the mesh faces so that users can see how the shade will be divided before they run the analysis
         
@@ -403,6 +412,7 @@ def prepareGeometry(gridSize, allDataDict):
     for branchCount, branch in enumerate(allDataDict):
         #Mesh the shade.
         shadeMesh, shadeMeshBrepList, shadeMeshAreas = meshTheShade(gridSize, allDataDict[branch]["shadeSrfs"])
+        
         shadeMeshBreps.append(shadeMeshBrepList)
         allDataDict[branch]["shadeMesh"] = shadeMesh
         allDataDict[branch]["shadeMeshAreas"] = shadeMeshAreas

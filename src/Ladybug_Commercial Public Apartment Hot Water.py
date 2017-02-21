@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -40,7 +40,7 @@ The following types of buildings are supported:
 Component based on paper: ASHRAE 2003 Applications Handbook (SI), Chapter 49, Service water heating:
 https://cours.etsmtl.ca/mec735/Documents/Notes_de_cours/2012/Hiver_2012/Service_Water_heating_ASHRAE.pdf
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     input:
         _epwFile: Input .epw file path by using grasshopper's "File Path" component.
@@ -69,6 +69,7 @@ Provided by Ladybug 0.0.62
         _numberOfUnits: Number of units for upper chosen "_buildingType". Represents the number of:
                         -
                         - apartment units:  apartment houses
+                        - rooms: hotel/motel
                         - occupants:  offices, elementary, junior, senior high schools, dormitories , hospitals, factories
                         - meals per day:  (full meal) restaurants, cafeterias; drive-ins, grilles, luncheonettes, sandwich, snack shops
                         - beds:  nursing homes
@@ -112,7 +113,8 @@ Provided by Ladybug 0.0.62
                                 factory -  1
                                 -
                                 If not supplied, it will be picked based on chosen "_buildingType" input.
-        occupancyDuration_: Number of adults (14 years and older) in household.
+        occupancyDuration_: Total number of hours in a single day during which the chosen _buildingType will be used.
+                            It can not be less than 1 nor larger than 24. Also it can not exceed the 24 when summed with occupancyStartingHour_.
                             -
                             office -  9
                             apartment house -  15
@@ -183,12 +185,12 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Commercial Public Apartment Hot Water"
 ghenv.Component.NickName = "CommercialPublicApartmentHotWater"
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 import Grasshopper.Kernel as gh

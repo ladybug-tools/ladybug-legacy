@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ Gendaymtx is written by Ian Ashdown and Greg Ward. For more information, check t
 http://www.radiance-online.org/learning/documentation/manual-pages/pdfs/gendaymtx.pdf
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     Args:
         _epwFile: The output of the Ladybug Open EPW component or the file path location of the epw weather file on your system.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.62\nAPR_06_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -153,6 +153,11 @@ def main(epwFile, skyType, workingDir, useOldRes):
             if os.path.isfile("c:/radiance/bin/gendaymtx.exe"):
                 # just copy this file
                 shutil.copyfile("c:/radiance/bin/gendaymtx.exe", gendaymtxFile)
+                # in newer versions of radiance you also need msvcr120.dll
+                if os.path.isfile("c:/radiance/bin/msvcr120.dll"):
+                    shutil.copyfile("c:/radiance/bin/msvcr120.dll",
+                                    os.path.join(workingDir, 'msvcr120.dll'))
+                    
             else:
                 # download the file
                 lb_preparation.downloadGendaymtx(workingDir)
@@ -198,20 +203,27 @@ def main(epwFile, skyType, workingDir, useOldRes):
                       "If you found the lines above confusing just ignore it! It's all fine. =)\n"
             else:
                 batchFile = weaFile.replace(".wea", ".bat")
-                command = "@echo off \necho.\n echo HELLO " + os.getenv("USERNAME").upper()+ "! " + \
-                          "DO NOT CLOSE THIS WINDOW. \necho.\necho IT WILL BE CLOSED AUTOMATICALLY WHEN THE CALCULATION IS OVER!\n" + \
-                          "echo.\necho AND MAY TAKE FEW MINUTES...\n" + \
-                          "echo.\n" + \
-                          "echo CALCULATING DIFFUSE COMPONENT OF THE SKY...\n" + \
-                          workingDir + "\\gendaymtx -m " + str(n) + " -s -O1 " + weaFile + "> " + outputFileDif + "\n" + \
-                          "echo.\necho CALCULATING DIRECT COMPONENT OF THE SKY...\n" + \
-                          workingDir + "\\gendaymtx -m " + str(n) + " -d -O1 " + weaFile + "> " + outputFileDir
-                      
+                try:
+                    username = ' %s' % os.getenv("USERNAME")
+                except:
+                    username = ''
+                
+                command = '@echo off \necho.\n echo HELLO{0}!\n' \
+                          'echo DO NOT CLOSE THIS WINDOW. \necho.\necho IT WILL BE CLOSED AUTOMATICALLY WHEN THE CALCULATION IS OVER!\n' \
+                          'echo.\necho AND MAY TAKE FEW MINUTES...\n' \
+                          'echo.\n' \
+                          'echo CALCULATING DIFFUSE COMPONENT OF THE SKY...\n' \
+                          '"{1}\\gendaymtx" -m {2} -s -O1 "{3}"> "{4}"\n' \
+                          'echo.\necho CALCULATING DIRECT COMPONENT OF THE SKY...\n' \
+                          '"{1}\\gendaymtx" -m {2} -d -O1 "{3}"> "{5}"\n'
+                         
+                command = command.format(username, workingDir, n, weaFile,
+                                         outputFileDif, outputFileDir)
                 file = open(batchFile, 'w')
                 file.write(command.encode('utf-8'))
                 file.close()
         
-                os.system(batchFile)
+                os.system('"%s"' % batchFile)
             
             return outputFileDif, outputFileDir, newLocName, lat, lngt, timeZone
             
@@ -323,6 +335,9 @@ def readMTXFile(daylightMtxDif, daylightMtxDir, n, newLocName, lat, lngt, timeZo
             self.lngt = lngt
             self.timeZone = timeZone
         
+        def ToString(self):
+            return 'AnnualDaylightMatrix::%s' % self.location
+            
     return SkyResultsCollection(radValuesDict, newLocName, lat, lngt, timeZone)
     
 if _runIt and _epwFile!=None:

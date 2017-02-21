@@ -5,7 +5,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -28,10 +28,10 @@ This component can be used to evaluate the number of hours of sunlight received 
 It can also be used for coarsely-gridded shadow studies in the Rhino scene .  For finer and more detailed shadow studies with simple input geometry, the Ladybug ShadowStudy component can be used.  For detailed shadow studies with complex geometry, the Honeybee daylight tools are recommended.
 
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     Args:
-        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees). In case you have provided rotation value for the North in the Sunpath component, there's no need to provide the same rotation value here. Doing this will give you erroneous results.
         _geometry: Geometry for which sunlight hours analysis will be conducted.  Geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         context_: Context geometry that could block sunlight to the test _geometry.  Conext geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         _gridSize_: A number in Rhino model units that represents the average size of a grid cell for sunlight hours analysis on the test _geometry.  This value should be smaller than the smallest dimension of the test _geometry for meaningful results.  Note that, the smaller the grid size, the higher the resolution of the analysis and the longer the calculation will take.
@@ -66,7 +66,7 @@ Provided by Ladybug 0.0.62
 
 ghenv.Component.Name = "Ladybug_Sunlight Hours Analysis"
 ghenv.Component.NickName = 'sunlightHoursAnalysis'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -206,7 +206,7 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
             joinedAnalysisMesh = lb_mesh.joinMesh(analysisSrfs)
             if contextSrfs: joinedContext = lb_mesh.joinMesh(contextSrfs)
             else: joinedContext = None
-                
+
             hoursResults, totalHoursResults, sunVisibility = lb_runStudy_GH.parallel_sunlightHoursCalculator(testPoints, ptsNormals, meshSrfAreas, joinedAnalysisMesh, joinedContext,
                                             parallel, sunVectors_sunlightHour, conversionFac, northVector, timeStep)
         else:
@@ -223,8 +223,8 @@ def main(north, geometry, context, gridSize, disFromBase, orientationStudyP,
     def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legendPar, legendTitle, studyLayerName, bakeIt, checkTheName, l, angle, listInfo):
         
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
-        if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[5]
-        elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[5]
+        if len(legendPar_) == 0: customColors = lb_visualization.gradientLibrary[6]
+        elif legendPar_[3] == []: customColors = lb_visualization.gradientLibrary[6]
         
         colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
         

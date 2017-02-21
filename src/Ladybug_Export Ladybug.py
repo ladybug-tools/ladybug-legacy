@@ -37,9 +37,9 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.62\nAPR_11_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Developers"
+ghenv.Component.SubCategory = "6 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
@@ -259,8 +259,10 @@ def exportToFile(component, targetFolder, lb_preparation):
             with open("c:\\ladybug\\failed.txt", "w") as ff:
                 ff.write(fileName)
             return True
-            
-    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 or component.Name.find("Dragonfly")>=0 or component.Name.find("Hydra")>=0:
+    
+    if component.Name.find("Honeybee")>=0 or component.Name.find("Ladybug")>=0 \
+        or component.Name.find("Dragonfly")>=0 or component.Name.find("Hydra")>=0 \
+        or component.Name.find("Butterfly")>=0:
         
         fileName = component.Name + ".py"
         
@@ -323,7 +325,7 @@ def main(components, targetFolder):
     
     if not os.path.isdir(targetFolder): os.mkdir(targetFolder)
         
-    if components[0] == "*":
+    if str(components[0]) == "*":
         ghComps = getAllTheComponents()
     else:
         ghComps = getListOfConnectedComponents()

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ By default, this function used to derive clothing levels based on outside temper
 This version of the component allows users to change the maximum and minimum clothing levels, which Schiavon set at 1 and 0.46 respectively, and the temperatures at which these clothing levels occur, which Schiavon set at 26C and -5 C respectively.
 Note that Schiavon did not endorse the changing of these values but they are provided here to allow users an additional level of freedom.
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     Args:
         _outdoorAirTemperature: A number or list of numbers representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept the direct output of dryBulbTemperature from the Import EPW component and this is recommended for hourly comfort analysis.
@@ -43,7 +43,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Clothing Function"
 ghenv.Component.NickName = 'CloFunction'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -254,7 +254,10 @@ def main():
             cloDifference = maxClo-minClo
             f1Slope = ((maxClo - cloDifference*.75) - maxClo)/10
             f1yInt = maxClo - (f1Slope*maxCloTemp)
-            f2Slope = (minClo - (maxClo - cloDifference*.75))/(minCloTemp - (maxCloTemp+10))
+            try:
+                f2Slope = (minClo - (maxClo - cloDifference*.75))/(minCloTemp - (maxCloTemp+10))
+            except:
+                f2Slope = 0
             f2yInt = minClo - (f2Slope*minCloTemp)
             
             for temperature in finalAirTemps:

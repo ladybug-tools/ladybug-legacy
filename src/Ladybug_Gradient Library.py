@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com>
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ _
 For an image of each of the gardients in the library, check here:
 https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/gradients.jpg
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     Args:
         _gradIndex: An index refering to one of the following possible gradients:
@@ -53,21 +53,24 @@ Provided by Ladybug 0.0.62
             19 - Energy Balance
             20 - THERM
             21 - Cloud Cover
+            22 - Glare Potential
+            23 - Radiation Benefit
     Returns:
         customColors: A series of colors to be plugged into the "Ladybug_Legend Parameters" component.
 """
 
 ghenv.Component.Name = "Ladybug_Gradient Library"
 ghenv.Component.NickName = 'GradientLibrary'
-ghenv.Component.Message = 'VER 0.0.62\nJAN_26_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
-#compatibleLBVersion = VER 0.0.59\nSEP_13_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+ghenv.Component.SubCategory = "5 | Extra"
+#compatibleLBVersion = VER 0.0.59\nSEP_21_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
 import scriptcontext as sc
+import Grasshopper.Kernel as gh
 
 def main(gradIndex):
     if sc.sticky.has_key('ladybug_release'):
@@ -93,6 +96,10 @@ def main(gradIndex):
         ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
         return -1
 
-if _gradIndex >=0 and _gradIndex <=21:
+if _gradIndex >=0 and _gradIndex <=23:
     result = main(_gradIndex)
     if result != -1: customColors = result
+elif _gradIndex != None:
+    print "_gradIndex must be between 0 and 23."
+    w = gh.GH_RuntimeMessageLevel.Warning
+    ghenv.Component.AddRuntimeMessage(w, "_gradIndex must be between 0 ans 22")

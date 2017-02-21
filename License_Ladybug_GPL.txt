@@ -22,6 +22,11 @@ Ladybug uses Radiance’s gendaymtx.exe, which is subject to its own licensing c
 https://github.com/NREL/Radiance
 
 
+Ladybug uses C# GDAL libraries, which are distributed under the terms of X11/MIT License. Some external libraries which can be optionally used by GDAL are subject to their own licensing conditions. At this point, libraries are used for Ladybug's "Terrain shading mask" component only. C# GDAL libraries are developed by Tamas Szekeres. Please refer to their download page for more information:
+
+http://gisinternals.com
+
+
 Ladybug uses formulas for PMV and Adatptive comfort models that have been developed by many scientists over several decades and have been published in the ASHRAE55 and EN-15251 international standards.  The code for these formulas has been re-written in Python by Chris Mackey based on the javascript version in the Center for the Built Environment's Thermal Comfort Tool developed by Hoyt, Tyler; Schiavon, Stefano; Piccioli, Alberto; Moon, Dustin; and Steinfeld, Kyle (2013).  The CBE Comfor Tool is subject to a GPL licence.  For more information, see the Comfort Tool website or the Comfort Tool github:
 
 http://cbe.berkeley.edu/comforttool/ , https://github.com/CenterForTheBuiltEnvironment/comfort_tool
@@ -50,6 +55,11 @@ https://pypi.python.org/pypi/geomag
 Ladybug uses an excerpt of code written in R by Nick Burns to calculate natural wet bulb temperature. The code is re-written in Python by Djordje Spasic and is used to calculate "WBGT indoors" thermal comfort index in "Thermal comfort indices" component. Please refer to the original code at github repository.
 
 https://github.com/nickb-/Calculating-WBGT/blob/master/relaxation_Tw/working_code/wbgt.R
+
+
+Ladybug uses python code written by Clement Greiner to calculate an area of mesh faces. The code is used in "Ladybug_Ladybug" component. Please refer to the original code at:
+
+http://discourse.mcneel.com/t/area-of-mesh-face/26609
 
 ---------------------------------------------------------------------------------------------------------------------------
 

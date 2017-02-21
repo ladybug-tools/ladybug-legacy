@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic and Chris Mackey <djordjedspasic@gmail.com and chris@mackeyarchitecture.com> 
+# Copyright (c) 2013-2017, Djordje Spasic and Chris Mackey <djordjedspasic@gmail.com and chris@mackeyarchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -22,11 +22,13 @@
 
 
 """
-Use this component to visualize a wind profile curve for a given terrain type.  Wind speed increases as one leaves the ground and wind profiles are a means of visualizing this change in wind speed with height.
+Use this component to visualize a wind profile curve for a given terrain type.  Wind speed increases as one leaves the ground and wind profiles are a means of visualizing this change in wind speed with height. 
+-
+The wind profile will point you in the direction of prevailing wind if EPW data is connected to _windSpeed_tenMeters and windDirections_. In case you are trying to orient your building to take advantage of natural ventilation, as a good rule of thumb, it always a good strategy to align the shorter axis of your building parellel to the prevailing wind directions.
 -
 More information on the power law of the wind profile can be found here: http://en.wikipedia.org/wiki/Wind_profile_power_law
 -
-Provided by Ladybug 0.0.62
+Provided by Ladybug 0.0.64
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -81,7 +83,7 @@ Provided by Ladybug 0.0.62
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.62\nAPR_13_2016'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -221,7 +223,7 @@ def checkTheInputs():
     checkData3, terrainType, d, a, rl = lb_wind.readTerrainType(terrainType_, 2)
     if checkData3 == False:
         w = gh.GH_RuntimeMessageLevel.Warning
-        ghenv.Component.AddRuntimeMessage(w, printMsg)
+        ghenv.Component.AddRuntimeMessage(w, 'terrainType_ not correct.')
     else: print "Terrain set to " + terrainType + "."
     
     #Take the model units into account.
@@ -298,18 +300,16 @@ def checkTheInputs():
         else:
             windVectorScale = windVectorScale_
     
-    # Set a defult epwTerrain if none is connected.
     checkData8 = True
     if epwTerrain_ != None:
-        if epwTerrain_ <=3 and epwTerrain_ >= 0: epwTerrain = epwTerrain_
-        else:
-            epwTerrain = None
-            checkData8 = False
-            print "You have not connected a correct epwTerrain_ type."
+        # Set a defult epwTerrain if none is connected.
+        checkData8, epwTerr, metD, metA, metrl = lb_wind.readTerrainType(epwTerrain_, 2)
+        if checkData8 == False:
             w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "You have not connected a correct epwTerrain_ type.")
+            ghenv.Component.AddRuntimeMessage(w, 'epwTerrain_ not correct.')
+        else: print "epwTerrain_ set to " + epwTerr + "."
     else:
-        epwTerrain = 2
+        checkData8, epwTerr, metD, metA, metrl = lb_wind.readTerrainType(2, 2)
         print "epwTerrain_ has been set to (2 = country) for flat clear land, which is typical for most EPW files that are recorded at airports."
     
     #Set a default arrow style if none has been set.
@@ -332,7 +332,7 @@ def checkTheInputs():
     else:
         checkData = False
     
-    return checkData, heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, conversionFactor
+    return checkData, heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, metD, metA, metrl, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, conversionFactor
 
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement, analysisPeriod, HOYS):
@@ -888,7 +888,7 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
     return unitsTextLabels, untisTxt, unitsTxtPts
 
 
-def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
+def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, metD, metA, metrl, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
     #Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
@@ -901,9 +901,6 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, 
     
     #Factor the units system into the scale.
     windVectorScale = windVectorScale*scaleFactor
-    
-    #Read the coefficients of the epwTerrain.
-    checkData, epwTerr, metD, metA, metrl = lb_wind.readTerrainType(epwTerrain, 2)
     
     #If epw data is connected, get the data for the analysis period and strip the header off.
     HOYS = range(1,8761)
@@ -1311,13 +1308,13 @@ else:
 checkData = False
 if initCheck == True:
     check = checkTheInputs()
-    checkData, heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, \
+    checkData, heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, metD, metA, metrl, \
     windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, \
     lb_wind, windVectorScale, scaleFactor = check
     
     #Get the wind profile curve if everything looks good.
     if checkData == True:
-        result = main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerrain, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
+        result = main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, metD, metA, metrl, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor)
         if result != -1:
             windProfileCurve, windVectorMesh, windSpeeds, windDirections, windVectors, vectorAnchorPts, profileAxes, axesText, legend, legendBasePt = result
 
