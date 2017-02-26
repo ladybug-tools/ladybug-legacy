@@ -83,7 +83,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Terrain Generator"
 ghenv.Component.NickName = 'TerrainGenerator'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_21_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -280,7 +280,7 @@ def createTiles(base_point, radius, numOfTiles):
 
 
 def cullAndSortPoints(pts, elevations):
-    terrain_pts = [Rhino.Geometry.Point3d(pt.X, pt.Y, elevations[i]) for i, pt in enumerate(pts)]
+    terrain_pts = [Rhino.Geometry.Point3d(pt.X/unitConversionFactor, pt.Y/unitConversionFactor, elevations[i]/unitConversionFactor) for i, pt in enumerate(pts)]
     cull_pts = list(set(terrain_pts))
     
     cull_pts.sort(key = lambda pt: pt.X)
@@ -386,8 +386,9 @@ def main(name):
     else: factor = -1
     
     tilesTree = DataTree[System.Object]()
-    tiles = createTiles(basePoint, radius, numOfTiles)
-    for i, tile in enumerate(tiles):
+    tilesVisualization = createTiles(basePoint, radius/unitConversionFactor, numOfTiles)
+    tilesCalculation = createTiles(basePoint, radius, numOfTiles)
+    for i, tile in enumerate(tilesVisualization):
         path = GH_Path(0, i)
         tilesTree.Add(tile, path)
     
@@ -401,12 +402,11 @@ def main(name):
     
     if _runIt:
         pointsGeo, pointsZ, pointsXY, imagePath  = DataTree[System.Object](), DataTree[System.Object](), DataTree[System.Object](), DataTree[System.Object]()
-        
-        for i in range(len(tiles)):
-            points_srf = divideSrf(tiles[i], numDivision)
+        for i in range(len(tilesCalculation)):
+            points_srf = divideSrf(tilesCalculation[i], numDivision)
             try:
                 points, elevations = terrainGen(points_srf, xf, _runIt, name)
-                ptCenter = centerPtsGeo(tiles[i])
+                ptCenter = centerPtsGeo(tilesCalculation[i])
                 pointGeo = xf * ptCenter
                 points_for_srf.extend(points_srf)
                 elevations_for_srf.extend(elevations)
@@ -416,25 +416,25 @@ def main(name):
                 
                 path = GH_Path(0, i)
                 pointsGeo.AddRange(points, path)
-                pointsZ.AddRange(elevations, path)
-                pointsXY.AddRange(points_srf, path)
+                pointsZ.AddRange([elev/unitConversionFactor for elev in elevations], path)
+                pointsXY.AddRange([Rhino.Geometry.Point3d(pt.X/unitConversionFactor, pt.Y/unitConversionFactor, pt.Z/unitConversionFactor) for pt in points_srf], path)
                 
             except TypeError: return -1
             except: return -1
         
         # make 3D points
-        # thanks to djordje for this advice
         cull_pts = cullAndSortPoints(points_for_srf, elevations_for_srf)
+        
         num = (numDivision + 1) * numOfTiles - (numOfTiles - 1)
         if type == 0:
             lb_meshpreparation = sc.sticky["ladybug_Mesh"]()
             terrain = lb_meshpreparation.meshFromPoints(num, num, cull_pts)
             origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToMeshes([terrain], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
         elif type == 1:
-             uDegree = min(3, num - 1)
-             vDegree = min(3, num - 1)
-             terrain = Rhino.Geometry.NurbsSurface.CreateThroughPoints(cull_pts, num, num, uDegree, vDegree, False, False)
-             origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToBreps([terrain.ToBrep()], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
+            uDegree = min(3, num - 1)
+            vDegree = min(3, num - 1)
+            terrain = Rhino.Geometry.NurbsSurface.CreateThroughPoints(cull_pts, num, num, uDegree, vDegree, False, False)
+            origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToBreps([terrain.ToBrep()], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
         
         try:
             for i, u in enumerate(URLs):
@@ -450,7 +450,7 @@ def main(name):
     else:
         # check the grid size
         dimension = round(((radius * 2) / numOfTiles) / numDivision, 3)
-        print("Size of the grid = {0} x {0}".format(dimension))
+        print("Size of the grid = {0} x {0}".format(dimension/unitConversionFactor))
         
         # delete image from the folder
         try:
@@ -462,7 +462,7 @@ def main(name):
         
         return None, None, None, None, None, tilesTree, None, None
     
-    return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree, origin, elevation
+    return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree, origin, origin[0].Z
 
 
 initCheck = False
@@ -493,6 +493,7 @@ name = writeFile()
 
 if check and initCheck:
     if checkInternetConnection():
+        unitConversionFactor = lb_preparation.checkUnits()
         if name != -1:
             result = main(name)
             if result != -1:

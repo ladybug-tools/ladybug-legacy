@@ -98,6 +98,10 @@ def checkMeshPlanarity(mesh, basePlanePt):
     if meshIsPlanar:
         changeBasisTransform = rc.Geometry.Transform.ChangeBasis(rc.Geometry.Plane.WorldXY, meshPlane)
         mesh.Transform(changeBasisTransform)
+    else:
+        meshNormals = [meshPlaneVec for i in range(mesh.Normals.Count)]
+        changeBasisTransform = rc.Geometry.Transform.ChangeBasis(rc.Geometry.Plane.WorldXY, meshPlane)
+        mesh.Transform(changeBasisTransform)
     
     return meshIsPlanar, mesh, meshPlane, meshNormals
 
@@ -114,7 +118,6 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         '\n Try breaking up your mesh into planar pieces and feeding them individually into this component.'
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-        return -1
     
     # Check the mesh's structure.
     if inputMesh.Faces.Count == len(analysisResult):
