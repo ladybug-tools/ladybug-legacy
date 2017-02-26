@@ -303,8 +303,9 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
     
     # initial check of weather data inputs
     TaL = []; mrtL = []; TdpL = []; rhL = []; wsL = []; SRL = []; NL = []; IclL = []; ML = []
-    
+    print "HERE 1"
     if (len(Ta) == 0) or (Ta[0] is ""):
+        print "HERE 2"
         comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
         validWeatherData = False
         printMsg = "Please input _dryBulbTemperature. As a single value, a list of values, or as a list from \"Import EPW\" component."
@@ -2202,37 +2203,42 @@ if sc.sticky.has_key("ladybug_release"):
         if (_comfortIndex != None) and _comfortIndex in range(19):
             locationName, latitude, longitude, timeZone, validLocationData, printMsgLocation = getLocationData(_location)
             if validLocationData:
-                if _runIt:
-                    comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsgWeather = getWeatherData(latitude, longitude, timeZone, _dryBulbTemperature, meanRadiantTemperature_, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, bodyCharacteristics_, HOY_, analysisPeriod_)
-                    if validWeatherData:
-                        if _comfortIndex != 11:  # not for MRT
-                            if (createOutputHeaders == True): startingIndex = 7
-                            elif (createOutputHeaders == False): startingIndex = 0
-                            percentComfortable = (comfortableOrNot[startingIndex:].count(1))/(len(comfortIndexValue[startingIndex:]))*100
-                            if _comfortIndex != 4:
-                                percentHotExtreme = (comfortIndexCategory[startingIndex:].count(HotExtremeCategory))/(len(comfortIndexCategory[startingIndex:]))*100
-                            else: # remove percentHotExtreme for WCT
-                                percentHotExtreme = []
-                            if _comfortIndex not in [0,1,5,6,13,14,18]: # no Cold categories
-                                percentColdExtreme = (comfortIndexCategory[startingIndex:].count(ColdExtremeCategory))/(len(comfortIndexCategory[startingIndex:]))*100
-                            else:  # remove percentColdExtreme
-                                percentColdExtreme = []
-                        else:
-                            percentComfortable = percentHotExtreme = percentColdExtreme = []
+                if (len(_dryBulbTemperature) != 0):
+                    if _runIt:
+                        comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsgWeather = getWeatherData(latitude, longitude, timeZone, _dryBulbTemperature, meanRadiantTemperature_, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, bodyCharacteristics_, HOY_, analysisPeriod_)
+                        if validWeatherData:
+                            if _comfortIndex != 11:  # not for MRT
+                                if (createOutputHeaders == True): startingIndex = 7
+                                elif (createOutputHeaders == False): startingIndex = 0
+                                percentComfortable = (comfortableOrNot[startingIndex:].count(1))/(len(comfortIndexValue[startingIndex:]))*100
+                                if _comfortIndex != 4:
+                                    percentHotExtreme = (comfortIndexCategory[startingIndex:].count(HotExtremeCategory))/(len(comfortIndexCategory[startingIndex:]))*100
+                                else: # remove percentHotExtreme for WCT
+                                    percentHotExtreme = []
+                                if _comfortIndex not in [0,1,5,6,13,14,18]: # no Cold categories
+                                    percentColdExtreme = (comfortIndexCategory[startingIndex:].count(ColdExtremeCategory))/(len(comfortIndexCategory[startingIndex:]))*100
+                                else:  # remove percentColdExtreme
+                                    percentColdExtreme = []
+                            else:
+                                percentComfortable = percentHotExtreme = percentColdExtreme = []
+                            
+                            generalOutputLists = ["dummy", "comfortIndexValue", "comfortIndexCategory", "comfortableOrNot", "percentComfortable", "percentHotExtreme", "percentColdExtreme"]
+                            for i in range(6):
+                                ghenv.Component.Params.Output[i+1].Name = outputNickNames[i]
+                                ghenv.Component.Params.Output[i+1].NickName = outputNickNames[i]
+                                ghenv.Component.Params.Output[i+1].Description = outputDescriptions[i]
+                                exec("%s = %s" % (outputNickNames[i], generalOutputLists[i+1]))
+                            printThermalComfortIndexName(_comfortIndex, date, HOYs, PETresults)
                         
-                        generalOutputLists = ["dummy", "comfortIndexValue", "comfortIndexCategory", "comfortableOrNot", "percentComfortable", "percentHotExtreme", "percentColdExtreme"]
-                        for i in range(6):
-                            ghenv.Component.Params.Output[i+1].Name = outputNickNames[i]
-                            ghenv.Component.Params.Output[i+1].NickName = outputNickNames[i]
-                            ghenv.Component.Params.Output[i+1].Description = outputDescriptions[i]
-                            exec("%s = %s" % (outputNickNames[i], generalOutputLists[i+1]))
-                        printThermalComfortIndexName(_comfortIndex, date, HOYs, PETresults)
-                    
+                        else:
+                            print printMsgWeather
+                            ghenv.Component.AddRuntimeMessage(level, printMsgWeather)
                     else:
-                        print printMsgWeather
-                        ghenv.Component.AddRuntimeMessage(level, printMsgWeather)
+                        print "All inputs are ok. Please set \"_runIt\" to True, to calculate the chosen Thermal Comfort index"
                 else:
-                    print "All inputs are ok. Please set \"_runIt\" to True, to calculate the chosen Thermal Comfort index"
+                    printMsg = "Please input _dryBulbTemperature. As a single value, a list of values, or as a list from \"Import EPW\" component."
+                    print printMsg
+                    ghenv.Component.AddRuntimeMessage(level, printMsg)
             else:
                 print printMsgLocation
                 ghenv.Component.AddRuntimeMessage(level, printMsgLocation)
