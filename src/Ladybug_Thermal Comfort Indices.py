@@ -151,7 +151,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = "VER 0.0.64\nFEB_26_2017"
+ghenv.Component.Message = "VER 0.0.64\nFEB_27_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -303,9 +303,8 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
     
     # initial check of weather data inputs
     TaL = []; mrtL = []; TdpL = []; rhL = []; wsL = []; SRL = []; NL = []; IclL = []; ML = []
-    print "HERE 1"
-    if (len(Ta) == 0) or (Ta[0] is ""):
-        print "HERE 2"
+    
+    if (len(Ta) == 0) or (Ta[0] == None):
         comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
         validWeatherData = False
         printMsg = "Please input _dryBulbTemperature. As a single value, a list of values, or as a list from \"Import EPW\" component."
@@ -317,7 +316,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         TaL = [float(Ta[i])  for i in range(len(Ta))]
     
     
-    if (len(mrt) == 0) or (mrt[0] is ""):
+    if (len(mrt) == 0) or (mrt[0] == None):
         mrtL = ["calculate_MRT"]  # calculate mrtL
     elif (len(mrt) == 8767) and (type(mrt[0]) == System.String):
         # the meanRadiantTemperature_ input contains annual data from "Import Epw" component and not 8767 numerical values
@@ -326,7 +325,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         mrtL = [float(mrt[i])  for i in range(len(mrt))]
     
     
-    if (len(rh) == 0) or (rh[0] is ""):
+    if (len(rh) == 0) or (rh[0] == None):
         rhL = [50]  # default 50%, indoor condition
     elif (len(rh) == 8767) and (type(rh[0]) == System.String):
         # the relativeHumidity_ input contains annual data from "Import Epw" component and not 8767 numerical values
@@ -335,16 +334,16 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         rhL = [float(rh[i])  for i in range(len(rh))]
     
     
-    if (len(Tdp) == 0):
+    if (len(Tdp) == 0) or (Tdp[0] == None):
         TdpL = ["calculate_Tdp"]
-    if (len(Tdp) == 8767) and (type(Tdp[0]) == System.String):
+    elif (len(Tdp) == 8767) and (type(Tdp[0]) == System.String):
         # the dewPointTemperature_ input contains annual data from "Import Epw" component and not 8767 numerical values
         TdpL = Tdp[7:]
     elif (len(Tdp) > 0) and (len(Tdp) < 8767):
         TdpL = [float(Tdp[i])  for i in range(len(Tdp))]
     
     
-    if (len(ws) == 0) or (ws[0] is ""):
+    if (len(ws) == 0) or (ws[0] == None):
         wsL = [0.3]  # default 0.3 m/s: no wind
     elif (len(ws) == 8767) and (type(ws[0]) == System.String):
         # the windSpeed_ input contains annual data from "Import Epw" component and not 8767 numerical values
@@ -353,7 +352,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         wsL = [float(ws[i])  for i in range(len(ws))]
     
     
-    if (len(N) == 0) or (N[0] is ""):
+    if (len(N) == 0) or (N[0] == None):
         NL = [6]  # default 6 tens, continental humid climate
     elif (len(N) == 8767) and (type(N[0]) == System.String):
         # the totalSkyCover_ input contains annual data from "Import Epw" component and not 8767 numerical values
@@ -362,7 +361,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         NL = [float(N[i])  for i in range(len(N))]
     
     
-    if (len(SR) == 0) or (SR[0] is "") or (SR[0] is None):
+    if (len(SR) == 0) or (SR[0] is "") or (SR[0] == None):
         SRL = [0]  # default 0 Wh/m2: no solar radiation
     elif (len(SR) == 8767) and (type(SR[0]) == System.String):
         # the solarRadiationPerHour_ input contains annual data from "Import Epw" component and not 8767 numerical values
@@ -2203,7 +2202,7 @@ if sc.sticky.has_key("ladybug_release"):
         if (_comfortIndex != None) and _comfortIndex in range(19):
             locationName, latitude, longitude, timeZone, validLocationData, printMsgLocation = getLocationData(_location)
             if validLocationData:
-                if (len(_dryBulbTemperature) != 0):
+                if (len(_dryBulbTemperature) != 0) and (_dryBulbTemperature[0] != None):
                     if _runIt:
                         comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsgWeather = getWeatherData(latitude, longitude, timeZone, _dryBulbTemperature, meanRadiantTemperature_, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, bodyCharacteristics_, HOY_, analysisPeriod_)
                         if validWeatherData:
