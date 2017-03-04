@@ -77,6 +77,8 @@ Provided by Ladybug 0.0.64
                                -
                                It requires the "numberOfRows_" to be larger than 1 in order visualize the minimal spacing between rows.
                                -
+                               Use Ladybug "Analysis Period" component to define this input.
+                               -
                                If not supplied, it will be calculated based on upper mentioned criteria.
         baseSurface_: Surface on which PV/SWH array will be laid onto.
                       This can be a surface of an angled or flat roof. Or an angled or flat terrain. A facade of a building etc.
