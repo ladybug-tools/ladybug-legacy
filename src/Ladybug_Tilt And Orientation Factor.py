@@ -51,9 +51,7 @@ Provided by Ladybug 0.0.64
                     Example - precision of 4, would mean that 4 fields in X direction (Azimuth) and 4 fields in Y direction (Tilt) = 16 fields, will be used to calculate the final "geometry" mesh.
                     For lower precision numbers (say < 20) even precision numbers are more accurate.
                     -
-                    CAUTION!!! Precision numbers (10 >) require stronger performance PCs. If your PC is somewhat "weaker", the precision of < 10 will be just fine.
-                    -
-                    If not supplied, default value of 2 will be used.
+                    If not supplied, default value of 20 will be used.
         scale_: Scale of the overall geometry.
                 -
                 If not supplied, default value of 1 will be used.
@@ -99,11 +97,11 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = "VER 0.0.64\nMAR_04_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+#compatibleLBVersion = VER 0.0.64\nMAR_04_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -652,6 +650,10 @@ if sc.sticky.has_key("ladybug_release"):
                         if bakeIt_: bakingGrouping(locationName, geometry, legend, analysisPt, TOF, TSRF)
                         printOutput(northDeg, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin)
                         PVsurfaceTilt = srfTiltD; PVsurfaceAzimuth = srfAzimuthD; optimalTilt = optimalTiltD; optimalAzimuth = optimalAzimuthD; optimalRadiation = maximalTotalRadiationPerYear; originPt = origin
+                        # correcting the bug with "optimalAzimuth" output (MAR 01 2017)
+                        optimalAzimuth = optimalAzimuth + northDeg
+                        if optimalAzimuth > 360:
+                            optimalAzimuth = optimalAzimuth - 360
                     else:
                         print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Tilt and orientation factor component."
                 else:

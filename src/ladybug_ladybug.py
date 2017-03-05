@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_12_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAR_04_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -5900,7 +5900,7 @@ class Photovoltaics(object):
                     correctedSrfAzimuthD = northDeg = None
                     validNorth = False
                     printMsg = "Please input north angle value from 0 to 360."
-                    return correctedSrfAzimuthD, validNorth, printMsg
+                    return correctedSrfAzimuthD, northDeg, validNorth, printMsg
             except Exception, e:  # check if it's a vector
                 north.Unitize()
             

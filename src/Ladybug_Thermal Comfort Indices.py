@@ -140,7 +140,7 @@ Provided by Ladybug 0.0.64
         _runIt: ...
         
     output:
-        readMe!: ...
+        readMe!: If your _comfortIndex is set to either 15 or 16, and you are performing analysis for a single hour, then this output will show additional results related with PET (Physiological Equivalent Temperature).
         comfortIndexValue: The value of the chosen comfort.
         comfortIndexLevel: The level (category, sensation) of the chosen index.
         comfortableOrNot: Indication of whether that person is comfortable (1) or not (0) at particular hour.
@@ -151,7 +151,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = "VER 0.0.64\nFEB_13_2017"
+ghenv.Component.Message = "VER 0.0.64\nFEB_27_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -161,7 +161,9 @@ except: pass
 
 import Grasshopper.Kernel as gh
 import scriptcontext as sc
+import System
 import math
+import time
 
 
 def getLocationData(location):
@@ -193,133 +195,188 @@ def averageWeatherData(hourlyData, activityDuration):
     activityDurationValues = activityDurationHours - 1
     hourlyDataShifted = hourlyData[-activityDurationValues:] + hourlyData[:]
     
-    lastActivityDurationHoursAverageL = [sum(hourlyDataShifted[i:activityDurationHours+i])/activityDurationHours for i in range(8760)]
+    #lastActivityDurationHoursAverageL = [sum(hourlyDataShifted[i:activityDurationHours+i])/activityDurationHours for i in range(8760)]
+    lastActivityDurationHoursAverageL = [sum(hourlyDataShifted[i:activityDurationHours+i])/activityDurationHours for i in range(len(hourlyData))]
     
     return lastActivityDurationHoursAverageL
 
 
 def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, bodyCharacteristics, HOY, analysisPeriod):
     
-    # required input: Ta
-    if (len(Ta) == 0) or (Ta[0] is ""):
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "Please input _dryBulbTemperature. As a single value, or as a list from \"Import EPW\" component."
+    # define function and HotExtremeCategory, ColdExtremeCategory variables
+    if _comfortIndex == 0:
+        function = heatIndex
+        HotExtremeCategory = 4
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    elif _comfortIndex == 1:
+        function = Humidex
+        HotExtremeCategory = 5
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    elif _comfortIndex == 2:
+        function = discomfortIndex
+        HotExtremeCategory = 3
+        ColdExtremeCategory = -6
+        climate = "dummy"
+    elif _comfortIndex == 3:
+        function = windChillIndex
+        HotExtremeCategory = 3
+        ColdExtremeCategory = -4
+        climate = "dummy"
+    elif _comfortIndex == 4:
+        function = windChillTemperature
+        HotExtremeCategory = "dummy"
+        ColdExtremeCategory = -4
+        climate = "dummy"
+    elif _comfortIndex == 5:
+        function = wbgt_indoors
+        HotExtremeCategory = 5
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    elif _comfortIndex == 6:
+        function = wbgt_outdoors
+        HotExtremeCategory = 5
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    elif _comfortIndex == 7:
+        function = effectiveTemperature
+        HotExtremeCategory = 2
+        ColdExtremeCategory = -4
+        climate = "dummy"
+    elif _comfortIndex == 8:
+        function = apparentTemperature
+        HotExtremeCategory = 4
+        ColdExtremeCategory = -6
+        climate = "dummy"
+    elif _comfortIndex == 9:
+        function = thermalSensation
+        HotExtremeCategory = 3
+        ColdExtremeCategory = -3
+        climate = "dummy"
+    elif _comfortIndex == 10:
+        function = actualSensationModel
+        HotExtremeCategory = 2
+        ColdExtremeCategory = -2
+        climate = "dummy"
+    elif _comfortIndex == 11:
+        function = meanRadiantTemperature
+        HotExtremeCategory = "dummy"
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    elif _comfortIndex == 12:
+        function = predictedInsulationIndexOfClothing
+        HotExtremeCategory = 2
+        ColdExtremeCategory = -4
+        climate = "dummy"
+    elif _comfortIndex == 13:
+        function = heartRate
+        HotExtremeCategory = 3
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    elif _comfortIndex == 14:
+        function = dehydrationRisk
+        HotExtremeCategory = 2
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    elif _comfortIndex == 15:
+        function = physiologicalEquivalentTemperature
+        HotExtremeCategory = 4
+        ColdExtremeCategory = -4
+        climate = "temperate"
+    elif _comfortIndex == 16:
+        function = physiologicalEquivalentTemperature
+        HotExtremeCategory = 4
+        ColdExtremeCategory = -4
+        climate = "humid"
+    elif _comfortIndex == 17:
+        function = temperatureHumidityIndex
+        HotExtremeCategory = 2
+        ColdExtremeCategory = -3
+        climate = "dummy"
+    elif _comfortIndex == 18:
+        function = predictedHeatStrain
+        HotExtremeCategory = 4
+        ColdExtremeCategory = "dummy"
+        climate = "dummy"
+    
+    
+    # initial check of weather data inputs
+    TaL = []; mrtL = []; TdpL = []; rhL = []; wsL = []; SRL = []; NL = []; IclL = []; ML = []
+    
+    if (len(Ta) == 0) or (Ta[0] == None):
+        comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
         validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
-    elif (len(Ta) == 8767):
+        printMsg = "Please input _dryBulbTemperature. As a single value, a list of values, or as a list from \"Import EPW\" component."
+        return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
+    elif (len(Ta) == 8767) and (type(Ta[0]) == System.String):
+        # the _dryBulbTemperature input contains annual data from "Import Epw" component and not 8767 numerical values
         TaL = Ta[7:]
-    elif (len(Ta) == 8760):
-        TaL = Ta
-    elif (len(Ta) == 1):
-        TaL = [float(Ta[0]) for i in range(8760)]
-    else:
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "_dryBulbTemperature input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo input a single value, or the \"dryBulbTemperature\" list from \"Import EPW\" component."
-        validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    elif (len(Ta) > 0) and (len(Ta) < 8767):
+        TaL = [float(Ta[i])  for i in range(len(Ta))]
     
     
-    if (len(mrt) == 0) or (mrt[0] is ""):
+    if (len(mrt) == 0) or (mrt[0] == None):
         mrtL = ["calculate_MRT"]  # calculate mrtL
-    elif (len(mrt) == 8767):
+    elif (len(mrt) == 8767) and (type(mrt[0]) == System.String):
+        # the meanRadiantTemperature_ input contains annual data from "Import Epw" component and not 8767 numerical values
         mrtL = mrt[7:]
-    elif (len(mrt) == 8760):
-        mrtL = mrt
-    elif (len(mrt) == 1):
-        mrtL = [float(mrt[0]) for i in range(8760)]
-    else:
-        TaL = mrtL = mrtL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = acclimated = ML = activityDuration = None
-        printMsg = "meanRadiantTemperature_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo input a single value, or the list.\nIf nothing supplied, it will be calculated automatically."
-        validWeatherData = False
-        return TaL, mrtL, mrtL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, acclimated, ML, activityDuration, validWeatherData, printMsg
+    elif (len(mrt) > 0) and (len(mrt) < 8767):
+        mrtL = [float(mrt[i])  for i in range(len(mrt))]
     
     
-    if (len(rh) == 0) or (rh[0] is ""):
-        rhL = [50 for i in range(8760)]  # default 50%, indoor condition
-    elif (len(rh) == 8767):
+    if (len(rh) == 0) or (rh[0] == None):
+        rhL = [50]  # default 50%, indoor condition
+    elif (len(rh) == 8767) and (type(rh[0]) == System.String):
+        # the relativeHumidity_ input contains annual data from "Import Epw" component and not 8767 numerical values
         rhL = rh[7:]
-    elif (len(rh) == 8760):
-        rhL = rh
-    elif (len(rh) == 1):
-        rhL = [float(rh[0]) for i in range(8760)]
-    else:
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "relativeHumidity_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo input a single value, or the \"relativeHumidity\" list from \"Import EPW\" component."
-        validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    elif (len(rh) > 0) and (len(rh) < 8767):
+        rhL = [float(rh[i])  for i in range(len(rh))]
     
     
-    if (len(Tdp) == 0) or (Tdp[0] is ""):
-        TdpL = [dewPointTemperature(TaL[i],rhL[i]) for i in range(8760)]  # calculate TdpL
-    elif (len(Tdp) == 8767):
+    if (len(Tdp) == 0) or (Tdp[0] == None):
+        TdpL = ["calculate_Tdp"]
+    elif (len(Tdp) == 8767) and (type(Tdp[0]) == System.String):
+        # the dewPointTemperature_ input contains annual data from "Import Epw" component and not 8767 numerical values
         TdpL = Tdp[7:]
-    elif (len(Tdp) == 8760):
-        TdpL = Tdp
-    elif (len(Tdp) == 1):
-        TdpL = [float(Tdp[0]) for i in range(8760)]
-    else:
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "dewPointTemperature_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo input a single value, or the \"dewPointTemperature\" list from \"Import EPW\" component."
-        validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    elif (len(Tdp) > 0) and (len(Tdp) < 8767):
+        TdpL = [float(Tdp[i])  for i in range(len(Tdp))]
     
     
-    if (len(ws) == 0) or (ws[0] is ""):
-        wsL = [0.3 for i in range(8760)]  # default 0.3 m/s: no wind
-    elif (len(ws) == 8767):
+    if (len(ws) == 0) or (ws[0] == None):
+        wsL = [0.3]  # default 0.3 m/s: no wind
+    elif (len(ws) == 8767) and (type(ws[0]) == System.String):
+        # the windSpeed_ input contains annual data from "Import Epw" component and not 8767 numerical values
         wsL = ws[7:]
-    elif (len(ws) == 8760):
-        wsL = ws
-    elif (len(ws) == 1):
-        wsL = [float(ws[0]) for i in range(8760)]
-    else:
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "windSpeed_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo input a single value, or the \"windSpeed\" list from \"Import EPW\" component."
-        validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    elif (len(ws) > 0) and (len(ws) < 8767):
+        wsL = [float(ws[i])  for i in range(len(ws))]
     
     
-    if (len(N) == 0) or (N[0] is ""):
-        NL = [6 for i in range(8760)]  # default 6 tens, continental humid climate
-    elif (len(N) == 8767):
+    if (len(N) == 0) or (N[0] == None):
+        NL = [6]  # default 6 tens, continental humid climate
+    elif (len(N) == 8767) and (type(N[0]) == System.String):
+        # the totalSkyCover_ input contains annual data from "Import Epw" component and not 8767 numerical values
         NL = N[7:]
-    elif (len(N) == 8760):
-        NL = N
-    elif (len(N) == 1):
-        NL = [float(N[0]) for i in range(8760)]
-    else:
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "totalSkyCover_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo input a single value, or the \"totalSkyCover\" list from \"Import EPW\" component."
-        validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    elif (len(N) > 0) and (len(N) < 8767):
+        NL = [float(N[i])  for i in range(len(N))]
     
     
-    if (len(SR) == 0) or (SR[0] is "") or (SR[0] is None):
-        SRL = [0 for i in range(8760)]  # default 0 Wh/m2: no solar radiation
-    elif (len(SR) == 8767):
+    if (len(SR) == 0) or (SR[0] is "") or (SR[0] == None):
+        SRL = [0]  # default 0 Wh/m2: no solar radiation
+    elif (len(SR) == 8767) and (type(SR[0]) == System.String):
+        # the solarRadiationPerHour_ input contains annual data from "Import Epw" component and not 8767 numerical values
         SRL = SR[7:]
-    elif (len(SR) == 8760):
-        SRL = SR
-    elif (len(SR) == 1):
-        SRL = [float(SR[0]) for i in range(8760)]
-    else:
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
-        printMsg = "solarRadiationPerHour_ input can only be a single value, or a list of 8760 (without the Ladybug header) or 8767 (with Ladybug header) values.\nSo either input a single value, or:\n" + \
-                   " \n" + \
-                   "1) If you would like to do an analysis accounted for shading (more precise) use the \"Sunpath shading\" component and its \"shadedSolarRadiationPerHour\" output.\n" + \
-                   " \n" + \
-                   "2) If you would not like to do an analysis accounted for shading (because it's quicker that way), then you can supply the data from \"Import epw\" component's \"diffuseHorizontalRadiation\" output.\n" + \
-                   "In this simplified way it will be assumed that an analysis is being conducted in outdoor in-shade conditions, or indoor conditions."
-        validWeatherData = False
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    elif (len(SR) > 0) and (len(SR) < 8767):
+        SRL = [float(SR[i])  for i in range(len(SR))]
+    
     
     
     # bodyCharacteristics
     if (len(bodyCharacteristics) != 10) and (len(bodyCharacteristics) != 0):
-        TaL = mrtL_calculated = TdpL = rhL = wsL = SRL = NL = TgroundL = RprimL = vapourPressureL = EpotL = HOYs = date = newAnalysisPeriod = age = sex = heightCM = heightM = weight = bodyPosition = IclL = ac = acclimated = ML = activityDuration = None
+        comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
         validWeatherData = False
         printMsg = "Your \"bodyCharacteristics_\" input is incorrect. Please use the \"bodyCharacteristics\" output from Ladybug's \"Body Characteristics\" component."
-        return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+        return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
         
     elif (len(bodyCharacteristics) == 0) or (bodyCharacteristics[0] is ""):
         # nothing inputted into "bodyCharacteristics_", use default bodyCharacteristics values
@@ -351,14 +408,103 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
     # check Icl and M from bodyCharacteristics
     if (Icl != None):
         # use "clothingInsulation" defined in "bodyCharacteristics_"
-        IclL = [Icl for i in range(8760)]
+        IclL = [Icl]
     else:
         # nothing inputted to "bodyCharacteristics_" or something inputted to "bodyCharacteristics_" but "clothingInsulation" is not defined (equals to: None)
-        IclL = [clothingInsulation(Ta) for Ta in TaL]
+        IclL = ["calculate_Icl"]  # this is so that: len(IclL) == 1
     
     if (Mmets == None) or (Mmets <= 0):
         Mmets = 2.32
-    ML = [Mmets * 58.2 for i in range(8760)]  # convert mets to W/m2 (2.32 met = 2.32 * 58.2 = 135 W/m2)
+    ML = [Mmets]
+    
+    
+    
+    # check compatibility between different input lengths
+    inputsLengths = [ len(TaL), len(mrtL), len(TdpL), len(rhL), len(wsL), len(SRL), len(NL) ]
+    
+    inputsMaximalLength = max( inputsLengths )
+    if (inputsMaximalLength == 1) and (len(HOY_) == 0) and (len(analysisPeriod_) == 0):
+        # all inputs have only one value, and HOY_ and analysisPeriod_ inputs are empty - in that case duplicate all inputs 8760 times, as we do not know to which HOY does these inputs belong to
+        inputsMaximalLength = 8760
+        inputsLengths[0] = 8760  # it could have been any other index indstead of "[0]"
+    elif (inputsMaximalLength == 1) and (len(HOY_) != 0) or (len(analysisPeriod_) != 0):
+        inputsMaximalLength = 8760
+    
+    inputsMinimalLength = min( inputsLengths )
+    numberOfDifferentInputLengths = list(set(inputsLengths))
+    
+    if len(numberOfDifferentInputLengths) > 2:
+        comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
+        validWeatherData = False
+        printMsg = "\"Thermal Comfort Indices\" component accepts maximum the two types of inputs when it come to number of items per input. For example, the following input combinations:\n\n- All input data coming from Ladybug \"Import EPW\" component.\n- All input data coming from Ladybug \"Import EPW\" component and some of inputs having a single value added to them.\n- Some inputs having a single value added to them, while some of them have number of values larger than 1. However all of these have the same number of items.\n- All inputs have a single value added to them.\n- All inputs have a number of values added to them larger than 1. However all of them have the same number of values.\n\n Edit your inputs so that they follow one of upper combinations."
+        return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
+    
+    
+    # HOY_ and analysisPeriod_ inputs
+    if (len(HOY_) == 0) and (len(analysisPeriod_) == 0) and (mrtL[0] != "calculate_MRT"):
+        # something added to the "meanRadiantTemperature_" input and nothing added to the "HOY_" input. In that case use dummy "HOY_" values, as what "noaaSolarCalculator" function returns will not be important: MRT will not be calculated but the values added to the "meanRadiantTemperature_" input will be used instead
+        HOY = range(inputsMaximalLength)  # dummy HOYs
+    
+    HOYs, daysDummy, monthsDummy, hoursDummy, date, newAnalysisPeriod = HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod)
+    HOYsDummy, days, months, hours, dateDummy, newAnalysisPeriodDummy = HOYsDaysMonthsHoursFromHOY_analysisPeriod(None, [(1, 1, 1),(12, 31, 24)])
+    
+    if (len(HOYs) > inputsMaximalLength):
+        comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
+        validWeatherData = False
+        printMsg = "\"Thermal Comfort Indices\" component does not know for which specific hour of the year you would like to calculate your chosen _comfortIndex.\nDefine it through \"HOY_\" or \"analysisPeriod_\" inputs. Either of these inputs need to cover the period of minimum 1 and maximum %s hours!" % inputsMaximalLength
+        return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
+    
+    
+    # headers
+    if (len(HOYs) == 1):
+        createOutputHeaders = False
+    elif (inputsMaximalLength == 8760):
+        createOutputHeaders = True
+    elif (inputsMaximalLength != 8760):
+        createOutputHeaders = False
+    
+    
+    # number of values in each input need to be the same across all inputs
+    if (len(TaL) == 1):
+        TaL = [float(TaL[0])  for i in range(inputsMaximalLength)]
+    if (len(mrtL) == 1) and (mrtL[0] != "calculate_MRT"):
+        mrtL = [mrtL[0]  for i in range(inputsMaximalLength)]
+    if (len(rhL) == 1):
+        rhL = [float(rhL[0])  for i in range(inputsMaximalLength)]
+    if (len(TdpL) == 1) and (TdpL[0] != "calculate_Tdp"):
+        TdpL = [float(TdpL[0])  for i in range(inputsMaximalLength)]
+    if (len(TdpL) == 1) and (TdpL[0] == "calculate_Tdp"):
+        try:
+            TdpL = [dewPointTemperature(TaL[i],rhL[i])  for i in range(inputsMaximalLength)]  # calculate TdpL
+        except:
+            comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
+            validWeatherData = False
+            printMsg = "The values you added to \"HOY_\" or \"analysisPeriod_\" inputs do not correspond to those you added to weather data inputs above.\nCorrect your \"HOY_\" or \"analysisPeriod_\" inputs."
+            return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
+    if (len(wsL) == 1):
+        wsL = [float(wsL[0])  for i in range(inputsMaximalLength)]
+    if (len(NL) == 1):
+        NL = [float(NL[0])  for i in range(inputsMaximalLength)]
+    if (len(SRL) == 1):
+        SRL = [float(SRL[0]) for i in range(inputsMaximalLength)]
+    if (len(IclL) == 1) and (IclL[0] != "calculate_Icl"):
+        IclL = [IclL[0] for i in range(inputsMaximalLength)]
+    if (len(IclL) == 1) and (IclL[0] == "calculate_Icl"):
+        IclL = [clothingInsulation(Ta) for Ta in TaL]
+    if (len(ML) == 1):
+        ML = [Mmets * 58.2  for i in range(inputsMaximalLength)]  # convert mets to W/m2 (2.32 met = 2.32 * 58.2 = 135 W/m2)
+    
+    """
+    # check if this makes any problems
+    if (inputsMaximalLength == 8760)  and  ((inputsMinimalLength > 1) and (inputsMinimalLength < 8760)):
+        comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
+        validWeatherData = False
+        printMsg = "\"Thermal Comfort Index\" component does not support weather data inputs from \"Import EPW\" component and custom input with more than 1 values per input.\nSo either deattach the input coming from \"Import EPW\" component, or lower the number values added to the input which contains more than 1 value."
+        return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
+    else:
+        pass
+    """
+    
     
     
     if _comfortIndex == 18:
@@ -377,31 +523,40 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         IclL = averageWeatherData(IclL, activityDuration)
     
     
+    
+    HRrates = heartRates(age, sex)
+    dehydrationRiskRates = DehydrationRiskRates(acclimated)
+    comfortIndexValue, comfortIndexCategory, comfortableOrNot, outputNickNames, outputDescriptions = createHeaders(createOutputHeaders, _comfortIndex, locationName, newAnalysisPeriod, _dryBulbTemperature, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, HRrates, dehydrationRiskRates, activityDuration)
+    
     TgroundL = []; RprimL = []; vapourPressureL = []; EpotL = []; mrtL_calculated = []
-    HOYs, daysDummy, monthsDummy, hoursDummy, date, newAnalysisPeriod = HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod)
-    HOYsDummy, days, months, hours, dateDummy, newAnalysisPeriodDummy = HOYsDaysMonthsHoursFromHOY_analysisPeriod(None, [(1, 1, 1),(12, 31, 24)])
-    for i in range(8760):
-        Tground = groundTemperature(TaL[i], NL[i])  # in C
-        solarZenithD, solarAzimuthD, solarAltitudeD = noaaSolarCalculator(latitude, longitude, timeZone, months[i], days[i], hours[i])  # in degrees
-        Rprim = solarRadiationNudeMan(SRL[i], solarAltitudeD, ac)  # in W/m2
-        vapourPressure = VapourPressure(TaL[i], rhL[i])  # in hPa
-        if mrtL[0] == "calculate_MRT":
-            mrt = meanRadiantTemperature(TaL[i], Tground, Rprim, vapourPressure, NL[i])  # in C
+    for i,hoy in enumerate(HOYs):
+        listIndex = hoy - 1
+        if (inputsMaximalLength == 8760):
+            valueIndex = listIndex
         else:
-            mrt = mrtL[i]  # in C
-        Ts = meanSkinTemperature(TaL[i], wsL[i], rhL[i], mrt, IclL[i], ML[i])  # in C
-        e_ = VapourPressure(TaL[i], 5)  # in hPa
-        Epot = turbulentExchangeOfLatentHeat(TaL[i], wsL[i], Ts, IclL[i], e_, ML[i])  # in W/m2
-        TgroundL.append(Tground)
-        RprimL.append(Rprim)
-        vapourPressureL.append(vapourPressure)
-        mrtL_calculated.append(mrt)
-        EpotL.append(Epot)
+            valueIndex = i
+        Tground = groundTemperature(TaL[valueIndex], NL[valueIndex])  # in C
+        solarZenithD, solarAzimuthD, solarAltitudeD = noaaSolarCalculator(latitude, longitude, timeZone, months[listIndex], days[listIndex], hours[listIndex])  # in degrees
+        Rprim = solarRadiationNudeMan(SRL[valueIndex], solarAltitudeD, ac)  # in W/m2
+        vapourPressure = VapourPressure(TaL[valueIndex], rhL[valueIndex])  # in hPa
+        if (mrtL[0] == "calculate_MRT"):
+            MRT = meanRadiantTemperature2(TaL[valueIndex], Tground, Rprim, vapourPressure, NL[valueIndex])  # in C
+        else:
+            MRT = mrtL[valueIndex]  # in C
+        Ts = meanSkinTemperature(TaL[valueIndex], wsL[valueIndex], rhL[valueIndex], MRT, IclL[valueIndex], ML[valueIndex])  # in C
+        e_ = VapourPressure(TaL[valueIndex], 5)  # in hPa
+        Epot = turbulentExchangeOfLatentHeat(TaL[valueIndex], wsL[valueIndex], Ts, IclL[valueIndex], e_, ML[valueIndex])  # in W/m2
+        
+        comfIndexValue, comfCategory, comfOrNot, PETresults = function(TaL[valueIndex], MRT, TdpL[valueIndex], rhL[valueIndex], wsL[valueIndex], SRL[valueIndex], NL[valueIndex], Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, IclL[valueIndex], ac, acclimated, ML[valueIndex], activityDuration, HRrates, dehydrationRiskRates, climate)
+        comfortIndexValue.append(comfIndexValue)
+        comfortIndexCategory.append(comfCategory)
+        comfortableOrNot.append(comfOrNot)
+    
     
     printMsg = "ok"
     validWeatherData = True
     
-    return TaL, mrtL_calculated, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsg
+    return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
 
 
 #angle units conversion
@@ -426,7 +581,8 @@ def celsiusToKelvin(Tc):
 
 
 # thermal comfort indices
-def heatIndex(Ta, rh):
+def heatIndex(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, rh):
     # formula by (NWS) National Weather Service
     Tf = celsiusToFahrenheit(Ta)
     
@@ -463,7 +619,7 @@ def heatIndex(Ta, rh):
     
     HI_c = fahrenheitToCelsius(HI_f)
     
-    return HI_c, effectHI, comfortable
+    return HI_c, effectHI, comfortable, []
 
 
 def dewPointTemperature(Ta, rh):
@@ -480,7 +636,8 @@ def dewPointTemperature(Ta, rh):
     return Tdp
 
 
-def Humidex(Ta, Tdp):
+def Humidex(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, Tdp):
     # formula by Environment Canada
     dewpointK = celsiusToKelvin(Tdp)  # to Kelvin
     e = 6.11 * math.exp(5417.7530 * ((1/273.16) - (1/dewpointK)))
@@ -506,10 +663,11 @@ def Humidex(Ta, Tdp):
         effectHumidex = 5
         comfortable = 0
     
-    return humidex, effectHumidex, comfortable
+    return humidex, effectHumidex, comfortable, []
 
 
-def discomfortIndex(Ta, rh):
+def discomfortIndex(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, rh):
     # also called "Thom's Index"
     # formula from: Thom, E.C. (1959): The discomfort index. Weather wise, 12: 5760.
     DI = Ta - (0.55 - 0.0055*rh)*(Ta - 14.5)
@@ -546,10 +704,11 @@ def discomfortIndex(Ta, rh):
         effectDI = 3
         comfortable = 0
     
-    return DI, effectDI, comfortable
+    return DI, effectDI, comfortable, []
 
 
-def windChillIndex(Ta, ws):
+def windChillIndex(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws):
     # formula by Gregorczuk 1976
     WCI = (10*math.sqrt(ws) + 10.45 - ws)*(33 - Ta)*1.163
     
@@ -579,10 +738,11 @@ def windChillIndex(Ta, ws):
         effectWCI = 3
         comfortable = 0
     
-    return WCI, effectWCI, comfortable
+    return WCI, effectWCI, comfortable, []
 
 
-def windChillTemperature(Ta, ws):
+def windChillTemperature(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws):
     # formula by Environment Canada (corresponds to National Weather Service (NSW) Wind chill formula used in U.S.)
     ws_km_h = ws * 3.6   # convert m/s to km/h wind speed
     
@@ -610,10 +770,11 @@ def windChillTemperature(Ta, ws):
         effectTwc = -6
         comfortable = 0
     
-    return Twc, effectTwc, comfortable
+    return Twc, effectTwc, comfortable, []
 
 
-def effectiveTemperature(Ta, ws, rh, SR, ac):
+def effectiveTemperature(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws, rh, SR, ac):
     if ws <= 0.2:
         # formula by Missenard
         TE = Ta - 0.4*(Ta - 10)*(1-rh/100)
@@ -646,10 +807,11 @@ def effectiveTemperature(Ta, ws, rh, SR, ac):
         effectTE = 2
         comfortable = 0
     
-    return TRE, effectTE, comfortable
+    return TRE, effectTE, comfortable, []
 
 
-def apparentTemperature(Ta, ws, rh):
+def apparentTemperature(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws, rh):
     
     e = (rh/100) * 6.105 * math.exp((17.27*Ta)/(237.7+Ta))
     AT = Ta + (0.33*e) - (0.70*ws) - 4.00
@@ -689,10 +851,11 @@ def apparentTemperature(Ta, ws, rh):
         effectAT = -6
         comfortable = 0
     
-    return AT, effectAT, comfortable
+    return AT, effectAT, comfortable, []
 
 
-def thermalSensation(Ta, ws, rh, SR, Tground):
+def thermalSensation(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws, rh, SR, Tground):
     # formula from: Givoni, Noguchi, Issues and problems in outdoor comfort research, in: Proceedings of the PLEA2000 Conference, Cambridge, UK, July 2000
     TS=1.7+0.1118*Ta+0.0019*SR-0.322*ws-0.0073*rh+0.0054*Tground
     
@@ -718,10 +881,11 @@ def thermalSensation(Ta, ws, rh, SR, Tground):
         effectTS = 3
         comfortable = 0
     
-    return TS, effectTS, comfortable
+    return TS, effectTS, comfortable, []
 
 
-def actualSensationModel(Ta, ws, rh, SR):
+def actualSensationModel(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws, rh, SR):
     # Actual Sensation Model for whole Europe 
     # formula by RUROS project.
     ASV = 0.049*Ta + 0.001*SR - 0.051*ws + 0.014*rh - 2.079
@@ -744,7 +908,7 @@ def actualSensationModel(Ta, ws, rh, SR):
         effectASV = 2
         comfortable = 0
     
-    return ASV, effectASV, comfortable
+    return ASV, effectASV, comfortable, []
 
 
 def noaaSolarCalculator(latitude, longitude, timeZone, month, day, hour):
@@ -836,7 +1000,19 @@ def VapourPressure(Ta, rh):
     return es
 
 
-def meanRadiantTemperature(Ta, Tground, Rprim, e, N):
+def meanRadiantTemperature(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, Tground, Rprim, e, N):
+    # formula by Man-ENvironment heat EXchange model (MENEX_2005)
+    
+    La = 5.5*(10**(-8)) *((273 + Ta)**(4)) *(0.82 - 0.25*(10**(-0.094*0.75*vapourPressure))) * (1 + 0.22*((N/10)**2.75))  # incoming long-wave radiation emitted from the sky hemisphere, in W/m2
+    Lg = 5.5 *(10**(-8)) * ((273 + Tground)**(4))  # outgoing long-wave radiation emitted by the ground, in W/m2
+    
+    MRT = (((Rprim + 0.5*Lg + 0.5*La) / (0.95*5.667*(10**(-8))))**(0.25)) - 273  # in C
+    
+    return MRT, "dummyCategory", "dummyComfortableOrNot", []
+
+
+def meanRadiantTemperature2(Ta, Tground, Rprim, e, N):
     # formula by Man-ENvironment heat EXchange model (MENEX_2005)
     
     La = 5.5*(10**(-8)) *((273 + Ta)**(4)) *(0.82 - 0.25*(10**(-0.094*0.75*e))) * (1 + 0.22*((N/10)**2.75))  # incoming long-wave radiation emitted from the sky hemisphere, in W/m2
@@ -847,7 +1023,8 @@ def meanRadiantTemperature(Ta, Tground, Rprim, e, N):
     return MRT
 
 
-def wbgt_indoors(Ta, ws, rh, e, MRT, Tdp):
+def wbgt_indoors(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws, rh, e, MRT, Tdp):
     # WBGT indoor formula by Bernard
     # formula from: "Calculating Workplace WBGT from Meteorological Data: A Tool for Climate Change Assessment", Lemke, Kjellstrom, 2012
     # natural wet bulb temperature based on code written by Nick Burns: https://github.com/nickb-/Calculating-WBGT/blob/master/relaxation_Tw/working_code/wbgt.R
@@ -892,12 +1069,13 @@ def wbgt_indoors(Ta, ws, rh, e, MRT, Tdp):
         effectWBGT = 5
         comfortable = 0
     
-    return WBGTid, effectWBGT, comfortable
+    return WBGTid, effectWBGT, comfortable, []
 
 
-def wbgt_outdoors(Ta, ws, rh, e, MRT):
+def wbgt_outdoors(Ta, MRT, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws, rh, e, MRT):
     # WBGT outdoor formula from Heat stress and occupational health and safety  spatial and temporal differentiation, K. Blazejczyk, J.Baranowski, A. Blazejczyk, Miscellanea geographica  regional studies on development, Vol. 18, No. 1, 2014, 
-    Tw = 1.885 + 0.3704*Ta + 0.4492*e
+    Tw = 1.885 + 0.3704*Ta + 0.4492*vapourPressure
     Tg = 2.098 - 2.561*ws + 0.5957*Ta + 0.4017*MRT
     WBGTout = 0.7*Tw + 0.2*Tg + 0.1*Ta
     WBGT_f = celsiusToFahrenheit(WBGTout)
@@ -922,10 +1100,11 @@ def wbgt_outdoors(Ta, ws, rh, e, MRT):
         effectWBGT = 5
         comfortable = 0
     
-    return WBGTout, effectWBGT, comfortable
+    return WBGTout, effectWBGT, comfortable, []
 
 
-def predictedInsulationIndexOfClothing(Ta, ws, M):
+def predictedInsulationIndexOfClothing(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, ws, M):
     # total insulation of clothing and the surrounding air layer by Burton and Edholm (1955)
     It = (0.082*(91.4 - (1.8*Ta + 32)) / (0.01724*M))
     # insulation of the surrounded air layer by Fourt and Hollies (1970)
@@ -958,7 +1137,7 @@ def predictedInsulationIndexOfClothing(Ta, ws, M):
     if Iclp < 0.5: Iclp = 0.5  # summer clothes (light trousers, short sleeves or blouse)
     if Iclp > 4.1: Iclp = 4.1  # heavy polar outfit (fur pants, coat, hood, gloves...)
     
-    return Iclp, effectIclp, comfortable
+    return Iclp, effectIclp, comfortable, []
 
 
 def heartRates(age, sex):
@@ -990,7 +1169,7 @@ def heartRates(age, sex):
         elif age > 65:
             HRrates = [76,84,90]
     elif sex == "average sex":
-        # average values (("male" + "female")/2) have been taken
+        # average sex values (("male" + "female")/2)
         if age <= 25:
             HRrates = [75.5, 83.5,90]
         elif age > 25 and age <= 35:
@@ -1007,9 +1186,10 @@ def heartRates(age, sex):
     return HRrates
 
 
-def heartRate(Ta, e, M, HRrates):
+def heartRate(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, vapourPressure, M, HRrates):
     #formula by Fuller, Brouha 1966
-    HR = 22.4 + 0.18*M + 0.25*(5*Ta + 2.66*e)
+    HR = 22.4 + 0.18*M + 0.25*(5*Ta + 2.66*vapourPressure)
     HR = int(round(HR))
     
     if HR < HRrates[0]:
@@ -1025,7 +1205,7 @@ def heartRate(Ta, e, M, HRrates):
         effectHR = 3
         comfortable = 0
     
-    return HR, effectHR, comfortable
+    return HR, effectHR, comfortable, []
 
 
 def clothingInsulation(Ta):
@@ -1088,7 +1268,8 @@ def DehydrationRiskRates(acclimated):
     return dehydrationRiskRates
 
 
-def dehydrationRisk(Epot, dehydrationRiskRates):
+def dehydrationRisk(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Epot, dehydrationRiskRates):
     # formula from MENEX_2005 model
     # water loss
     SW = -2.6*Epot  # in g/hour
@@ -1103,15 +1284,16 @@ def dehydrationRisk(Epot, dehydrationRiskRates):
         effectSW = 2
         comfortable = 0
     
-    return SW, effectSW, comfortable
+    return SW, effectSW, comfortable, []
 
 
-def physiologicalEquivalentTemperature(climate, Ta, ws, rh, MRT, age, sex, heightM, weight, bodyPosition, M, Icl):
+def physiologicalEquivalentTemperature(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (climate, Ta, ws, rh, MRT, age, sex, heightM, weight, bodyPosition, M, Icl):
     # based on: Peter Hoeppe PET fortran code, from:
     # "Urban climatic map and standards for wind environment - Feasibility study, Technical Input Report No.1",
     # The Chinese University of Hong Kong, Planning Department, Nov 2008
     
-    petObj = lb_comfortModels.physiologicalEquivalentTemperature(Ta, MRT, rh, ws, age, sex, heightM, weight, bodyPosition, M, Icl)
+    petObj = lb_comfortModels.physiologicalEquivalentTemperature(Ta, mrt, rh, ws, age, sex, heightM, weight, bodyPosition, M, Icl)
     respiration = petObj.inkoerp()
     coreTemperature, radiationBalance, convection, waterVaporDiffusion = petObj.berech()
     petObj.pet()
@@ -1123,7 +1305,8 @@ def physiologicalEquivalentTemperature(climate, Ta, ws, rh, MRT, age, sex, heigh
     return PET, effectPET, comfortablePET, PETresults
 
 
-def temperatureHumidityIndex(Ta, Tdp):
+def temperatureHumidityIndex(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, M, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, Tdp):
     # formula and categories based on: Taiwan's Central Weather Bureau
     THI = Ta - 0.55 * (1-math.exp((17.269*Tdp)/(Tdp+237.3)-(17.269*Ta)/(Ta+237.3))) * (Ta-14)  # Taiwan's Central Weather Bureau Comfort Index
     
@@ -1146,10 +1329,11 @@ def temperatureHumidityIndex(Ta, Tdp):
         effectTHI = 2
         comfortable = 0
     
-    return THI, effectTHI, comfortable
+    return THI, effectTHI, comfortable, []
 
 
-def predictedHeatStrain(Ta, mrt, ws, vapourPressure, heightM, weight, bodyPosition, Icl, acclimated, Met, activityDuration):
+def predictedHeatStrain(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPressure, Epot, age, sex, heightCM, heightM, weight, bodyPosition, Icl, ac, acclimated, Met, activityDuration, HRrates, dehydrationRiskRates, climate):
+    # inputs: (Ta, mrt, ws, vapourPressure, heightM, weight, bodyPosition, Icl, acclimated, Met, activityDuration):
     # based on: Dr. Jacques Malchaire Quick Basic code from:
     # "Ergonomics of the thermal environment - Analytical determination and interpretation of heat stress using calculation of predicted heat strain", ISO 7933, 2004
     
@@ -1434,7 +1618,7 @@ def predictedHeatStrain(Ta, mrt, ws, vapourPressure, heightM, weight, bodyPositi
         effectPHS = 1
         comfortable = 0
     
-    return Tre, effectPHS, comfortable
+    return Tre, effectPHS, comfortable, []
 
 
 def HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod):
@@ -1481,7 +1665,7 @@ def HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod):
     return HOYs, days, months, hours, date, newAnalysisPeriod
 
 
-def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws, SR, N, HRrates, dehydrationRiskRates, activityDuration):
+def createHeaders(createOutputHeaders, comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws, SR, N, HRrates, dehydrationRiskRates, activityDuration):
     
     for data in Ta, Tdp, rh, ws, SR, N:
         if "key:location/dataType/units/frequency/startsAt/endsAt" in data:
@@ -1880,7 +2064,8 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     ,
     
-    ["Physiologically Equivalent Temperature (C) for temperate climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
+    ["Physiologically Equivalent Temperature (C) for temperate climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.\n\n" + \
+    "If an analysis has been performed for a single hour, then \"readMe!\" output will show additional results related with PET!",  #comfortIndexValues
     
     "Each number (from -4 to 4) represents a certain PET level/category. With categories being the following:\n" + \
     "--\n" + \
@@ -1904,7 +2089,8 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     
     ,
     
-    ["Physiologically Equivalent Temperature (C) for (sub)tropical climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.",  #comfortIndexValues
+    ["Physiologically Equivalent Temperature (C) for (sub)tropical climates - an air temperature at which, in a typical indoor conditions, the heat budget of the human body is balanced with the same core and skin temperature as under the complex outdoor conditions to be assessed. This way PET enables a layperson to compare the integral effects of complex thermal conditions outside with his or her own experience indoors.\n\n" + \
+    "If an analysis has been performed for a single hour, then \"readMe!\" output will show additional results related with PET!",  #comfortIndexValues
     
     "Each number (from -4 to 4) represents a certain PET level/category. With categories being the following:\n" + \
     "--\n" + \
@@ -1988,12 +2174,18 @@ def createHeaders(comfortIndex, locationName, newAnalysisPeriod, Ta, Tdp, rh, ws
     " "]  #percentColdExtreme
     ]
     
-    return comfortIndexValue, comfortIndexCategory, comfortableOrNot, outputNickNames[comfortIndex], outputDescriptions[comfortIndex]
+    if (createOutputHeaders == True):
+        # create headers for first three outputs
+        return comfortIndexValue, comfortIndexCategory, comfortableOrNot, outputNickNames[comfortIndex], outputDescriptions[comfortIndex]
+    elif (createOutputHeaders == False):
+        # do not create headers for first three outputs
+        return [], [], [], outputNickNames[comfortIndex], outputDescriptions[comfortIndex]
 
 
 def printThermalComfortIndexName(comfortIndex, date, HOYs, PETresults):
-    thermalComfortIndexName = ["HI (Heat Index)", "humidex (humidity index)", "DI (Discomfort Index)", "WCI (Wind Chill Index)", "WCT (Wind Chill Temperature)", "WBGT (Wet-Bulb Globe Temperature) indoors", "WBGT (Wet-Bulb Globe Temperature) outdoors", "TE (Effective Temperature)", "AT (Apparent Temperature)", "TS (Thermal Sensation)", "ASV (Actual Sensation Vote)", "MRT (Mean Radiant Temperature)", "Iclp (Predicted Insulation Index Of Clothing)", "HR (Heart Rate)", "DhRa (Dehydration Risk)", "PET (Physiologically Equivalent Temperature) for temperate climates", "PET (Physiologically Equivalent Temperature) for (sub)tropical humid climates", "THI (Temperature Humidity Index)", "PHS (Predicted Heat Strain)"]
-    print "%s successfully calculated for %s period." % (thermalComfortIndexName[comfortIndex], date)
+    thermalComfortIndexName = ["HI (Heat Index)", "humidex (humidity index)", "DI (Discomfort Index)", "WCI (Wind Chill Index)", "WCT (Wind Chill Temperature)", "WBGT (Wet-Bulb Globe Temperature) indoors", "WBGT (Wet-Bulb Globe Temperature) outdoors", "TE (Effective Temperature)", "AT (Apparent Temperature)", "TS (Thermal Sensation)", "ASV (Actual Sensation Vote)", "MRT (Mean Radiant Temperature)", "Iclp (Predicted Insulation Index Of Clothing)", "HR (Heart Rate)", "DhRa (Dehydration Risk)", "PET for temperate climates", "PET for (sub)tropical humid climates", "THI (Temperature Humidity Index)", "PHS (Predicted Heat Strain)"]
+    print "%s" % (thermalComfortIndexName[comfortIndex])
+    print date
     
     # print PETresults or PHSresults only for HOY_ inputted:
     if PETresults and (len(HOYs) == 1):
@@ -2010,108 +2202,42 @@ if sc.sticky.has_key("ladybug_release"):
         if (_comfortIndex != None) and _comfortIndex in range(19):
             locationName, latitude, longitude, timeZone, validLocationData, printMsgLocation = getLocationData(_location)
             if validLocationData:
-                TaL, mrtL, TdpL, rhL, wsL, SRL, NL, TgroundL, RprimL, vapourPressureL, EpotL, HOYs, date, newAnalysisPeriod, age, sex, heightCM, heightM, weight, bodyPosition, IclL, ac, acclimated, ML, activityDuration, validWeatherData, printMsgWeather = getWeatherData(latitude, longitude, timeZone, _dryBulbTemperature, meanRadiantTemperature_, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, bodyCharacteristics_, HOY_, analysisPeriod_)
-                if validWeatherData:
+                if (len(_dryBulbTemperature) != 0) and (_dryBulbTemperature[0] != None):
                     if _runIt:
-                        HRrates = heartRates(age, sex)
-                        dehydrationRiskRates = DehydrationRiskRates(acclimated)
-                        comfortIndexValue, comfortIndexCategory, comfortableOrNot, outputNickNames, outputDescriptions = createHeaders(_comfortIndex, locationName, newAnalysisPeriod, _dryBulbTemperature, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, HRrates, dehydrationRiskRates, activityDuration)
-                        PETresults = None
-                        for i,hoy in enumerate(HOYs):
-                            listIndex = hoy - 1
-                            if _comfortIndex == 0:
-                                hi,cat,cnc = heatIndex(TaL[listIndex], rhL[listIndex]);  comfortIndexValue.append(hi);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 4
-                            elif _comfortIndex == 1:
-                                humi,cat,cnc = Humidex(TaL[listIndex], TdpL[listIndex]);  comfortIndexValue.append(humi);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 5
-                            elif _comfortIndex == 2:
-                                di,cat,cnc = discomfortIndex(TaL[listIndex], rhL[listIndex]);  comfortIndexValue.append(di);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 3
-                                ColdExtremeCategory = -6
-                            elif _comfortIndex == 3:
-                                wci,cat,cnc = windChillIndex(TaL[listIndex], wsL[listIndex]);  comfortIndexValue.append(wci);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 3
-                                ColdExtremeCategory = -4
-                            elif _comfortIndex == 4:
-                                wct,cat,cnc = windChillTemperature(TaL[listIndex], wsL[listIndex]);  comfortIndexValue.append(wct);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                ColdExtremeCategory = -4
-                            elif _comfortIndex == 5:
-                                wbgt,cat,cnc = wbgt_indoors(TaL[listIndex], wsL[listIndex], rhL[listIndex], vapourPressureL[listIndex], mrtL[listIndex], TdpL[listIndex]);  comfortIndexValue.append(wbgt);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 5
-                            elif _comfortIndex == 6:
-                                wbgt,cat,cnc = wbgt_outdoors(TaL[listIndex], wsL[listIndex], rhL[listIndex], vapourPressureL[listIndex], mrtL[listIndex]);  comfortIndexValue.append(wbgt);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 5
-                            elif _comfortIndex == 7:
-                                et,cat,cnc = effectiveTemperature(TaL[listIndex], wsL[listIndex], rhL[listIndex], SRL[listIndex], ac);  comfortIndexValue.append(et);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 2
-                                ColdExtremeCategory = -4
-                            elif _comfortIndex == 8:
-                                at,cat,cnc = apparentTemperature(TaL[listIndex], wsL[listIndex], rhL[listIndex]);  comfortIndexValue.append(at);  comfortIndexCategory.append(cat); comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 4
-                                ColdExtremeCategory = -6
-                            elif _comfortIndex == 9:
-                                ts,cat,cnc = thermalSensation(TaL[listIndex], wsL[listIndex], rhL[listIndex], SRL[listIndex], TgroundL[listIndex]);  comfortIndexValue.append(ts);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 3
-                                ColdExtremeCategory = -3
-                            elif _comfortIndex == 10:
-                                asv,cat,cnc = actualSensationModel(TaL[listIndex], wsL[listIndex], rhL[listIndex], SRL[listIndex]);  comfortIndexValue.append(asv);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 2
-                                ColdExtremeCategory = -2
-                            elif _comfortIndex == 11:
-                                mrt = meanRadiantTemperature(TaL[listIndex], TgroundL[listIndex], RprimL[listIndex], vapourPressureL[listIndex], NL[listIndex]);  comfortIndexValue.append(mrt)
-                            elif _comfortIndex == 12:
-                                iclp,cat,cnc = predictedInsulationIndexOfClothing(TaL[listIndex], wsL[listIndex], ML[listIndex]);  comfortIndexValue.append(iclp);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 2
-                                ColdExtremeCategory = -4
-                            elif _comfortIndex == 13:
-                                hr,cat,cnc = heartRate(TaL[listIndex], vapourPressureL[listIndex], ML[listIndex], HRrates);  comfortIndexValue.append(hr);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 3
-                            elif _comfortIndex == 14:
-                                sw,cat,cnc = dehydrationRisk(EpotL[i], dehydrationRiskRates);  comfortIndexValue.append(sw);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 2
-                            elif _comfortIndex == 15:
-                                pet,cat,cnc,PETresults = physiologicalEquivalentTemperature("temperate", TaL[listIndex], wsL[listIndex], rhL[listIndex], mrtL[listIndex], age, sex, heightM, weight, bodyPosition, ML[listIndex], IclL[listIndex]);  comfortIndexValue.append(pet);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 4
-                                ColdExtremeCategory = -4
-                            elif _comfortIndex == 16:
-                                pet,cat,cnc,PETresults = physiologicalEquivalentTemperature("humid", TaL[listIndex], wsL[listIndex], rhL[listIndex], mrtL[listIndex], age, sex, heightM, weight, bodyPosition, ML[listIndex], IclL[listIndex]);  comfortIndexValue.append(pet);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 4
-                                ColdExtremeCategory = -4
-                            elif _comfortIndex == 17:
-                                thi,cat,cnc = temperatureHumidityIndex(TaL[listIndex], TdpL[listIndex]);  comfortIndexValue.append(thi);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 2
-                                ColdExtremeCategory = -3
-                            elif _comfortIndex == 18:
-                                phs,cat,cnc = predictedHeatStrain(TaL[listIndex], mrtL[listIndex], wsL[listIndex], vapourPressureL[listIndex], heightM, weight, bodyPosition, IclL[listIndex], acclimated, ML[listIndex], activityDuration);  comfortIndexValue.append(phs);  comfortIndexCategory.append(cat);  comfortableOrNot.append(cnc)
-                                HotExtremeCategory = 4
+                        comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsgWeather = getWeatherData(latitude, longitude, timeZone, _dryBulbTemperature, meanRadiantTemperature_, dewPointTemperature_, relativeHumidity_, windSpeed_, solarRadiationPerHour_, totalSkyCover_, bodyCharacteristics_, HOY_, analysisPeriod_)
+                        if validWeatherData:
+                            if _comfortIndex != 11:  # not for MRT
+                                if (createOutputHeaders == True): startingIndex = 7
+                                elif (createOutputHeaders == False): startingIndex = 0
+                                percentComfortable = (comfortableOrNot[startingIndex:].count(1))/(len(comfortIndexValue[startingIndex:]))*100
+                                if _comfortIndex != 4:
+                                    percentHotExtreme = (comfortIndexCategory[startingIndex:].count(HotExtremeCategory))/(len(comfortIndexCategory[startingIndex:]))*100
+                                else: # remove percentHotExtreme for WCT
+                                    percentHotExtreme = []
+                                if _comfortIndex not in [0,1,5,6,13,14,18]: # no Cold categories
+                                    percentColdExtreme = (comfortIndexCategory[startingIndex:].count(ColdExtremeCategory))/(len(comfortIndexCategory[startingIndex:]))*100
+                                else:  # remove percentColdExtreme
+                                    percentColdExtreme = []
+                            else:
+                                percentComfortable = percentHotExtreme = percentColdExtreme = []
+                            
+                            generalOutputLists = ["dummy", "comfortIndexValue", "comfortIndexCategory", "comfortableOrNot", "percentComfortable", "percentHotExtreme", "percentColdExtreme"]
+                            for i in range(6):
+                                ghenv.Component.Params.Output[i+1].Name = outputNickNames[i]
+                                ghenv.Component.Params.Output[i+1].NickName = outputNickNames[i]
+                                ghenv.Component.Params.Output[i+1].Description = outputDescriptions[i]
+                                exec("%s = %s" % (outputNickNames[i], generalOutputLists[i+1]))
+                            printThermalComfortIndexName(_comfortIndex, date, HOYs, PETresults)
                         
-                        if _comfortIndex != 11:  # not for MRT
-                            percentComfortable = (comfortableOrNot[7:].count(1))/(len(comfortIndexValue[7:]))*100
-                            if _comfortIndex != 4:
-                                percentHotExtreme = (comfortIndexCategory[7:].count(HotExtremeCategory))/(len(comfortIndexCategory[7:]))*100
-                            else: # remove percentHotExtreme for WCT
-                                percentHotExtreme = []
-                            if _comfortIndex not in [0,1,5,6,13,14,18]: # no Cold categories
-                                percentColdExtreme = (comfortIndexCategory[7:].count(ColdExtremeCategory))/(len(comfortIndexCategory[7:]))*100
-                            else:  # remove percentColdExtreme
-                                percentColdExtreme = []
                         else:
-                            percentComfortable = percentHotExtreme = percentColdExtreme = []
-                    
-                    if _runIt:
-                        generalOutputLists = ["dummy", "comfortIndexValue", "comfortIndexCategory", "comfortableOrNot", "percentComfortable", "percentHotExtreme", "percentColdExtreme"]
-                        for i in range(6):
-                            ghenv.Component.Params.Output[i+1].Name = outputNickNames[i]
-                            ghenv.Component.Params.Output[i+1].NickName = outputNickNames[i]
-                            ghenv.Component.Params.Output[i+1].Description = outputDescriptions[i]
-                            exec("%s = %s" % (outputNickNames[i], generalOutputLists[i+1]))
-                        printThermalComfortIndexName(_comfortIndex, date, HOYs, PETresults)
+                            print printMsgWeather
+                            ghenv.Component.AddRuntimeMessage(level, printMsgWeather)
                     else:
                         print "All inputs are ok. Please set \"_runIt\" to True, to calculate the chosen Thermal Comfort index"
                 else:
-                    print printMsgWeather
-                    ghenv.Component.AddRuntimeMessage(level, printMsgWeather)
+                    printMsg = "Please input _dryBulbTemperature. As a single value, a list of values, or as a list from \"Import EPW\" component."
+                    print printMsg
+                    ghenv.Component.AddRuntimeMessage(level, printMsg)
             else:
                 print printMsgLocation
                 ghenv.Component.AddRuntimeMessage(level, printMsgLocation)
