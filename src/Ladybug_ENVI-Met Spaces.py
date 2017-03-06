@@ -41,6 +41,7 @@ Provided by Ladybug 0.0.64
         _dimY_: Size of grid cell in meter. Default value is 3.0.
         _dimZ_: Size of grid cell in meter. Default value is 3.0.
         --------------------: (...)
+        baseSoilmaterial_: Connect a profileId that you want to use as base material of soil. If no id is provided it will be 'LO'.
         numNestingGrid_: Connect an integer to set nesting grid around main area. If no input is connected this will be 3.
         nestingGridSoil_: Connect two envimet ID soils to set soil profile for nesting grids. Use "LB ENVI-Met Read Library" for that.
         -
@@ -123,7 +124,7 @@ def matrixConstruction(buildings, numX, numY, numZ, dimX, dimY, dimZ, matWall, m
                     if k<5:
                         point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, k*dimZ/5+dimZ/10)
                     else:
-                        point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ)
+                        point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ/2)
                     if building.IsPointInside(point, sc.doc.ModelAbsoluteTolerance*10, False):
                         bNr = ','.join([str(i),str(j),str(k),'1',str(index+1)])
                         id = index+1
@@ -280,7 +281,7 @@ def digitalElevationModel3D(terrain, numX, numY, numZ, dimX, dimY, dimZ):
                 if k<5:
                     point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, k*dimZ/5+dimZ/10)
                 else:
-                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ)
+                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ/2)
                 if terrain.IsPointInside(point, sc.doc.ModelAbsoluteTolerance*10, False):
                     tN = ','.join([str(i),str(j),str(k),str('1.00000')])
                     
@@ -416,7 +417,7 @@ def grid(numX, numY, numZ, dimX, dimY, dimZ):
                 if k<5:
                     point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, k*dimZ/5+dimZ/10)
                 else:
-                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ)
+                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ/2)
                 points.append(point)
     
     points = prettyGridVisualization(points)
@@ -424,12 +425,13 @@ def grid(numX, numY, numZ, dimX, dimY, dimZ):
     return points
 
 
-def writeINX(fullPath, Xcells, Ycells, Zcells, Xdim, Ydim, Zdim, telescopingGrid, verticalStretch, startStretch, has3DModel, isFull3DDesign, numNesting, matNesting, location, north, defaultMat, buildingEmptyMatrix, buildingNrMatrix, terrainFlagMatrix, buildingFlagAndNrMatrix, WallDBMatrix, ID_plants1DMatrix, threeDplants, soils2DMatrix, ID_sourcesMatrix, emptySequence, demPattern):
+def writeINX(fullPath, Xcells, Ycells, Zcells, Xdim, Ydim, Zdim, numNesting, matNesting, location, north, defaultMat, buildingEmptyMatrix, buildingNrMatrix, terrainFlagMatrix, buildingFlagAndNrMatrix, WallDBMatrix, ID_plants1DMatrix, threeDplants, soils2DMatrix, ID_sourcesMatrix, emptySequence, demPattern, telescopingGrid = 0, verticalStretch = 0.0, startStretch = 0.0, has3DModel = 1, isFull3DDesign = 1):
     
     # location data
     locationName, latitude, longitude, timeZone = locationDataFunction(location)
     
-    # set grid
+    
+    # set grid.. It is important for future development
     if telescopingGrid == 1:
         useSplitting = 0 
     else:
@@ -675,6 +677,11 @@ def main():
     else:
         fileName = fileName_ + '.INX'
     
+    if baseSoilmaterial_ == None:
+        baseSoilmaterial = 'LO'
+    else:
+        baseSoilmaterial = baseSoilmaterial_
+    
     # name of file
     if not os.path.exists(_folder):
         os.makedirs(_folder)
@@ -731,9 +738,9 @@ def main():
         # soil
         if envimetSoils_:
             soil2D, empty, idSoild = separateData(envimetSoils_)
-            soils2DMatrix = matrix2DGen(soil2D, numX, numY, dimX, dimY, idSoild, 'PG')#LO
+            soils2DMatrix = matrix2DGen(soil2D, numX, numY, dimX, dimY, idSoild, baseSoilmaterial)
             print soils2DMatrix
-        else: soils2DMatrix = re.sub(r'', 'LO', emptySequence)
+        else: soils2DMatrix = re.sub(r'', baseSoilmaterial, emptySequence)
         # source
         if envimetSources_:
             source2D, empty, idSource = separateData(envimetSources_)
@@ -741,12 +748,11 @@ def main():
         else: ID_sourcesMatrix = emptySequence
         
         # write file
-        writeINX(fileAddress, numX+1, numY+1, numZ+1, dimX, dimY, dimZ, 
-                 telescopingGrid=0, verticalStretch=0.0, startStretch=0.0, has3DModel = 1, isFull3DDesign = 1,
-                 numNesting=str(numNestingGrid), matNesting=nestingGridSoil, location=_location, north=north, defaultMat=defaultMaterials, buildingEmptyMatrix=buildingEmptyMatrix, buildingNrMatrix=buildingNrMatrix,
-                 terrainFlagMatrix=terrainFlagMatrix, buildingFlagAndNrMatrix=buildingFlagAndNrMatrix, WallDBMatrix=WallDBMatrix,
-                 ID_plants1DMatrix=ID_plants1DMatrix, threeDplants=threeDplants,
-                 soils2DMatrix=soils2DMatrix, ID_sourcesMatrix=ID_sourcesMatrix, emptySequence=emptySequence, demPattern=demPattern)
+        writeINX(fileAddress, numX+1, numY+1, numZ+1, dimX, dimY, dimZ,
+                str(numNestingGrid), nestingGridSoil, _location,
+                north, defaultMaterials, buildingEmptyMatrix, buildingNrMatrix,
+                terrainFlagMatrix, buildingFlagAndNrMatrix, WallDBMatrix, ID_plants1DMatrix, 
+                threeDplants, soils2DMatrix, ID_sourcesMatrix, emptySequence, demPattern)
         
         if os.path.exists(fileAddress):
             print("INX file successfully created!")

@@ -110,11 +110,11 @@ def ENVIGeometryParser(INXfileAddress):
                     if len(line) > 0:
                         numbers = line.split(',')
                         integers = map(float, numbers)
-                        if integers[2]<4:
+                        if integers[2]<5:
                             plane = rc.Geometry.Plane(rc.Geometry.Point3d(integers[0]*dx+dx/2, integers[1]*dy+dy/2, integers[2]*dz/5+dz/10), rc.Geometry.Vector3d.ZAxis)
                             cube = rc.Geometry.Box(plane, dimX, dimY, rc.Geometry.Interval(-dz/10, dz/10))
                         else:
-                            plane = rc.Geometry.Plane(rc.Geometry.Point3d(integers[0]*dx+dx/2, integers[1]*dy+dy/2, (integers[2]-4)*dz+dz), rc.Geometry.Vector3d.ZAxis)
+                            plane = rc.Geometry.Plane(rc.Geometry.Point3d(integers[0]*dx+dx/2, integers[1]*dy+dy/2, (integers[2]-4)*dz+dz/2), rc.Geometry.Vector3d.ZAxis)
                             cube = rc.Geometry.Box(plane, dimX, dimY, rc.Geometry.Interval(-dz/2, dz/2))
                         cubes.append(cube)
         return cubes

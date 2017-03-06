@@ -200,14 +200,14 @@ def checkType(buildings):
             w = gh.GH_RuntimeMessageLevel.Warning
             message = "Please provide closed breps."
             ghenv.Component.AddRuntimeMessage(w, message)
-            return False
+            return -1
     else: return True
 
 
 def main():
     
     # check main input
-    if _buildings != []:
+    if _buildings != [] and not None in _buildings:
         if checkType(_buildings):
             if _defaultMaterialsld_ == []:
                 defaultMaterials = ['00', 'R1']
