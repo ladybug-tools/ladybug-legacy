@@ -1,4 +1,4 @@
-# ENVI-Met Reader
+# ENVI-Met Results Reader
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
@@ -81,7 +81,6 @@ Provided by Ladybug 0.0.64
         34 = Plant CO2 Flux (mg/kgm/s)
         35 = Div Rlw Temp change (K/h)
         ---------------: (...)
-        readBuildings_: Set to "True" to read and visualize ENVI-Met buildings.
         _runIt: Set to "True" to run the component and perform ENVI-Met data visualization.
     Returns:
         readMe!: ...
@@ -89,8 +88,8 @@ Provided by Ladybug 0.0.64
         resultFileAddress: Connect this output to "ENVI-Met visualizer".
 """
 
-ghenv.Component.Name = "Ladybug_ENVI-Met Reader"
-ghenv.Component.NickName = 'ENVI-MetReader'
+ghenv.Component.Name = "Ladybug_ENVI-Met Results Reader"
+ghenv.Component.NickName = 'ENVI-MetResultsReader'
 ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
@@ -127,8 +126,7 @@ inputsDict = {
 "23 = Water on Leafes (g/m)\n24 = Leaf Temperature (C)\n25 = Local Mixing Length (m)\n26 = Mean Radiant Temp. (C)\n27 = TKE normalised 1D ( )\n28 = Dissipation normalised 1D ( )\n"+ \
 "29 = Km normalised 1D ( )\n30 = TKE Mechanical Turbulence Prod. ( )\n31 = Stomata Resistance (s/m)\n32 = CO2 (mg/m3)\n33 = CO2 (ppm)\n34 = Plant CO2 Flux (mg/kgm/s)\n35 = Div Rlw Temp change (K/h)"],
 4: ["---------------", "(...)"],
-5: ["readBuildings_", "Set to \"True\" to read and visualize ENVI-Met buildings."],
-6: ["_runIt", "Set to \"True\" to run the component and perform ENVI-Met data visualization."]
+5: ["_runIt", "Set to \"True\" to run the component and perform ENVI-Met data visualization."]
 }
 
 otherFolderDict = {
@@ -272,7 +270,7 @@ variables = [{'1' : 'Flow u (m/s)',
 
 
 def setComponentInputs(newText):
-    for input in range(7):
+    for input in range(6):
         if input == 3:
             ghenv.Component.Params.Input[input].NickName = '_variable_'
             ghenv.Component.Params.Input[input].Name = '_variable_'
@@ -284,7 +282,7 @@ def setComponentInputs(newText):
 
 
 def restoreComponentInputs():
-    for input in range(7):
+    for input in range(6):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
@@ -347,82 +345,6 @@ def ENVIparser(fileName, metaname, dataname, folder, variable, variableHeader, d
                 f.write(data)
 
 
-def ENVIGeometryParser(p, folder):
-    
-    def findINX(p):
-        parts = p.split('\\')
-        folderINX = '\\'.join(parts[:-1])
-        for name in os.listdir(folderINX):
-            if name[-3:] == 'INX':
-                fullPathINX = os.path.join(folderINX, name)
-        return fullPathINX    
-    
-    
-    def findTxt(mf, key):
-        return mf.GetElementsByTagName(key)[0].InnerText
-    
-    INXname = findINX(p)
-    if INXname == None:
-        print("File INX not found! Check ENVI-Met model folder.")
-        return -1
-    
-    listWithoutAuthor = []
-    file = open(INXname, 'r')
-    for i, line in enumerate(file.readlines()):
-        if i != 10:
-            listWithoutAuthor.append(line)
-    file = ''.join(listWithoutAuthor)
-    
-    metainfo = re.sub('[^\s()_<>/,\.A-Za-z0-9=""]+', '', file)
-    
-    fileCopy = os.path.join(folder, "geoData.INX")
-    with open(fileCopy, 'w+') as f:
-        f.write(metainfo)
-    
-    metafile = System.Xml.XmlDocument()
-    
-    metafile.Load(fileCopy)
-    root = metafile.DocumentElement
-    
-    gridI, gridJ, gridZ = int(findTxt(metafile, "gridsI")), int(findTxt(metafile, "gridsJ")), int(findTxt(metafile, "gridsZ"))
-    dx, dy, dz = float(findTxt(metafile, "dx"))/unitConversionFactor, float(findTxt(metafile, "dy"))/unitConversionFactor, float(findTxt(metafile, "dzbase"))/unitConversionFactor
-    
-    topBase = findTxt(metafile, "zTop")
-    topBase = re.sub('[\r ]', '', topBase)
-    topBase = re.split('\n', topBase)
-    topBase = [l.split(',') for l in topBase if len(l) != 0]
-    
-    bottomBase = findTxt(metafile, "zBottom")
-    bottomBase = re.sub('[\r ]', '', bottomBase)
-    bottomBase = re.split('\n', bottomBase)
-    bottomBase = [l.split(',') for l in bottomBase if len(l) != 0]
-    
-    # geometry
-    points = []
-    for i in range(gridI):
-        rows = []
-        for j in range(gridJ):
-            pt = rc.Geometry.Point3d((i+1)*dx-(dx/2), (gridJ-j)*dy-(dy/2), 0)
-            rows.append(pt)
-        points.append(rows)
-    points = [list(x) for x in zip(*points)]
-    
-    buildingData = []
-    for lIndexT, lIndexB, lItem in zip(topBase, bottomBase, points):
-        for indexT, indexB, item in zip(lIndexT, lIndexB, lItem):
-            if indexB != '0':
-                item.Z = int(indexB)
-                indexT = int(indexT)-int(indexB)
-            if indexT != '0':
-                buildingData.append((int(indexT)/unitConversionFactor, int(indexB)/unitConversionFactor, item))
-    
-    xSize = rc.Geometry.Interval(-dx/2, dx/2)
-    ySize = rc.Geometry.Interval(-dy/2, dy/2)
-    buildings = [rc.Geometry.Box(rc.Geometry.Plane(b[2], rc.Geometry.Vector3d.ZAxis), xSize, ySize, rc.Geometry.Interval(0, b[0])) for b in buildingData]
-    
-    return buildings
-
-
 def makeFolder(subFolder):
     # make a folder
     subFolder = subFolder + '\\'
@@ -483,17 +405,13 @@ def main():
         ENVIparser(fileName, metaname, dataname, folderName, variable, varStr, selItem[-19:])
         if os.path.isfile(fileName):
             resultFileAddress = fileName
-            if readBuildings_:
-                folderName = makeFolder('geometry')
-                buildings = ENVIGeometryParser(_outputFolder, folderName)
-                return resultFileAddress, outputFiles, buildings
-            else: return resultFileAddress, outputFiles, None
+            return resultFileAddress, outputFiles
         else:
             print("File not found.")
             return -1
     else:
         print("Set runIt to True.")
-        return None, outputFiles, None
+        return None, outputFiles
 
 
 initCheck = False
@@ -537,7 +455,7 @@ if check and initCheck:
     unitConversionFactor = lb_preparation.checkUnits()
     result = main()
     if result != -1:
-        resultFileAddress, outputFiles, buildings = result
+        resultFileAddress, outputFiles = result
     else:
         print("Something went wrong!")
 else:
