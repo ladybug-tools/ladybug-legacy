@@ -128,7 +128,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_PV SWH System Size"
 ghenv.Component.NickName = "PV_SWH_SystemSize"
-ghenv.Component.Message = "VER 0.0.64\nMAR_04_2017"
+ghenv.Component.Message = "VER 0.0.64\nMAR_06_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -432,8 +432,13 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
         lb_sunpath.solInitOutput(m1+1, d1, h1, solarTime)
         sunAltitudeR1 = lb_sunpath.solAlt
         sunAzimuthR1 = lb_sunpath.solAz
+        # correct "sunAzimuthR1" for north_
+        correctedSunAzimuthD = northDeg + math.degrees(sunAzimuthR1)
+        if correctedSunAzimuthD > 360:
+            correctedSunAzimuthD = correctedSunAzimuthD - 360
+        correctedSunAzimuthR1 = math.radians(correctedSunAzimuthD)
         sunAltitudeR_L.append(sunAltitudeR1)
-        sunAzimuthR_L.append(sunAzimuthR1)
+        sunAzimuthR_L.append(correctedSunAzimuthR1)
     
     for i,hoy in enumerate(minimalSpacingPeriodHOYs2):
         d2, m2, h2 = lb_preparation.hour2Date(minimalSpacingPeriodHOYs2[i], True)
@@ -443,8 +448,13 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
         lb_sunpath.solInitOutput(m2+1, d2, h2, solarTime)
         sunAltitudeR2 = lb_sunpath.solAlt
         sunAzimuthR2 = lb_sunpath.solAz
+        # correct "sunAzimuthR2" for north_
+        correctedSunAzimuthD = northDeg + math.degrees(sunAzimuthR2)
+        if correctedSunAzimuthD > 360:
+            correctedSunAzimuthD = correctedSunAzimuthD - 360
+        correctedSunAzimuthR2 = math.radians(correctedSunAzimuthD)
         sunAltitudeR_L.append(sunAltitudeR2)
-        sunAzimuthR_L.append(sunAzimuthR2)
+        sunAzimuthR_L.append(correctedSunAzimuthR2)
     
     # split the energyLoadPerHour_ according to numberOfRows_
     energyLoadPerRowPerHourDataTree = grass.DataTree[object]()
