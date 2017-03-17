@@ -22,13 +22,14 @@
 
 
 """
-Use this component to generate inputs for "LB ENVI-Met Spaces".
+Use this component to generate ENVI-Met inputs for "LB ENVI-Met Spaces".
 -
-there are some 'plant3Did_' which do not work properly, probably this is related to BASIC version of the software.
+Some 'plant3Did_' could not work properly.
 -
 Provided by Ladybug 0.0.64
     
     Args:
+        basePoint_: Input a point here to move ENVI-Met grid. If no input is provided it will be origin point.
         _soil_: Geometry that represent ENVI-Met soil.  Geometry must be a Surface or Brep on xy plane.
         _plant2D_: Geometry that represent ENVI-Met plant 2d.  Geometry must be a Surface or Brep on xy plane.
         _plant3D_: Geometry that represent ENVI-Met plant 3d.  Geometry must be a Surface or Brep on xy plane.
@@ -87,8 +88,8 @@ def setMaterialsPlant(data, dataId, defaultMat, flag, name):
     return envimetPlants
 
 
-def flatGeometry(geoList):
-    xprj = rc.Geometry.Transform.PlanarProjection(rc.Geometry.Plane.WorldXY)
+def flatGeometry(geoList, plane):
+    xprj = rc.Geometry.Transform.PlanarProjection(plane)
     
     projectedGeo = []
     for geo in geoList:
@@ -106,25 +107,33 @@ def flatGeometry(geoList):
 
 def main():
     
+    # default basePoint
+    if basePoint_ == None:
+        basePoint = rc.Geometry.Point3d.Origin
+    else:
+        basePoint = basePoint_
+    
+    plane = rc.Geometry.Plane(basePoint, rc.Geometry.Vector3d.ZAxis)
+    
     # run
     plantsTwoD = plantsThreeD = soilD = sourceD = []
     if _plant2D_:
-        plant2Dgeometry = flatGeometry(_plant2D_)
+        plant2Dgeometry = flatGeometry(_plant2D_, plane)
         if plant2Dgeometry != -1:
             name = ghenv.Component.Params.Input[1].Name
             plantsTwoD = setMaterialsPlant(plant2Dgeometry, _plantId_, 'XX', 0, name)
     if _plant3D_:
-        plant3Dgeometry = flatGeometry(_plant3D_)
+        plant3Dgeometry = flatGeometry(_plant3D_, plane)
         if plant3Dgeometry != -1:
             name = ghenv.Component.Params.Input[2].Name
             plantsThreeD = setMaterialsPlant(plant3Dgeometry, _plant3Did_, 'PI,.Pinus Pinea', 1, name)
     if _soil_:
-        soilGeometry = flatGeometry(_soil_)
+        soilGeometry = flatGeometry(_soil_, plane)
         if soilGeometry != -1:
             name = ghenv.Component.Params.Input[0].Name
             soilD = setMaterialsPlant(soilGeometry, _soilId_, 'LO', 0, name)
     if _source_:
-        sourceGeometry = flatGeometry(_source_)
+        sourceGeometry = flatGeometry(_source_, plane)
         if sourceGeometry != -1:
             name = ghenv.Component.Params.Input[3].Name
             sourceD = setMaterialsPlant(sourceGeometry, _sourceId_, 'FT', 0, name)
