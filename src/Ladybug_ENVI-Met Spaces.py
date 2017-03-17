@@ -34,6 +34,7 @@ Provided by Ladybug 0.0.64
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
         _north_: Input a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
+        basePoint_: Input a point here to move ENVI-Met grid. If no input is provided it will be origin point.
         _numX_: Number of grid cells in base plane x direction. Default value is 20.
         _numY_: Number of grid cells in base plane y direction. Default value is 20.
         _numZ_: Number of grid cells in base plane z direction. Default value is 20.
@@ -109,7 +110,7 @@ def locationDataFunction(location):
     return locationName, '{:f}'.format(float(latitude)), '{:f}'.format(float(longitude)), timeZone
 
 
-def matrixConstruction(buildings, numX, numY, numZ, dimX, dimY, dimZ, matWall, matRoof):
+def matrixConstruction(buildings, numX, numY, numZ, dimX, dimY, dimZ, matWall, matRoof, basePoint):
     
     buildingFlagAndNr = []
     nestedLayers = []
@@ -122,9 +123,9 @@ def matrixConstruction(buildings, numX, numY, numZ, dimX, dimY, dimZ, matWall, m
                 rows = []
                 for i in range(numX+1):
                     if k<5:
-                        point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, k*dimZ/5+dimZ/10)
+                        point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, k*dimZ/5+dimZ/10 + basePoint.Z)
                     else:
-                        point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ/2)
+                        point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, (k-4)*dimZ+dimZ/2 + basePoint.Z)
                     if building.IsPointInside(point, sc.doc.ModelAbsoluteTolerance*10, False):
                         bNr = ','.join([str(i),str(j),str(k),'1',str(index+1)])
                         id = index+1
@@ -150,6 +151,7 @@ def matrixConstruction(buildings, numX, numY, numZ, dimX, dimY, dimZ, matWall, m
                 total = sum(x)
                 # overlap issue ;)
                 if total > len(buildings):
+                    print 's'
                     total = 0
                 rows.append(total)
             columns.append(rows)
@@ -235,16 +237,22 @@ def twoDimensionalBuilding(oneMatrix):
     return buildingNrMatrix
 
 
-def checkDistanceFromBorder(points, buildings, dimX, dimY, dimZ, numZ, maxHeight):
+def checkDistanceFromBorder(points, buildings, dimX, dimY, dimZ, numZ, maxHeight, basePoint):
     
-    def messageForUser():
+    def messageForUserTop():
+        w = gh.GH_RuntimeMessageLevel.Warning
+        message = "There is not enough space between the top and Building n{0}."
+        ghenv.Component.AddRuntimeMessage(w, message.format(index))
+        return False
+    
+    def messageForUserBorder():
         w = gh.GH_RuntimeMessageLevel.Warning
         message = "There is not enough space between the border and Building n{0}."
         ghenv.Component.AddRuntimeMessage(w, message.format(index))
         return False
     
-    ptMin = rc.Geometry.Point3d(min(points).X, min(points).Y, 0)
-    ptMax = rc.Geometry.Point3d(max(points).X, max(points).Y, 0)
+    ptMin = rc.Geometry.Point3d(min(points).X, min(points).Y, basePoint.Z)
+    ptMax = rc.Geometry.Point3d(max(points).X, max(points).Y, basePoint.Z)
     border = rc.Geometry.Rectangle3d(rc.Geometry.Plane.WorldXY, ptMin, ptMax).ToNurbsCurve()
     
     # let's check!
@@ -260,16 +268,16 @@ def checkDistanceFromBorder(points, buildings, dimX, dimY, dimZ, numZ, maxHeight
         secondCheck = border.Offset(rc.Geometry.Plane.WorldXY, -maxHeight[index], sc.doc.ModelAbsoluteTolerance, cornerStyle)[0]
         
         for v in bbox.Vertices:
-            if maxHeight[index] > dimZ*numZ - dimZ*3:
-                return messageForUser()
-            elif secondCheck.Contains(v.Location, rc.Geometry.Plane.WorldXY) == rc.Geometry.PointContainment.Outside:
-                return messageForUser()
-                if firstCheck.Contains(v.Location, rc.Geometry.Plane.WorldXY) == rc.Geometry.PointContainment.Outside:
-                    return messageForUser()
+            if maxHeight[index] > dimZ*numZ - dimZ*3 + basePoint.Z:
+                return messageForUserTop()
+            #elif secondCheck.Contains(v.Location, rc.Geometry.Plane.WorldXY) == rc.Geometry.PointContainment.Outside:
+            #    return messageForUser() # WIP
+            elif firstCheck.Contains(v.Location, rc.Geometry.Plane.WorldXY) == rc.Geometry.PointContainment.Outside:
+                    return messageForUserBorder()
     return True
 
 
-def digitalElevationModel3D(terrain, numX, numY, numZ, dimX, dimY, dimZ):
+def digitalElevationModel3D(terrain, numX, numY, numZ, dimX, dimY, dimZ, basePoint):
     
     terrainflag = []
     
@@ -279,9 +287,9 @@ def digitalElevationModel3D(terrain, numX, numY, numZ, dimX, dimY, dimZ):
             rows = []
             for i in range(numX+1):
                 if k<5:
-                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, k*dimZ/5+dimZ/10)
+                    point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, k*dimZ/5+dimZ/10 + basePoint.Z)
                 else:
-                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ/2)
+                    point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, (k-4)*dimZ+dimZ/2 + basePoint.Z)
                 if terrain.IsPointInside(point, sc.doc.ModelAbsoluteTolerance*10, False):
                     tN = ','.join([str(i),str(j),str(k),str('1.00000')])
                     
@@ -313,7 +321,7 @@ def emptyMatrix(numX, numY):
     return matrix
 
 
-def matrix2DGen(dataList, numX, numY, dimX, dimY, obj, altObj):
+def matrix2DGen(dataList, numX, numY, dimX, dimY, obj, altObj, basePoint):
     
     nestedMatrix = []
     for index, d in enumerate(dataList):
@@ -321,7 +329,7 @@ def matrix2DGen(dataList, numX, numY, dimX, dimY, obj, altObj):
         for j in range(numY+1):
             row = []
             for i in range(numX+1):
-                point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, 0)
+                point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, basePoint.Z)
                 line = rc.Geometry.Line(point, rc.Geometry.Vector3d.ZAxis, dimX*2)
                 if rc.Geometry.Intersect.Intersection.CurveBrep(line.ToNurbsCurve(), d[0], sc.doc.ModelAbsoluteTolerance)[2]:
                     row.append(str(obj[index]))
@@ -359,7 +367,7 @@ def matrix2DGen(dataList, numX, numY, dimX, dimY, obj, altObj):
     return finalMatrix
 
 
-def threeDimensionalPlants(dataList, numX, numY, dimX, dimY):
+def threeDimensionalPlants(dataList, numX, numY, dimX, dimY, basePoint):
     nestedMatrix = []
     for index, d in enumerate(dataList):
         curves = [c for c in d[0].DuplicateEdgeCurves()]
@@ -367,14 +375,14 @@ def threeDimensionalPlants(dataList, numX, numY, dimX, dimY):
         
         for j in range(numY+1):
             for i in range(numX+1):
-                point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, 0)
+                point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, basePoint.Z)
                 if rc.Geometry.Curve.Contains(closedCrv, point, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance) == rc.Geometry.PointContainment.Inside:
                     idAndDescription = d[1].split(',')
                     nestedMatrix.append([str(i+1),str(j+1),'0', idAndDescription[0], idAndDescription[1], '0'])
     return nestedMatrix
 
 
-def generateDem2D(numX, numY, dimX, dimY, terrain):
+def generateDem2D(numX, numY, dimX, dimY, terrain, basePoint):
     
     def findMaxHeight(terrain):
         bbox = terrain.GetBoundingBox(True)
@@ -389,8 +397,9 @@ def generateDem2D(numX, numY, dimX, dimY, terrain):
         rowsHeight = []
         rowsBottom = []
         for x in range(numX+1):
-            line = rc.Geometry.Line(rc.Geometry.Point3d(x*dimX/2, y*dimY/2, 0), rc.Geometry.Vector3d.ZAxis, altitude*2)
-            intersection = rc.Geometry.Intersect.Intersection.CurveBrep(line.ToNurbsCurve(), terrain, sc.doc.ModelAbsoluteTolerance)[2]
+            line = rc.Geometry.Line(rc.Geometry.Point3d(x*dimX/2 + basePoint.X, y*dimY/2 + basePoint.Y, basePoint.Z), rc.Geometry.Vector3d.ZAxis, altitude*2)
+            intersection = rc.Geometry.Intersect.Intersection.MeshLine(terrain, line)[0]
+            #intersection = rc.Geometry.Intersect.Intersection.CurveBrep(line.ToNurbsCurve(), terrain, sc.doc.ModelAbsoluteTolerance)[2]
             if intersection:
                 heightData = sorted(intersection)
                 rowsHeight.append(str(int(round(max([h.Z for h in heightData]),0))))
@@ -404,10 +413,10 @@ def generateDem2D(numX, numY, dimX, dimY, terrain):
     return demPattern
 
 
-def grid(numX, numY, numZ, dimX, dimY, dimZ):
+def grid(numX, numY, numZ, dimX, dimY, dimZ, basePoint):
     
     def prettyGridVisualization(points):
-        points = [p for p in points if p.X == (numX*dimX)+dimX/2 or p.Y == (numY*dimY)+dimY/2 or p.Z == dimZ/10]
+        points = [p for p in points if p.X == (numX*dimX)+dimX/2 + basePoint.X or p.Y == (numY*dimY)+dimY/2 + basePoint.Y or p.Z == dimZ/10 + basePoint.Z]
         return points
     
     points = []
@@ -415,9 +424,9 @@ def grid(numX, numY, numZ, dimX, dimY, dimZ):
         for j in range(numY+1):
             for i in range(numX+1):
                 if k<5:
-                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, k*dimZ/5+dimZ/10)
+                    point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, k*dimZ/5+dimZ/10 + basePoint.Z)
                 else:
-                    point = rc.Geometry.Point3d(i*dimX+dimX/2, j*dimY+dimY/2, (k-4)*dimZ+dimZ/2)
+                    point = rc.Geometry.Point3d(i*dimX+dimX/2 + basePoint.X, j*dimY+dimY/2 + basePoint.Y, (k-4)*dimZ+dimZ/2 + basePoint.Z)
                 points.append(point)
     
     points = prettyGridVisualization(points)
@@ -553,8 +562,8 @@ def writeINX(fullPath, Xcells, Ycells, Zcells, Xdim, Ydim, Zdim, numNesting, mat
     defaultSettingsDict = {'commonWallMaterial': defaultMat[0],
                   'commonRoofMaterial': defaultMat[1]
                   }
-    nameAttribute2D, dataAttribute2D = ['type', 'dataI', 'dataJ'], ['matrix-data', str(Xcells), str(Ycells)]
-    buildings2DDict = {'zTop':buildingEmptyMatrix,
+    nameAttribute2D, dataAttribute2D = ['type', 'dataI', 'dataJ'], ['matrix-data', str(Xcells), str(Ycells)] #buildingNrMatrix
+    buildings2DDict = {'zTop':buildingNrMatrix,
                   'zBottom':buildingEmptyMatrix,
                   'buildingNr':buildingNrMatrix,
                   'fixedheight':buildingEmptyMatrix
@@ -631,6 +640,11 @@ def writeINX(fullPath, Xcells, Ycells, Zcells, Xdim, Ydim, Zdim, numNesting, mat
 def main():
     
     # default values
+    if basePoint_ == None:
+        basePoint = rc.Geometry.Point3d.Origin
+    else:
+        basePoint = basePoint_
+    
     if _numX_ == None:
         numX = 19
     else:
@@ -691,7 +705,7 @@ def main():
     locationName, latitude, longitude, timeZone = locationDataFunction(_location)
     
     # generate pretty grid visualization
-    points = grid(numX, numY, numZ, dimX, dimY, dimZ)
+    points = grid(numX, numY, numZ, dimX, dimY, dimZ, basePoint)
     
     if _runIt:
         # read buildingData
@@ -701,15 +715,15 @@ def main():
         defaultMaterials = [[buildingData[3] for buildingData in _envimetBuildings][0], [buildingData[4] for buildingData in _envimetBuildings][0]]
         maxHeight = [buildingData[5] for buildingData in _envimetBuildings]
         
-        checkBorder = checkDistanceFromBorder(points, buildings, dimX, dimY, dimZ, numZ, maxHeight)
+        checkBorder = checkDistanceFromBorder(points, buildings, dimX, dimY, dimZ, numZ, maxHeight, basePoint)
         
         if checkBorder:
             # move building up
-            copyBuildings = [b.DuplicateBrep() for b in buildings]
-            [b.Translate(rc.Geometry.Vector3d.ZAxis*(dimZ/10)) for b in copyBuildings]
+            copyBuildings = [b.Duplicate() for b in buildings]
+            #[b.Translate(rc.Geometry.Vector3d.ZAxis*(dimZ/10)) for b in copyBuildings]
             
             # create building matrix
-            buildingFlagAndNrMatrix, WallDBMatrix, oneMatrix = matrixConstruction(copyBuildings, numX, numY, numZ, dimX, dimY, dimZ, wallMaterials, roofMaterials)
+            buildingFlagAndNrMatrix, WallDBMatrix, oneMatrix = matrixConstruction(copyBuildings, numX, numY, numZ, dimX, dimY, dimZ, wallMaterials, roofMaterials, basePoint)
             
             # 2D building stuff
             buildingNrMatrix = twoDimensionalBuilding(oneMatrix)
@@ -720,8 +734,8 @@ def main():
         emptySequence = emptyMatrix(numX, numY)
         # dem
         if envimetTerrain_:
-            terrainFlagMatrix = digitalElevationModel3D(envimetTerrain_, numX, numY, numZ, dimX, dimY, dimZ)
-            demPattern = generateDem2D(numX, numY, dimX, dimY, envimetTerrain_)
+            terrainFlagMatrix = digitalElevationModel3D(envimetTerrain_, numX, numY, numZ, dimX, dimY, dimZ, basePoint)
+            demPattern = generateDem2D(numX, numY, dimX, dimY, envimetTerrain_, basePoint)
         else:
             terrainFlagMatrix = ''
             demPattern = buildingEmptyMatrix
@@ -729,22 +743,22 @@ def main():
         if envimetPlants_:
             plants2D, plants3D, idPlants = separateData(envimetPlants_)
             if len(plants2D) != 0:
-                ID_plants1DMatrix = matrix2DGen(plants2D, numX, numY, dimX, dimY, idPlants, '')
+                ID_plants1DMatrix = matrix2DGen(plants2D, numX, numY, dimX, dimY, idPlants, '', basePoint)
             else: ID_plants1DMatrix = emptySequence
             if len(plants3D) != 0:
-                threeDplants = threeDimensionalPlants(plants3D, numX, numY, dimX, dimY)
+                threeDplants = threeDimensionalPlants(plants3D, numX, numY, dimX, dimY, basePoint)
             else: threeDplants = []
         else: ID_plants1DMatrix, threeDplants = emptySequence, []
         # soil
         if envimetSoils_:
             soil2D, empty, idSoild = separateData(envimetSoils_)
-            soils2DMatrix = matrix2DGen(soil2D, numX, numY, dimX, dimY, idSoild, baseSoilmaterial)
+            soils2DMatrix = matrix2DGen(soil2D, numX, numY, dimX, dimY, idSoild, baseSoilmaterial, basePoint)
             print soils2DMatrix
         else: soils2DMatrix = re.sub(r'', baseSoilmaterial, emptySequence)
         # source
         if envimetSources_:
             source2D, empty, idSource = separateData(envimetSources_)
-            ID_sourcesMatrix = matrix2DGen(source2D, numX, numY, dimX, dimY, idSource, '')
+            ID_sourcesMatrix = matrix2DGen(source2D, numX, numY, dimX, dimY, idSource, '', basePoint)
         else: ID_sourcesMatrix = emptySequence
         
         # write file

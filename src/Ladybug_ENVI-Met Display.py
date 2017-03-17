@@ -130,7 +130,7 @@ def ENVIGeometryParser(INXfileAddress):
     
     fileCopy = os.path.join(folder, "geoData.xml")
     with open(fileCopy, 'w+') as f:
-        f.write(metainfo)
+        f.write(metainfo.encode('utf-8'))
     
     metaXml = System.Xml.XmlDocument()
     

@@ -34,26 +34,29 @@ Provided by Ladybug 0.0.64
     
     Args:
         _geometry: A list of Breps, Meshes and Surfaces to export.
-        _basePoint: Input a point here to georeference the model.
-        _basePointGeo: It accepts two type of inputs. 
+        _basePoint_: Input a point here to georeference the model. Default value is origin point.
+        _location: It accepts two type of inputs. 
         a) latitude, longitude and elevation that represent WSG84 coordinates of the base point. You can achieve these type of coordinates from Google Maps or similar.
         e.g. 40.821796, 14.426439, 990
         -
         b) location, you can obtain this type of input from "Ladybug_Construct Location", "Ladybug_Location Finder", "Ladybug_Import epw", "Ladybug_Import Location".
         _terrain: Connect the terrain output of "Ladybug_Terrain Generator" to move the geometries in the right altitude automatically.
         ---------------: ---------------
-        name_: The kmz file name that you would like the image to be saved as.
+        _folder_: The folder into which you would like to write the kmz file.  This should be a complete file path to the folder.  If no folder is provided, the images will be written to Ladybug default folder.
+        name_: Name of kmz file.
         material_: Connect Create Material component of Grasshopper, it is part of Display tab. If not supplied it will be default material.
         _bakeIt: Connect a Grasshopper button. Set to "True" to bake the geometries for Google Earth.
         _writeKmz: Connect a Boolean Toggle. After the baking, set it to "True" to export from Rhino Model to KMZ format.
     Returns:
         readMe!: ...
-        geometry : geometries on the ground.
+        kmzPath: Complete path of kmz file.
+        pointOnTerrain: basePoint projected on terrain.
+        geometry : Geometries on the ground.
 """
 
 ghenv.Component.Name = "Ladybug_Kmz Generator"
 ghenv.Component.NickName = 'KmzGenerator'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nFEB_26_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -66,12 +69,12 @@ import scriptcontext as sc
 import Grasshopper.Kernel as gh
 import rhinoscriptsyntax as rs
 import System
+import os
 
-
-def checkInputs(basePoint, basePointGeo, geometry,  bakeIt, writeKmz, terrain):
-    if basePoint == None or basePointGeo == None or geometry == [] or bakeIt == None or writeKmz == None or terrain == None:
+def checkInputs(location, geometry,  bakeIt, writeKmz, terrain):
+    if location == None or geometry == [] or bakeIt == None or writeKmz == None or terrain == None:
         return False
-    elif basePoint and basePointGeo and geometry and terrain:
+    elif location and geometry and terrain:
         return True
 
 
@@ -145,27 +148,68 @@ def bakeGeometry(geometries, materialFromUser):
         
         id = rc.RhinoDoc.ActiveDoc.Objects.Add(obj, attr)
 
+
+def mdPath(folder):
+    # make a folder for the images
+    if folder != None:
+        directory = folder + '\\' # it work also with Desktop as folder
+        if not os.path.exists(folder):
+            try:
+                os.mkdir(directory)
+            except Exception:
+                appdata = os.getenv("APPDATA")
+                directory = os.path.join(appdata, "Ladybug\LB_Kmz\\")
+                w = gh.GH_RuntimeMessageLevel.Warning
+                ghenv.Component.AddRuntimeMessage(w, "Invalid Folder, you can find images here: {}".format(directory))
+    else:
+        appdata = os.getenv("APPDATA")
+        directory = os.path.join(appdata, "Ladybug\LB_Kmz\\")
+        if not os.path.exists(directory): os.makedirs(directory)
+    
+    return directory
+
+
 def main():
     
-    if name_ == None: name = '! _-Save "Ladybug_GoogleEarth.kmz"'
-    else: name = '! _-Save \"' + name_ + '.kmz\"'
+    # default values
+    if _basePoint_ == None:
+        basePoint = rc.Geometry.Point3d.Origin
+    else:
+        basePoint = _basePoint_
+    
+    if _folder_ == None:
+        path = mdPath(_folder_)
+    else:
+        path = _folder_
+    
+    if name_ == None:
+        name = "Ladybug_GoogleEarth.kmz"
+    else:
+        name = name_
+    
+    fullPath = os.path.join(path, name)
+    
+    
+    # file!
+    fileName = '!-Save "{}"'.format(fullPath)
     
     if material_ == None: materialFromUser = None
     else: materialFromUser = material_
     sc.doc = rc.RhinoDoc.ActiveDoc
     
+    
     # location or point3d
     try:
-        latitude, longitude, elevation = eval(_basePointGeo)
-        basePointGeo = rc.Geometry.Point3d(latitude, longitude, elevation)
+        latitude, longitude, elevation = eval(_location)
+        location = rc.Geometry.Point3d(latitude, longitude, elevation)
     except:
-        locationName, latitude, longitude, timeZone, elevation = lb_preparation.decomposeLocation(_basePointGeo)
-        basePointGeo = rc.Geometry.Point3d(latitude, longitude, elevation)
+        locationName, latitude, longitude, timeZone, elevation = lb_preparation.decomposeLocation(_location)
+        location = rc.Geometry.Point3d(latitude, longitude, elevation)
     
     
-    pointOnTerrain = findEarthPoint(_terrain, _basePoint)
+    pointOnTerrain = findEarthPoint(_terrain, basePoint)
     setReferencePoint(pointOnTerrain[0], latitude, longitude, 0)
-    geometryOnTerrain = [moveGeometry(geo, _terrain, _basePoint) for geo in _geometry]
+    geometryOnTerrain = [moveGeometry(geo, _terrain, basePoint) for geo in _geometry]
     
     # avoid bakeIt
     if _writeKmz == True and _bakeIt == True: bakeIt = None
@@ -177,9 +221,11 @@ def main():
         # remark for users
         w = gh.GH_RuntimeMessageLevel.Remark
         ghenv.Component.AddRuntimeMessage(w, "if you want to bake again you have to switch '_writeKmz' to False")
-        rs.Command(name)  # I should improve this part here. Users should choose where to save the file.
+        rs.Command(fileName)
+        
+        return geometryOnTerrain, pointOnTerrain, fullPath
     
-    return geometryOnTerrain, pointOnTerrain
+    return geometryOnTerrain, pointOnTerrain, None
 
 
 initCheck = False
@@ -203,13 +249,13 @@ else:
     w = gh.GH_RuntimeMessageLevel.Warning
     ghenv.Component.AddRuntimeMessage(w, "You should first let the Ladybug fly...")
 
-check = checkInputs(_basePoint, _basePointGeo, _geometry, _bakeIt, _writeKmz, _terrain)
+check = checkInputs(_location, _geometry, _bakeIt, _writeKmz, _terrain)
 if check and initCheck:
-    buttonTest = ghenv.Component.Params.Input[7].Sources[0]
+    buttonTest = ghenv.Component.Params.Input[8].Sources[0]
     if buttonTest.Name == 'Button':
         result = main()
         if result != -1:
-            geometry, pointOnTerrain = result
+            geometry, pointOnTerrain, kmzPath = result
             if _writeKmz: print("kmz done! Check on your Desktop.")
     else:
         warning = "_bakeIt should be a Button. You can find it in Params/Input."
