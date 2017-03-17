@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAR_14_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -169,7 +169,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     else:
         heightD = rc.Geometry.Interval(0,(numSeg-1)*(1/conversionFac))
         contInterval = contIncr*(1/conversionFac)
-        coloredChart = lb_visualization.create3DColoredMesh(inputMesh, analysisResult, heightD, blankColors, meshStruct, meshNormals)
+        coloredChart = lb_visualization.create3DColoredMesh(inputMesh, analysisResult, heightD, blankColors, meshStruct)
     
     # Figure out some basic things about the Legend.
     lb_visualization.calculateBB([coloredChart], True)
