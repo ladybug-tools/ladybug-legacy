@@ -200,14 +200,14 @@ def checkType(buildings):
             w = gh.GH_RuntimeMessageLevel.Warning
             message = "Please provide closed breps."
             ghenv.Component.AddRuntimeMessage(w, message)
-            return False
+            return -1
     else: return True
 
 
 def main():
     
     # check main input
-    if _buildings != []:
+    if _buildings != [] and not None in _buildings:
         if checkType(_buildings):
             if _defaultMaterialsld_ == []:
                 defaultMaterials = ['00', 'R1']
@@ -223,17 +223,41 @@ def main():
                 if _runIt:
                     if checkTerrain(terrain_):
                         envimetTerrain = creteBrepTerrain(terrain_)
+                        
+                        # from breps to meshes
+                        meshTerrain = rc.Geometry.Mesh()
+                        meshSrf = rc.Geometry.Mesh.CreateFromBrep(envimetTerrain, rc.Geometry.MeshingParameters.Coarse)
+                        for m in meshSrf:
+                            meshTerrain.Append(m)
+                        
+                        envimetTerrain = meshTerrain
+                        
+                        
                         buildings = moveAndCutBuilding(_buildings, terrain_)
                     else:
                         w = gh.GH_RuntimeMessageLevel.Warning
-                        message = "Please provide two materials. Otherwise will be used this two materials 00, R1."
+                        message = "Please move terrain."
                         ghenv.Component.AddRuntimeMessage(w, message)
                         return -1
                 else: envimetTerrain, buildings = None, None
             else:
                 buildings = _buildings
                 envimetTerrain = None
+            
             if _runIt:
+                
+                # from breps to meshes
+                meshBuildings = []
+                for item in buildings:
+                    bulkMesh = rc.Geometry.Mesh()
+                    if item.IsSolid:
+                        meshSrf = rc.Geometry.Mesh.CreateFromBrep(item, rc.Geometry.MeshingParameters.Coarse)
+                        for m in meshSrf:
+                            bulkMesh.Append(m)
+                        meshBuildings.append(bulkMesh)
+                
+                buildings = meshBuildings
+                
                 envimetBuildings = setMaterials(wallMaterialsId_, roofMaterialsId_, buildings, defaultMaterials)
             else: envimetBuildings = None
     else:

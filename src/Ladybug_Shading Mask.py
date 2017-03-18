@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAR_14_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -180,7 +180,7 @@ def checkTheInputs():
                     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                     return -1
                 orientVector = rc.Geometry.Vector3d(0,1,0)
-                orientVector.Rotate(math.radians(orientAngle), rc.Geometry.Vector3d.ZAxis)
+                orientVector.Rotate(math.radians(-orientAngle), rc.Geometry.Vector3d.ZAxis)
             except:
                 warning = "orientation_ input is not valid."
                 print warning
