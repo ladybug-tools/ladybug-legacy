@@ -1623,18 +1623,6 @@ def HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod):
         endingDate = analysisPeriod[1]
         timeStep = 1
         HOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, timeStep)
-        print "______________HOYS from analysisPeriod"
-        """
-        startingHOY = lb_preparation.date2Hour(startingDate[0], startingDate[1], startingDate[2])
-        endingHOY = lb_preparation.date2Hour(endingDate[0], endingDate[1], endingDate[2])
-        
-        if (startingHOY < endingHOY):
-            HOYs = range(startingHOY, endingHOY+1)
-        elif (startingHOY > endingHOY):
-            startingHOYs = range(startingHOY, 8760+1)
-            endingHOYs = range(1,endingHOY+1)
-            HOYs = startingHOYs + endingHOYs
-        """
         
         newAnalysisPeriod = analysisPeriod
     
