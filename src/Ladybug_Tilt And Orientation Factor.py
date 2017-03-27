@@ -97,7 +97,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = "VER 0.0.64\nMAR_18_2017"
+ghenv.Component.Message = "VER 0.0.64\nMAR_27_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -537,7 +537,7 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
     titleLabelMeshes = lb_visualization.text2srf([titleLabelText], [titleLabelOrigin], legendFont, legendFontSize*1.6, legendBold, None, 6)[0]
     if (len(analysisPeriod_) != 0) and (analysisPeriod_[0] != None):
         # something added to "analysisPeriod_" input
-        analysisPeriod = "%s to %s" % (list(analysisPeriod_[0]), list(analysisPeriod_[0]))
+        analysisPeriod = "%s to %s" % (list(analysisPeriod_[0]), list(analysisPeriod_[1]))
     else:
         # nothing added to "analysisPeriod_" input
         analysisPeriod = "whole year"
