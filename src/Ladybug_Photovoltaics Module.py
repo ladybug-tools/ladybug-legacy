@@ -22,25 +22,30 @@
 
 
 """
-Use this component to define the Photovoltaics module settings.
+Use this component to define the Photovoltaics crystalline silicon (c-Si) module settings.
 -
 If nothing inputed, the following PV module settings will be used by default:
-- moduleType: Close (flush) roof mount 
+- module material: crystalline silicon (c-Si)
+- mountType: Close (flush) roof mount 
 - moduleEfficiency: 15%
 - temperatureCoefficient: -0.5 %/C
 - moduleActiveAreaPercent: 90%
 -
+If you would like to use a thin-film module, then use the thin-film module from "Import Sandia Photovoltaics Module" component.
+-
+Sources:
+http://prod.sandia.gov/techlib/access-control.cgi/2004/043535.pdf
+-
 Provided by Ladybug 0.0.64
     
     input:
-        moduleType_: Module type and mounting configuration:
-                     -
-                     0 = Glass/cell/polymer sheet, Insulated back (pv curtain wall, pv skylights)
-                     1 = Glass/cell/glass, Close (flush) roof mount (pv array mounted parallel and relatively close to the plane of the roof (between 5 and 15 centimenters))
-                     2 = Glass/cell/polymer sheet, Open rack (ground mount array, flat/sloped roof array that is tilted, pole-mount solar panels, solar carports, solar canopies)
-                     3 = Glass/cell/glass, Open rack (the same as upper "2" type, just with a glass on the back part of the module).
-                     -
-                     If not supplied, default type: "Glass/cell/glass, Close (flush) roof mount" (1) is used.
+        mountType_: Mounting type (configuration) of a module. There are three of them:
+                    -
+                    0 = Insulated back (pv curtain wall, pv skylights)
+                    1 = Close (flush) roof mount (pv array mounted parallel and relatively close to the plane of the roof (between 5 and 15 centimenters))
+                    2 = Open rack (ground mount array, flat/sloped roof array that is tilted, pole-mount solar panels, solar carports, solar canopies)
+                    -
+                    If not supplied, default type: "Glass/cell/glass, Close (flush) roof mount" (1) is used.
         moduleEfficiency_: The ratio of electrical energy output from the PV module to input solar energy from the sun.
                            Current typical module efficiencies for crystalline silicon modules range from 14-20%
                            -
@@ -67,11 +72,11 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Module"
 ghenv.Component.NickName = "PhotovoltaicsModule"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = "VER 0.0.64\nMAR_27_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.61\nDEC_01_2015
+#compatibleLBVersion = VER 0.0.64\nMAR_27_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -79,11 +84,14 @@ import Grasshopper.Kernel as gh
 import scriptcontext as sc
 
 
-def main(moduleType, moduleEfficiency, temperatureCoefficientPercent, moduleActiveAreaPercent):
+def main(mountType, moduleEfficiency, temperatureCoefficientPercent, moduleActiveAreaPercent):
     
     # checking for inputs and input ranges
-    if (moduleType == None) or (moduleType < 0) or (moduleType > 3):
-        moduleType = 1  # default for Glass/cell/glass, Close (flush) roof mount
+    if (mountType == None) or (mountType < 0) or (mountType > 2):
+        printMsg = "\"mountType_\" input accepts only the following values: 0,1,2.\n" + \
+                   "\"mountType_\" input set to default value: \"1\" (Close (flush) roof mount)."
+        print printMsg
+        mountType = 1  # default for Glass/cell/glass, Close (flush) roof mount
     
     if (moduleEfficiency == None) or (moduleEfficiency <= 0) or (moduleEfficiency > 100):
         moduleEfficiency = 15  # default in %, for crystalline silicon PV modules
@@ -94,21 +102,41 @@ def main(moduleType, moduleEfficiency, temperatureCoefficientPercent, moduleActi
     if (moduleActiveAreaPercent == None) or (moduleActiveAreaPercent <= 0) or (moduleActiveAreaPercent > 100):
         moduleActiveAreaPercent = 90  # default in %
     
-    PVmoduleSettings = [moduleType, moduleEfficiency, temperatureCoefficientPercent, moduleActiveAreaPercent]
     
-    resultsCompletedMsg = "Module settings component results successfully completed!"
-    moduleTypesL = ["Glass/cell/polymer sheet Insulated back", "Glass/cell/glass Close (flush) roof mount", "Glass/cell/polymer sheet Open rack", "Glass/cell/glass Open rack"]
-    model = moduleTypesL[moduleType]
+    # Sandia Cell Temperature Model
+    if mountType == 0:   # glass/cell/polymer sheet   insulated back
+        mountTypeName = "insulated back"
+        a = -2.81
+        b = -0.0455
+        deltaT = 0
+    elif mountType == 1:   # glass/cell/glass   close roof mount
+        mountTypeName = "close roof mount"
+        a = -2.98
+        b = -0.0471
+        deltaT = 1
+    elif mountType == 2:   # glass/cell/polymer sheet   open rack
+        mountTypeName = "open rack"
+        a = -3.56
+        b = -0.0750
+        deltaT = 3
+    
+    moduleMaterial = "c-Si"
+    
+    PVmoduleSettings = [mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientPercent, a, b, deltaT]
+    
+    resultsCompletedMsg = "Photovoltaics Module component results successfully completed!"
+    mountTypesL = ["Insulated back", "Close (flush) roof mount", "Open rack"]
+    model = mountTypesL[mountType]
     
     printOutputMsg = \
     """
 Input data:
 
-Module type: %s (%s)
-Module efficiency: %s
-Temperature coefficient: %s
-Module active area percent: %s
-    """ % (moduleType, model, moduleEfficiency, temperatureCoefficientPercent, moduleActiveAreaPercent)
+Module type:  %s (%s),
+Module efficiency:  %s (perc.),
+Temperature coefficient:  %s (perc./celsius deg.),
+Module active area percent:  %s (perc.),
+    """ % (mountType, model, moduleEfficiency, temperatureCoefficientPercent, moduleActiveAreaPercent)
     print resultsCompletedMsg
     print printOutputMsg
     
@@ -119,7 +147,7 @@ level = gh.GH_RuntimeMessageLevel.Warning
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         
-        PVmoduleSettings = main(moduleType_, moduleEfficiency_, temperatureCoefficient_, moduleActiveAreaPercent_)
+        PVmoduleSettings = main(mountType_, moduleEfficiency_, temperatureCoefficient_, moduleActiveAreaPercent_)
     else:
         printMsg = "You need a newer version of Ladybug to use this component." + \
             "Use updateLadybug component to update userObjects.\n" + \
