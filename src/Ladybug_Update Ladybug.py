@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAR_29_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
@@ -114,6 +114,8 @@ def getAllTheComponents(onlyGHPython = True):
     for obj in objects:
         if type(obj) == gh.Special.GH_Cluster:
             clusterDoc = obj.Document("")
+            if not clusterDoc:
+                continue
             for clusterObj in  clusterDoc.Objects:
                 objects.append(clusterObj)
     
