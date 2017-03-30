@@ -28,7 +28,7 @@ Provided by Ladybug 0.0.64
         _testPtsOrPlanes: A point or plane from which view vectors will be pojected.  Note that, if a point is connected, all view vectors will be weighted evenly (assuming no directional bias).  However, if a plane is connected, vectors will be weighted based on their angle to the plane normal, producing view factors for a surface in the connected plane.  The first is useful for MRT calculations while the latter is needed for radiant assymetry calculations.  This input can also be a list of points or planes.
         _testSrfs: A list of breps, surfaces, or meshes to which you want to compute view factors.  Note that by meshing and joining several goemtries together, you can calculate the combined view factor to these geometries.
         context_: Optional context geometry as breps, surfaces, or meshes that can block the view to the _testSrfs.
-        _viewResolution_: An interger, which sets the number of times that the tergenza skyview patches are split.  A higher number will ensure a greater accuracy but will take longer.  The default is set to 1 for a quick calculation.
+        _viewResolution_: An interger, which sets the number of times that the tergenza skyview patches are split.  A higher number will ensure a greater accuracy but will take longer.  The default is set to 0 for a quick calculation.
         parallel_: Set to "True" to run the calculation in parallel and set to "False" to run it with a single core.  The default is set to "False."
         _runIt: Set to 'True' to run the component and claculate view factors.
     Returns:
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Surface View Analysis"
 ghenv.Component.NickName = 'srfViewFactors'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAR_29_2017'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -66,7 +66,7 @@ w = gh.GH_RuntimeMessageLevel.Warning
 
 def checkInputs():
     #Set a default view resolution.
-    if _viewResolution_ == None: viewRes = 1
+    if _viewResolution_ == None: viewRes = 0
     else: viewRes = _viewResolution_
     
     #Set a default parallel.
