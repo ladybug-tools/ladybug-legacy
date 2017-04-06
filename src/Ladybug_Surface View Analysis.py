@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Surface View Analysis"
 ghenv.Component.NickName = 'srfViewFactors'
-ghenv.Component.Message = 'VER 0.0.64\nMAR_29_2017'
+ghenv.Component.Message = 'VER 0.0.64\nAPR_05_2017'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -188,7 +188,10 @@ def main(zoneSrfsMesh, context, viewVectors, patchAreaFacs, testPts, viewPtNorma
                     else:
                         # calculate the angle between the surface and the vector to project the view into the plane.
                         vecAngle = rc.Geometry.Vector3d.VectorAngle(viewVectors[rayCount], viewPtNormals[i])
-                        srfHits[minIndex].append(patchAreaFacs[rayCount]* 2 * abs(math.cos(vecAngle)))
+                        if math.degrees(vecAngle) > 90:
+                            srfHits[minIndex].append(0)
+                        else:
+                            srfHits[minIndex].append(patchAreaFacs[rayCount]* 4 * abs(math.cos(vecAngle)))
             else:
                 vecSrfIndices[i].append(-1)
         
