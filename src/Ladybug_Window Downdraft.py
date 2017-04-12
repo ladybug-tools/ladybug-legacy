@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAR_29_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -95,6 +95,19 @@ def velMaxFar(deltaT, windowHgt):
 def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
     # Check Rhino model units.
     conversionFactor = lb_preparation.checkUnits()
+    
+    # Check the list of window surface temps.
+    winSrfTempFinal = []
+    if len(winSrfTemp) == 1:
+        for srf in range(len(windowSrfs)):
+            winSrfTempFinal.append(winSrfTemp[0])
+    elif len(winSrfTemp) == len(windowSrfs):
+        winSrfTempFinal = winSrfTemp
+    else:
+        warning = "The number of window surface temperatures does not match the number of windowSrfs."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
     
     # Get the normal vectors of all the window surfaces.
     normalVecs = []
@@ -159,8 +172,7 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
     # Set a "spread factor" to ensure conservation of mass in the flow of air to the sides
     spreadFac = .97
     
-    # Compute the temperature difference.
-    glassAirDelta = airTemp - winSrfTemp
+    
     
     # Compute the downdraft conditions for each point.
     ptVelLists = []
@@ -168,7 +180,10 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
     for ptCount, ptDict in enumerate(ptIntList):
         ptVelLists.append([])
         ptTemplists.append([])
-        for srf in ptDict.keys():
+        for srfCount, srf in enumerate(ptDict.keys()):
+            # Compute the temperature difference.
+            glassAirDelta = airTemp - winSrfTempFinal[srfCount]
+            
             dist = ptDict[srf][0]
             angFac = ptDict[srf][3]
             windowHgt = ptDict[srf][4]
@@ -220,6 +235,8 @@ else:
 
 
 if initCheck == True and _testPts[0] != None and _windowSrfs[0] != None and _runIt == True:
-    draftAirVeloc, draftAirTemp, airFlowPlanes = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_)
+    result = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_)
+    if result != -1:
+        draftAirVeloc, draftAirTemp, airFlowPlanes = result
 
 ghenv.Component.Params.Output[3].Hidden= True
