@@ -40,11 +40,11 @@ Provided by Ladybug 0.0.64
                              Each module from "_modulesLibraryFile" input comes with predefined mounting type (configuration). You can see it in "moduleMountType" output.
                              If you would like to change that predefined mounting type, then use this input, and the following values:
                              -
-                             0 = Insulated back (pv curtain wall, pv skylights)
+                             0 = Insulated back (pv curtain wall, pv skylights, BIPV installations with obstructed backside airflow)
                              1 = Close (flush) roof mount (pv array mounted parallel and relatively close to the plane of the roof (between 5 and 15 centimenters))
-                             2 = Open rack (ground mount array, flat/sloped roof array that is tilted, pole-mount solar panels, solar carports, solar canopies)
+                             2 = Open rack (ground mount array, flat/sloped roof array that is tilted, pole-mount solar panels, solar carports, solar canopies, BIPV installations with sufficient backside airflow)
                              -
-                             This input is actually the same as "mountType" input of the Ladybug "Photovoltaics Module" component.
+                             This input is actually the same as "mountType" input of the Ladybug "Simplified Photovoltaics Module" component.
                              -
                              If not supplied, default type: Close (flush) roof mount" (1) is used.
         moduleActiveAreaPercent_: Percentage of the module's area excluding module framing and gaps between cells. 
@@ -58,11 +58,17 @@ Provided by Ladybug 0.0.64
         allModuleNames: Names of all crystalline silicon modules from the "_modulesLibraryFile" file.
         moduleName: Name of the chosen module, according to "moduleIndex_" input.
         moduleMaterial: Material of the chosen module.
-        moduleMountType: Mount type (configuration) of the chosen module.
+        moduleMountType: Final mount type (configuration) of the chosen module.
                          This output can have two values:
                          -
-                         a) default one: coming directly from "_modulesLibraryFile". This value will only appear if "newModuleMountType_" input is empty
+                         a) default one: coming directly from "_modulesLibraryFile". This value will only appear if "newModuleMountType_" input is empty.
                          b) custom one: altered mounting type, according to "newModuleMountType_" input.
+                         -
+                         One of the following mount types will be shown:
+                         -
+                         0 = Insulated back (pv curtain wall, pv skylights, BIPV installations with obstructed backside airflow)
+                         1 = Close (flush) roof mount (pv array mounted parallel and relatively close to the plane of the roof (between 5 and 15 centimenters))
+                         2 = Open rack (ground mount array, flat/sloped roof array that is tilted, pole-mount solar panels, solar carports, solar canopies, BIPV installations with sufficient backside airflow)
         moduleArea: Area of the chosen module.
                     -
                     In square meters.
@@ -79,12 +85,12 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Import Sandia Photovoltaics Module"
 ghenv.Component.NickName = "ImportSandiaPhotovoltaicsModule"
-ghenv.Component.Message = "VER 0.0.63\nMAR_27_2016"
+ghenv.Component.Message = "VER 0.0.64\nAPR_12_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.64\nMAR_27_2017
+#compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -101,6 +107,18 @@ def main(modulesLibraryFile_filePath, moduleIndex, newModuleMountType, moduleAct
         printMsg = "Add \"Sandia National Laboratories Modules\" .csv file path to \"_modulesLibraryFile\" input.\n" + \
                    "Download its newest version from the bottom of the following page:\n\n" + \
                    "https://sam.nrel.gov/libraries"
+        return moduleNameL, moduleName, moduleMaterial, moduleMountType, moduleArea, nameplateDCpowerRating_m, moduleEfficiency, sourceNotes, PVmoduleSettings, validInputData, printMsg
+    # testing if the "modulesLibraryFile_filePath" is valid:
+    try:
+        with open(modulesLibraryFile_filePath) as modulesCSVFile:
+            pass
+    except:
+        moduleNameL = moduleName = moduleMaterial = moduleMountType = moduleArea = nameplateDCpowerRating_m = moduleEfficiency = sourceNotes = PVmoduleSettings = None
+        validInputData = False
+        printMsg = "The .csv file path you added to the \"_modulesLibraryFile\" input is invalid.\n" + \
+                   "Download the newest version of \"Sandia National Laboratories Modules\" .csv file from the bottom of the following page:\n" + \
+                   "https://sam.nrel.gov/libraries\n" + \
+                   "And add its file path to the \"_modulesLibraryFile\" input."
         return moduleNameL, moduleName, moduleMaterial, moduleMountType, moduleArea, nameplateDCpowerRating_m, moduleEfficiency, sourceNotes, PVmoduleSettings, validInputData, printMsg
     
     

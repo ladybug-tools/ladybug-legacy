@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.64
                              It can be calculated with Ladybug's "DC to AC derate factor" component.
                              -
                              If not supplied, default value of 0.85 will be used.
-        PVmoduleSettings_: A list of PV module settings. Use the "Photovoltaics module" or "Import Sandia Photovoltaics Module" components to generate them.
+        PVmoduleSettings_: A list of PV module settings. Use the "Simplified Photovoltaics Module" or "Import Sandia Photovoltaics Module" or "Import CEC Photovoltaics Module" components to generate them.
                            -
                            If not supplied, the following PV module settings will be used by default:
                            - module material: crystalline silicon (c-Si)
@@ -91,9 +91,6 @@ Provided by Ladybug 0.0.64
         totalRadiationPerHour: Total Incident POA (Plane of array) irradiance for each hour during a year.
                                -
                                In kWh/m2.
-        moduleTemperaturePerHour: Module's back surface temperature for each hour during year.
-                                  -
-                                  In C.
         cellTemperaturePerHour: Cell temperature for each hour during year.
                                 -
                                 In C.
@@ -112,11 +109,11 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
 ghenv.Component.NickName = "PhotovoltaicsSurface"
-ghenv.Component.Message = "VER 0.0.64\nMAR_27_2017"
+ghenv.Component.Message = "VER 0.0.64\nAPR_12_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.64\nMAR_27_2017
+#compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -214,10 +211,10 @@ def PVsurfaceInputData(PVsurface, PVsurfacePercent, unitAreaConversionFactor, DC
         DCtoACderateFactor = 0.85  # default value (corresponds to 11.42% of PVWatts v5 Total Losses)
     
     # PV module settings inputs
-    if (len(PVmoduleSettings) != 9) and (len(PVmoduleSettings) != 36) and (len(PVmoduleSettings) != 0):
+    if (len(PVmoduleSettings) != 9) and (len(PVmoduleSettings) != 23) and (len(PVmoduleSettings) != 36) and (len(PVmoduleSettings) != 0):
         PVsurfaceInputType = nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = DCtoACderateFactor = None
         validPVsurfaceData = False
-        printMsg = "Your \"PVmoduleSettings_\" input is incorrect. Please use \"PVmoduleSettings\" output from \"Photovoltaics module\" or \"Import Sandia Photovoltaics Module\" components."
+        printMsg = "Your \"PVmoduleSettings_\" input is incorrect. Please use \"PVmoduleSettings\" output from \"Simplified Photovoltaics Module\" or \"Import Sandia Photovoltaics Module\" or \"Import CEC Photovoltaics Module\" components."
         
         return PVsurfaceInputType, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, validPVsurfaceData, printMsg
     
@@ -232,11 +229,15 @@ def PVsurfaceInputData(PVsurface, PVsurfacePercent, unitAreaConversionFactor, DC
         moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientFraction, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
     
     elif (len(PVmoduleSettings) == 9):
-        # data from "Photovoltaics Module" component added to "PVmoduleSettings_" input
+        # data from "Simplified Photovoltaics Module" component added to "PVmoduleSettings_" input
         moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientFraction, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
     
+    elif (len(PVmoduleSettings) == 23):
+        # data from "Import CEC Photovoltaics Module" component added to "PVmoduleSettings_" input
+        moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, IL_ref, Io_ref, Rs_ref, Rsh_ref, A_ref, n_s, adjust, gamma_r_ref, ws_adjusted_factor, Tnoct_adj = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
+    
     elif (len(PVmoduleSettings) == 36):
-        # data from "Photovoltaics Module" component added to "PVmoduleSettings_" input
+        # data from "Import Sandia Photovoltaics Module" component added to "PVmoduleSettings_" input
         moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, beta_mp_ref, mu_betamp, s, n, Fd, a0, a1, a2, a3, a4, b0, b1, b2, b3, b4, b5, C0, C1, C2, C3, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
     
     
@@ -380,7 +381,6 @@ def main(latitude, longitude, timeZone, elevationM, locationName, years, months,
     ACenergyPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "AC power output", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)]
     DCenergyPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "DC power output", "kWh", "Hourly", (1, 1, 1), (12, 31, 24)]
     totalRadiationPerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Total POA irradiance", "kWh/m2", "Hourly", (1, 1, 1), (12, 31, 24)]
-    moduleTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Module temperature", "C", "Hourly", (1, 1, 1), (12, 31, 24)]
     cellTemperaturePerHour = ["key:location/dataType/units/frequency/startsAt/endsAt", locationName, "Cell temperature", "C", "Hourly", (1, 1, 1), (12, 31, 24)]
     beamRadiationPerHour = []
     diffuseRadiationPerHour = []
@@ -391,12 +391,11 @@ def main(latitude, longitude, timeZone, elevationM, locationName, years, months,
     for i,hoy in enumerate(HOYs):
         sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, years[i], months[i], days[i], hours[i]-1)
         Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltD, srfAzimuthD, directNormalRadiation[i], diffuseHorizontalRadiation[i], albedoL[i])
-        Tm, Tcell, Pdc_, Pac = lb_photovoltaics.pvwatts(nameplateDCpowerRating, DCtoACderateFactor, sunZenithD, AOI_R, Epoa, Eb, Ed_sky, Eground, dryBulbTemperature[i], windSpeed[i], directNormalRadiation[i], diffuseHorizontalRadiation[i], PVmoduleSettings, elevationM)
+        Tcell, Pdc_, Pac = lb_photovoltaics.pvwatts(nameplateDCpowerRating, DCtoACderateFactor, srfTiltD, sunZenithD, AOI_R, Epoa, Eb, Ed_sky, Eground, dryBulbTemperature[i], windSpeed[i], directNormalRadiation[i], diffuseHorizontalRadiation[i], PVmoduleSettings, elevationM)
         Epoa = Epoa/1000 # to kWh/m2
         ACenergyPerHour.append(Pac)
         DCenergyPerHour.append(Pdc_)
         totalRadiationPerHour.append(Epoa)
-        moduleTemperaturePerHour.append(Tm)
         cellTemperaturePerHour.append(Tcell)
         beamRadiationPerHour.append(Eb)
         diffuseRadiationPerHour.append(Ed_sky)
@@ -408,10 +407,10 @@ def main(latitude, longitude, timeZone, elevationM, locationName, years, months,
     averageDailyACenergyPerYear = ACenergyPerYear/365  # in kWh/day
     
     # optimal pv surface initial data
-    pv_inputData = [conditionalStatementForFinalPrint, DCtoACderateFactor, PVmoduleSettings, elevationM, sunZenithDL, AOI_RL, [Epoa*1000 for index,Epoa in enumerate(totalRadiationPerHour) if index >= 7], beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation]
+    pv_inputData = [conditionalStatementForFinalPrint, DCtoACderateFactor, PVmoduleSettings, elevationM, srfTiltD, sunZenithDL, AOI_RL, [Epoa*1000 for index,Epoa in enumerate(totalRadiationPerHour) if index >= 7], beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation]
     sc.sticky["pv_inputData"] = pv_inputData
     
-    return ACenergyPerHour, ACenergyPerYear, averageDailyACenergyPerYear, DCenergyPerHour, totalRadiationPerHour, moduleTemperaturePerHour, cellTemperaturePerHour
+    return ACenergyPerHour, ACenergyPerYear, averageDailyACenergyPerYear, DCenergyPerHour, totalRadiationPerHour, cellTemperaturePerHour
 
 
 def printOutput(unitAreaConversionFactor, locationName, latitude, longitude, northDeg, albedoL, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, srfTiltD, srfAzimuthD, PVmoduleSettings, conditionalStatementForFinalPrint):
@@ -434,6 +433,47 @@ Upper limit coefficient for module temperature at low wind speeds and high solar
 Coefficient for rate at which module temperature drops as wind speed increases:  %s,
 Temperature difference between the cell and the module back surface:  %s,
         """ % (PVmoduleSettings[1], PVmoduleSettings[2], PVmoduleSettings[0], PVmoduleSettings[3], PVmoduleSettings[4], PVmoduleSettings[5], PVmoduleSettings[6], PVmoduleSettings[7], PVmoduleSettings[8])
+    
+    
+    elif (len(PVmoduleSettings) == 23):
+        PVmoduleSettings_printString = \
+    """
+Input data:,
+
+Module Name:  %s,
+Module Material:  %s,
+Module Mount Type:  %s,
+Module Area (m2):  %s,
+Module Active Area Percent (perc.):  %s,
+
+Power at Max Power (W):  %s,
+Module Efficiency (perc.):  %s,
+Reference Max Power Voltage (V):  %s,
+Reference Max Power Current (A):  %s,
+Reference Open Circuit Voltage (V):  %s,
+Reference Short Circuit Current (A):  %s,
+
+Short circuit current temperature coefficient (A/C deg.):  %s,
+Open circuit voltage temperature coefficient (V/C deg.):  %s,
+
+Reference light current:  %s,
+Reference diode saturation current:  %s,
+Reference series resistance:  %s,
+Reference shunt resistance:  %s,
+
+Reference ideality factor:  %s,
+Diode factor:  %s,
+
+Temperature coefficient adjustment factor:  %s,
+Temperature coefficient of Power (perc./C deg.):  %s,
+Wind speed adjustment factor:  %s,
+Normal operating cell temperature:  %s,
+    """ % (PVmoduleSettings[0], PVmoduleSettings[1], PVmoduleSettings[2], PVmoduleSettings[3], PVmoduleSettings[4],
+    PVmoduleSettings[5], PVmoduleSettings[6], PVmoduleSettings[7], PVmoduleSettings[8], PVmoduleSettings[9], PVmoduleSettings[10], 
+    PVmoduleSettings[11], PVmoduleSettings[12],
+    PVmoduleSettings[13], PVmoduleSettings[14], PVmoduleSettings[15], PVmoduleSettings[16],
+    PVmoduleSettings[17], PVmoduleSettings[18],
+    PVmoduleSettings[19], PVmoduleSettings[20], PVmoduleSettings[21], PVmoduleSettings[22])
     
     
     elif (len(PVmoduleSettings) == 36):
@@ -543,7 +583,7 @@ if sc.sticky.has_key("ladybug_release"):
                                 srfAzimuthD, surfaceTiltDCalculated = lb_photovoltaics.srfAzimuthAngle(PVsurfaceAzimuthAngle_, PVsurfaceInputType, _PVsurface, latitude)
                                 correctedSrfAzimuthD, northDeg, validNorth, printMsg = lb_photovoltaics.correctSrfAzimuthDforNorth(north_, srfAzimuthD)
                                 srfTiltD = lb_photovoltaics.srfTiltAngle(PVsurfaceTiltAngle_, surfaceTiltDCalculated, PVsurfaceInputType, _PVsurface, latitude)
-                                ACenergyPerHour, ACenergyPerYear, averageDailyACenergyPerYear, DCenergyPerHour, totalRadiationPerHour, moduleTemperaturePerHour, cellTemperaturePerHour = main(latitude, longitude, timeZone, elevationM, locationName, years, months, days, hours, HOYs, nameplateDCpowerRating, DCtoACderateFactor, srfArea, srfTiltD, correctedSrfAzimuthD, PVmoduleSettings_, dryBulbTemperatureCondStat, windSpeedCondStat, directNormalRadiationCondStat, diffuseHorizontalRadiationCondStat, albedoL, conditionalStatementForFinalPrint)
+                                ACenergyPerHour, ACenergyPerYear, averageDailyACenergyPerYear, DCenergyPerHour, totalRadiationPerHour, cellTemperaturePerHour = main(latitude, longitude, timeZone, elevationM, locationName, years, months, days, hours, HOYs, nameplateDCpowerRating, DCtoACderateFactor, srfArea, srfTiltD, correctedSrfAzimuthD, PVmoduleSettings_, dryBulbTemperatureCondStat, windSpeedCondStat, directNormalRadiationCondStat, diffuseHorizontalRadiationCondStat, albedoL, conditionalStatementForFinalPrint)
                                 printOutput(unitAreaConversionFactor, locationName, latitude, longitude, northDeg, albedoL, nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, DCtoACderateFactor, srfTiltD, correctedSrfAzimuthD, PVmoduleSettings_, conditionalStatementForFinalPrint)
                                 systemSize = nameplateDCpowerRating; PVsurfaceTiltAngle = srfTiltD; PVsurfaceAzimuthAngle = correctedSrfAzimuthD
                             else:

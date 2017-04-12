@@ -1,4 +1,4 @@
-# Photovoltaics module
+# simplified photovoltaics module
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
@@ -22,7 +22,7 @@
 
 
 """
-Use this component to define the Photovoltaics crystalline silicon (c-Si) module settings.
+Use this component to define simplified Photovoltaics crystalline silicon (c-Si) module settings.
 -
 If nothing inputed, the following PV module settings will be used by default:
 - module material: crystalline silicon (c-Si)
@@ -31,7 +31,8 @@ If nothing inputed, the following PV module settings will be used by default:
 - temperatureCoefficient: -0.5 %/C
 - moduleActiveAreaPercent: 90%
 -
-If you would like to use a thin-film module, then use the thin-film module from "Import Sandia Photovoltaics Module" component.
+If you would like to use a thin-film module, then use the thin-film module from "Import Sandia Photovoltaics Module" or "Import CEC Photovoltaics Module" components.
+Also for choosing a specific module, not a simplified one, use one of those two components as well.
 -
 Sources:
 http://prod.sandia.gov/techlib/access-control.cgi/2004/043535.pdf
@@ -41,9 +42,9 @@ Provided by Ladybug 0.0.64
     input:
         mountType_: Mounting type (configuration) of a module. There are three of them:
                     -
-                    0 = Insulated back (pv curtain wall, pv skylights)
+                    0 = Insulated back (pv curtain wall, pv skylights, BIPV installations with obstructed bakside airflow)
                     1 = Close (flush) roof mount (pv array mounted parallel and relatively close to the plane of the roof (between 5 and 15 centimenters))
-                    2 = Open rack (ground mount array, flat/sloped roof array that is tilted, pole-mount solar panels, solar carports, solar canopies)
+                    2 = Open rack (ground mount array, flat/sloped roof array that is tilted, pole-mount solar panels, solar carports, solar canopies, BIPV installations with sufficient bakside airflow)
                     -
                     If not supplied, default type: "Glass/cell/glass, Close (flush) roof mount" (1) is used.
         moduleEfficiency_: The ratio of electrical energy output from the PV module to input solar energy from the sun.
@@ -70,13 +71,13 @@ Provided by Ladybug 0.0.64
         PVmoduleSettings: A list of PV module settings. Plug it to "Photovoltaics surface" component's "PVmoduleSettings_" input.
 """
 
-ghenv.Component.Name = "Ladybug_Photovoltaics Module"
-ghenv.Component.NickName = "PhotovoltaicsModule"
-ghenv.Component.Message = "VER 0.0.64\nMAR_27_2017"
+ghenv.Component.Name = "Ladybug_Simplified Photovoltaics Module"
+ghenv.Component.NickName = "SimplifiedPhotovoltaicsModule"
+ghenv.Component.Message = "VER 0.0.64\nAPR_12_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.64\nMAR_27_2017
+#compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -124,7 +125,7 @@ def main(mountType, moduleEfficiency, temperatureCoefficientPercent, moduleActiv
     
     PVmoduleSettings = [mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientPercent, a, b, deltaT]
     
-    resultsCompletedMsg = "Photovoltaics Module component results successfully completed!"
+    resultsCompletedMsg = "Simplified Photovoltaics Module component results successfully completed!"
     mountTypesL = ["Insulated back", "Close (flush) roof mount", "Open rack"]
     model = mountTypesL[mountType]
     
