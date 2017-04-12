@@ -31,8 +31,8 @@ Provided by Ladybug 0.0.64
     input:
         _modulesLibraryFile: Add "Sandia National Laboratories Modules" .csv file path to this input.
                              -
-                             Download its newest version on the bottom of this page:
-                             https://sam.nrel.gov/libraries
+                             Download its newest version on the bottom of this web page
+                             sam.nrel.gov/libraries
         moduleIndex_: An index corresponding to chosen module from "allModuleNames" output.
                       -
                       If nothing added to this input, "0" will be used as a default (the first module from the "allModuleNames" output will be chosen).
@@ -46,7 +46,7 @@ Provided by Ladybug 0.0.64
                              -
                              This input is actually the same as "mountType" input of the Ladybug "Simplified Photovoltaics Module" component.
                              -
-                             If not supplied, default type: Close (flush) roof mount" (1) is used.
+                             If nothing is added to this input, default mount type of the chosen module will be used (you can check which one by looking at the "moduleMountType" output).
         moduleActiveAreaPercent_: Percentage of the module's area excluding module framing and gaps between cells. 
                                   -
                                   If not supplied, default value of 90(perc.) will be used.
