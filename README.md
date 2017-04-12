@@ -49,6 +49,8 @@ Alex Jacobson
 
 [Djordje Spasic](https://github.com/stgeorges)
 
+Jason Sensibaugh
+
 [Mostapha Roudsari](https://github.com/mostapharoudsari)
 
 [Saeran Vasanthakumar](https://github.com/saeranv)
