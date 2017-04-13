@@ -348,21 +348,23 @@ class Preparation(object):
     
     def angle2north(self, north):
         try:
-            # print north
-            northVector = rc.Geometry.Vector3d.YAxis
-            northVector.Rotate(math.radians(float(north)), rc.Geometry.Vector3d.ZAxis)
-            northVector.Unitize()
-            return math.radians(float(north)), northVector
-        except Exception, e:
-            # print `e`
             try:
-                northVector = rc.Geometry.Vector3d(north)
-                northVector.Unitize()
-                return rc.Geometry.Vector3d.VectorAngle(rc.Geometry.Vector3d.YAxis, northVector, rc.Geometry.Plane.WorldXY), northVector
+                north = float(north)
+                if north > 360:
+                    north = north-360
+                elif north < 0:
+                    north = north+360
+                northRad = math.radians(north)
             except:
-                    #w = gh.GH_RuntimeMessageLevel.Warning
-                    #ghenv.Component.AddRuntimeMessage(w, "North should be a number or a vector!")
-                    return 0, rc.Geometry.Vector3d.YAxis
+                plane = rc.Geometry.Plane(rc.Geometry.Point3d(0,0,0), rc.Geometry.Vector3d(0,0,1))
+                Yaxis = rc.Geometry.Vector3d.YAxis
+                north.Unitize()
+                northRad = rc.Geometry.Vector3d.VectorAngle(north,Yaxis,plane)
+            northVector = rc.Geometry.Vector3d(0,1,0)
+            rc.Geometry.Vector3d.Rotate(northVector, -northRad, rc.Geometry.Vector3d(0,0,1))
+            return northRad, northVector
+        except:
+            return 0, rc.Geometry.Vector3d.YAxis
     
     def setScale(self, scale, conversionFac = 1):
         try:
