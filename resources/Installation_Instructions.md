@@ -24,7 +24,7 @@
 
 8. Install the Latest OpenStudio by downloading and running the .exe file from [this link](https://github.com/NREL/OpenStudio/releases/tag/v1.12.0).
 
-9. Finally, copy [falsecolor2.exe](https://dl.dropboxusercontent.com/u/16228160/honeybee/falsecolor2.zip) to C:\Radiance\bin
+9. Finally, copy [falsecolor2.exe](https://github.com/mostaphaRoudsari/honeybee/blob/master/resources/falsecolor2.exe?raw=true) to C:\Radiance\bin
 
 
 
