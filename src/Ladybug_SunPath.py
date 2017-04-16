@@ -84,7 +84,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nAPR_16_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -509,8 +509,9 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     listInfo[i][5] = (1,1,1)
                     listInfo[i][6] = (12,31,24)
                     #find the numbers
-                    for h, hr in enumerate(sunUpHours):
-                        value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
+                    for h, hr in enumerate(sunUpHours):                     
+#                        value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
+                        value = selList[int(hr+1)]
                         values.append(value)
                         modifiedsunPosInfo.append(sunPosInfo[h] + '\n' + ("%.2f" % value) + ' ' + listInfo[i][3])
                 
@@ -695,6 +696,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
         else: return -1
         
         return [sunPositions], [sunsJoined], sunVectors, [sunPathCrvs], [compassCrvs], [angleCrvs], [[]], [values], sunAlt, sunAzm, [cenPt], [sunPosInfo], [], [sunUpHours], [legend], [titlebasePt]
+        
 
     else:
         print "You should first let the Ladybug fly..."
