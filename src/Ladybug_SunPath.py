@@ -511,7 +511,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     #find the numbers
                     for h, hr in enumerate(sunUpHours):                     
 #                        value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
-                        value = selList[int(hr+1)]
+                        value = selList[int(hr)]
                         values.append(value)
                         modifiedsunPosInfo.append(sunPosInfo[h] + '\n' + ("%.2f" % value) + ' ' + listInfo[i][3])
                 
