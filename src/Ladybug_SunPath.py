@@ -84,7 +84,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.64\nAPR_16_2017'
+ghenv.Component.Message = 'VER 0.0.64\nAPR_17_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -511,7 +511,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
                     #find the numbers
                     for h, hr in enumerate(sunUpHours):                     
 #                        value = selList[int(math.floor(hr))] + (selList[int(math.ceil(hr))] - selList[int(math.floor(hr))])* (hr - math.floor(hr))
-                        value = selList[int(hr)]
+                        value = selList[int(hr-1)]
                         values.append(value)
                         modifiedsunPosInfo.append(sunPosInfo[h] + '\n' + ("%.2f" % value) + ' ' + listInfo[i][3])
                 
