@@ -284,6 +284,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
                         contourArea = rc.Geometry.AreaMassProperties.Compute(finalSplitMesh).Area
                         if contourArea < contourMeshArea-sc.doc.ModelAbsoluteTolerance and finalSplitMesh.IsValid:
                             contourMesh.append(finalSplitMesh)
+                            contourColors.append([legendColors[count]])
                         startTrigger = True
                         initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[count+1])[-1]
                         finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intMeshes[count])[0]
@@ -294,12 +295,15 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
                         initMeshArea = rc.Geometry.AreaMassProperties.Compute(initSplitMesh).Area
                         finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intMeshes[count+1])[0]
                     try:
-                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
+                        lColor = legendColors[count+1]
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(lColor)
                     except:
-                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
+                        lColor = legendColors[count+1]
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(lColor)
                     contourArea = rc.Geometry.AreaMassProperties.Compute(finalSplitMesh).Area
                     if contourArea < contourMeshArea-sc.doc.ModelAbsoluteTolerance and contourArea < initMeshArea-sc.doc.ModelAbsoluteTolerance and finalSplitMesh.IsValid:
                         contourMesh.append(finalSplitMesh)
+                        contourColors.append([lColor])
                 except:
                     try:
                         finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[count])[0]
@@ -313,7 +317,6 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     # Generate Labeled Contours
     try:
         if contourType == 0 or contourType == 2 or contourType == None:
-            contourColors.append([System.Drawing.Color.Black])
             if lowB != 'min' and highB != 'max':
                 numbers = rs.frange(lowB, highB, round((highB - lowB) / (numSeg -1), 6))
             elif lowB != 'min':
