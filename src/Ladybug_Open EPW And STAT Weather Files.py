@@ -133,22 +133,29 @@ def unzip(source_filename, dest_dir):
 
 def addresses(directory):
     epw, stat = None, None
+    try:
+        keyText = directory.split('\\')[-2].replace('.','_')
+    except:
+        keyText = ''
     for file in os.listdir(directory):
-        if file.endswith('.epw'):
+        if file.endswith('.epw') and keyText in file.replace('.','_'):
             epw = directory + '/' + file
-        elif file.endswith('.stat'):
+        elif file.endswith('.stat')and keyText in file.replace('.','_'):
             stat = directory + '/' + file
     
     return epw, stat
 
 def checkIfAlreadyDownloaded(workingDir, url):
-    if os.path.isdir(workingDir):
-        epw, stat = addresses(workingDir)
-        if os.path.isfile(epw) == True and os.path.isfile(stat) == True:
-            return True, epw, stat
+    try:
+        if os.path.isdir(workingDir):
+            epw, stat = addresses(workingDir)
+            if os.path.isfile(epw) == True and os.path.isfile(stat) == True:
+                return True, epw, stat
+            else:
+                return False, None, None
         else:
             return False, None, None
-    else:
+    except:
         return False, None, None
 
 
