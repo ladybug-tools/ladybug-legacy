@@ -84,7 +84,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.64\nAPR_17_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAY_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -407,7 +407,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             lb_sunpath.solInitOutput(m, d, h, solarOrStandardTime)
             
             if lb_sunpath.solAlt >= 0: SUH += 1
-            if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))]:
+            if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))-1]:
                 sunSphere, sunVector, sunPoint = lb_sunpath.sunPosPt(sunSc)
                 sunSphere, sunPoint = lb_visualization.sunSpherePt(sunSc, sunPoint, projection, cenPt, scale)
                 # find the hour of the year
