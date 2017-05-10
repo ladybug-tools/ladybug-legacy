@@ -135,6 +135,12 @@ if _capture and _fileName!=None:
     
     directory = mdPath(folder_)
     
+    # bring this to the top
+    ghenv.Component.OnPingDocument().DeselectAll()
+    ghenv.Component.Attributes.Selected = True
+    ghenv.Component.OnPingDocument().BringSelectionToTop()
+    ghenv.Component.Attributes.Selected = False
+    
     # check input
     if len(viewNames_)==0: viewNames_ = [sc.doc.Views.ActiveView.ActiveViewport.Name]
     
