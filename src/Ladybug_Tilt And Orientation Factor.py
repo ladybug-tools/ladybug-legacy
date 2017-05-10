@@ -1,4 +1,4 @@
-# Tilt and orientation factor
+# tilt and orientation factor
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
@@ -51,9 +51,7 @@ Provided by Ladybug 0.0.64
                     Example - precision of 4, would mean that 4 fields in X direction (Azimuth) and 4 fields in Y direction (Tilt) = 16 fields, will be used to calculate the final "geometry" mesh.
                     For lower precision numbers (say < 20) even precision numbers are more accurate.
                     -
-                    CAUTION!!! Precision numbers (10 >) require stronger performance PCs. If your PC is somewhat "weaker", the precision of < 10 will be just fine.
-                    -
-                    If not supplied, default value of 2 will be used.
+                    If not supplied, default value of 20 will be used.
         scale_: Scale of the overall geometry.
                 -
                 If not supplied, default value of 1 will be used.
@@ -77,13 +75,13 @@ Provided by Ladybug 0.0.64
               -
               In percent(%).
         PVsurfaceTilt: Tilt angle of the inputted PV_SWHsurface.
-                       In degrees ().
+                       In degrees (°).
         PVsurfaceAzimuth: Orientation angle of the inputted PV_SWHsurface.
-                          In degrees ().
+                          In degrees (°).
         optimalTilt: Optimal tilt of the PV_SWHsurface for a given location. Optimal tilt being the one that receives the most annual solar radiation.
-                     In degrees ().
+                     In degrees (°).
         optimalAzimuth: Optimal orientation of the PV_SWHsurface for a given location. Optimal azimuth being the one that receives the most annual solar radiation.
-                        In degrees ().
+                        In degrees (°).
         optimalRoofPitch: Optimal steepness of the PV_SWHsurface for a given location. Optimal steepness being the one that receives the most annual solar radiation.
                           In inches/inches
         optimalRadiation: Total solar radiation per square meter for a whole year received on a PV_SWHsurface of optimal tilt and azimuth, at given location.
@@ -99,11 +97,11 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = "VER 0.0.64\nAPR_12_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+#compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -116,7 +114,7 @@ import time
 import math
 
 
-def getEpwData(epwFile, annualShading, albedo, precision, scale, origin, legendPar):
+def getEpwData(epwFile, annualShading, albedo, precision, scale, origin, legendPar, analysisPeriod):
     
     if epwFile:
         try:
@@ -184,7 +182,16 @@ def getEpwData(epwFile, annualShading, albedo, precision, scale, origin, legendP
                     hour += 1
                 hour = 1
             
-            HOYs = range(1,8761)
+            
+            # HOYs
+            if (len(analysisPeriod) != 0) and (analysisPeriod[0] != None):
+                # something added to "analysisPeriod_" input
+                timeStep = 1
+                HOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, timeStep)
+            else:
+                # nothing added to "analysisPeriod_" input
+                HOYs = range(1,8761)
+            
             
             validEpwData = True
             printMsg = "ok"
@@ -192,6 +199,7 @@ def getEpwData(epwFile, annualShading, albedo, precision, scale, origin, legendP
             return locationName, float(latitude), float(longitude), float(timeZone), DNI, DHI, yearsHOY, monthsHOY, daysHOY, hoursHOY, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg
         
         except Exception, e:
+            print "e: ", e
             # something is wrong with "_epwFile" input
             locationName = latitude = longitude = timeZone = DNI = DHI = yearsHOY = monthsHOY = daysHOY = hoursHOY = HOYs = annualShading = albedoL = precision = scale = origin = originOffset = legendPar = None
             validEpwData = False
@@ -267,6 +275,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
     # TOF mesh generation (mesh width = 80, mesh height = 45)
     meshPtStepU = 80/(len(srfAzimuthTOFList)-1)
     meshPtStepV = 45/(len(srfTiltTOFList)-1)
+    
     meshPts = []
     meshLiftedPts = []
     totalRadiationPerYearL = []
@@ -274,18 +283,26 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
         for k,srfAzimuthTOF in enumerate(srfAzimuthTOFList):
             totalRadiationPerYear = 0
             for g,hoy in enumerate(HOYs):
-                sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, years[g], months[g], days[g], hours[g]-1)
-                Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltTOF, srfAzimuthTOF, directNormalRadiation[g], diffuseHorizontalRadiation[g], albedoL[g])
+                sunZenithD, sunAzimuthD, sunAltitudeD = lb_photovoltaics.NRELsunPosition(latitude, longitude, timeZone, years[hoy-1], months[hoy-1], days[hoy-1], hours[hoy-1]-1)
+                Epoa, Eb, Ed_sky, Eground, AOI_R = lb_photovoltaics.POAirradiance(sunZenithD, sunAzimuthD, srfTiltTOF, srfAzimuthTOF, directNormalRadiation[hoy-1], diffuseHorizontalRadiation[hoy-1], albedoL[hoy-1])
                 totalRadiationPerYear += Epoa  # in Wh/m2
             totalRadiationPerYearL.append(totalRadiationPerYear)
+    
+    # iterate "srfTiltTOFList" and "srfAzimuthTOFList" one more time, now that "totalRadiationPerYearL" has been generated: to find "meshPts", "liftedMeshPts"
+    totalRadiationPerYear_index = 0
+    for i,srfTiltTOF in enumerate(srfTiltTOFList):
+        for k,srfAzimuthTOF in enumerate(srfAzimuthTOFList):
+            normalized_totalRadiationPerYear = (totalRadiationPerYearL[totalRadiationPerYear_index] - min(totalRadiationPerYearL)) / (max(totalRadiationPerYearL) - min(totalRadiationPerYearL))  # normalizes each totalRadiationPerYear value from 0 to 1
             if anglesClockwise == True:  # angles clockwise
                 meshPt = Rhino.Geometry.Point3d(originOffset.X + meshPtStepU*k, originOffset.Y + meshPtStepV*i, originOffset.Z)
-                liftedMeshPt = Rhino.Geometry.Point3d(originOffset.X + meshPtStepU*k, originOffset.Y + meshPtStepV*i, originOffset.Z + totalRadiationPerYear/50000)
+                liftedMeshPt = Rhino.Geometry.Point3d(originOffset.X + meshPtStepU*k, originOffset.Y + meshPtStepV*i, originOffset.Z + (normalized_totalRadiationPerYear*100))  # lift each meshPt.Z coordinate by "normalized_totalRadiationPerYear*100"
             elif anglesClockwise == False:  # angles counterclockwise
                 meshPt = Rhino.Geometry.Point3d(originOffset.X + meshPtStepU*k, originOffset.Y + meshPtStepV*i, originOffset.Z)
-                liftedMeshPt = Rhino.Geometry.Point3d(originOffset.X + meshPtStepU*k, originOffset.Y + meshPtStepV*i, originOffset.Z + totalRadiationPerYear/50000)
+                liftedMeshPt = Rhino.Geometry.Point3d(originOffset.X + meshPtStepU*k, originOffset.Y + meshPtStepV*i, originOffset.Z + (normalized_totalRadiationPerYear*100))  # lift each meshPt.Z coordinate by "normalized_totalRadiationPerYear*100"
             meshPts.append(meshPt)
             meshLiftedPts.append(liftedMeshPt)
+            totalRadiationPerYear_index += 1
+    
     
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     colors = lb_visualization.gradientColor(totalRadiationPerYearL, lowB, highB, customColors)
@@ -340,6 +357,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
     def meshesClosesPts(startingPt, mesh1, mesh2):
         pt1 = startingPt
         for k in range(300):
+        #for k in range(3000):
             pt2 = mesh2.ClosestMeshPoint(pt1,0.0).Point
             pt1 = mesh1.ClosestMeshPoint(pt2,0.0).Point
         return pt1
@@ -350,6 +368,7 @@ def main(latitude, longitude, timeZone, locationName, years, months, days, hours
         azimuthMeshStartValue = 270
     meshLiftedCentroid = Rhino.Geometry.AreaMassProperties.Compute(meshLifted).Centroid
     optimalPt = meshesClosesPts(meshLiftedCentroid, meshLifted, planarMeshAboveLifted)
+    
     if anglesClockwise == True:  # clockwise
         if latitude >= 0:
             optimalAzimuthD = round( 180-((optimalPt.X-originOffset.X) *180/80)+azimuthMeshStartValue, 1 )
@@ -514,9 +533,15 @@ def createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalT
     descriptionLabelOrigin = Rhino.Geometry.Point3d(originOffset.X-6, originOffset.Y-22, originOffset.Z)
     TOFoptimal = 100  # always 100%
     TSRFoptimal = 100 # always 100%
-    titleLabelText = "Annual total solar radiation as a function of panel tilt/orientation"
+    titleLabelText = "Solar radiation as a function of panel tilt/orientation"
     titleLabelMeshes = lb_visualization.text2srf([titleLabelText], [titleLabelOrigin], legendFont, legendFontSize*1.6, legendBold, None, 6)[0]
-    descriptionLabelText = "Location: %s, Latitude: %s, Longitude: %s\nOptimal: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f\nAnalysed: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f" %(locationName, latitude, longitude, optimalTiltD, optimalAzimuthD, maximalTotalRadiationPerYear, TOFoptimal, TSRFoptimal, srfTiltD, srfAzimuthD, totalRadiationPerYear, TOF, TSRF)
+    if (len(analysisPeriod_) != 0) and (analysisPeriod_[0] != None):
+        # something added to "analysisPeriod_" input
+        analysisPeriod = "%s to %s" % (list(analysisPeriod_[0]), list(analysisPeriod_[1]))
+    else:
+        # nothing added to "analysisPeriod_" input
+        analysisPeriod = "whole year"
+    descriptionLabelText = "Location: %s, Latitude: %s, Longitude: %s\nOptimal: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f\nAnalysed: Tilt: %0.1f, Azimuth: %0.1f, Radiation: %s kWh/m2, TOF: %0.1f, TSRF: %0.1f\nAnalysis period: %s" %(locationName, latitude, longitude, optimalTiltD, optimalAzimuthD, maximalTotalRadiationPerYear, TOFoptimal, TSRFoptimal, srfTiltD, srfAzimuthD, totalRadiationPerYear, TOF, TSRF, analysisPeriod)
     descriptionLabelMeshes = lb_visualization.text2srf([descriptionLabelText], [descriptionLabelOrigin], legendFont, legendFontSize*1.3, legendBold, None, 6)[0]
     
     # region percent values
@@ -569,7 +594,7 @@ def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
     # generate the legend
     totalRadiationPerYearLint = [annualEpoa/1000 for annualEpoa in totalRadiationPerYearL]
     lb_visualization.calculateBB([mesh])
-    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Annual radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
+    legendSrfs, legendText, legendTextSrfs, textPt, textSize = lb_visualization.createLegend(totalRadiationPerYearLint, lowB, highB, numSeg, "Radiation (kWh/m2)", lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces
@@ -578,8 +603,8 @@ def legendGeometry(legendPar, meshPts, totalRadiationPerYearL):
     legendPlusLegendBasePoint = legend + [legendBasePoint]
     
     # hide originPt, legendBasePt outputs
-    ghenv.Component.Params.Output[12].Hidden= True
-    ghenv.Component.Params.Output[15].Hidden= True
+    ghenv.Component.Params.Output[12].Hidden = True
+    ghenv.Component.Params.Output[15].Hidden = True
     
     return legend, legendBasePoint
 
@@ -606,23 +631,26 @@ def bakingGrouping(locationName, geometry, legend, analysisPt, TOF, TSRF):
     Rhino.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex, geometryIds)
 
 
-def printOutput(north, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin):
+def printOutput(north, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin, analysisPeriod):
+    if (len(analysisPeriod) == 0):
+        analysisPeriod = [(1,1,1),(12,31,24)]
     resultsCompletedMsg = "Tilt and orientation factor component results successfully completed!"
     printOutputMsg = \
     """
 Input data:
 
-Location (): %s
-Latitude (): %s
-Longitude (): %s
-North (): %s
+Location (deg.): %s
+Latitude (deg.): %s
+Longitude (deg.): %s
+North (deg.): %s
 Average annual albedo(-): %0.2f
 
 Surface area (m2): %0.2f
 Precision: %s
 Scale: %s
 Origin: %0.2f,%0.2f,%0.2f
-    """ % (locationName, latitude, longitude, north, sum(albedoL)/8760, srfArea, precision, scale, origin.X, origin.Y, origin.Z)
+Analysis period: %s to %s
+    """ % (locationName, latitude, longitude, north, sum(albedoL)/8760, srfArea, precision, scale, origin.X, origin.Y, origin.Z, list(analysisPeriod[0]), list(analysisPeriod[1]))
     print resultsCompletedMsg
     print printOutputMsg
 
@@ -636,7 +664,7 @@ if sc.sticky.has_key("ladybug_release"):
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
         if _epwFile:
-            locationName, latitude, longitude, timeZone, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg = getEpwData(_epwFile, annualShading_, albedo_, precision_, scale_, origin_, legendPar_)
+            locationName, latitude, longitude, timeZone, directNormalRadiation, diffuseHorizontalRadiation, years, months, days, hours, HOYs, annualShading, albedoL, precision, scale, origin, originOffset, legendPar, validEpwData, printMsg = getEpwData(_epwFile, annualShading_, albedo_, precision_, scale_, origin_, legendPar_, analysisPeriod_)
             if validEpwData:
                 PVsurfaceInputType, srfArea, validPVsurfaceData, printMsg = PVsurfaceInputData(_PV_SWHsurface)
                 if validPVsurfaceData:
@@ -650,8 +678,12 @@ if sc.sticky.has_key("ladybug_release"):
                         geometry = createGeometry(totalRadiationPerYearL, totalRadiationPerYear, mesh, optimalTiltD, optimalAzimuthD, TOF, TSRF, projectedIsoCrvs, projectedLastIsoCrvs, isoCrvPercents, originOffset, legendPar, locationName, latitude, longitude)
                         legend, legendBasePt = legendGeometry(legendPar, meshPts, totalRadiationPerYearL)
                         if bakeIt_: bakingGrouping(locationName, geometry, legend, analysisPt, TOF, TSRF)
-                        printOutput(northDeg, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin)
+                        printOutput(northDeg, latitude, longitude, locationName, albedoL, srfArea, precision, scale, origin, analysisPeriod_)
                         PVsurfaceTilt = srfTiltD; PVsurfaceAzimuth = srfAzimuthD; optimalTilt = optimalTiltD; optimalAzimuth = optimalAzimuthD; optimalRadiation = maximalTotalRadiationPerYear; originPt = origin
+                        # changing "optimalAzimuth" output to account for "north_" input
+                        optimalAzimuth = optimalAzimuth + northDeg
+                        if optimalAzimuth > 360:
+                            optimalAzimuth = optimalAzimuth - 360
                     else:
                         print "All inputs are ok. Please set the \"_runIt\" to True, in order to run the Tilt and orientation factor component."
                 else:

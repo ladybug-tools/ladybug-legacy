@@ -252,7 +252,7 @@ def main():
             return -1
         
         # geometry
-        if selXZ_ != None and not 'soil' in checkSoil:
+        if selXZ_ != None and not 'soil' in checkSoil and not 'surface' in checkSoil:
             xdim = dimension[0][0] / unitConversionFactor
             ydim = [element/unitConversionFactor for element in dimension[1]]
             zdim = [element/unitConversionFactor for element in dimension[2]]
@@ -265,7 +265,7 @@ def main():
                 return -1
         else: surfacesX, analysisResultX, pointsX = [], [], []
         
-        if selYZ_ != None and not 'soil' in checkSoil:
+        if selYZ_ != None and not 'soil' in checkSoil and not 'surface' in checkSoil:
             xdim = [element/unitConversionFactor for element in dimension[0]]
             ydim = dimension[1][0] / unitConversionFactor
             zdim = [element/unitConversionFactor for element in dimension[2]]

@@ -33,41 +33,55 @@ Provided by Ladybug 0.0.64
                            -
                            Some countries and states, have local codes which limit the portion of the roof, which can be covered by crystalline silicon modules. For example, this may include having setbacks(distances) of approximatelly 90cm from side and top edges of a roof, as a fire safety regulation.
                            -
-                           If not supplied, default value of 100 (all surface area will be covered in PV modules) is used.
-        moduleActiveAreaPercent_: Percentage of the module's area excluding module framing and gaps between cells. 
-                                  -
-                                  If not supplied, default value of 90(%) will be used.
-        moduleEfficiency_: The ratio of energy output from the PV module to input energy from the sun. It ranges from 0 to 100 (%).
+                           If not supplied, default value of 100 percent (all surface area will be covered in PV modules) is used.
                            -
-                           If not defined, default value of 15(%) will be used.
-        lifetime_: Life expectancy of a PV module. In years.
-                   -
-                   If not supplied default value of 30 (years) will be used.
+                           In percent.
+        PVmoduleSettings_: A list of PV module settings. Use the "Simplified Photovoltaics Module" or "Import Sandia Photovoltaics Module" or "Import CEC Photovoltaics Module" components to generate them.
+                           -
+                           If not supplied, the following PV module settings will be used by default:
+                           - module material: crystalline silicon (c-Si)
+                           - moduleType: Close (flush) roof mount
+                           - moduleEfficiency: 15 %
+                           - temperatureCoefficient: -0.5 %/C
+                           - moduleActiveAreaPercent: 90 %
         _ACenergyPerHour: Import "ACenergyPerYear" output data from "Photovoltaics surface" component.
+                          -
                           In kWh.
         _totalRadiationPerHour: Import "totalRadiationPerHour" output data from "Photovoltaics surface" component.
+                                -
                                 In kWh/m2.
         _cellTemperaturePerHour: Import "cellTemperaturePerHour" output data from "Photovoltaics surface" component.
+                                 -
                                  In C.
         ACenergyDemandPerHour_: Required electrical energy used for any kind of load: heating, cooling, electric lights, solar water heating circulation pump etc.
                                 For example, any of the Honeybee's "Read EP Result" outputs can be inputted in here. Either separately or summed.
                                 -
                                 If nothing inputted, this input will be neglected (there is no required electrical energy).
+                                -
                                 In kWh.
         energyCostPerKWh_: The cost of one kilowatt hour in any currency unit (dollar, euro, yuan...)
                            -
                            If not supplied, 0.15 $/kWh will be used as default value.
         embodiedEnergyPerM2_: Energy necessary for an entire product life-cycle of PV module per square meter.
-                             In MJ/m2 (megajoules per square meter).
                              -
                              If not supplied default value of 4410 (MJ/m2) will be used.
-        embodiedCO2PerM2_: Carbon emissions produced during PV module's life-cycle per square meter..
-                          In kg CO2/m2 (kilogram of CO2 per square meter).
+                             -
+                             In MJ/m2 (megajoules per square meter).
+        embodiedCO2PerM2_: Carbon emissions produced during PV module's life-cycle per square meter.
                           -
                           If not supplied default value of 225 (kg CO2/m2) will be used.
+                          -
+                          In kg CO2/m2 (kilogram of CO2 per square meter).
+        lifetime_: Life expectancy of a PV module.
+                   -
+                   If not supplied default value of 30 (years) will be used.
+                   -
+                   In years.
         gridEfficiency_: An average primary energy to electricity conversion efficiency.
                         -
-                        If not supplied default value of 29 (%) will be used.
+                        If not supplied default value of 29 (perc.) will be used.
+                        -
+                        In percent.
         optimal_: Set to "True" to calculate optimal PVsurface area.
                   An optimal PVsurface area will cover 100% of the of the annual electricity load ("ACenergyDemandPerHour_").
         _runIt: ...
@@ -151,11 +165,11 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = "VER 0.0.64\nAPR_12_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+#compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -243,27 +257,37 @@ def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, PVmoduleSetti
         PVsurfacePercent = 100  # default value 100%
     
     # PV module settings inputs
-    if (len(PVmoduleSettings) != 4) and (len(PVmoduleSettings) != 0):
+    if (len(PVmoduleSettings) != 9) and (len(PVmoduleSettings) != 23) and (len(PVmoduleSettings) != 36) and (len(PVmoduleSettings) != 0):
         nameplateDCpowerRating = srfArea = activeArea = PVsurfacePercent = moduleEfficiency = temperatureCoefficientFraction = moduleActiveAreaPercent = ACenergyPerHourData = ACenergyPerHourDataFiltered = totalRadiationPerHourData = totalRadiationPerHourDataFiltered = cellTemperaturePerHourData = cellTemperaturePerHourDataFiltered = ACenergyDemandPerHourData = energyCostPerKWh = embodiedEnergyPerGJ_M2 = embodiedCO2PerT_M2 = lifetime = gridEfficiency = locationName = None
         validInputData = False
-        printMsg = "Your \"PVmoduleSettings_\" input is incorrect. Please use \"PVmoduleSettings\" output from \"Photovoltaics module\" component."
+        printMsg = "Your \"PVmoduleSettings_\" input is incorrect. Please use \"PVmoduleSettings\" output from \"Simplified Photovoltaics Module\" or \"Import Sandia Photovoltaics Module\" or \"Import CEC Photovoltaics Module\" components."
         
         return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
     
     elif (len(PVmoduleSettings) == 0) or (PVmoduleSettings[0] is ""):
         # nothing inputted into "PVmoduleSettings_", use default PVmoduleSettings values
-        moduleType = 1  # Glass/cell/glass, Close (flush) roof mount
-        moduleEfficiency = 15  # for crystalline silicon
-        temperatureCoefficientPercent = -0.5  # in %, for crystalline silicon
-        moduleActiveAreaPercent = 90  # default value in %
+        
+        #mountTypeName = "close roof mount"  # Glass/cell/glass (moduleType_ = 1)
+        #moduleActiveAreaPercent = 90  # default value in %
+        #moduleEfficiency = 15  # for crystalline silicon
+        #temperatureCoefficientPercent = -0.5  # in %, for crystalline silicon
+        
+        moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientFraction, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
     
-    elif (len(PVmoduleSettings) == 4):
-        # 4 items inputted into "PVmoduleSettings_"
-        moduleType = PVmoduleSettings[0]
-        moduleEfficiency = PVmoduleSettings[1]
-        temperatureCoefficientPercent = PVmoduleSettings[2]
-        moduleActiveAreaPercent = PVmoduleSettings[3]
-    temperatureCoefficientFraction = temperatureCoefficientPercent/100  # unitless
+    elif (len(PVmoduleSettings) == 9):
+        # data from "Simplified Photovoltaics Module" component added to "PVmoduleSettings_" input
+        moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientFraction, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
+    
+    elif (len(PVmoduleSettings) == 23):
+        # data from "Import CEC Photovoltaics Module" component added to "PVmoduleSettings_" input
+        moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, IL_ref, Io_ref, Rs_ref, Rsh_ref, A_ref, n_s, adjust, temperatureCoefficientPercent, ws_adjusted_factor, Tnoct_adj = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
+        temperatureCoefficientFraction = temperatureCoefficientPercent/100  # unitless
+    
+    elif (len(PVmoduleSettings) == 36):
+        # data from "Import Sandia Photovoltaics Module" component added to "PVmoduleSettings_" input
+        moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, beta_mp_ref, mu_betamp, s, n, Fd, a0, a1, a2, a3, a4, b0, b1, b2, b3, b4, b5, C0, C1, C2, C3, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
+        temperatureCoefficientPercent = -0.5  # dummy value
+        temperatureCoefficientFraction = temperatureCoefficientPercent/100  # unitless, dummy value
     
     
     if (energyCostPerKWh == None) or (energyCostPerKWh <= 0):
@@ -284,6 +308,8 @@ def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, PVmoduleSetti
     
     if (gridEfficiency == None) or (gridEfficiency <= 0) or (gridEfficiency > 100):
         gridEfficiency = 29  # default, in %
+    
+    
     
     # check PVsurface input
     PVsurfaceInputType = "brep"
@@ -307,7 +333,7 @@ def PVinputData(PVsurface, PVsurfacePercent, unitConversionFactor, PVmoduleSetti
         return nameplateDCpowerRating, srfArea, activeArea, PVsurfacePercent, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHourData, totalRadiationPerHourDataFiltered, cellTemperaturePerHourData, cellTemperaturePerHourDataFiltered, ACenergyDemandPerHourData, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerT_M2, lifetime, gridEfficiency, locationName, validInputData, printMsg
 
 
-def optimizePVsurfaceArea(DCtoACderateFactor, moduleType, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, ACenergyDemandPerYear):
+def optimizePVsurfaceArea(DCtoACderateFactor, PVmoduleSettings, elevationM, srfTiltD, sunZenithDL, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, ACenergyDemandPerYear):
     
     # initialOptimalNameplateDCpowerRating
     averageDailyACenergyDemandPerYear = ACenergyDemandPerYear/365
@@ -343,7 +369,7 @@ def optimizePVsurfaceArea(DCtoACderateFactor, moduleType, moduleEfficiency, temp
     for k in range(1,1000,1):
         ACenergyPerHour = []
         for i in range(8760):
-            Tm, Tcell, Pdc_, Pac = lb_photovoltaics.pvwatts(optimalNameplateDCpowerRatingL[-1], DCtoACderateFactor, AOI_RL[i], totalRadiationPerHour[i], beamRadiationPerHour[i], diffuseRadiationPerHour[i], groundRadiationPerHour[i], moduleType, temperatureCoefficientFraction, dryBulbTemperature[i], windSpeed[i], directNormalRadiation[i], diffuseHorizontalRadiation[i])
+            Tcell, Pdc_, Pac = lb_photovoltaics.pvwatts(optimalNameplateDCpowerRatingL[-1], DCtoACderateFactor, srfTiltD, sunZenithDL[i], AOI_RL[i], totalRadiationPerHour[i], beamRadiationPerHour[i], diffuseRadiationPerHour[i], groundRadiationPerHour[i], dryBulbTemperature[i], windSpeed[i], directNormalRadiation[i], diffuseHorizontalRadiation[i], PVmoduleSettings, elevationM)
             ACenergyPerHour.append(Pac)
         energyOffsetPerYear = sum(ACenergyPerHour)/ACenergyDemandPerYear*100
         nameplateDCpowerRatingStep = initialOptimalNameplateDCpowerRating + k * stepNameplateDCpowerRating  #0.5  # minimal step: 10 watts
@@ -469,10 +495,10 @@ def main(ACenergyPerHourData, ACenergyPerHourDataFiltered, totalRadiationPerHour
         if (ACenergyDemandPerYear != 0):
             # ACenergyDemandPerYear_ inputted
             pv_inputData = sc.sticky["pv_inputData"]
-            conditionalStatementForFinalPrint, DCtoACderateFactor, moduleType, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation = pv_inputData
+            conditionalStatementForFinalPrint, DCtoACderateFactor, PVmoduleSettings, elevationM, srfTiltD, sunZenithDL, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation = pv_inputData
             if (conditionalStatementForFinalPrint == "No condition"):
                 # nothing inputted into "Photovoltaics surface component"'s "annualHourlyData_" and "conditionalStatement_" inputs.
-                optimalSystemSize = optimizePVsurfaceArea(DCtoACderateFactor, moduleType, moduleEfficiency, temperatureCoefficientFraction, moduleActiveAreaPercent, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, ACenergyDemandPerYear)
+                optimalSystemSize = optimizePVsurfaceArea(DCtoACderateFactor, PVmoduleSettings, elevationM, srfTiltD, sunZenithDL, AOI_RL, totalRadiationPerHour, beamRadiationPerHour, diffuseRadiationPerHour, groundRadiationPerHour, dryBulbTemperature, windSpeed, directNormalRadiation, diffuseHorizontalRadiation, ACenergyDemandPerYear)
             else:
                 # something inputted into "Photovoltaics surface component"'s "annualHourlyData_" and "conditionalStatement_" inputs.
                 optimalSystemSize = Yield = CUFperYear = basicPRperYear = temperatureCorrectedPRperMonth = temperatureCorrectedPRperYear = energyOffsetPerMonth = energyOffsetPerYear = energyValue = embodiedEnergy = embodiedCO2 = CO2emissionRate = EPBT = EROI = None
@@ -505,20 +531,20 @@ def printOutput(locationName, PVsurfacePercent, moduleActiveAreaPercent, srfArea
     """
 Input data:
 
-Location: %s
+Location:  %s,
 
-Surface percentage used for PV modules: %0.2f
-Active area Percentage: %0.2f
-Surface area (m2): %0.2f
-Surface active area (m2): %0.2f
-Nameplate DC power rating (kW): %0.2f
-Module efficiency: %s
+Surface percentage used for PV modules:  %0.2f,
+Active area Percentage:  %0.2f,
+Surface area (m2):  %0.2f,
+Surface active area (m2):  %0.2f,
+Nameplate DC power rating (kW):  %0.2f,
+Module efficiency:  %s,
 
-Energy cost per KWh: %s
-Embodied energy/m2 (MJ/m2): %0.2f
-Embodied CO2/m2 (kg CO2/m2): %0.2f
-Lifetime: %s
-gridEfficiency: %s
+Energy cost per KWh:  %s,
+Embodied energy/m2 (MJ/m2):  %0.2f,
+Embodied CO2/m2 (kg CO2/m2):  %0.2f,
+Lifetime:  %s,
+gridEfficiency:  %s,
     """ % (locationName, PVsurfacePercent, moduleActiveAreaPercent, srfArea, activeArea, nameplateDCpowerRating, moduleEfficiency, energyCostPerKWh, embodiedEnergyPerGJ_M2, embodiedCO2PerKg_M2, lifetime, gridEfficiency)
     print resultsCompletedMsg
     print printOutputMsg

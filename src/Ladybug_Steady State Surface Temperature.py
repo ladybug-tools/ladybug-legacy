@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Steady State Surface Temperature"
 ghenv.Component.NickName = 'ssSrfTemp'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAR_20_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -51,6 +51,7 @@ except: pass
 
 import Rhino as rc
 import math
+import Grasshopper.Kernel as gh
 
 def dupdata(data, calcLen):
     return [data for i in range(calcLen)]
@@ -89,6 +90,14 @@ def main(outTemp, inTemp, uValue, windSpd, srfOrient = None, emissivity = 0.9):
     heatFlowFactor = (-12.443 * (math.pow(dimHeatFlow,3))) + (24.28 * (math.pow(dimHeatFlow,2))) - (16.898 * dimHeatFlow) + 8.1275
     filmCoeff = (heatFlowFactor * dimHeatFlow) + (5.81176 * emissivity) + 0.9629
     
+    if uValue > filmCoeff:
+        warning = "The window U-Value is higher than the interior film coefficient.\n" +\
+        "This is not physically possible given that the U-value is supposed to include the resistance of the film coefficient.\n" +\
+        "Try raising your emissivity or lowering your U-Value."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
+    
     extFilmCoeff = []
     intTemp = []
     extTemp = []
@@ -105,4 +114,6 @@ def main(outTemp, inTemp, uValue, windSpd, srfOrient = None, emissivity = 0.9):
 
 if _outTemp != [] and _inTemp != [] and _uValue:
     inTemp, outTemp, windSpd = checkData(_outTemp, _inTemp, outWindSpd_)
-    inSrfTemp, inFilmCoeff, extSrfTemp, extFilmCoeff = main(outTemp, inTemp, _uValue, windSpd, srfOrient_, intEmiss_)
+    result = main(outTemp, inTemp, _uValue, windSpd, srfOrient_, intEmiss_)
+    if result != -1:
+        inSrfTemp, inFilmCoeff, extSrfTemp, extFilmCoeff = result
