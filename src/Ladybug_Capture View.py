@@ -138,9 +138,9 @@ if _capture and _fileName!=None:
     
     directory = mdPath(folder_)
     
-    doc = GH.Instances.ActiveCanvas.Document.Objects;
-    isAtLast = doc[doc.Count-1].InstanceGuid.Equals(ghenv.Component.InstanceGuid);
-    if (not isAtLast):
+    doc = GH.Instances.ActiveCanvas.Document.Objects
+    isAtLast = doc[doc.Count-1].InstanceGuid.Equals(ghenv.Component.InstanceGuid)
+    if not isAtLast:
         # bring this to the top
         ghenv.Component.OnPingDocument().DeselectAll()
         ghenv.Component.Attributes.Selected = True
