@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Capture View"
 ghenv.Component.NickName = 'captureView'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMay_11_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -58,6 +58,8 @@ import System
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
 import Rhino as rc
+import Grasshopper as GH
+
 
 def mdPath(workDir):
     # check user input
@@ -130,16 +132,20 @@ def viewCapture(fileName, directory, viewNames, image_width, image_height, dispM
                 pass
         
         return fullPath
+        
 
 if _capture and _fileName!=None:
     
     directory = mdPath(folder_)
     
-    # bring this to the top
-    ghenv.Component.OnPingDocument().DeselectAll()
-    ghenv.Component.Attributes.Selected = True
-    ghenv.Component.OnPingDocument().BringSelectionToTop()
-    ghenv.Component.Attributes.Selected = False
+    doc = GH.Instances.ActiveCanvas.Document.Objects;
+    isAtLast = doc[doc.Count-1].InstanceGuid.Equals(ghenv.Component.InstanceGuid);
+    if (not isAtLast):
+        # bring this to the top
+        ghenv.Component.OnPingDocument().DeselectAll()
+        ghenv.Component.Attributes.Selected = True
+        ghenv.Component.OnPingDocument().BringSelectionToTop()
+        ghenv.Component.Attributes.Selected = False
     
     # check input
     if len(viewNames_)==0: viewNames_ = [sc.doc.Views.ActiveView.ActiveViewport.Name]
