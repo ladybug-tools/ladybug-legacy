@@ -84,7 +84,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_SunPath"
 ghenv.Component.NickName = 'sunPath'
-ghenv.Component.Message = 'VER 0.0.64\nAPR_17_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAY_23_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -289,6 +289,8 @@ def bakePlease(listInfo, sunsJoined, legendSrfs, legendText, textPt, legendFont,
         dataType = 'No Hourly Data'
     
     # check the study type
+    if sunsJoined == -1:
+        sunsJoined = None
     newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
     if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, sunsJoined, legendSrfs, legendText, textPt, textSize, legendFont, sunPathCrvs, decimalPlaces, True)
     else: lb_visualization.bakeObjects(newLayerIndex, sunsJoined, legendSrfs, legendText, textPt, textSize, legendFont, sunPathCrvs, decimalPlaces, False)
@@ -388,8 +390,8 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             titleStatement = False
         
         printWarning = False
-        if float(latitude) > 90: latitude = 90; printWarning = True
-        elif float(latitude) < -90: latitude = -90; printWarning = True
+        if float(latitude) >= 90: latitude = 89.9; printWarning = True
+        elif float(latitude) <= -90: latitude = -89.9; printWarning = True
             
         if printWarning == True:
             print 'Latitude should be between -90 and 90'
@@ -407,7 +409,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             lb_sunpath.solInitOutput(m, d, h, solarOrStandardTime)
             
             if lb_sunpath.solAlt >= 0: SUH += 1
-            if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))]:
+            if lb_sunpath.solAlt >= 0 and patternList[int(round(lb_preparation.date2Hour(m, d, h)))-1]:
                 sunSphere, sunVector, sunPoint = lb_sunpath.sunPosPt(sunSc)
                 sunSphere, sunPoint = lb_visualization.sunSpherePt(sunSc, sunPoint, projection, cenPt, scale)
                 # find the hour of the year
@@ -675,6 +677,7 @@ def main(latitude, longitude, timeZone, elevation, north, hour, day, month, time
             sunsJoined = colorSun(sunSpheres, colors, lb_visualization)
             
             compassCrvsInit, compassTextPts, compassText = lb_visualization. compassCircle(cenPt, northVector, scale, range(0, 360, 30), 1.5*textSize)
+            angleCrvsOnly = []
             if projection == 1 or projection == 2:
                 angleCrvs, angleTextPt, angleText = lb_visualization.angleCircle(cenPt, northVector, scale, projection)
                 altitutdeMeshText = lb_visualization.text2srf(angleText, angleTextPt, 'Verdana', textSize/2, legendBold)

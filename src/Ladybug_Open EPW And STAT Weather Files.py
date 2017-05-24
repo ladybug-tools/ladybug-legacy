@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'EPW+STAT'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAY_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -55,33 +55,7 @@ import time
 import System
 
 
-def updateUrl(oldurl):
-    """Update old url to new url"""
-    # old: http://apps1.eere.energy.gov/buildings/energyplus/weatherdata/4_north_and_central_america_wmo_region_4/1_usa/USA_PA_Philadelphia.Intl.AP.724080_TMY3.zip
-    # new: https://www.energyplus.net/weather-download/north_and_central_america_wmo_region_4/USA/PA/USA_PA_Philadelphia.Intl.AP.724080_TMY3/all
-    
-    if not oldurl: return
-    
-    oldurl = oldurl.replace("https://energyplus.net", "https://www.energyplus.net")
-    if not _weatherFileURL.endswith('.zip'): return oldurl
-    
-    oldurl = oldurl \
-        .replace("http://apps1.eere.energy.gov/buildings/energyplus/weatherdata", \
-        "https://www.energyplus.net/weather-download")
-    linkdata = oldurl.split("/")
-    # update region name
-    linkdata[4] = ("_").join(linkdata[4].split("_")[1:])
-    city, state = linkdata[-1].split("_")[:2]
-    if oldurl.find("CAN_")==-1 and oldurl.find("USA_")==-1:
-        state = ''
-        linkdata.insert(5, "")
-        
-    linkdata[5] = city + "/" + state
-    linkdata[-1] = linkdata[-1].replace(".zip","/all")
-    
-    updatedLink = "/".join(linkdata)
-    return updatedLink
-    
+
 def checkTheInputs(_weatherFileURL):
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
@@ -98,14 +72,8 @@ def checkTheInputs(_weatherFileURL):
             return -1
         
         lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
-
-
-
-        #Check the inputs to make sure that a valid DOE URL has been connected.
-        _weatherFileURL = updateUrl(_weatherFileURL)
-            
-        if _weatherFileURL and \
-            _weatherFileURL.startswith('https://www.energyplus.net/weather-download/') and _weatherFileURL.endswith('all'):
+        
+        if _weatherFileURL and (_weatherFileURL.startswith('https://') or _weatherFileURL.startswith('http://')):
             folderName = _weatherFileURL.split('/')[-2]
             checkData = True
         else:
@@ -163,18 +131,31 @@ def unzip(source_filename, dest_dir):
                 path = os.path.join(path, word)
             zf.extract(member, path)
 
-def addresses(filename, directory):
-    filenamewords = filename.replace(".zip", "")
-    epw = filenamewords + '.epw'
-    stat = filenamewords + '.stat'
+def addresses(directory):
+    epw, stat = None, None
+    try:
+        keyText = directory.split('\\')[-2].replace('.','_')
+    except:
+        keyText = ''
+    for file in os.listdir(directory):
+        if file.endswith('.epw') and keyText in file.replace('.','_'):
+            epw = directory + '/' + file
+        elif file.endswith('.stat')and keyText in file.replace('.','_'):
+            stat = directory + '/' + file
+    
     return epw, stat
 
 def checkIfAlreadyDownloaded(workingDir, url):
-    zipFileAddress = workingDir + url.split('/')[-2] + '.zip'
-    epw, stat = addresses(zipFileAddress, workingDir)
-    if os.path.isfile(epw) == True and os.path.isfile(stat) == True:
-        return True, epw, stat
-    else:
+    try:
+        if os.path.isdir(workingDir):
+            epw, stat = addresses(workingDir)
+            if os.path.isfile(epw) == True and os.path.isfile(stat) == True:
+                return True, epw, stat
+            else:
+                return False, None, None
+        else:
+            return False, None, None
+    except:
         return False, None, None
 
 
@@ -199,5 +180,5 @@ else: pass
 #Unzip the file and load it into Grasshopper!!!!
 if checkData == True and checkData2 == False and zipFileAddress:
     unzip(zipFileAddress, workingDir)
-    epwFile, statFile = addresses(zipFileAddress, workingDir)
+    epwFile, statFile = addresses(workingDir)
 else: pass
