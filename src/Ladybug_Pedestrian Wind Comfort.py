@@ -25,7 +25,7 @@
 Use this component to analyse pedestrian wind comfort and safety for the present and potential (newly built) urban environments.
 Construction of a new building changes the wind microclimate in its vicinity. These changes can result in either decreased or increased wind speeds around the building, which may be uncomfortable or even dangerous.
 -
-Based on Lawsons Pedestrian Comfort Criteria (1990)
+Based on Lawson’s Pedestrian Comfort Criteria (1990)
 https://www.dropbox.com/s/t9pxhr45vwg2xd2/Wind_Microclimate.pdf?dl=0
 -
 Provided by Ladybug 0.0.64
@@ -85,7 +85,7 @@ Provided by Ladybug 0.0.64
                                    The categories depend on the threshold wind speed for particular point: the wind speed that for 95% of the chosen analysis period is below a certain value. With values being the following:
                                    -
                                    0) < 4 m/s  sitting (outdoor cafes, patios, terraces, benches, gardens, parks, fountains, monuments...)
-                                   1) 4-6 m/s  standing (building entrances or exits, bus stops, childrens play areas...)
+                                   1) 4-6 m/s  standing (building entrances or exits, bus stops, children’s play areas...)
                                    2) 6-8 m/s  leisurely walking (general areas of walking, strolling and sightseeing, window shopping, public/private sidewalks, pathways, public spaces...)
                                    3) 8-10 m/s  business walking (walking from one place to another quickly, or where individuals pass rapidly through local areas around buildings, public/private vehicular drop-off zones, roads and car parks, cyclists pathways...)
                                    4) > 10 m/s  uncomfortable (uncomfortable for all pedestrian activities)
@@ -138,15 +138,14 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Pedestrian Wind Comfort"
 ghenv.Component.NickName = "PedestrianWindComfort"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = "VER 0.0.64\nJUN_01_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
-#compatibleLBVersion = VER 0.0.62\nJUN_07_2016
+#compatibleLBVersion = VER 0.0.63\nJUN_09_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
-import ghpythonlib.components as ghc
 import Grasshopper.Kernel as gh
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
@@ -192,17 +191,11 @@ def getEpwData(epwFile):
 def HOYs_from_analysisPeriod(analysisPeriod):
     
     if (len(analysisPeriod) != 0) and (analysisPeriod[0] != None):
+        
         startingDate = analysisPeriod[0]
         endingDate = analysisPeriod[1]
-        startingHOY = lb_preparation.date2Hour(startingDate[0], startingDate[1], startingDate[2])
-        endingHOY = lb_preparation.date2Hour(endingDate[0], endingDate[1], endingDate[2])
-        
-        if (startingHOY < endingHOY):
-            HOYs = range(startingHOY, endingHOY+1)
-        elif (startingHOY > endingHOY):
-            startingHOYs = range(startingHOY, 8760+1)
-            endingHOYs = range(1,endingHOY+1)
-            HOYs = startingHOYs + endingHOYs
+        timeStep = 1
+        HOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, timeStep)
     
     else:  # no "analysisPeriod_" inputted. Use the whole year period
         HOYs = range(1,8761)
@@ -227,12 +220,12 @@ def HOYs_from_analysisPeriod(analysisPeriod):
 def checkInputData(windFactor, analysisGeometryMesh, pedestrianType, north, northCfd, resultGradient, analysisPeriod):
     
     if (windFactor.DataCount == 0):  # if an empty data tree inputted into "_windFactor". Not if "None" inputted into "_windFactor"
-        windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
+        windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = pedestrianTypeLabel = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
         validInputData = False
         printMsg = "Please supply the data to the \"_windFactor\" input.\n" + \
                    "\"_windFactor\" data should be supplied into different branches corresponding to different directions for which the cfd simulation has been performed.\n" + \
                    "For example: the first branch holds windFactors for all analysis points for wind direction 0. Second branch would hold windFactors for all analysis points for wind direction 20. Third branch would hold windFactors for all analysis points for wind direction 40 ... and so on."
-        return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
+        return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
     
     
     windFactorPaths = windFactor.Paths
@@ -244,38 +237,42 @@ def checkInputData(windFactor, analysisGeometryMesh, pedestrianType, north, nort
         if len(windFactorList) == windFactorBranchesFirstListLength:
             windFactorAllBranchesEqualLength += 1
     if windFactorAllBranchesEqualLength != len(windFactor.Branches):
-        windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
+        windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = pedestrianTypeLabel = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
         validInputData = False
         printMsg = "The \"_windFactor\" data you supplied has unequal number of values in its branches.\n" + \
                    "Please input the \"_windFactor\" data with equal number of values in all its branches."
-        return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
+        return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
     
     
     if (analysisGeometryMesh == None):
-        windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
+        windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = pedestrianTypeLabel = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
         validInputData = False
         printMsg = "Please supply a mesh to the \"_analysisGeometry\" input.\n" + \
                    "-\n" + \
                    "The number of mesh face centroids needs to be equal to the number of values in each of the \"_windFactor\" branches."
-        return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
+        return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
     else:
         faceCentroids = [analysisGeometryMesh.Faces.GetFaceCenter(i) for i in xrange(analysisGeometryMesh.Faces.Count)]
         if len(faceCentroids) != windFactorBranchesFirstListLength:
-            windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
+            windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = pedestrianTypeLabel = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
             validInputData = False
             printMsg = "The mesh you supplied to the \"_analysisGeometry\" input does not have the same number of face centroids as the number of values in each \"_windFactor\" branches.\n" + \
                        "Please input a mesh which does."
-            return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
+            return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
     
     
     if (pedestrianType == None):
         pedestrianSafetyThreshold = 20  # default, typical pedestrian
+        pedestrianTypeLabel = "typical pedestrian"
     elif (pedestrianType == 0):
         pedestrianSafetyThreshold = 20  # typical pedestrian
+        pedestrianTypeLabel = "typical pedestrian"
     elif (pedestrianType == 1):
         pedestrianSafetyThreshold = 15  # sensitive pedestrians (elderly people, cyclists, children)
+        pedestrianTypeLabel = "sensitive pedestrian"
     elif (pedestrianType < 0) or (pedestrianType > 1):
         pedestrianSafetyThreshold = 20  # default, typical pedestrian
+        pedestrianTypeLabel = "typical pedestrian"
         printMsg = "The \"pedestrianType_\" input can only take \"0\" or \"1\" as inputs.\n" + \
                    "\"pedestrianType_\" input set to \"0\" (typical pedestrian)."
     
@@ -287,10 +284,10 @@ def checkInputData(windFactor, analysisGeometryMesh, pedestrianType, north, nort
         try:  # check if it's a number
             north = float(north)
             if north < 0 or north > 360:
-                windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
+                windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = pedestrianTypeLabel = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
                 validInputData = False
                 printMsg = "Please input north angle value from 0 to 360."
-                return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
+                return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
         except Exception, e:  # check if it's a vector
             north.Unitize()
         
@@ -307,10 +304,10 @@ def checkInputData(windFactor, analysisGeometryMesh, pedestrianType, north, nort
         try:  # check if it's a number
             northCfd = float(northCfd)
             if northCfd < 0 or northCfd > 360:
-                windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
+                windFactorsPerPointLL = analysisGeometryMesh = cfdSimulationDirections = pedestrianSafetyThreshold = pedestrianTypeLabel = northCfdD = northD = resultGradient = HOYs = analysisPeriod = date = None
                 validInputData = False
                 printMsg = "Please input northCfd angle value from 0 to 360."
-                return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
+                return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
         except Exception, e:  # check if it's a vector
             northCfd.Unitize()
         
@@ -345,7 +342,7 @@ def checkInputData(windFactor, analysisGeometryMesh, pedestrianType, north, nort
     validInputData = True
     printMsg = "ok"
     
-    return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
+    return windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg
 
 
 def checkAnnualHourlyInputData(annualHourlyData):
@@ -554,10 +551,13 @@ def main(windSpeedData, windDirectionData, windFactorsPerPointLL, outputLocation
         windDirectionData_corrected2.append(correctedEpwWindDirection2)
     
     
+    
     # correct epw windSpeed with windFactor for each point
     windSpeedDataPerPointDataTree_corrected = Grasshopper.DataTree[object]()  # "locationWindSpeed" output
     header = ["key:location/dataType/units/frequency/startsAt/endsAt", "%s" % locationName, "Location's wind speed", "m/s", "Hourly", analysisPeriod[0], analysisPeriod[1]]
     
+    """
+    # option 1 (slower)
     windSpeedDataPerPointLL_corrected = []
     for pointIndex, windFactorsPerPointL in enumerate(windFactorsPerPointLL):  # iterrate through each point
         windSpeedDataPerPoint_corrected = []
@@ -573,6 +573,20 @@ def main(windSpeedData, windDirectionData, windFactorsPerPointLL, outputLocation
         if outputLocationWindSpeed:
             path = Grasshopper.Kernel.Data.GH_Path(pointIndex)
             windSpeedDataPerPointDataTree_corrected.AddRange(header + windSpeedDataPerPoint_corrected, path)
+    """
+    
+    # option 2 (faster)
+    cfdSimulationDirections_corrected_dict = {correctedCfdWindDirection:cfdDirIndex for cfdDirIndex,correctedCfdWindDirection in enumerate(cfdSimulationDirections_corrected)}
+    
+    windSpeedDataPerPointLL_corrected = [[windSpeedData[hoy - 1] * windFactorsPerPointL[cfdSimulationDirections_corrected_dict[windDirectionData_corrected2[hoy-1]]]
+         for hoy in HOYs]
+     for windFactorsPerPointL in windFactorsPerPointLL]
+    
+    
+    if outputLocationWindSpeed:
+        path = Grasshopper.Kernel.Data.GH_Path(pointIndex)
+        windSpeedDataPerPointDataTree_corrected.AddRange(header + windSpeedDataPerPoint_corrected, path)
+    
     
     
     # Lawson's comfort and safety assessment criteria (1990)
@@ -613,7 +627,7 @@ def main(windSpeedData, windDirectionData, windFactorsPerPointLL, outputLocation
     return windSpeedDataPerPointDataTree_corrected, windSpeed95percentPerYear_forAllPoints, strongestLocationWindSpeed_forAllPoints, pedestrianComfortCategory_forAllPoints, pedestrianSafety_forAllPoints
 
 
-def createGeometry(legendPar, locationName, analysisGeometryMesh, pedestrianComfortCategory_forAllPoints, pedestrianSafety_forAllPoints, resultGradient, date):
+def createGeometry(legendPar, locationName, analysisGeometryMesh, pedestrianTypeLabel, pedestrianComfortCategory_forAllPoints, pedestrianSafety_forAllPoints, northCfdD, northD, resultGradient, date):
     
     # extract data from "legendPar_" input
     if len(legendPar) == 0:
@@ -693,14 +707,14 @@ def createGeometry(legendPar, locationName, analysisGeometryMesh, pedestrianComf
     
     titleLabelOrigin = lb_visualization.BoundingBoxPar[5]
     titleLabelOrigin.Y = titleLabelOrigin.Y - (lb_visualization.BoundingBoxPar[2]/10)*legendScale  # (height2d_ofBB/10)*legendScale
-    titleLabelText = "Pedestrian wind comfort\n%s\n%s" % (locationName, date)
+    titleLabelText = "Pedestrian wind comfort: %s\nResult gradient: %s, northCfd: %s, north: %s\n%s" % (locationName, resultGradient, northCfdD, northD, date)
     titleLabelMeshes = lb_visualization.text2srf([titleLabelText], [titleLabelOrigin], legendFont, legendFontSize*1.2, legendBold, None, 6)[0]
     titleDescriptionLabelMeshes = titleLabelMeshes
     
     # titlePedestrianSafety
     titleLabelOrigin2 = Rhino.Geometry.Point3d(pedestrianSafetyMesh_bottomLeftPt.X, pedestrianSafetyMesh_bottomLeftPt.Y, pedestrianSafetyMesh_bottomLeftPt.Z)
     titleLabelOrigin2.Y = titleLabelOrigin2.Y - (lb_visualization.BoundingBoxPar[2]/10)*legendScale  # (height2d_ofBB/10)*legendScale
-    titleLabelText2 = "Pedestrian wind safety\n%s\n%s" % (locationName, date)
+    titleLabelText2 = "Pedestrian wind safety: %s\nResult gradient: %s, northCfd: %s, north: %s, %s\n%s" % (locationName, resultGradient, northCfdD, northD, pedestrianTypeLabel, date)
     titleLabelMeshes2 = lb_visualization.text2srf([titleLabelText2], [titleLabelOrigin2], legendFont, legendFontSize*1.2, legendBold, None, 6)[0]
     titleDescriptionLabelMeshes2 = titleLabelMeshes2
     
@@ -824,13 +838,10 @@ def bakingGrouping(locationName, pedestrianComfortMesh, pedestrianSafetyMesh, ti
     Rhino.RhinoDoc.ActiveDoc.Groups.AddToGroup(groupIndex3_, geometryIds3_)
 
 
-def printOutput(locationName, cfdSimulationDirections, pedestrianType, northCfd, north, resultGradient, analysisPeriod, conditionalStatementForFinalPrint):
+def printOutput(locationName, cfdSimulationDirections, pedestrianType, pedestrianTypeLabel, northCfd, north, resultGradient, analysisPeriod, conditionalStatementForFinalPrint):
     
-    if pedestrianType == 0:
-        pedestrianTypeLabel = "typical pedestrian"
-    elif pedestrianType == 1:
-        pedestrianTypeLabel = "sensitive pedestrian"
     resultsCompletedMsg = "Pedestrian wind comfort component results successfully completed!"
+    
     printOutputMsg = \
     """
 Input data:
@@ -855,14 +866,13 @@ level = gh.GH_RuntimeMessageLevel.Warning
 if sc.sticky.has_key("ladybug_release"):
     if sc.sticky["ladybug_release"].isCompatible(ghenv.Component):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
-        lb_meshpreparation = sc.sticky["ladybug_Mesh"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         lb_photovoltaics = sc.sticky["ladybug_Photovoltaics"]()
         
         if _epwFile:
             locationName, windSpeedData, windDirectionData, validEpwData, printMsg = getEpwData(_epwFile)
             if validEpwData:
-                windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg = checkInputData(_windFactor, _analysisGeometry, pedestrianType_, north_, northCfd_, resultGradient_, analysisPeriod_)
+                windFactorsPerPointLL, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, pedestrianTypeLabel, northCfdD, northD, resultGradient, HOYs, analysisPeriod, date, validInputData, printMsg = checkInputData(_windFactor, _analysisGeometry, pedestrianType_, north_, northCfd_, resultGradient_, analysisPeriod_)
                 if validInputData:
                     validAnnualHourlyData, annualHourlyDataLists, annualHourlyDataListsEpwNames, printMsg = checkAnnualHourlyInputData(annualHourlyData_)
                     if validAnnualHourlyData:
@@ -872,10 +882,11 @@ if sc.sticky.has_key("ladybug_release"):
                             if _runIt:
                                 outputLocationWindSpeed = False
                                 windSpeedDataPerPointDataTree_corrected, windSpeed95percentPerYear_forAllPoints, strongestLocationWindSpeed_forAllPoints, pedestrianComfortCategory_forAllPoints, pedestrianSafety_forAllPoints = main(windSpeedCondStat, windDirectionCondStat, windFactorsPerPointLL, outputLocationWindSpeed, analysisGeometryMesh, cfdSimulationDirections, pedestrianSafetyThreshold, northCfdD, northD, resultGradient, HOYs, analysisPeriod)
-                                pedestrianComfortMesh, pedestrianSafetyMesh, titleDescriptionLabelMeshes, titleDescriptionLabelMeshes2, legend, legend2, legendBasePt, legendBasePt2, validModelTolerance, printMsg = createGeometry(legendPar_, locationName, analysisGeometryMesh, pedestrianComfortCategory_forAllPoints, pedestrianSafety_forAllPoints, resultGradient, date)
+                                pedestrianComfortMesh, pedestrianSafetyMesh, titleDescriptionLabelMeshes, titleDescriptionLabelMeshes2, legend, legend2, legendBasePt, legendBasePt2, validModelTolerance, printMsg = createGeometry(legendPar_, locationName, analysisGeometryMesh, pedestrianTypeLabel, pedestrianComfortCategory_forAllPoints, pedestrianSafety_forAllPoints, northCfdD, northD, resultGradient, date)
+                                
                                 if validModelTolerance:
                                     if bakeIt_: bakingGrouping(locationName, pedestrianComfortMesh, pedestrianSafetyMesh, titleDescriptionLabelMeshes, titleDescriptionLabelMeshes2, legend, legend2)
-                                    printOutput(locationName, cfdSimulationDirections, pedestrianType_, northCfd_, north_, resultGradient, analysisPeriod, conditionalStatementForFinalPrint)
+                                    printOutput(locationName, cfdSimulationDirections, pedestrianType_, pedestrianTypeLabel, northCfd_, north_, resultGradient, analysisPeriod, conditionalStatementForFinalPrint)
                                     pedestrianComfortCategory = pedestrianComfortCategory_forAllPoints; pedestrianSafetyCategory = pedestrianSafety_forAllPoints;
                                     thresholdWindSpeed = windSpeed95percentPerYear_forAllPoints; strongestLocationWindSpeed = strongestLocationWindSpeed_forAllPoints; locationWindSpeed = windSpeedDataPerPointDataTree_corrected;
                                     legend = titleDescriptionLabelMeshes + legend; legend2 = titleDescriptionLabelMeshes2 + legend2
