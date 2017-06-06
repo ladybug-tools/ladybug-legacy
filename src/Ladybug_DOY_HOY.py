@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nAPR_19_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -79,6 +79,7 @@ def main(days, months, hours):
                     HOY.append(lb_preparation.date2Hour(month, day, hour))
                     DOY.append(int(lb_preparation.getJD(month, day)))
                     date.append(lb_preparation.hour2Date(lb_preparation.date2Hour(month, day, hour)))
+        HOY = HOY[1:]+[HOY[-1]+1]
         return HOY, DOY, date
     else:
         print "You should first let the Ladybug fly..."
