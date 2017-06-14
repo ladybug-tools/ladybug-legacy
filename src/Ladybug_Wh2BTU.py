@@ -22,19 +22,19 @@
 
 #Wh to BTU
 """
-Use this component to convert energy values in Wh to BTU, kWh to kBTU, Wh/m2 to BTU/ft2, or kWh/m2 to kBTU/ft2.
+Use this component to convert energy values in Wh to BTU (or kWh to kBTU).
 -
 Provided by Ladybug 0.0.64
     
     Args:
-        _Wh: An energy value or list of energy values in Wh, kWh, Wh/m2, kWh/m2.  Note that, for the component to recognize flux (division by m2), the input must have a Ladybug header.
+        _Wh: An energy value or list of energy values in Wh or kWh.
     Returns:
-        BTU: The input enervy values converted to BTU, kBTU, BTU/ft2, or kBTU/ft2 (depeding on input).
+        BTU: The input enervy values converted to BTU or kBTU (depeding on input).
 """
 
 ghenv.Component.Name = "Ladybug_Wh2BTU"
 ghenv.Component.NickName = 'Wh2BTU'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nJUN_14_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -42,31 +42,16 @@ ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
-floorNorm = False
 BTU = []
 for num in _Wh:
     try:
-        if 'KWH/M2' in num.upper():
-            BTU.append('kBTU/ft2')
-            floorNorm = True
-        elif 'WH/M2' in num.upper():
-            BTU.append('BTU/ft2')
-            floorNorm = True
-        elif 'KWH' in num.upper():
+        if 'KWH' in num.upper():
             BTU.append('kBTU')
         elif 'WH' in num.upper():
             BTU.append('BTU')
         else:
-            if floorNorm == True:
-                try: BTU.append(float(num)*0.316998331)
-                except: BTU.append(num)
-            else:
-                try: BTU.append(float(num)*3.41214163)
-                except: BTU.append(num)
-    except:
-        if floorNorm == True:
-            try: BTU.append(float(num)*0.316998331)
-            except: BTU.append(num)
-        else:
             try: BTU.append(float(num)*3.41214163)
             except: BTU.append(num)
+    except:
+        try: BTU.append(float(num)*3.41214163)
+        except: BTU.append(num)

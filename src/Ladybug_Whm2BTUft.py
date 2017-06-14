@@ -20,20 +20,20 @@
 # @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 
 
-#BTU to Wh
+#Wh to BTU
 """
-Use this component to convert energy values in BTU to Wh or kBTU to kWh.
+Use this component to convert energy values in Wh/m2 to BTU/ft2 (or kWh/m2 to kBTU/ft2).
 -
 Provided by Ladybug 0.0.64
     
     Args:
-        _BTU: An energy value or list of energy values in BTU or kBTU.
+        _Wh_m2: An energy value or list of energy values in Wh/m2, kWh/m2.
     Returns:
-        Wh: The input enervy values converted to Wh or kWh (depeding on input).
+        BTU_ft2: The input energy flux values converted to BTU/ft2, or kBTU/ft2 (depeding on input).
 """
 
-ghenv.Component.Name = "Ladybug_BTU2Wh"
-ghenv.Component.NickName = 'BTU2Wh'
+ghenv.Component.Name = "Ladybug_Whm2BTUft"
+ghenv.Component.NickName = 'Wh2BTU'
 ghenv.Component.Message = 'VER 0.0.64\nJUN_14_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
@@ -42,16 +42,17 @@ ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
-Wh = []
-for num in _BTU:
+
+BTU_ft2 = []
+for num in _Wh_m2:
     try:
-        if 'BTU' in num.upper():
-            Wh.append('Wh')
-        elif 'KBTU' in num.upper():
-            Wh.append('kWh')
+        if 'KWH/M2' in num.upper():
+            BTU_ft2.append('kBTU/ft2')
+        elif 'WH/M2' in num.upper():
+            BTU_ft2.append('BTU/ft2')
         else:
-            try: Wh.append(float(num)/3.41214163)
-            except: Wh.append(num)
+            try: BTU_ft2.append(float(num)*0.316998331)
+            except: BTU_ft2.append(num)
     except:
-        try: Wh.append(float(num)/3.41214163)
-        except: Wh.append(num)
+        try: BTU_ft2.append(float(num)*0.316998331)
+        except: BTU_ft2.append(num)
