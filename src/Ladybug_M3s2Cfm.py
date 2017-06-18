@@ -21,19 +21,19 @@
 # @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 
 """
-Use this component to convert volume flow rate from U.S. cubic feet per minute (cfm) to S.I. cubic meters per second (m3/s).
+Use this component to convert volume flow rate from S.I. cubic meters per second (m3/s) to U.S. cubic feet per minute (cfm).
 -
 Provided by Ladybug 0.0.64
     
     Args:
-        _cfm: A value or list of values in cubic feet per minute (cfm).
+        _m3_s: A value or list of values in cubic meters per second (m3/s).
     Returns:
-        m3_s: Input volume flow rate converted to cubic meters per second (m3/s).
+        cfm: Input volume flow rate converted to cubic feet per minute (cfm).
 """
 
-ghenv.Component.Name = "Ladybug_Cmf2M3s"
-ghenv.Component.NickName = "cfm2m3s"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Name = "Ladybug_M3s2Cfm"
+ghenv.Component.NickName = "m3s2cfm"
+ghenv.Component.Message = 'VER 0.0.64\nAPR_12_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -42,9 +42,9 @@ try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 # component, and component icon is based on "C2F" Ladybug component by Mostapha Sadeghipour Roudsari.
-m3_s = []
-for num in _cfm:
-   if num == "cfm": m3_s.append("m3/s")
+cfm = []
+for num in _m3_s:
+   if num == "m3/s": cfm.append("cfm")
    else:
-       try: m3_s.append(float(num)*0.000471947)
-       except: m3_s.append(num)
+       try: cfm.append(float(num)/0.000471947)
+       except: cfm.append(num)

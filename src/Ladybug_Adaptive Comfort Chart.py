@@ -81,7 +81,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Chart"
 ghenv.Component.NickName = 'AdaptiveChart'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nAPR_19_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1292,7 +1292,7 @@ def main(epwData, epwStr, calcLength, airTemp, radTemp, prevailTemp, windSpeed, 
         airTemp = newAirTemp
         radTemp = newRadTemp
         prevailTemp = newPrevailTemp
-        windSpeed = newWindSpeed
+        if len(windSpeed) == calcLength: windSpeed = newWindSpeed
         if IPTrigger == True:
             newfarenheitAirVals = farenheitAirVals
             newfarenheitRadVals = farenheitRadVals

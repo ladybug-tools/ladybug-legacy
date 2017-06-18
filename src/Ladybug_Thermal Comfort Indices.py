@@ -151,7 +151,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = "VER 0.0.64\nFEB_27_2017"
+ghenv.Component.Message = "VER 0.0.64\nMAR_18_2017"
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -446,7 +446,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         HOY = range(inputsMaximalLength)  # dummy HOYs
     
     HOYs, daysDummy, monthsDummy, hoursDummy, date, newAnalysisPeriod = HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod)
-    HOYsDummy, days, months, hours, dateDummy, newAnalysisPeriodDummy = HOYsDaysMonthsHoursFromHOY_analysisPeriod(None, [(1, 1, 1),(12, 31, 24)])
+    HOYsDummy, days, months, hours, dateDummy, newAnalysisPeriodDummy = HOYsDaysMonthsHoursFromHOY_analysisPeriod([], [(1, 1, 1),(12, 31, 24)])
     
     if (len(HOYs) > inputsMaximalLength):
         comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
@@ -493,18 +493,6 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
         IclL = [clothingInsulation(Ta) for Ta in TaL]
     if (len(ML) == 1):
         ML = [Mmets * 58.2  for i in range(inputsMaximalLength)]  # convert mets to W/m2 (2.32 met = 2.32 * 58.2 = 135 W/m2)
-    
-    """
-    # check if this makes any problems
-    if (inputsMaximalLength == 8760)  and  ((inputsMinimalLength > 1) and (inputsMinimalLength < 8760)):
-        comfortIndexValue = comfortIndexCategory = comfortableOrNot = PETresults = HotExtremeCategory = ColdExtremeCategory = outputNickNames = outputDescriptions = createOutputHeaders = HOYs = date = None
-        validWeatherData = False
-        printMsg = "\"Thermal Comfort Index\" component does not support weather data inputs from \"Import EPW\" component and custom input with more than 1 values per input.\nSo either deattach the input coming from \"Import EPW\" component, or lower the number values added to the input which contains more than 1 value."
-        return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
-    else:
-        pass
-    """
-    
     
     
     if _comfortIndex == 18:
@@ -559,7 +547,7 @@ def getWeatherData(latitude, longitude, timeZone, Ta, mrt, Tdp, rh, ws, SR, N, b
     return comfortIndexValue, comfortIndexCategory, comfortableOrNot, PETresults, HotExtremeCategory, ColdExtremeCategory, outputNickNames, outputDescriptions, createOutputHeaders, HOYs, date, validWeatherData, printMsg
 
 
-#angle units conversion
+# angle units conversion
 def degreesToRadians(deg):
     return deg*0.0174532925 
 
@@ -1622,7 +1610,7 @@ def predictedHeatStrain(Ta, mrt, Tdp, rh, ws, SR, N, Tground, Rprim, vapourPress
 
 
 def HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod):
-    if (HOY):
+    if (len(HOY) != 0):
         HOYs = HOY
         HOYs.sort()
         startingDay, startingMonth, startingHour = lb_preparation.hour2Date(min(HOYs),True)
@@ -1630,18 +1618,11 @@ def HOYsDaysMonthsHoursFromHOY_analysisPeriod(HOY, analysisPeriod):
         
         newAnalysisPeriod = [(startingMonth+1, startingDay, startingHour),(endingMonth+1, endingDay, endingHour)]
     
-    elif not (HOY) and (len(analysisPeriod)!=0) and (analysisPeriod[0]!=None):
+    elif (len(HOY) == 0) and (len(analysisPeriod) != 0) and (analysisPeriod[0] != None):
         startingDate = analysisPeriod[0]
         endingDate = analysisPeriod[1]
-        startingHOY = lb_preparation.date2Hour(startingDate[0], startingDate[1], startingDate[2])
-        endingHOY = lb_preparation.date2Hour(endingDate[0], endingDate[1], endingDate[2])
-        
-        if (startingHOY < endingHOY):
-            HOYs = range(startingHOY, endingHOY+1)
-        elif (startingHOY > endingHOY):
-            startingHOYs = range(startingHOY, 8760+1)
-            endingHOYs = range(1,endingHOY+1)
-            HOYs = startingHOYs + endingHOYs
+        timeStep = 1
+        HOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod, timeStep)
         
         newAnalysisPeriod = analysisPeriod
     

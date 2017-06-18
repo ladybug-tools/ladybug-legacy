@@ -70,7 +70,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.64\nMAR_14_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAY_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -189,7 +189,7 @@ def resultVisualization(contextSrfs, analysisSrfs, results, totalResults, legend
         legendText.append(titleStr)
         textPt.append(titlebasePt)
         # check the study type
-        newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName,
+        newLayerIndex, l = lb_visualization.setupLayers(totalResults, 'LADYBUG', projectName_,
                                                         studyLayerName, checkTheName,
                                                         runOrientation, angle, l)
         if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, analysisSrfs, legendSrfs, legendText, textPt, textSize, legendFont, None, decimalPlaces, True)

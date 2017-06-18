@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nAPR_25_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -44,7 +44,7 @@ except: pass
 
 import webbrowser as wb
 if _download:
-    url = 'http://mostapharoudsari.github.io/epwmap'
+    url = 'http://www.ladybug.tools/epwmap/'
     wb.open(url,2,True)
     print 'Happy downloading!'
 else:

@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.64
         imageHeight_: The height of the image that you would like to take in pixels.  If no value is provided here, the component will set the height to that of the active Rhino viewport on your screen.
         displayMode_: The display mode of the viewport that you would like to take an image of. Acceptable inputs include "Wireframe", "Shaded", "Rendered", "Ghosted", "X-Ray", "Technical", "Atristic", and "Pen".  If no text is input here, the default will be the displaymode of the active viewport (or the last viewport in which you navigated).
         keepAspectR_: Set to "True" to keep the aspect ratio of the viewport in the images that you save.  By default, this is set to "False" if you have connected an imageHeight_ but will override this input to ensure correct aspect ratio if set to "True".
-        transparBack_: Set to "True" to have a transparent background for the image and set to "False" to save a picture using the Rhino viewport background color.  The default is set to "True" for a transparent background.
+        transparBack_: Set to "True" to have a transparent background for the image and set to "False" to save a picture using the Rhino viewport background color.  The default is set to "False" for an opaque background.
         _capture: Set to "True" to capture the image of the Rhino viewport and save it to your hard drive.
     Returns:
         imagePath: The filepath of the image taken with this component.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Capture View"
 ghenv.Component.NickName = 'captureView'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nJUN_17_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -58,6 +58,8 @@ import System
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
 import Rhino as rc
+import Grasshopper as GH
+
 
 def mdPath(workDir):
     # check user input
@@ -111,7 +113,7 @@ def viewCapture(fileName, directory, viewNames, image_width, image_height, dispM
         viewSize = System.Drawing.Size(int(image_w), int(image_h))
         
         pic = rc.Display.RhinoView.CaptureToBitmap(viewtoCapture , viewSize)
-        if transparent == True or transparent == None:
+        if transparent == True:
             if sc.doc.Views.ActiveView.ActiveViewport.DisplayMode.EnglishName == 'Rendered': rhBackColor = sc.doc.Views.Document.RenderSettings.BackgroundColorTop
             else: rhBackColor = rc.ApplicationSettings.AppearanceSettings.ViewportBackgroundColor
             pic.MakeTransparent(rhBackColor)
@@ -130,10 +132,20 @@ def viewCapture(fileName, directory, viewNames, image_width, image_height, dispM
                 pass
         
         return fullPath
+        
 
 if _capture and _fileName!=None:
     
     directory = mdPath(folder_)
+    
+    doc = GH.Instances.ActiveCanvas.Document.Objects
+    isAtLast = doc[doc.Count-1].InstanceGuid.Equals(ghenv.Component.InstanceGuid)
+    if not isAtLast:
+        # bring this to the top
+        ghenv.Component.OnPingDocument().DeselectAll()
+        ghenv.Component.Attributes.Selected = True
+        ghenv.Component.OnPingDocument().BringSelectionToTop()
+        ghenv.Component.Attributes.Selected = False
     
     # check input
     if len(viewNames_)==0: viewNames_ = [sc.doc.Views.ActiveView.ActiveViewport.Name]

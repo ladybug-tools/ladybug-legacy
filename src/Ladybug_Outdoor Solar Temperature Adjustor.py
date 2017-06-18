@@ -40,7 +40,7 @@ Provided by Ladybug 0.0.64
         _diffuseHorizRad: If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the "Ladybug_Import epw" component here.  Otherwise, this input is not required.
         _baseTemperature: A number or list of numbers representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  This number will be modified to account for solar radiation.  This input can be air temperature data from the 'Import_epw' component and will follow the assumption that the surrounding mean radiant temperature is the same as the air temperature.  This assumption is ok for a person in an outdoor open field.  However, the more obstacles that surround the person (and the more "contextShading_" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.
         _baseDryBulbOrMRT_: Set to 'True' to have the _baseTemperature above understood as the outdoor dry bulb air temperature, in which case this component will attempt to account for long wave radiation by computing sky temperature and assuming all other surfaces are at the specified _baseTemperature.  Set to 'False' to have the input above interpreted as a starting long wave MRT, which will only be increased to account for short wave radiation.  The latter is useful for indoor conditions where you can compute a starting long wave MRT from the indoor surface temperatures.  The default is set to 'True' to interpret the input above as outdoor air temperature.
-        _horizInfraredRad: A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'
+        _horizInfraredRad_: A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'
         -------------------------: ...
         bodyPosture_: An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting.
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.64\nAPR_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -107,7 +107,7 @@ inputsDict = {
 2: ["_diffuseHorizRad", "If you are running a simple analysis with Direct Normal Radiation above, you must provide the diffuseHorizaontalRadiation ouput from the 'Ladybug_Import epw' component here.  Otherwise, this input is not required."],
 3: ["_baseTemperature", "A number or list of numbers representing either the outdoor dry bulb air temperture (if the input below is set to 'True') or the long wave mean radiant temperature (MRT) of the surrounding surfaces in degrees Celcius (if the input below is set to 'False').  The former is useufl for computing outdoor MRT if you only have the air temperature while the latter is useful for indoor conditions when you can compute a starting long wave MRT from the indoor surface temperatures."],
 4: ["_baseDryBulbOrMRT_", "Set to 'True' to have the _baseTemperature above understood as the outdoor dry bulb air temperature, in which case this component will attempt to account for long wave radiation by computing sky temperature and assuming all other surfaces are at the specified _baseTemperature.  Set to 'False' to have the input above interpreted as a starting long wave MRT, which will only be increased to account for short wave radiation.  The latter is useful for indoor conditions where you can compute a starting long wave MRT from the indoor surface temperatures.  The default is set to 'True' to interpret the input above as outdoor air temperature."],
-5: ["_horizInfraredRad", "A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'"],
+5: ["_horizInfraredRad_", "A number or list of numbers representing downwelling long wave infrared radiation from the sky.  This input can also be the horizontalInfraredRadiation output of the Import EPE component.  The values are necessary to calculate long wave sky temperature when the input above is set to 'True.'"],
 6: ["-------------------------", "..."],
 7: ["bodyPosture_", "An interger between 0 and 5 to set the posture of the comfort mannequin, which can have a large effect on the radiation for a given sun position.  0 = Standing, 1 = Sitting, 2 = Lying Down, 3 = Low-Res Standing, 4 = Low-Res Sitting, and 5 = Low-Res Lying Down.  The default is set to 1 for sitting."],
 8: ["rotationAngle_", "An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature."],
@@ -532,24 +532,25 @@ def checkTheInputs():
     checkData2 = False
     infraredRad = []
     try:
-        try:
-            if "Infrared Radiation" in _horizInfraredRad[2]:
-                infraredRad = _horizInfraredRad[7:]
-                checkData2 = True
-                epwData = True
-                epwStr = _horizInfraredRad[0:7]
-        except: pass
-        if checkData2 == False:
-            for item in _horizInfraredRad:
-                try:
-                    infraredRad.append(float(item))
+        if baseTempType == True:
+            try:
+                if "Infrared Radiation" in _horizInfraredRad_[2]:
+                    infraredRad = _horizInfraredRad_[7:]
                     checkData2 = True
-                except: checkData2 = False
-        if checkData2 == False:
-            warning = '_horizInfraredRad input does not contain valid long wave sky radiation values.'
-            print warning
-            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            return -1
+                    epwData = True
+                    epwStr = _horizInfraredRad_[0:7]
+            except: pass
+            if checkData2 == False:
+                for item in _horizInfraredRad_:
+                    try:
+                        infraredRad.append(float(item))
+                        checkData2 = True
+                    except: checkData2 = False
+            if checkData2 == False:
+                warning = '_horizInfraredRad_ input does not contain valid long wave sky radiation values.'
+                print warning
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+                return -1
         
         
         #If there is only one value for MRT, duplicate it 8760 times.
@@ -560,7 +561,7 @@ def checkTheInputs():
                     dupData.append(infraredRad[0])
                 infraredRad = dupData
             else:
-                warning = 'Input for _horizInfraredRad must be either the output of the import EPW component, a list of 8760 values, or a single relative humidity to be applied for every hour of the year.'
+                warning = 'Input for _horizInfraredRad_ must be either the output of the import EPW component, a list of 8760 values, or a single relative humidity to be applied for every hour of the year.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
                 return -1

@@ -1,9 +1,10 @@
-#Instructions for Installing Ladybug + Honeybee:
+# Instructions for Installing Ladybug + Honeybee:
 
-#####Follow initial steps 0-5 for Ladybug functionality and additional 1-4 for full functionality.
+##### Follow initial steps 0-5 for Ladybug functionality and additional 6-9 for full functionality.
 
 
-###LADYBUG
+### LADYBUG
+
 0. If you have an old version of LB+HB, download the file [here](http://hydrashare.github.io/hydra/viewer?owner=mostaphaRoudsari&fork=hydra_1&id=Remove_Ladybug_and_Honeybee) and open it in Grasshopper to remove your old Ladybug  and Honeybee version.
 
 1. Make sure that you have a working copy of both Rhino and Grasshopper installed.
@@ -17,15 +18,15 @@
 5. Restart Rhino and Grasshopper. You now have a fully-functioning Ladybug.  For Honeybee, continue to the following:
 
 
-###HONEYBEE
+### HONEYBEE
+
 6. Install Radiance to C:\Radiance by downloading it from [this link](https://github.com/NREL/Radiance/releases/download/5.0.a.6/radiance-5.0.a.6-win64.exe) and running the exe.
 
 7. Install Daysim 4.0 for Windows to C:\DAYSIM by downloading it at [this link](http://daysim.ning.com/page/download) and running the exe.
 
 8. Install the Latest OpenStudio by downloading and running the .exe file from [this link](https://github.com/NREL/OpenStudio/releases/tag/v1.12.0).
 
-9. Finally, copy [falsecolor2.exe](https://dl.dropboxusercontent.com/u/16228160/honeybee/falsecolor2.zip) to C:\Radiance\bin
-
+9. Finally, copy [falsecolor2.exe](https://github.com/mostaphaRoudsari/honeybee/blob/master/resources/falsecolor2.exe?raw=true) to C:\Radiance\bin
 
 
 You now have a fully-working version of Ladybug + Honeybee.  Get started visualizing weather data with [these video tutorials](https://www.youtube.com/playlist?list=PLruLh1AdY-Sj_XGz3kzHUoWmpWDXNep1O).

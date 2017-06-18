@@ -47,14 +47,20 @@ Provided by Ladybug 0.0.64
         layerName_: If bakeIt_ is set to "True", input Text here corresponding to the Rhino layer onto which the resulting mesh and legend should be baked.
     Returns:
         readMe!: ...
-        newMesh: A new mesh that has been re-colored based on the _analysisResult data.
-        legend: A new legend that that corresponds to the colors of the newMesh. Connect this output to a grasshopper "Geo" component in order to preview this legend separately in the Rhino scene.  
+        contourMesh: A list of colored meshes that is organized with each contour region as its own color.
+        underlayMesh: A mesh that is colored face-by-face (like a typical Ladybug mesh), which is plaed under the contour mesh to make the visualization read when the Rhino intersection fails to produce a complete contourMesh.
+        contourLines: Curves that show values of constant value along the results.
+        contourColors: Connect these to a native Grasshopper Preview componen along with the contourLines to get a colored line visualization.
+        contourLabels: A list of text meshes that show the value along each contour line.
+        legend: A new legend that that corresponds to the colors of the newMesh. Connect this output to a grasshopper "Geo" component in order to preview this legend separately in the Rhino scene.
         legendBasePt: The legend base point, which can be used to move the legend in relation to the newMesh with the grasshopper "move" component.
+        legendColors: A list of colors that correspond to each step in the legend.
+        intPlanes: The planes that were used to intersect the mesh to genrate the contours. Set heightDomain_ to a non-zer number to visualize.
 """
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.64\nMAR_14_2017'
+ghenv.Component.Message = 'VER 0.0.64\nMAY_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -110,15 +116,6 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     # Get the Unit System.
     conversionFac = lb_preparation.checkUnits()
     
-    # Check the mesh's planarity
-    minPt = inputMesh.GetBoundingBox(rc.Geometry.Plane.WorldXY).Min
-    meshIsPlanar, inputMesh, meshPlane, meshNormals = checkMeshPlanarity(inputMesh, minPt)
-    if meshIsPlanar == False:
-        warning = 'The connected inputMesh is not planar and this component only works for planar meshes.' + \
-        '\n Try breaking up your mesh into planar pieces and feeding them individually into this component.'
-        print warning
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-    
     # Check the mesh's structure.
     if inputMesh.Faces.Count == len(analysisResult):
         meshStruct = 0
@@ -140,6 +137,25 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     elif meshStruct == 1:
         for count in inputMesh.Vertices:
             blankColors.append(System.Drawing.Color.Gray)
+    
+    # Generate an underlay mesh to cover our ass when the intersection fails.
+    underlayMesh = None
+    if contourType == 0 or contourType == 1 or contourType == None:
+        colors = lb_visualization.gradientColor(analysisResult, lowB, highB, customColors)
+        underlayMesh = lb_visualization.colorMesh(colors, inputMesh, True, meshStruct)
+        if heightDomain!=None:
+            underlayMesh = lb_visualization.create3DColoredMesh(underlayMesh, analysisResult, heightDomain, colors, meshStruct)
+        moveTrans = rc.Geometry.Transform.Translation(0,0,-(1/conversionFac)*.03)
+        underlayMesh.Transform(moveTrans)
+    
+    # Check the mesh's planarity
+    minPt = inputMesh.GetBoundingBox(rc.Geometry.Plane.WorldXY).Min
+    meshIsPlanar, inputMesh, meshPlane, meshNormals = checkMeshPlanarity(inputMesh, minPt)
+    if meshIsPlanar == False:
+        warning = 'The connected inputMesh is not planar and this component only works for planar meshes.' + \
+        '\n Try breaking up your mesh into planar pieces and feeding them individually into this component.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
     # Find the min and max of the dataset.
     sortedData = analysisResult[:]
@@ -196,6 +212,14 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     
     # Generate intersection planes.
+    intMeshes = []
+    if contourType == 0 or contourType == 1 or contourType == None:
+        BB = coloredChart.GetBoundingBox(rc.Geometry.Plane.WorldXY)
+        boundBox = BB.ToBrep()
+        baseSplitPlaneOrigin = boundBox.Faces[4].GetBoundingBox(rc.Geometry.Plane.WorldXY).Min
+        baseSplitPlane = boundBox.Faces[4].ToBrep()
+        intMeshes = [rc.Geometry.Mesh.CreateFromBrep(baseSplitPlane)[0]]
+    
     lastPt = lb_visualization.BoundingBoxPar[0]
     if lowB != 'min':
         if heightDomain!=None:
@@ -203,12 +227,26 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         else:
             startVal = ((lowB-dataMin)/fullRange)*(numSeg-1)*(1/conversionFac)
         lastPt = rc.Geometry.Point3d(lastPt.X, lastPt.Y, startVal)
+        movedPlane = copy.deepcopy(baseSplitPlane)
+        planeTransf = rc.Geometry.Transform.Translation(0,0,lastPt.Z-baseSplitPlaneOrigin.Z)
+        movedPlane.Transform(planeTransf)
+        movedPlaneMesh = rc.Geometry.Mesh.CreateFromBrep(movedPlane)[0]
+        intMeshes = [movedPlaneMesh]
     intPlanes = [rc.Geometry.Plane(lastPt, rc.Geometry.Vector3d.ZAxis)]
     for count in range(int(numSeg)):
         lastPt = rc.Geometry.Point3d(lastPt.X, lastPt.Y, lastPt.Z+contInterval)
         intPlanes.append(rc.Geometry.Plane(lastPt, rc.Geometry.Vector3d.ZAxis))
+        if contourType == 0 or contourType == 1 or contourType == None:
+            movedPlane = copy.deepcopy(baseSplitPlane)
+            planeTransf = rc.Geometry.Transform.Translation(0,0,lastPt.Z-baseSplitPlaneOrigin.Z)
+            movedPlane.Transform(planeTransf)
+            movedPlaneMesh = rc.Geometry.Mesh.CreateFromBrep(movedPlane)[0]
+            intMeshes.append(movedPlaneMesh)
     
     # Contour the mesh.
+    contourMeshArea = rc.Geometry.AreaMassProperties.Compute(inputMesh).Area
+    initMeshArea = contourMeshArea
+    failedIntersects = []
     contourMesh = []
     contourLines = []
     contourLabels = []
@@ -216,6 +254,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     labelText = []
     labelTextPts = []
     startTrigger = False
+    failIntersecTrigger = False
     
     #Generate colored regions.
     if contourType == 0 or contourType == 1 or contourType == None:
@@ -229,42 +268,55 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             contourMesh.append(coloredChart)
         else:
             try:
-                finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[0])[-1]
+                finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[0])[-1]
                 finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[0])
-                contourMesh.append(finalSplitMesh)
+                contourArea = rc.Geometry.AreaMassProperties.Compute(finalSplitMesh).Area
+                if contourArea < contourMeshArea-sc.doc.ModelAbsoluteTolerance and finalSplitMesh.IsValid:
+                    contourMesh.append(finalSplitMesh)
                 startTrigger = True
             except:
                 pass
-            for count in range(len(intPlanes)-1):
+            for count in range(len(intMeshes)-1):
                 try:
                     if startTrigger == False:
-                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[-1]
+                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[count])[-1]
                         finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
-                        contourMesh.append(finalSplitMesh)
+                        contourArea = rc.Geometry.AreaMassProperties.Compute(finalSplitMesh).Area
+                        if contourArea < contourMeshArea-sc.doc.ModelAbsoluteTolerance and finalSplitMesh.IsValid:
+                            contourMesh.append(finalSplitMesh)
+                            contourColors.append([legendColors[count]])
                         startTrigger = True
-                        initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
-                        finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intPlanes[count])[0]
-                    elif count == len(intPlanes)-2:
-                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
+                        initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[count+1])[-1]
+                        finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intMeshes[count])[0]
+                    elif count == len(intMeshes)-2:
+                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[count])[0]
                     else:
-                        initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count+1])[-1]
-                        finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intPlanes[count])[0]
+                        initSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[count])[-1]
+                        initMeshArea = rc.Geometry.AreaMassProperties.Compute(initSplitMesh).Area
+                        finalSplitMesh = rc.Geometry.Mesh.Split(initSplitMesh, intMeshes[count+1])[0]
                     try:
-                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
+                        lColor = legendColors[count+1]
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(lColor)
                     except:
-                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
-                    contourMesh.append(finalSplitMesh)
+                        lColor = legendColors[count+1]
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(lColor)
+                    contourArea = rc.Geometry.AreaMassProperties.Compute(finalSplitMesh).Area
+                    if contourArea < contourMeshArea-sc.doc.ModelAbsoluteTolerance and contourArea < initMeshArea-sc.doc.ModelAbsoluteTolerance and finalSplitMesh.IsValid:
+                        contourMesh.append(finalSplitMesh)
+                        contourColors.append([lColor])
                 except:
                     try:
-                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intPlanes[count])[0]
-                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count+1])
-                        contourMesh.append(finalSplitMesh)
+                        finalSplitMesh = rc.Geometry.Mesh.Split(coloredChart, intMeshes[count])[0]
+                        finalSplitMesh.VertexColors.CreateMonotoneMesh(legendColors[count])
+                        finalSplitMesh.Transform(moveTrans)
+                        contourArea = rc.Geometry.AreaMassProperties.Compute(finalSplitMesh).Area
+                        if contourArea < contourMeshArea-sc.doc.ModelAbsoluteTolerance:
+                            failedIntersects.append(finalSplitMesh)
                     except: pass
     
     # Generate Labeled Contours
     try:
         if contourType == 0 or contourType == 2 or contourType == None:
-            contourColors.append([System.Drawing.Color.Black])
             if lowB != 'min' and highB != 'max':
                 numbers = rs.frange(lowB, highB, round((highB - lowB) / (numSeg -1), 6))
             elif lowB != 'min':
@@ -312,6 +364,8 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         planeTrans = rc.Geometry.Transform.PlanarProjection(rc.Geometry.Plane.WorldXY)
         crvMove = rc.Geometry.Transform.Translation(0,0,sc.doc.ModelAbsoluteTolerance*5)
         for geo in contourMesh: geo.Transform(planeTrans)
+        for geo in failedIntersects: geo.Transform(planeTrans)
+        for geo in intMeshes: geo.Transform(planeTrans)
         for crvList in contourLines:
             for geo in crvList:
                 geo.Transform(planeTrans)
@@ -335,6 +389,8 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     # Change the geomtry back to its original plane.
     transfBack = rc.Geometry.Transform.ChangeBasis(meshPlane, rc.Geometry.Plane.WorldXY)
     for geo in contourMesh: geo.Transform(transfBack)
+    for geo in failedIntersects: geo.Transform(transfBack)
+    for geo in intMeshes: geo.Transform(transfBack)
     for crvList in contourLines:
         for geo in crvList: geo.Transform(transfBack)
     for crvList in contourLabels:
@@ -346,6 +402,10 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
             legendSrfs.Transform(transfBack)
         except:
             pass
+    
+    # Move any failed intersections below the main surface.
+    moveTrans = rc.Geometry.Transform.Translation(0,0,-(1/conversionFac)*.03)
+    for geo in failedIntersects: geo.Transform(moveTrans)
     
     # If the user has requested to bake the geomtry, then bake it.
     if bakeIt > 0:
@@ -381,7 +441,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
         if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, joinedContMesh, legendSrfs, legendText, textPt, textSize, legendFont, flatContourLines, decimalPlaces, True)
         else: lb_visualization.bakeObjects(newLayerIndex, joinedContMesh, legendSrfs, legendText, textPt, textSize, legendFont, flatContourLines, decimalPlaces, False)
     
-    return contourMesh, contourLines, contourColors, contourLabels, [legendSrfs, flattenedLegend], legendBasePoint, legendColors
+    return contourMesh, [underlayMesh]+failedIntersects, contourLines, contourColors, contourLabels, [legendSrfs, flattenedLegend], legendBasePoint, legendColors, intMeshes
 
 
 
@@ -413,14 +473,15 @@ if initCheck == True and _inputMesh and len(_analysisResult)!=0:
     result = main(_analysisResult, _inputMesh, _contourType_, heightDomain_, legendPar_, analysisTitle_, legendTitle_, bakeIt_, layerName_, lb_preparation, lb_visualization)
     if result!= -1:
         legend= []
-        [legend.append(item) for item in lb_visualization.openLegend(result[4])]
+        [legend.append(item) for item in lb_visualization.openLegend(result[5])]
         contourMesh = result[0]
-        legendBasePt = result[5]
-        legendColors = result[6]
-        
-        contourLabelsInit = result[3]
-        contourLinesInit = result[1]
-        contourColorsInit = result[2]
+        underlayMesh = result[1]
+        legendBasePt = result[6]
+        legendColors = result[7]
+        contourLabelsInit = result[4]
+        contourLinesInit = result[2]
+        contourColorsInit = result[3]
+        intPlanes = result[8]
         contourLines = DataTree[Object]()
         contourColors = DataTree[Object]()
         contourLabels = DataTree[Object]()
@@ -432,4 +493,5 @@ if initCheck == True and _inputMesh and len(_analysisResult)!=0:
             for item in datalist: contourLabels.Add(item, GH_Path(count))
         
         # Hide output
-        ghenv.Component.Params.Output[6].Hidden = True
+        ghenv.Component.Params.Output[7].Hidden = True
+        ghenv.Component.Params.Output[9].Hidden = True
