@@ -554,8 +554,8 @@ def writeINX(fullPath, Xcells, Ycells, Zcells, Xdim, Ydim, Zdim, numNesting, mat
                   'realworldLowerLeft_X':'0.00000',
                   'realworldLowerLeft_Y':'0.00000',
                   'locationName':locationName,
-                  'location_Longitude':latitude,
-                  'location_Latitude':longitude,
+                  'location_Longitude':longitude,
+                  'location_Latitude':latitude,
                   'locationTimeZone_Name':timeZone,
                   'locationTimeZone_Longitude':'15.00000'
                   }
