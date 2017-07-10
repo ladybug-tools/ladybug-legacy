@@ -25,7 +25,7 @@
 Use this component to analyse pedestrian wind comfort and safety for the present and potential (newly built) urban environments.
 Construction of a new building changes the wind microclimate in its vicinity. These changes can result in either decreased or increased wind speeds around the building, which may be uncomfortable or even dangerous.
 -
-Based on Lawson’s Pedestrian Comfort Criteria (1990)
+Based on Lawsons Pedestrian Comfort Criteria (1990)
 https://www.dropbox.com/s/t9pxhr45vwg2xd2/Wind_Microclimate.pdf?dl=0
 -
 Provided by Ladybug 0.0.64
@@ -85,7 +85,7 @@ Provided by Ladybug 0.0.64
                                    The categories depend on the threshold wind speed for particular point: the wind speed that for 95% of the chosen analysis period is below a certain value. With values being the following:
                                    -
                                    0) < 4 m/s  sitting (outdoor cafes, patios, terraces, benches, gardens, parks, fountains, monuments...)
-                                   1) 4-6 m/s  standing (building entrances or exits, bus stops, children’s play areas...)
+                                   1) 4-6 m/s  standing (building entrances or exits, bus stops, childrens play areas...)
                                    2) 6-8 m/s  leisurely walking (general areas of walking, strolling and sightseeing, window shopping, public/private sidewalks, pathways, public spaces...)
                                    3) 8-10 m/s  business walking (walking from one place to another quickly, or where individuals pass rapidly through local areas around buildings, public/private vehicular drop-off zones, roads and car parks, cyclists pathways...)
                                    4) > 10 m/s  uncomfortable (uncomfortable for all pedestrian activities)
