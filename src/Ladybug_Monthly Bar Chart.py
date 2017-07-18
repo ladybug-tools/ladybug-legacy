@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.64\nJUN_26_2017'
+ghenv.Component.Message = 'VER 0.0.64\nJUL_19_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -125,7 +125,6 @@ def checkTheInputs():
         else:
             # separate the data
             indexList, listInfo = lb_preparation.separateList(_inputData, lb_preparation.strToBeFound)
-            
             #separate the lists of data
             separatedLists = []
             for i in range(len(indexList)-1):
@@ -262,7 +261,6 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
     #Read legend parameters
     lowBNotImp, highBNotImp, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
     numSeg = int(numSeg)
-    
     #Set some defaults.
     if legendFontSize == None: legendFontSize = 1
     allText = []
@@ -690,10 +688,13 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
                 legendSrf.Append(mesh)
                 #Generate legend mesh for the comfort model
                 base = basePt[0]
-                point01 = rc.Geometry.Point3d(base, legendHeight, 0)
-                point02 = rc.Geometry.Point3d(base+legendWidth, legendHeight,0)
-                point03 = rc.Geometry.Point3d(base, legendHeight*2, 0)
-                point04 = rc.Geometry.Point3d(base+legendWidth, legendHeight*2,0)
+                #Following variable sets the location of the comfort legend. So if more than one lists are provided to the _annualHourlyData, this variabke
+                # will shift the comfort legend upwards
+                comfortLegendShiftingFactor = len(listInfo)
+                point01 = rc.Geometry.Point3d(base, legendHeight*comfortLegendShiftingFactor, 0)
+                point02 = rc.Geometry.Point3d(base+legendWidth, legendHeight*comfortLegendShiftingFactor,0)
+                point03 = rc.Geometry.Point3d(base, (legendHeight*comfortLegendShiftingFactor+legendHeight), 0)
+                point04 = rc.Geometry.Point3d(base+legendWidth, (legendHeight*comfortLegendShiftingFactor+ legendHeight),0)
                 additionalPts = [point01, point02, point03, point04]
                 additionalSrf = rc.Geometry.Mesh()
                 mesh = rc.Geometry.Mesh()
@@ -706,7 +707,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
                 # Text Points
                 txtPt = meshVertices[segNum * 2 + 1]
                 textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.5), txtPt.Z))
-                comfortTextPt.append(rc.Geometry.Point3d(txtPt.X + (legendFontSize), txtPt.Y+legendHeight+(legendFontSize/0.5),txtPt.Z))
+                comfortTextPt.append(rc.Geometry.Point3d(txtPt.X + (legendFontSize), txtPt.Y+legendHeight*comfortLegendShiftingFactor+(legendFontSize/0.5),txtPt.Z))
         #Else only make legend mesh for values fed to _inputData
         else:
             meshVertices = ptList; textPt = []
