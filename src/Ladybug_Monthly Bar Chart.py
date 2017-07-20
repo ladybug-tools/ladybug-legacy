@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.64\nJUL_19_2017'
+ghenv.Component.Message = 'VER 0.0.64\nJUL_20_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1149,7 +1149,10 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
         for geo in graphAxes: geo.Transform(moveTransform)
         for geo in graphLabels: geo.Transform(moveTransform)
         for geo in legend: geo.Transform(moveTransform)
-        for geo in comfortLegend: geo.Transform(moveTransform)
+        if comfortLegend != None:
+            for geo in comfortLegend: geo.Transform(moveTransform)
+        else:
+            pass
         try:
             for geo in comfortBand: geo.Transform(moveTransform)
         except: pass
