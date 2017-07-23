@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.64
     Args:
         _dryBulbTemperature: The dry bulb temperature from the Import epw component.
         _relativeHumidity: The relative humidity from the Import epw component.
-        _barometricPressure: The barometric pressure from the Import epw component.
+        _barometricPressure: A number representing the barometric pressure in Pascals.  If no value is connected here, the default pressure will be 101325 Pa, which is air pressure at sea level.  It is recommended that you connect the barometric pressure from the Import epw component here as the air pressure at sea level can cause some misleading results for cities at higher elevations.
     Returns:
         readMe!: ...
         humidityRatio: The hourly humidity ratio (kg water / kg air).
@@ -150,7 +150,7 @@ def checkTheData():
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         checkData3 = True
-        barPress = [0.05]
+        barPress = [101325]
         print 'No value connected for barometricPressure_.  It will be assumed that the pressure is at seal level.'
     
     
