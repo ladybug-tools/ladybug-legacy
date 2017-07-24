@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.64\nJUL_20_2017'
+ghenv.Component.Message = 'VER 0.0.64\nJUL_23_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -611,7 +611,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
             if unit2 == 'C' or unit2 == 'C' or unit2 == 'F' or unit2 == 'F':
                 tempVals.append(lowVal2)
                 tempScale.append(valRange2)
-                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
+                if 'Dry Bulb Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
             for count, valText in enumerate(finalValues):
                 axesTextSrf = lb_visualization.text2srf([valText], [yAxisRightPts[count]], legendFont, legendFontSize, legendBold)
                 textSrfs.extend(axesTextSrf[0])
@@ -624,7 +624,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
             if unit1 == 'C' or unit1 == 'C' or unit1 == 'F' or unit1 == 'F':
                 tempVals.append(lowVal1)
                 tempScale.append(valRange1)
-                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
+                if 'Dry Bulb Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
         elif unit.strip('') == unit2.strip(''):
             startVals.append(lowVal2)
             scaleFacs.append(valRange2/height)
@@ -635,7 +635,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
             if unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'F' or unitsList[uCount+1] == 'F':
                 tempVals.append(lowVal1)
                 tempScale.append(valRange1)
-                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
+                if 'Dry Bulb Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
     
     #Create a title.
     if altTitle_ == None: newlistInfo = str(listInfo[0][1])
@@ -1151,8 +1151,6 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
         for geo in legend: geo.Transform(moveTransform)
         if comfortLegend != None:
             for geo in comfortLegend: geo.Transform(moveTransform)
-        else:
-            pass
         try:
             for geo in comfortBand: geo.Transform(moveTransform)
         except: pass
