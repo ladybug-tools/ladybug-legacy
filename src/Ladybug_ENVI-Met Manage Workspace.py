@@ -26,7 +26,7 @@ Use this component to create a Workspace folder.
 -
 Connect "folder" output to ENVI-Met Spaces.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _workspaceFolder: Main folder where you have to save an Envimet project.
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Manage Workspace"
 ghenv.Component.NickName = 'ENVI-MetManageWorkspace'
-ghenv.Component.Message = 'VER 0.0.64\nJUL_10_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

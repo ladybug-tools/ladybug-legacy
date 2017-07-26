@@ -29,7 +29,7 @@ Analyze parametric models with ENVI-Met!
 Save the model in the ENVI_MET Workspace, set the simulation file with ENVI_MET ConfigWizard and run the simulation.
 N.B. It can write files with equidistant grid only. If you want to visualize INX file with ENVI_MET SPACES you need to use "Open 3D view".
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -65,7 +65,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Spaces"
 ghenv.Component.NickName = 'ENVI-MetSpaces'
-ghenv.Component.Message = 'VER 0.0.64\nJUL_10_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

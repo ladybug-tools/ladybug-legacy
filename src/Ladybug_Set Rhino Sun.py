@@ -22,7 +22,7 @@
 """
 Use this component to set the Rhino sun from grasshopper and coordinate your Rhino visualizations with the Ladybug weatherfile and other solar parameters.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     Args:
         _location: get location from Ladybug_Import epw component. This will update rhino solar system to the correct coordinates and timezone
         north_: North direction of the model. This can be either an number representing angle, or a vector. (by default North is set on the y axis)
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Set Rhino Sun"
 ghenv.Component.NickName = 'rhinoSun'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

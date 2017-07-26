@@ -24,7 +24,7 @@
 """
 Use this component to convert energy values in BTU to Wh or kBTU to kWh.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _BTU: An energy value or list of energy values in BTU or kBTU.
@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_BTU2Wh"
 ghenv.Component.NickName = 'BTU2Wh'
-ghenv.Component.Message = 'VER 0.0.64\nJUN_14_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

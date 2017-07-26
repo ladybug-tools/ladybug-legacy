@@ -30,7 +30,7 @@ If nothing inputed, the following swh system will be used by default:
 - pipe length: 20 meters
 - unshaded
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     input:
         collectorOpticalEfficiency_: Fr(tau alpha) Collector's optical efficiency coefficient. Also called Collector heat removal factor. Varies based on collector's type. Some default values by type:
@@ -232,7 +232,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating System Detailed"
 ghenv.Component.NickName = "SolarWaterHeatingSystemDetailed"
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

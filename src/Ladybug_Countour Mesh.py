@@ -25,7 +25,7 @@
 Use this component to create contoured visualizations of any analysis mesh and corresponding numerical dataset in Ladybug + Honeybee.
 Note that this component currently only works for planar meshes.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to generate contours from the mesh.
@@ -60,7 +60,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.64\nJUL_10_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

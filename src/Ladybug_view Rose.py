@@ -24,7 +24,7 @@
 Use this component to see the area visible from a given viewpoint across a 2D plane of vision.
 The component will create a circular surface in this plane of vision that is interrupted by context geometry to show the places that can be seen through this context geometry.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _context: Breps or Meshes representing context geometry that can block the view around a given viewPoint.
@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_view Rose"
 ghenv.Component.NickName = 'viewRose'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

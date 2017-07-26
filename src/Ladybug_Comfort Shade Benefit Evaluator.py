@@ -38,7 +38,7 @@ _
 The heating/temperture degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the temperture-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or temperture degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive temperture degree-days to give a net effect for the cell.
 
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _location: The location output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

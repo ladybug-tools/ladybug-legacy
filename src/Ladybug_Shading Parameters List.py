@@ -23,7 +23,7 @@
 """
 Use this component to generate shading depths, numbers of shades, horizontal or vertical boolean values, and shade angles for different cardinal directions to be plugged into the "Ladybug_Shading Designer" component or the "Honeybee_EnergyPlus Window Shade Generator".
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
 
     Args:
         _northShdParam_: Shading parameter for north-facing glazing.
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Shading Parameters List"
 ghenv.Component.NickName = 'shdParamList'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

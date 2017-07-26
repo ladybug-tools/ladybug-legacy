@@ -27,7 +27,7 @@ This is particularly useful if you are trying to create animations of Grasshoppe
 Note that your images will have a Rhino world axes icon in the lower left of the image unless you go to Options > Grid > and uncheck "Show world axes icon" in Rhino.
 
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
 
     Args:
         _fileName: The file name that you would like the image to be saved as.  Note that, for animations, you want to make sure that each saved images has a different filename otherwise the previous image will be overwritten by each successive image.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Capture View"
 ghenv.Component.NickName = 'captureView'
-ghenv.Component.Message = 'VER 0.0.64\nJUN_17_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

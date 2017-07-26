@@ -44,7 +44,7 @@ Use this component to calculate various thermal comfort indices:
 - THI (Temperature Humidity Index)
 - PHS (Predicted Heat Strain)
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     input:
         _comfortIndex: Choose one of the comfort indices:
@@ -90,7 +90,7 @@ Provided by Ladybug 0.0.64
                            If not supplied 50% will be used as a default (indoor conditions).
                            -
                            In percent (from 0% to 110%).
-        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing person’s gravity center). It can be a single value or a list of values.
+        windSpeed_: Wind speed at 1.1 meters height from analysis surface (height of standing persons gravity center). It can be a single value or a list of values.
                     Take the "windSpeed" output from "Import epw" component and plug it to "Wind Speed Calculator" component's "_windSpeed_tenMeters" input. Set the "heightAboveGround_" input to "1.1". Then plug in the data from "Wind Speed Calculator" component's "windSpeedAtHeight" output to this component's "windSpeed_" input.
                     In this way we converted the 10 meter wind speed from the .epw file to required 1.1m.
                     -
@@ -151,7 +151,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = "VER 0.0.64\nMAR_18_2017"
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"

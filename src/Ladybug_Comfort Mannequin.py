@@ -24,7 +24,7 @@
 """
 Use this component to color a mannequin based on their relation to a comfort temperature.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _ambientTemperature: The temperture around the mannequin, which can be either UTCI (outdoor comfort), Standard Effective Temperature (PMV comfort), or Operative Temperature (Adaptive Comfort).
@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Comfort Mannequin"
 ghenv.Component.NickName = 'ComfortMannequin'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

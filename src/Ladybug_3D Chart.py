@@ -24,7 +24,7 @@
 """
 Use this component to make a 3D chart in the Rhino scene of any climate data or hourly simulation data.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _inputData: A list of input data to plot.
@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"

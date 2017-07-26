@@ -39,7 +39,7 @@ Provided by Honeybee 0.0.59
 
 ghenv.Component.Name = "Ladybug_Generate Mesh"
 ghenv.Component.NickName = 'genMesh'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

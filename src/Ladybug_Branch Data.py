@@ -23,7 +23,7 @@
 """
 Use this component to convert any list of annual data into a data tree branched by day of the year, month of the year, or hour of the day. If the data is not 8760 value sof each hour, the number of _data items should match number of items in HOY_.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _data: A list of data to be branched for each month, day and hour.  Note that this can be either a list of 8760 values for each hour of the year, the output of the "Import EPW" component, or a custom list of data that is matched by the data in the HOY_ input.
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Branch Data"
 ghenv.Component.NickName = 'branchDataDailyMonthlyHourly'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"

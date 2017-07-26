@@ -26,7 +26,7 @@ Use this component to generate ENVI-Met inputs for "LB ENVI-Met Spaces".
 -
 Some 'plant3Did_' could not work properly.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         basePoint_: Input a point here to move ENVI-Met grid. If no input is provided it will be origin point.
@@ -57,7 +57,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Soil Plant Source"
 ghenv.Component.NickName = 'ENVI-MetSoilPlantSource'
-ghenv.Component.Message = 'VER 0.0.64\nJUL_10_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

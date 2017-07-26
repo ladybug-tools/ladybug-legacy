@@ -25,7 +25,7 @@
 This component calculates the Optimal Tilt, Optimal Orientation and TOF (Tilt and Orientation Factor) for PV modules or Solar water heating collectors.
 TOF is a solar radiation at the actual tilt and orientation divided by the solar radiation at the optimum tilt and orientation.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -75,13 +75,13 @@ Provided by Ladybug 0.0.64
               -
               In percent(%).
         PVsurfaceTilt: Tilt angle of the inputted PV_SWHsurface.
-                       In degrees (°).
+                       In degrees ().
         PVsurfaceAzimuth: Orientation angle of the inputted PV_SWHsurface.
-                          In degrees (°).
+                          In degrees ().
         optimalTilt: Optimal tilt of the PV_SWHsurface for a given location. Optimal tilt being the one that receives the most annual solar radiation.
-                     In degrees (°).
+                     In degrees ().
         optimalAzimuth: Optimal orientation of the PV_SWHsurface for a given location. Optimal azimuth being the one that receives the most annual solar radiation.
-                        In degrees (°).
+                        In degrees ().
         optimalRoofPitch: Optimal steepness of the PV_SWHsurface for a given location. Optimal steepness being the one that receives the most annual solar radiation.
                           In inches/inches
         optimalRadiation: Total solar radiation per square meter for a whole year received on a PV_SWHsurface of optimal tilt and azimuth, at given location.
@@ -97,7 +97,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Tilt And Orientation Factor"
 ghenv.Component.NickName = "TOF"
-ghenv.Component.Message = "VER 0.0.64\nAPR_12_2017"
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

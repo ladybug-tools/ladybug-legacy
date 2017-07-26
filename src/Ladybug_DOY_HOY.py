@@ -23,7 +23,7 @@
 """
 Use this component to calculate the day of the year and hour of the year from an input date with a day of the month, month of the year and hour of the day.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _days_: A number (or list of numbers) between 1 and 31 that represents the day(s) of the month.
@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_DOY_HOY"
 ghenv.Component.NickName = 'DOY/HOY'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

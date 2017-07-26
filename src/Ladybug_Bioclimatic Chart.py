@@ -32,7 +32,7 @@ References:
     5. Brown G.Z. and DeKay M., 2001. Sun, WInd & Light. Architectural Design Strategies (2nd edition). John WIley  & Sons, Inc.
 
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius. This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"

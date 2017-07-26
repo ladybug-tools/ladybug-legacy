@@ -26,7 +26,7 @@ Use this component to make a bar chart in the Rhino scene of any monhtly or avrM
 _
 This component can also plot daily or hourly data but, for visualizing this type of data, it is recommended that you use the "Ladybug_3D Chart" component.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _inputData: A list of input data to plot.  This should usually be data out of the "Ladybug_Average Data" component or monthly data from an energy simulation but can also be hourly or daily data from the "Ladybug_Import EPW."  However, it is recommended that you use the "Ladybug_3D Chart" component for daily or hourly data as this is usually a bit clearer.
@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.64\nJUL_23_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
