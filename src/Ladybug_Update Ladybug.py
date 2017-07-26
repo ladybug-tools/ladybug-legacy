@@ -232,7 +232,9 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         for fileName in fileNames:
             # check for ladybug userObjects and delete the files if they are not
             # in source anymore
-            if fileName.StartsWith('Ladybug') and fileName not in srcFiles:
+            if fileName.StartsWith('LadybugPlus'):
+                continue            
+            elif fileName.StartsWith('Ladybug') and fileName not in srcFiles:
                 fullPath = os.path.join(destinationDirectory, fileName)
                 os.remove(fullPath)                
 
