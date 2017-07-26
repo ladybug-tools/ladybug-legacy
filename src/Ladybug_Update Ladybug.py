@@ -262,7 +262,8 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         
         return "Done!", True
 
-if _updateThisFile or _updateAllUObjects:
+if _updateAllUObjects:
+    _updateThisFile = False
     msg, success = main(sourceDirectory_, _updateThisFile, _updateAllUObjects)
     if not success:
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
