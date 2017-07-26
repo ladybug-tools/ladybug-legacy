@@ -62,12 +62,13 @@ def markComponent(doc, comp, note=None):
     doc.AddObject(grp, False);    
     return True
 
+ladybugTools = set(('Ladybug', 'Honeybee', 'Butterfly',
+                    'Dragonfly', 'LadybugPlus', 'HoneybeePlus'))
 
 def isLadybugTools(component):
     """Return True if a component is part of ladybug tools."""
-    for name in ('Ladybug', 'Honeybee', 'Butterfly', 'Dragonfly'):
-        if component.Name.startswith(name + '_'):
-            return True
+    if component.Name.split('_')[0] in ladybugTools:
+        return True
 
     return False
 
