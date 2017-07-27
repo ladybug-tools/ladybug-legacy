@@ -1,10 +1,10 @@
-# Bioclimatic Chart
+﻿# Bioclimatic Chart
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Abraham Yezioro <ayez@ar.technion.ac.il> 
+# Copyright (c) 2013-2017, Abraham Yezioro <ayez@ar.technion.ac.il> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -32,7 +32,7 @@ References:
     5. Brown G.Z. and DeKay M., 2001. Sun, WInd & Light. Architectural Design Strategies (2nd edition). John WIley  & Sons, Inc.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius. This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -76,10 +76,12 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-ghenv.Component.SubCategory = "6 | WIP"
+ghenv.Component.SubCategory = "7 | WIP"
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -424,8 +426,8 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
     ##pointColors.append(lb_visualization.gradientColor(totalComfortOrNot, 0, 1, customColors))
     
     legend = []
-    #legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legComfBasePts, legendScale, legendFont, legendFontSize)
-    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort or Not", lb_visualization.BoundingBoxPar, legComfBasePts, .45, legendFont, 1.5)
+    #legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort", lb_visualization.BoundingBoxPar, legComfBasePts, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
+    legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(totalComfortOrNot, 0, 1, 2, "Comfort or Not", lb_visualization.BoundingBoxPar, legComfBasePts, .45, legendFont, 1.5, decimalPlaces, removeLessThan)
     legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend.append(legendSrfs)
@@ -607,8 +609,9 @@ def drawColorResults(czPt, pshPt, stPt, colorCZ, colorPSH, colorST):
 
         # generate the color list for all the vertices
         repeatedColors = []
-        for face in range(meshedC.Faces.Count):
-            repeatedColors.append(color)
+        if meshedC != None:
+            for face in range(meshedC.Faces.Count):
+                repeatedColors.append(color)
         
         #  use ladybug functions to color the circle
         ##colMesh = lb_visualization.colorMesh(repeatedColors, meshedC)
@@ -847,7 +850,9 @@ def showResults(basePoint_, mainLegHeight, strategyNames, strategyPercent, strat
     scale = rc.Geometry.Transform.Scale(bPt, scaleLegBox)
     move = rc.Geometry.Transform.Translation(bPt.X, bPt.Y, bPt.Z)
     transformMtx = scale * move
-    for geo in resultsChart: geo.Transform(transformMtx)
+    for geo in resultsChart:
+        if geo == -1: continue
+        geo.Transform(transformMtx)
     
     return resultsChart    
 
@@ -1143,7 +1148,7 @@ def createFrequencyMesh(orgY, dryBulbTemperature, relativeHumidity, cullMesh, lb
     else: legendPar = legendPar_
     
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale,\
-    legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar, False)
+    legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     
     hourPts = []
     for count, ratio in enumerate(relativeHumidity):
@@ -1329,7 +1334,8 @@ def main(epwData, epwStr):
         
         # Read the legend parameters.
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, \
-        legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
+        legendFont, legendFontSize, legendBold, decimalPlaces, \
+        removeLessThan= lb_preparation.readLegendParameters(legendPar_, False)
         
         if cullMesh_:
             cullMesh = cullMesh_
@@ -1525,7 +1531,7 @@ def main(epwData, epwStr):
         #legendFontSize = 2
         #lb_visualization.calculateBB(chartText, True)
         lb_visualization.calculateBB(chartLayout[0:90], True) 
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize)
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
         ##legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
@@ -1694,7 +1700,9 @@ def main(epwData, epwStr):
             for geo in geoList:
                 geo.Transform(transformMtx)
         if calculateCharts_ == True:
-            for geo in resultsChart: geo.Transform(transformMtx)
+            for geo in resultsChart:
+                if geo == -1: continue
+                geo.Transform(transformMtx)
         
         #hourPointColorsByComfort = []
         #hourPointColorsByMonth = []
