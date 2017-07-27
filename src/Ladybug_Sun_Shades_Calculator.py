@@ -48,7 +48,7 @@ Provided by Ladybug 0.0.65
         cullPts: Show the points that define the contour of the shading device. Pay attention to those more/less dense areas covered by these points.
         finalSrf: Surface representing the shape of the shading device.
 """
-##
+##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
 ghenv.Component.Message = 'VER 0.0.65\nJul_28_2016'
