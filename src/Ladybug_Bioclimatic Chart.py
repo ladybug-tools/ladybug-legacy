@@ -1,4 +1,4 @@
-﻿# Bioclimatic Chart
+# Bioclimatic Chart
 #
 # Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
 # 
@@ -85,7 +85,7 @@ ghenv.Component.SubCategory = "7 | WIP"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
-
+###
 import Grasshopper.Kernel as gh
 import math
 import scriptcontext as sc
