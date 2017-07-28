@@ -51,7 +51,7 @@ Provided by Ladybug 0.0.65
 ##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2016'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
