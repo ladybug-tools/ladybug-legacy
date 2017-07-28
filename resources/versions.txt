@@ -3,7 +3,7 @@
 "Honeybee" : "2017.02.05.0.0.61",
 "Dragonfly" : "2015.11.07.0.0.01",
 "Template" : "2016.03.22.02.00",
-"OpenStudio" : "1.14.0",
+"OpenStudio" : "2.2.0",
 "OSJSONFile" : "2015.11.02.02.00",
 "THERM" : "7.5.0"
 }
