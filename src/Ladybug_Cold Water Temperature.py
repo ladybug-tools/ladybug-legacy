@@ -26,7 +26,7 @@ Use this component to calculate the cold (inlet, mains) water temperature, if wa
 Sources:
 http://www.energy.ca.gov/2013publications/CEC-400-2013-003/CEC-400-2013-003-CMF-REV.pdf
 http://www.nrel.gov/docs/fy04osti/35917.pdf
-http://www.retscreen.net/download.php/ang/120/0/Textbook_SWH.pdf
+http://www.solarthermalworld.org/sites/gstec/files/story/2015-05-31/textbook_swh.pdf
 -
 Provided by Ladybug 0.0.65
     
