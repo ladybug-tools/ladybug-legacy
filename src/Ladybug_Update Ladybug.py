@@ -251,6 +251,13 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
                 # or is older than the new file
                 elif os.stat(srcFullPath).st_mtime - os.stat(dstFullPath).st_mtime > 1: shutil.copy2(srcFullPath, dstFullPath)
         
+        # if item selector is not already copied, copy it to component folder
+        srcFullPath = os.path.join(userObjectsFolder, "Ladybug_ImageViewer.gha")
+        dstFullPath = os.path.join(folders.DefaultAssemblyFolder, "Ladybug_ImageViewer.gha")
+        if not os.path.isfile(dstFullPath):
+            shutil.copy2(srcFullPath, dstFullPath)
+        
+        
         return "Done!" , True
     
     if updateThisFile:
