@@ -25,7 +25,7 @@
 Use this component to create contoured visualizations of any analysis mesh and corresponding numerical dataset in Ladybug + Honeybee.
 Note that this component currently only works for planar meshes.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to generate contours from the mesh.
@@ -60,7 +60,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.64\nMAY_02_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -345,7 +345,7 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
                         labelText.append(numbersStr[count])
                         labelTextPts.append(ltextPt)
                         labelTextMesh = lb_visualization.text2srf([numbersStr[count]], [ltextPt], legendFont, labelSize, legendBold)[0]
-                        contourLabels[count].extend(labelTextMesh)
+                        contourLabels[count].append(labelTextMesh)
                     except:
                         pass
     except:
@@ -371,9 +371,10 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
                 geo.Transform(planeTrans)
                 geo.Transform(crvMove)
         for crvList in contourLabels:
-            for geo in crvList:
-                geo.Transform(planeTrans)
-                geo.Transform(crvMove)
+            for geoList in crvList:
+                for geo in geoList:
+                    geo.Transform(planeTrans)
+                    geo.Transform(crvMove)
     
     # color legend surfaces
     if contourType != 2:
@@ -394,7 +395,8 @@ def main(analysisResult, inputMesh, contourType, heightDomain, legendPar, analys
     for crvList in contourLines:
         for geo in crvList: geo.Transform(transfBack)
     for crvList in contourLabels:
-        for geo in crvList: geo.Transform(transfBack)
+        for geoList in crvList:
+            for geo in geoList: geo.Transform(transfBack)
     for geo in flattenedLegend: geo.Transform(transfBack)
     legendBasePoint.Transform(transfBack)
     if legendSrfs != None:
@@ -489,8 +491,9 @@ if initCheck == True and _inputMesh and len(_analysisResult)!=0:
             for item in datalist: contourLines.Add(item, GH_Path(count))
         for count, datalist in enumerate(contourColorsInit):
             for item in datalist: contourColors.Add(item, GH_Path(count))
-        for count, datalist in enumerate(contourLabelsInit):
-            for item in datalist: contourLabels.Add(item, GH_Path(count))
+        for count, branchlist in enumerate(contourLabelsInit):
+            for count2, datalist in enumerate(branchlist):
+                for item in datalist: contourLabels.Add(item, GH_Path(count, count2))
         
         # Hide output
         ghenv.Component.Params.Output[7].Hidden = True

@@ -38,7 +38,7 @@ Reference: Niemasz, J., Sargent, J., Reinhart D.F., "Solar Zoning and Energy in
 Detached Residential Dwellings," Proceedings of SIMAUD 2011, Boston, April 2011.
 
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _boundary: A closed boundary curve representing a piece of land (such as a property to be developed) for which solar access of the surrounding land is desired.
@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_SolarEnvelopeBasic"
 ghenv.Component.NickName = 'SolarEnvelopeBasic'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

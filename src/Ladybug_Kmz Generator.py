@@ -30,7 +30,7 @@ Updating: Just setting again to "True" _writeKmz, after that right click and sel
 -
 Special thanks goes to Google and the authors of gHowl.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _geometry: A list of Breps, Meshes and Surfaces to export.
@@ -56,7 +56,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Kmz Generator"
 ghenv.Component.NickName = 'KmzGenerator'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_26_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

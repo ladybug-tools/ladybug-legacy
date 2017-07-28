@@ -22,19 +22,19 @@
 
 #BTU to Wh
 """
-Use this component to convert energy values in BTU to Wh, kBTU to kWh, BTU/ft2 to Wh/m2, or kBTU/ft2 to kWh/m2.
+Use this component to convert energy values in BTU to Wh or kBTU to kWh.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
-        _BTU: An energy value or list of energy values in BTU, kBTU, BTU/ft2, or kBTU/ft2.  Note that, for the component to recognize flux (division by ft2), the input must have a Ladybug header.
+        _BTU: An energy value or list of energy values in BTU or kBTU.
     Returns:
-        Wh: The input enervy values converted to Wh, kWh, Wh/m2, or kWh/m2 (depeding on input).
+        Wh: The input enervy values converted to Wh or kWh (depeding on input).
 """
 
 ghenv.Component.Name = "Ladybug_BTU2Wh"
 ghenv.Component.NickName = 'BTU2Wh'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -42,31 +42,16 @@ ghenv.Component.SubCategory = "5 | Extra"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
-floorNorm = False
 Wh = []
 for num in _BTU:
     try:
-        if 'BTU/FT2' in num.upper():
-            Wh.append('Wh/m2')
-            floorNorm = True
-        elif 'KBTU/FT2' in num.upper():
-            Wh.append('kWh/m2')
-            floorNorm = True
-        elif 'BTU' in num.upper():
+        if 'BTU' in num.upper():
             Wh.append('Wh')
         elif 'KBTU' in num.upper():
             Wh.append('kWh')
         else:
-            if floorNorm == True:
-                try: Wh.append(float(num)/0.316998331)
-                except: Wh.append(num)
-            else:
-                try: Wh.append(float(num)/3.41214163)
-                except: Wh.append(num)
-    except:
-        if floorNorm == True:
-            try: Wh.append(float(num)/0.316998331)
-            except: Wh.append(num)
-        else:
             try: Wh.append(float(num)/3.41214163)
             except: Wh.append(num)
+    except:
+        try: Wh.append(float(num)/3.41214163)
+        except: Wh.append(num)

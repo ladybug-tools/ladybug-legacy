@@ -24,7 +24,7 @@
 """
 Use this component to separate and exctract the information in the 'location' output of the importEPW or constructLocation component.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
 
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.64
 """
 ghenv.Component.Name = "Ladybug_Decompose Location"
 ghenv.Component.NickName = 'explodeLocation'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"

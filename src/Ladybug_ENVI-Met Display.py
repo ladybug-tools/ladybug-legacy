@@ -24,9 +24,10 @@
 """
 Use this component to visualize ENVI-Met v4.0 3D geometry models.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
+        basePoint_: Input a point here to move ENVI-Met grid. If no input is provided it will be origin point.
         _INXfileAddress: Output which comes from "ENVI-Met Spaces" or a complete file path of a INX file on your machine.
     Returns:
         readMe!: ...
@@ -36,12 +37,12 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Display"
 ghenv.Component.NickName = 'ENVI-MetDisplay'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_26_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 
@@ -95,7 +96,7 @@ def ENVIGeometryParser(INXfileAddress):
     def findTxt(mf, key):
         return mf.GetElementsByTagName(key)[0].InnerText
     
-    def cubeProduction(key, dx, dy, dz):
+    def cubeProduction(key, dx, dy, dz, basePoint):
         
         # grid dimension
         dimX = rc.Geometry.Interval(-dx/2, dx/2)
@@ -111,13 +112,19 @@ def ENVIGeometryParser(INXfileAddress):
                         numbers = line.split(',')
                         integers = map(float, numbers)
                         if integers[2]<5:
-                            plane = rc.Geometry.Plane(rc.Geometry.Point3d(integers[0]*dx+dx/2, integers[1]*dy+dy/2, integers[2]*dz/5+dz/10), rc.Geometry.Vector3d.ZAxis)
+                            plane = rc.Geometry.Plane(rc.Geometry.Point3d((integers[0]*dx+dx/2) + basePoint.X, (integers[1]*dy+dy/2) + basePoint.Y, (integers[2]*dz/5+dz/10) + basePoint.Z), rc.Geometry.Vector3d.ZAxis)
                             cube = rc.Geometry.Box(plane, dimX, dimY, rc.Geometry.Interval(-dz/10, dz/10))
                         else:
-                            plane = rc.Geometry.Plane(rc.Geometry.Point3d(integers[0]*dx+dx/2, integers[1]*dy+dy/2, (integers[2]-4)*dz+dz/2), rc.Geometry.Vector3d.ZAxis)
+                            plane = rc.Geometry.Plane(rc.Geometry.Point3d((integers[0]*dx+dx/2) + basePoint.X, (integers[1]*dy+dy/2) + basePoint.Y, ((integers[2]-4)*dz+dz/2) + basePoint.Z), rc.Geometry.Vector3d.ZAxis)
                             cube = rc.Geometry.Box(plane, dimX, dimY, rc.Geometry.Interval(-dz/2, dz/2))
                         cubes.append(cube)
         return cubes
+    
+    
+    if basePoint_ == None:
+        basePoint = rc.Geometry.Point3d.Origin
+    else:
+        basePoint = basePoint_
     
     
     # path and folder
@@ -140,8 +147,8 @@ def ENVIGeometryParser(INXfileAddress):
     # dimensions
     dx, dy, dz = float(findTxt(root, "dx"))/unitConversionFactor, float(findTxt(root, "dy"))/unitConversionFactor, float(findTxt(root, "dz-base"))/unitConversionFactor
     
-    buildings = cubeProduction("buildings3D", dx, dy, dz)
-    terrain = cubeProduction("terrainflag", dx, dy, dz)
+    buildings = cubeProduction("buildings3D", dx, dy, dz, basePoint)
+    terrain = cubeProduction("terrainflag", dx, dy, dz, basePoint)
     
     return buildings, terrain
 

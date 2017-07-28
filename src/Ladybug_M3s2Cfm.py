@@ -23,7 +23,7 @@
 """
 Use this component to convert volume flow rate from S.I. cubic meters per second (m3/s) to U.S. cubic feet per minute (cfm).
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _m3_s: A value or list of values in cubic meters per second (m3/s).
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_M3s2Cfm"
 ghenv.Component.NickName = "m3s2cfm"
-ghenv.Component.Message = 'VER 0.0.64\nAPR_12_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

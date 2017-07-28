@@ -26,7 +26,7 @@ This component doesn't update the installation. It will only update the file
 to your current installation. The components that can't be updated automatically
 will be marked and should be replaced manually.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _update: Set to "True" if you want this component to search through the current Grasshopper file and update ladybug tools components.
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Update File"
 ghenv.Component.NickName = 'updateGHFile'
-ghenv.Component.Message = 'VER 0.0.64\nMAR_29_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -62,12 +62,13 @@ def markComponent(doc, comp, note=None):
     doc.AddObject(grp, False);    
     return True
 
+ladybugTools = set(('Ladybug', 'Honeybee', 'Butterfly',
+                    'Dragonfly', 'LadybugPlus', 'HoneybeePlus'))
 
 def isLadybugTools(component):
     """Return True if a component is part of ladybug tools."""
-    for name in ('Ladybug', 'Honeybee', 'Butterfly', 'Dragonfly'):
-        if component.Name.startswith(name + '_'):
-            return True
+    if component.Name.split('_')[0] in ladybugTools:
+        return True
 
     return False
 

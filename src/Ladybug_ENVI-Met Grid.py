@@ -27,9 +27,10 @@ Use this component to visualize ENVI-Met v4.0 data. Connect "resultFileAddress" 
 Component mainly based on:
 https://www.researchgate.net/publication/281031049_Outdoor_Comfort_the_ENVI-BUG_tool_to_evaluate_PMV_values_point_by_point
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
+        basePoint_: Input a point here to move ENVI-Met grid. If no input is provided it will be origin point.
         _resultFileAddress: Output comes from "ENVI-Met Reader".
         _selXY_: Connect an integer to generate a XY section. Plug a panel to "readMe!" for more info.
         -
@@ -51,12 +52,12 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Grid"
 ghenv.Component.NickName = 'ENVI-MetGrid'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 
@@ -157,7 +158,13 @@ def main():
     if _selXY_ == None: selZ = 0
     else: selZ = _selXY_
     
-    def xzAndyzSection(Matrix, sel, xdim, ydim, zdim, accumulateDim, currentDim, zdimA, flag):
+    if basePoint_ == None:
+        basePoint = rc.Geometry.Point3d.Origin
+    else:
+        basePoint = basePoint_
+    
+    
+    def xzAndyzSection(Matrix, sel, xdim, ydim, zdim, accumulateDim, currentDim, zdimA, flag, basePoint):
         
         values = []
         for layer in Matrix:
@@ -171,12 +178,12 @@ def main():
         for indexZ, vList in enumerate(values):
             for index, value in enumerate(vList):
                 if flag:
-                    coord = ((index+1)*xdim-(xdim/2), currentDim, (zdimA[indexZ]-(zdim[indexZ]/2)))
+                    coord = ((index+1)*xdim-(xdim/2) + basePoint.X, currentDim + basePoint.Y, (zdimA[indexZ]-(zdim[indexZ]/2)) + basePoint.Z)
                     point = rc.Geometry.Point3d(coord[0], coord[1], coord[2])
                     width, height = rc.Geometry.Interval(-zdim[indexZ]/2, zdim[indexZ]/2), rc.Geometry.Interval(-xdim/2, xdim/2)
                     rect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(point, rc.Geometry.Vector3d.YAxis), width, height)
                 else:
-                    coord = (currentDim, (index+1)*ydim-(ydim/2), (zdimA[indexZ]-(zdim[indexZ]/2)))
+                    coord = (currentDim  + basePoint.X, (index+1)*ydim-(ydim/2)  + basePoint.Y, (zdimA[indexZ]-(zdim[indexZ]/2)) + basePoint.Z)
                     point = rc.Geometry.Point3d(coord[0], coord[1], coord[2])
                     width, height = rc.Geometry.Interval(-zdim[indexZ]/2, zdim[indexZ]/2), rc.Geometry.Interval(-ydim/2, ydim/2)
                     rect = rc.Geometry.Rectangle3d(rc.Geometry.Plane(point, rc.Geometry.Vector3d.XAxis), height, width)
@@ -235,7 +242,7 @@ def main():
             analysisResultZ = []
             for indexY, vList in enumerate(chunkRow):
                 for indexX, value in enumerate(vList):
-                    coord = ((indexX+1)*xdim-(xdim/2), (indexY+1)*ydim-(ydim/2), currentZ)
+                    coord = ((indexX+1)*xdim-(xdim/2) + basePoint.X, (indexY+1)*ydim-(ydim/2)  + basePoint.Y, currentZ + basePoint.Z)
                     
                     point = rc.Geometry.Point3d(coord[0], coord[1], coord[2])
                     width, height = rc.Geometry.Interval(-xdim/2, xdim/2), rc.Geometry.Interval(-ydim/2, ydim/2)
@@ -259,7 +266,7 @@ def main():
             ydimA = list(accumulate(ydim))
             try:
                 currentY = ydimA[selXZ_] - ydim[selXZ_]/2
-                surfacesX, analysisResultX, pointsX = xzAndyzSection(MatrixX, selXZ_, xdim, ydim, zdim, ydimA, currentY, zdimA, True)
+                surfacesX, analysisResultX, pointsX = xzAndyzSection(MatrixX, selXZ_, xdim, ydim, zdim, ydimA, currentY, zdimA, True, basePoint)
             except IndexError:
                 print("gridSize has {1} XZ Planes max!".format(numCell[0],numCell[1],numCell[2]))
                 return -1
@@ -272,7 +279,7 @@ def main():
             xdimA = list(accumulate(xdim))
             try:
                 currentX = xdimA[selYZ_] - xdim[selYZ_]/2
-                surfacesY, analysisResultY, pointsY = xzAndyzSection(MatrixY, selYZ_, xdim, ydim, zdim, xdimA ,currentX, zdimA, False)
+                surfacesY, analysisResultY, pointsY = xzAndyzSection(MatrixY, selYZ_, xdim, ydim, zdim, xdimA ,currentX, zdimA, False, basePoint)
             except IndexError:
                 print("gridSize has {0} YZ Planes max!".format(numCell[0],numCell[1],numCell[2]))
                 return -1

@@ -24,7 +24,7 @@
 Code Developers and Beta Testers of new Ladybug components can use this component to remove old Ladybug components, add new Ladybug components, and update existing Ladybug components from a synced Github folder on their computer.
 This component can also update outdated Ladybug components in an old Grasshopper file so long as the updates to the components do not involve new inputs or outputs.
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         sourceDirectory_: An optional address to a folder on your computer that contains the updated Ladybug userObjects. If no input is provided here, the component will download the latest version from GitHUB.
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.64\nMAR_29_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
@@ -232,7 +232,9 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         for fileName in fileNames:
             # check for ladybug userObjects and delete the files if they are not
             # in source anymore
-            if fileName.StartsWith('Ladybug') and fileName not in srcFiles:
+            if fileName.StartsWith('LadybugPlus'):
+                continue            
+            elif fileName.StartsWith('Ladybug') and fileName not in srcFiles:
                 fullPath = os.path.join(destinationDirectory, fileName)
                 os.remove(fullPath)                
 
@@ -262,7 +264,8 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         
         return "Done!", True
 
-if _updateThisFile or _updateAllUObjects:
+if _updateAllUObjects:
+    _updateThisFile = False
     msg, success = main(sourceDirectory_, _updateThisFile, _updateAllUObjects)
     if not success:
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)

@@ -28,7 +28,7 @@ Schiavon, S., D. Rim, W. Pasut, W. Nazaroff. 2016. Sensation of draft at uncover
 _
 Liu, S., S. Schiavon, A. Kabanshi, W. Nazaroff. 2016. Predicted percentage of dissatisfied with ankle draft. Accepted Author Manuscript. Indoor Environmental Quality. http://escholarship.org/uc/item/9076254n
 -
-Provided by Ladybug 0.0.64
+Provided by Ladybug 0.0.65
     
     Args:
         _fullBodyPMV: The predicted mean vote (PMV) of the subject.  This can be calculated using the "Ladybug_PMV Comfort Calculator" component.  The reason for why PMV is incorporated into this draft discomfort model is that people are likely to feel more uncomfortable from downdraft when their whole body is already feeling cold.
@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.64
 
 ghenv.Component.Name = "Ladybug_Ankle Draft Discomfort"
 ghenv.Component.NickName = 'ankleDraftComf'
-ghenv.Component.Message = 'VER 0.0.64\nFEB_05_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
