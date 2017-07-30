@@ -19,6 +19,9 @@ Use this component to generate shading devices, either surface or pergola, for a
 The component first culls all sun vectors obstructed by the context, if provided.
 By default it calculates the device as a "new brand" one but it also can calculate the cut profile for a given surface.
 The default it will generate an overhang over the window (or multiple overhangs if the _numOfShds is increased).  
+References:
+Shaviv E., 1975. "A Method for the Design of Fixed External Sun-Shades". "Build International"  (8), Applied Science Publishers LTD, England, (pp.121-150).
+Shaviv E., 1984. "A Design Tool for Determining the Form of Fixed & Movable Sun-Shades".  "ASHRAE Trans." Vol. 90, AT-84-18 No. 4, Atlanta (pp.1-14).
 
 -
 Provided by Ladybug 0.0.65
@@ -51,7 +54,7 @@ Provided by Ladybug 0.0.65
 ##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
-ghenv.Component.Message = 'VER 0.0.65\nJul_28_2016'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
