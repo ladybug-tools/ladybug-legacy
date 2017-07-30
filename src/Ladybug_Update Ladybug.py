@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 Code Developers and Beta Testers of new Ladybug components can use this component to remove old Ladybug components, add new Ladybug components, and update existing Ladybug components from a synced Github folder on their computer.
 This component can also update outdated Ladybug components in an old Grasshopper file so long as the updates to the components do not involve new inputs or outputs.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         sourceDirectory_: An optional address to a folder on your computer that contains the updated Ladybug userObjects. If no input is provided here, the component will download the latest version from GitHUB.
@@ -36,9 +36,10 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Developers"
+ghenv.Component.SubCategory = "6 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
@@ -102,11 +103,23 @@ def downloadSourceAndUnzip(lb_preparation):
     return userObjectsFolder
 
 def getAllTheComponents(onlyGHPython = True):
+    
     components = []
     
     document = ghenv.Component.OnPingDocument()
     
-    for component in document.Objects:
+    objects = list(document.Objects)
+    
+    # check if there is any cluster and collect the objects inside clusters
+    for obj in objects:
+        if type(obj) == gh.Special.GH_Cluster:
+            clusterDoc = obj.Document("")
+            if not clusterDoc:
+                continue
+            for clusterObj in  clusterDoc.Objects:
+                objects.append(clusterObj)
+    
+    for component in objects:
         if onlyGHPython and type(component)!= type(ghenv.Component):
             pass
         else:
@@ -182,8 +195,13 @@ def updateTheComponent(component, newUOFolder, lb_preparation):
     isNewer, newCode = isNewerVersion(newUO, component)
     # replace the code inside the component with userObject code
     if isNewer:
-        component.Code = newCode
-        component.ExpireSolution(True)
+        if component.CodeInputParam == None:
+            component.Code = newCode
+            component.ExpireSolution(True)
+        else:
+            warning = "Failed to update %s. Remove code input from the component and try again!"%component.Name
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
 
 def main(sourceDirectory, updateThisFile, updateAllUObjects):
@@ -198,17 +216,6 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
     
     destinationDirectory = folders.ClusterFolders[0]
     
-    if updateThisFile:
-        # find all the userObjects
-        ghComps = getAllTheComponents()
-        
-        # for each of them check and see if there is a userObject with the same name is available
-        for ghComp in ghComps:
-            if ghComp.Name != "Ladybug_Update Ladybug":
-                updateTheComponent(ghComp, userObjectsFolder, lb_preparation)
-        
-        return "Done!", True
-        
     # copy files from source to destination
     if updateAllUObjects:
         if not userObjectsFolder  or not os.path.exists(userObjectsFolder):
@@ -225,7 +232,9 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         for fileName in fileNames:
             # check for ladybug userObjects and delete the files if they are not
             # in source anymore
-            if fileName.StartsWith('Ladybug') and fileName not in srcFiles:
+            if fileName.StartsWith('LadybugPlus'):
+                continue            
+            elif fileName.StartsWith('Ladybug') and fileName not in srcFiles:
                 fullPath = os.path.join(destinationDirectory, fileName)
                 os.remove(fullPath)                
 
@@ -243,8 +252,20 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
                 elif os.stat(srcFullPath).st_mtime - os.stat(dstFullPath).st_mtime > 1: shutil.copy2(srcFullPath, dstFullPath)
         
         return "Done!" , True
+    
+    if updateThisFile:
+        # find all the userObjects
+        ghComps = getAllTheComponents()
+        
+        # for each of them check and see if there is a userObject with the same name is available
+        for ghComp in ghComps:
+            if ghComp.Name != "Ladybug_Update Ladybug":
+                updateTheComponent(ghComp, userObjectsFolder, lb_preparation)
+        
+        return "Done!", True
 
-if _updateThisFile or _updateAllUObjects:
+if _updateAllUObjects:
+    _updateThisFile = False
     msg, success = main(sourceDirectory_, _updateThisFile, _updateAllUObjects)
     if not success:
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)

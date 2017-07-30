@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ The air conditioning industy set out with the goal of satisfying 80% of the occu
 _
 Further note that cultures differ widely in terms of their treatment of humidity at cooler temperatures and lack of humidity.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         PPDComfortThreshold_: A number between 5 and 100 that represents the percent of people dissatisfied (PPD) at which point a given set of conditions are outside of a comfortable range.  The default is set to 10 percent, which is the typical criteria for both US and European (ISO) standards. However, both of these standards allow an expanded range for infrequenlty-occupied buildings (20% in the US and 15% in Europe) and the European standard requires 6% for 'Class I' buildings.  Note that, if you try to restrict everyone's clothing and metabolic rate as the PMV model assumes, you can never make 100% of the people comfortable.  This is why the smallest acceptable input here is 5%.
@@ -42,9 +42,10 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_PMV Comfort Parameters"
 ghenv.Component.NickName = 'PMVComfortPar'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.60\nJUL_06_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass

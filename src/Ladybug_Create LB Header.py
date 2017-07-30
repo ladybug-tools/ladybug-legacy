@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ _
 
 This component is particularly useful if you are bringing in data from other plugins or from instrumental measurements and you want to visualize it or analyze it with the Ladybug and Honeybee components.  It is also useful if you want to replace the header on Ladybug data.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         location_: A text string that represents the name of the location where the data was collected.  If no value is connected here, the default will be "Somewhere."
@@ -35,39 +35,49 @@ Provided by Ladybug 0.0.60
         units_: A text string that represents the units of the data. This can be "C", "m/s", etc.  If no value is connected here, the default will be "Some Units."
         timeStep_:  A text string that represents the time step of the data.  Acceptable values include "Hourly", "Daily", "Monthly", or "Annually."  If no value is connected here, the default will be "Hourly."
         analysisPeriod_: An optional analysis period from the Analysis Period component.  If no analysis period is given, the default will be for the enitre year: (1,1,1)(12,31,24).
+        rawData_: A list of data that you want to add/modify Ladybug Header
     Returns:
         LBHEader: A Ladybug header that can be combined with any raw data in order to format it for the Ladybug and Honeybee components.
+        dataWithHeader: A list of data with added/modified Ladybug header
 """
 
 ghenv.Component.Name = "Ladybug_Create LB Header"
 ghenv.Component.NickName = 'CreateHeader'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
+import scriptcontext as sc
 import Grasshopper.Kernel as gh
 w = gh.GH_RuntimeMessageLevel.Warning
 
 
-def setDefaults():
+def setDefaults(Header):
     checkData = True
+    defaultHeader = ['key:location/dataType/units/frequency/startsAt/endsAt', 'Somewhere', 'Some Data', 'Some Units', 'Hourly', (1, 1, 1), (12, 31, 24)]
+
+    if (len(Header) == 7):
+        defaultHeader = Header
+    
     #Set a default location.
-    if location_ == None: location = "Somewhere"
-    else: location = location_
+    if location_ == None: location = defaultHeader[1]
+    else:location = location_
+    
     
     #Set a default dataType.
-    if dataType_ == None: dataType = "Some Data"
+    if dataType_ == None: dataType = defaultHeader[2]
     else: dataType = dataType_
     
     #Set a default units.
-    if units_ == None: units = "Some Units"
+    if units_ == None: units = defaultHeader[3]
     else: units = units_
     
     #Set a default analysis period.
-    if analysisPeriod_ == []: analysisPeriod = [(1,1,1), (12,31,24)]
+    if analysisPeriod_ == []: analysisPeriod = [defaultHeader[5], defaultHeader[6]]
     else:
         if len(analysisPeriod_) == 2: analysisPeriod = analysisPeriod_
         else:
@@ -78,7 +88,7 @@ def setDefaults():
             ghenv.Component.AddRuntimeMessage(w, warning)
     
     #Check the timpeStep_.
-    if timeStep_ == None: timeStep = "Hourly"
+    if timeStep_ == None: timeStep = defaultHeader[4]
     else:
         if timeStep_ == "Hourly" or timeStep_ == "Daily" or timeStep_ == "Monthly" or timeStep_ == "Annually": timeStep = timeStep_
         else:
@@ -91,6 +101,11 @@ def setDefaults():
     
     return checkData, location, dataType, units, timeStep, analysisPeriod
 
+def checkRawData(rawD):
+    lb_preparation = sc.sticky["ladybug_Preparation"]()
+    indexList, oldHeader = lb_preparation.separateList(rawD, lb_preparation.strToBeFound)
+    separatedLists = rawD[indexList[0]+7:indexList[1]]
+    return separatedLists, oldHeader[0]
 
 def main(location, dataType, units, timeStep, analysisPeriod):
     header = ['key:location/dataType/units/frequency/startsAt/endsAt', location, dataType, units, timeStep]
@@ -98,6 +113,12 @@ def main(location, dataType, units, timeStep, analysisPeriod):
     
     return header
 
-checkData, location, dataType, units, timeStep, analysisPeriod = setDefaults()
+dataList, oldHeader = checkRawData(rawData_)
+checkData, location, dataType, units, timeStep, analysisPeriod = setDefaults(oldHeader)
+newData = []
+
 if checkData == True:
     LBHeader = main(location, dataType, units, timeStep, analysisPeriod)
+    newData.extend(LBHeader)
+    newData.extend(dataList)
+    dataWithHeader=newData

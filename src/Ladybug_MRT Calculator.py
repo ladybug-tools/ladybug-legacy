@@ -1,0 +1,72 @@
+# Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
+# 
+# This file is part of Ladybug.
+# 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Ladybug is free software; you can redistribute it and/or modify 
+# it under the terms of the GNU General Public License as published 
+# by the Free Software Foundation; either version 3 of the License, 
+# or (at your option) any later version. 
+# 
+# Ladybug is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+# 
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+
+
+"""
+Use this component calculate Mean Radiant Temperature (MRT) given a set of temperatures and corresponding view factors.  This component will check to be sure view factors add to 1 and will use the following formula:
+MRT = (V1*T1^4 + V2*T2^4 + ...) ^ (1/4)
+Where V corresponds to a view factor and T corresponds to a temperature.
+-
+Provided by Ladybug 0.0.65
+    Args:
+        _temperatures: A list of radiant temperatures that correspond to view factors below.
+        _viewFactors: A list of viewFactors that correspond to the temperatures above.  These should sum to 1.
+    Returns:
+        MRT: The Mean Radiant Temperature that results from the input temperatures and view factors.
+"""
+
+ghenv.Component.Name = "Ladybug_MRT Calculator"
+ghenv.Component.NickName = 'MRT'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
+ghenv.Component.Category = "Ladybug"
+ghenv.Component.SubCategory = "5 | Extra"
+#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+except: pass
+
+import math
+import Grasshopper.Kernel as gh
+
+def getMRT(temperatures, viewFactors):
+    equRight = 0
+    for count, temp in enumerate(temperatures):
+        equRight = equRight + math.pow(temp, 4)*viewFactors[count]
+    MRT = math.pow(equRight, 0.25)
+    return MRT
+
+def main(temperatures, viewFactors):
+    if sum(viewFactors) < 0.99:
+        warning = "The sum of the view factors is less than 1."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
+    elif sum(viewFactors) > 1.01:
+        warning = "The sum of the view factors is greater than 1."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
+    
+    return getMRT(temperatures, viewFactors)
+
+if _temperatures != [] and _temperatures != [None] and _viewFactors != [] and _viewFactors != [None]:
+    result = main(_temperatures, _viewFactors)
+    if result != -1:
+        MRT = result

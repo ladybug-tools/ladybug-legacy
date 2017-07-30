@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Anton Szilasi with help from Chris Mackey <ajszilasi@gmail.com> 
+# Copyright (c) 2013-2017, Anton Szilasi with help from Chris Mackey <ajszilasi@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to visualise ground temperatures throughout the year at specific depths. Please note that epw files usually only provide ground temperature data at depths 0.5 meters, 2 meters and 4 meters thus data has been interpolated for all other depths. In particular this interpolation assumes that ground temperatures do not vary over the seasons once the depth has reach 9 meters below the ground surface.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _groundTemperatureData: ...
@@ -45,7 +45,8 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_16_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_10_2015
@@ -329,7 +330,10 @@ def drawprofileCrvs_Month(groundtemp1st,groundtemp2nd,groundtemp3rd):
     if maxDiff > minDiff: diffFactor = maxDiff/4
     else: diffFactor = minDiff/4
     
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters([], False)
+    # Originally readLegendParameters output 9 variables not it outputs 11 but this component only uses the first 
+    # 9 so dummy variables were added as a work around for hte too many variables to unpack error.
+    
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold,dummyvariable1,dummyvariable2 = lb_preparation.readLegendParameters([], False)
     
     # colors = lb_visualization.gradientColor(range(12), 0, 11, customColors) ophaned code, initally each month line was a different colour now colouring by season
     
@@ -383,6 +387,7 @@ def main(_epw_file):
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -391,6 +396,8 @@ def main(_epw_file):
             w = gh.GH_RuntimeMessageLevel.Warning
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
+            
+        # Create an instance of the lb_preparation class 
         lb_preparation = sc.sticky["ladybug_Preparation"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
@@ -403,7 +410,8 @@ def main(_epw_file):
         locationData = lb_preparation.epwLocation(_epw_file)
         groundtemp = lb_preparation.groundTempData(_epw_file,locationData[0])
         
-        
+        lb_preparation.printgroundTempData(lb_preparation.groundtemp)
+
         return locationData, groundtemp, lb_visualization, lb_preparation
     
     else:

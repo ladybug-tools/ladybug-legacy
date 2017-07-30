@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari and Chris Mackey <Sadeghipour@gmail.com and Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari and Chris Mackey <mostapha@ladybug.tools and Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,20 +26,23 @@ Use this component to generate a solar fan for a given test surface and set of s
 Solar fans are typically used to ensure solar access for park vegetation in the midst of large developments constructed around it.  It can be also used to ensure solar access for windows that might want to use the sun for heating for ceratin hours of the year.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _baseSrf: A surface representing a piece of land (such as a park) or a window for which solar access is desired.
         _sunVectors: Sun vectors representing hours of the year when sun should be accessible to the baseSrf. sunVectors can be generated using the Ladybug sunPath component.
         _size_: Input a number here to change how far the solar fan extends from the _baseSrf.  The default is set to 1, which will produce a solar fan that is half as tall as the longest side of the _baseSrf. Note that increasing the height too high can cause the fan to break up into multiple fans due to the resolution of the solar vectors.
         _runIt: Set to "True" to run the analysis and generate a solar fan. Note that, for more than 500 sunVectors, calculation times can take more than a half-minute.
+        noUnion_: By default this component will attempt to boolean union all the solar fans created, sometimes the underlying boolean union rhino operation fails and as a result only some of the solar fans are created.
+        When this happens you can set this input to false and the boolean union operation will not be performed on the solar fans ensuring that all solar fans will be created.
     Returns:
         readMe!:...
         solarFan: Brep representing a solar fan that should be clear of shading in order to ensure solar access to the _baseSrf for the given _sunVectors.
 """
 ghenv.Component.Name = 'Ladybug_SolarFan'
 ghenv.Component.NickName = 'SolarFan'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -180,6 +183,7 @@ def isSrfFacingTheVector(sunV, normalVector):
 
 def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, lb_preparation):
     # create shading on planes
+    
     unionedProjectedCrvsCollection = []
     firsTime = True
     
@@ -191,25 +195,31 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, lb_preparation):
         normalVector = brepPlane.Normal
         # mesh the base surface
         meshedBrep = rc.Geometry.Mesh.CreateFromBrep(brep, rc.Geometry.MeshingParameters.Smooth)[0]
+        
         for sunV in sunVectors:
+
             projectedCrv = None
             #check if the window facing the sun vector
             isFacingTheSun = isSrfFacingTheVector(sunV, normalVector)
+            
             if isFacingTheSun:
+
                 # get the view from sun
                 outline = getOutlineCrvFromSun(meshedBrep, sunV)[0]
-                
+
                 # project the outline to the plane
                 try:
                     projectedCrv = projectToPlane(outline.DuplicateCurve(), planes[brepCount], sunV)
+                    
                     if not isShadingPossible(projectedCrv, brepPlane, sunV, lb_preparation, False):
+                        
                         #if brepCount== len(baseSrfs)-1: i = -1
                         #else: i = 1
                         i = 1
                         # try + 1
                         #if brepCount!= len(baseSrfs)-1:
                         projectedCrv = projectToPlane(outline.DuplicateCurve(), planes[brepCount + i], sunV)
-                        
+
                         #double check
                         if not isShadingPossible(projectedCrv, brepPlane, sunV, lb_preparation, False):
                             # print brepCount
@@ -226,20 +236,29 @@ def createShadings(baseSrfs, planes, sunVectors, mergeCrvs, lb_preparation):
                     print "Number of planes doesn't match the number of surfaces." + \
                           "\nOne of the shadings won't be created. You can generate the planes manually" + \
                           "\nand use optionalPlanes option."
+                          
             if projectedCrv:
+                
                 try: projectedCrvs.extend(projectedCrv)
                 except: projectedCrvs.append(projectedCrv)
         
         # find the union the curves with the boundary of the shading
         if mergeCrvs == True:
+            
             unionedProjectedCrvs =rc.Geometry.Curve.CreateBooleanUnion(projectedCrvs)
+            
+            if (len(unionedProjectedCrvs) != len(projectedCrvs)) and (noUnion_ == True):
+                # Unable to perform boolean union operation so just return the projectedCrvs
+
+                return projectedCrvs
+            
             if len(unionedProjectedCrvs) == 0:
                 unionedProjectedCrvs = rc.Geometry.Curve.JoinCurves(projectedCrvs)
         else:
             unionedProjectedCrvs = projectedCrvs
-        
+
         unionedProjectedCrvsCollection.extend(unionedProjectedCrvs)
-    
+        
     return unionedProjectedCrvsCollection
 
 def unionAllFans(solarFans):
@@ -261,10 +280,12 @@ def unionAllFans(solarFans):
     return res
 
 def main(sunVectors):
+    
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -300,55 +321,68 @@ def main(sunVectors):
         
         # create the outline curve shaded by the solar vectors. 
         shadingCrvs = createShadings([_baseSrf], plane, sunVectors, True, lb_preparation)
+        
         if len(shadingCrvs) == 0:
             try:
                 _baseSrf.Flip()
+                
                 shadingCrvs = createShadings([_baseSrf], plane, sunVectors, True, lb_preparation)
+
             except: pass
         
-        # if one of the shading curves is contained inside the other, it can be deleted from the solar fan and can speed up the calculation down the line.
-        shdCrv2 = []
-        for curve in shadingCrvs:
-            if rc.Geometry.AreaMassProperties.Compute(curve).Area > rc.Geometry.AreaMassProperties.Compute(_baseSrf).Area:
-                shdCrv2.append(curve)
+        if noUnion_ == False:
+            # When a boolean union is conducted the following works well
+            # if one of the shading curves is contained inside the other, it can be deleted from the solar fan and can speed up the calculation down the line.
+            shdCrv2 = []
+            for curve in shadingCrvs:
+                if rc.Geometry.AreaMassProperties.Compute(curve).Area > rc.Geometry.AreaMassProperties.Compute(_baseSrf).Area:
+                    shdCrv2.append(curve)
+                
+        else:
+            # When a boolean union is not conducted the above code doesn't append anything to shdCrv2
+            shdCrv2 = shadingCrvs
+            
         sortedCrvs = sorted(shdCrv2, key=lambda curve: rc.Geometry.AreaMassProperties.Compute(curve).Area)
         largestCrv = sortedCrvs[-1]
         finalShdCrvs =[]
+        
         for curve in sortedCrvs:
             if str(rc.Geometry.Curve.PlanarClosedCurveRelationship(largestCrv, curve, plane[0], sc.doc.ModelAbsoluteTolerance)) != 'BInsideA':
                 finalShdCrvs.append(curve)
             else: pass
         
-        # dublicate the border around the base surface, which will be used to loft the solar fan
+        # duplicate the border around the base surface, which will be used to loft the solar fan
         baseSrfCrv = rc.Geometry.Curve.JoinCurves(_baseSrf.DuplicateEdgeCurves())[0]
         # get a point from the center of the shading curve to a new seam to adjust the seam on the shading curve.
         seamVectorPt = rc.Geometry.Vector3d((baseSrfCrv.PointAtStart.X - baseSrfCenPt.X)*planeHeight, (baseSrfCrv.PointAtStart.Y - baseSrfCenPt.Y)*planeHeight, 0)
         # adjust the seam of the shading curves.
         shadingCrvAdjust = []
         for curve in finalShdCrvs:
-            curve.Reverse()
-            curveParameter = curve.ClosestPoint(rc.Geometry.Intersect.Intersection.CurveCurve(curve, rc.Geometry.Line(rc.Geometry.AreaMassProperties.Compute(curve).Centroid, seamVectorPt).ToNurbsCurve(), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)[1]
-            curveParameterRound = round(curveParameter)
-            curveParameterTol = round(curveParameter, (len(list(str(sc.doc.ModelAbsoluteTolerance)))-2))
-            if curveParameterRound + sc.doc.ModelAbsoluteTolerance > curveParameter and curveParameterRound - sc.doc.ModelAbsoluteTolerance < curveParameter:
-                curve.ChangeClosedCurveSeam(curveParameterRound)
-                shadingCrvAdjust.append(curve)
-            else:
-                curve.ChangeClosedCurveSeam(curveParameterTol)
-                if curve.IsClosed == True:
+            try:
+                curve.Reverse()
+                curveParameter = curve.ClosestPoint(rc.Geometry.Intersect.Intersection.CurveCurve(curve, rc.Geometry.Line(rc.Geometry.AreaMassProperties.Compute(curve).Centroid, seamVectorPt).ToNurbsCurve(), sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)[0].PointA)[1]
+                curveParameterRound = round(curveParameter)
+                curveParameterTol = round(curveParameter, (len(list(str(sc.doc.ModelAbsoluteTolerance)))-2))
+                if curveParameterRound + sc.doc.ModelAbsoluteTolerance > curveParameter and curveParameterRound - sc.doc.ModelAbsoluteTolerance < curveParameter:
+                    curve.ChangeClosedCurveSeam(curveParameterRound)
                     shadingCrvAdjust.append(curve)
                 else:
-                    curve.ChangeClosedCurveSeam(curveParameterTol+sc.doc.ModelAbsoluteTolerance)
+                    curve.ChangeClosedCurveSeam(curveParameterTol)
                     if curve.IsClosed == True:
                         shadingCrvAdjust.append(curve)
                     else:
-                        curve.ChangeClosedCurveSeam(curveParameterTol-sc.doc.ModelAbsoluteTolerance)
+                        curve.ChangeClosedCurveSeam(curveParameterTol+sc.doc.ModelAbsoluteTolerance)
                         if curve.IsClosed == True:
                             shadingCrvAdjust.append(curve)
                         else:
-                            curve.ChangeClosedCurveSeam(curveParameter)
-                            curve.MakeClosed(sc.doc.ModelAbsoluteTolerance)
-                            shadingCrvAdjust.append(curve)
+                            curve.ChangeClosedCurveSeam(curveParameterTol-sc.doc.ModelAbsoluteTolerance)
+                            if curve.IsClosed == True:
+                                shadingCrvAdjust.append(curve)
+                            else:
+                                curve.ChangeClosedCurveSeam(curveParameter)
+                                curve.MakeClosed(sc.doc.ModelAbsoluteTolerance)
+                                shadingCrvAdjust.append(curve)
+            except: shadingCrvAdjust.append(curve)
         
         # loft the shading curves with the base curve and generate a surface to cap the loft.
         solarFanInit = []
@@ -407,6 +441,7 @@ else:
     checkList = False
 
 if checkList:
+
     solarFan = main(sunVectors)
     if solarFan!=-1:
         print "Solar fan calculation is done!"

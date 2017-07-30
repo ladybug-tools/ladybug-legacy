@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com>, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools>, and Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to make a 3D chart in the Rhino scene of any climate data or hourly simulation data.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _inputData: A list of input data to plot.
@@ -35,24 +35,29 @@ Provided by Ladybug 0.0.60
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
         condStatement_ : An optional conditional statement, which will remove data from the chart that does not fit the conditions. The input must be a valid python conditional statement (e.g. a > 25).
-        bakeIt_ : If set to True, the chart will be Baked into the Rhino scene as a colored mesh.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         readMe!: ...
         graphMesh: A 3D plot of the input data as a colored mesh.  Multiple meshes will be output for several input data streams or graph scales.
         graphCurves: A list of curves and text surfaces representing the time periods corresponding to the input data.  Note that if the time period of the input data is not clear, no curves or labels will be generated here.
         legend: A legend of the chart. Connect this output to a grasshopper "Geo" component in order to preview the legend in the Rhino scene.g
         legendBasePts: The legend base point, which can be used to move the legend in relation to the chart with the native rasshopper "Move" component.
-        title: The title text of the char.  Hook this up to a native Grasshopper 'Geo' component to preview it separately from the other outputs.
+        title: The title text of the chart.  Hook this up to a native Grasshopper 'Geo' component to preview it separately from the other outputs.
         titleBasePt: Point for the placement of the title, which can be used to move the title in relation to the chart with the native Grasshopper "Move" component.
+        dataPts: Points representing the location of each piece of data on the chart.  Use this to label the points of the chart with text lables using a native grasshopper "Text Tag" component.
         conditionalHOY: The input data for the hours of the year that pass the conditional statement.
 """
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_18_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nFEB_01_2015
+#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -68,7 +73,7 @@ import Grasshopper.Kernel as gh
 from Grasshopper import DataTree
 from Grasshopper.Kernel.Data import GH_Path
 import math
-
+from collections import deque
 
 def checkConditionalStatement(annualHourlyData, conditionalStatement):
         lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -148,17 +153,15 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
 
 def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, colors, yCount):
     #If there is no yCount, define it as 24
-    if yCount == []:
-        if len(values) == 24:
-            yCount = 1
-        else:
-            yCount = xSize
-    else:
-        yCount = yCount[0]
+    if yCount == []: yCount = xSize
+    else: yCount = yCount[0]
+    
+    numOfDays = len(values)/yCount
     
     # make a monocolor mesh without webbing between the primary faces.
     ySize = int(len(values)/xSize)
     meshFacePts = []
+    dataPts = []
     
     for i in range(len(values)):
         xMove = - xScale * (i % xSize)
@@ -173,6 +176,7 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
         facePt4 = rc.Geometry.Point3d(newPoint.X, newPoint.Y + yScale, newPoint.Z)
         
         meshFacePts.append([facePt1, facePt2, facePt3, facePt4])
+        dataPts.append(rc.Geometry.Point3d(newPoint.X + (xScale/2), newPoint.Y, newPoint.Z))
     
     joinedMesh = rc.Geometry.Mesh()
     
@@ -187,28 +191,31 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     
     if zScale > 0.0:
         #Create the first webbing in between the primary mesh faces.
-        for listCount, list in enumerate(meshFacePts):
-            if listCount < len(meshFacePts)-yCount:
-                mesh = rc.Geometry.Mesh()
-                mesh.Vertices.Add(list[2])
-                mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
-                mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
-                mesh.Vertices.Add(list[3])
-                
-                mesh.Faces.AddFace(0, 1, 2, 3)
-                joinedMesh.Append(mesh)
+        if numOfDays >= 2:
+            for listCount, list in enumerate(meshFacePts):
+                if listCount < len(meshFacePts)-yCount:
+                    mesh = rc.Geometry.Mesh()
+                    mesh.Vertices.Add(list[2])
+                    mesh.Vertices.Add(meshFacePts[listCount+yCount][1])
+                    mesh.Vertices.Add(meshFacePts[listCount+yCount][0])
+                    mesh.Vertices.Add(list[3])
+                    
+                    mesh.Faces.AddFace(0, 1, 2, 3)
+                    joinedMesh.Append(mesh)
         
         #Create the second webbing in between the primary mesh faces.
         for listCount, list in enumerate(meshFacePts):
             if listCount/yCount != int(listCount/yCount):
-                mesh = rc.Geometry.Mesh()
-                mesh.Vertices.Add(list[2])
-                mesh.Vertices.Add(list[1])
-                mesh.Vertices.Add(meshFacePts[listCount-1][0])
-                mesh.Vertices.Add(meshFacePts[listCount-1][3])
-                
-                mesh.Faces.AddFace(0, 1, 2, 3)
-                joinedMesh.Append(mesh)
+                try:
+                    mesh = rc.Geometry.Mesh()
+                    mesh.Vertices.Add(list[2])
+                    mesh.Vertices.Add(list[1])
+                    mesh.Vertices.Add(meshFacePts[listCount-1][0])
+                    mesh.Vertices.Add(meshFacePts[listCount-1][3])
+                    
+                    mesh.Faces.AddFace(0, 1, 2, 3)
+                    joinedMesh.Append(mesh)
+                except: pass
     
     # color the mesh faces.
     joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Gray)
@@ -220,20 +227,20 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
             joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum]
             joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum]
         if zScale > 0.0:
-            if srfNum >= len(values) and srfNum < len(values)*2 - yCount:
-                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
-                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
-                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
-                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
-            elif srfNum >= len(values)*2 - yCount:
-                extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
-                if yCount == 2: extraVal = extraVal+2
-                joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-                joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
-                joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
-                joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
-            else: pass
-        else: pass
+            try:
+                if srfNum >= len(values) and srfNum < len(values)*2 - yCount:
+                    joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-len(values)]
+                    joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-len(values)+yCount]
+                    joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-len(values)]
+                    joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-len(values)+yCount]
+                elif srfNum >= len(values)*2 - yCount:
+                    extraVal = int((srfNum - len(values)*2 - yCount)/(yCount-1))
+                    if yCount == 2: extraVal = extraVal+2
+                    joinedMesh.VertexColors[4 * srfNum + 0] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                    joinedMesh.VertexColors[4 * srfNum + 1] = colors[srfNum-2*len(values)+(yCount+3)+extraVal]
+                    joinedMesh.VertexColors[4 * srfNum + 3] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+                    joinedMesh.VertexColors[4 * srfNum + 2] = colors[srfNum-2*len(values)+(yCount+3)+extraVal-1]
+            except: pass
     
     #Make a copy of the mesh for purposes of placing the legend correctly.
     originalMesh = rc.Geometry.Mesh.Duplicate(joinedMesh)
@@ -241,9 +248,11 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
     # Cull mesh faces that do not meet the conditional statement.
     if condStatement_:
         cullFaceIndices = []
+        cullPtIndices = []
         for count, boolean in enumerate(patternList):
             if boolean == False:
                 cullFaceIndices.append(count)
+                cullPtIndices.append(count)
                 if count < len(values)-yCount:
                     cullFaceIndices.append(count+len(values))
                     cullFaceIndices.append(count+len(values)-yCount)
@@ -251,15 +260,18 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
                 cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal)
                 cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal+1)
             else: pass
-        
+        cullPtIndices.reverse()
+        for count in cullPtIndices: del dataPts[count]
         joinedMesh.Faces.DeleteFaces(cullFaceIndices)
     else: pass
     
     # Rotate the mesh to be correctly oriented towards the Rhino X and Y axes.
     joinedMesh.Rotate(-math.pi/2, rc.Geometry.Vector3d.ZAxis, basePoint)
     originalMesh.Rotate(-math.pi/2, rc.Geometry.Vector3d.ZAxis, basePoint)
+    rotateTrans = rc.Geometry.Transform.Rotation(-math.pi/2, basePoint)
+    for point in dataPts: point.Transform(rotateTrans)
     
-    return joinedMesh, originalMesh
+    return joinedMesh, originalMesh, dataPts
 
 def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, zScale, basePoint, yHeight, lb_preparation, legendFont, legendFontSize, legendBold, lb_visualization):
     ySize = int(len(values)/xSize)
@@ -277,9 +289,13 @@ def createChartCrvs(values, analysisStart, analysisEnd, xSize, xScale, yScale, z
     endHour = analysisEnd[2]
     
     # Make a list of days in ech month of the analysis period.
+    months = [1,2,3,4,5,6,7,8,9,10,11,12]
+    d = deque(months)
+    d.rotate(-startMonth+1)
     monthsList = []
-    for month in range(startMonth, endMonth+1, 1):
+    for month in d:
         monthsList.append(month)
+    monthsList = monthsList[:monthsList.index(endMonth)+1]
     
     daysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -358,6 +374,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -414,7 +431,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 return -1
             
             
-            res = [[],[], [], [], [], [], []]
+            res = [[],[], [], [], [], [], [], []]
             # legendBasePoints = []
             for i, results in enumerate(separatedLists):
                 
@@ -463,7 +480,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                         xC = float(yCount[0])
                     except:
                         if 'Daily' in listInfo[i][4]: xC = 7
-                        elif listInfo[i][4] == 'Monthly' or listInfo[i][4] == 'Monthly-> averaged': xC = 1
+                        elif listInfo[i][4] == 'Monthly' or listInfo[i][4] == 'Monthly-> averaged' or listInfo[i][4] == 'Monthly-> total': xC = 1
                         else: xC = abs(endHour - stHour) + 1
                         
                 if xC == 0: xC = abs(endHour - stHour) + 1
@@ -492,14 +509,14 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 zSC = abs(zSC)
                 
                 # read legend parameters
-                if len(legendPs) == 1: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[0], False)
-                else: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPs[i], False)
+                if len(legendPs) == 1: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
+                else: lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[i], False)
                 
                 # Get the graph colors
                 colors = lb_visualization.gradientColor(results, lowB, highB, customColors)
                 
                 # draw the graph mesh
-                coloredChart, originalMesh = makeChart(results, xC, xSC, ySC, zSC, patternList, rc.Geometry.Point3d.Origin, colors, yCount)
+                coloredChart, originalMesh, dataPts = makeChart(results, xC, xSC, ySC, zSC, patternList, rc.Geometry.Point3d.Origin, colors, yCount)
                 
                 #Create the chart curves.
                 if yCount == []: yHeight = 24*xSC
@@ -566,7 +583,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 
                 # create legend geometries
                 legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(results
-                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+                    , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
                 
                 textPt.append(titlebasePt)
                 
@@ -575,6 +592,13 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     ptLocation = rc.Geometry.Point(pt)
                     ptLocation.Translate(movingVector) # move it to the right place
                     textPt[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
+                    ptCount += 1
+                
+                ptCount  = 0
+                for pt in dataPts:
+                    ptLocation = rc.Geometry.Point(pt)
+                    ptLocation.Translate(movingVector) # move it to the right place
+                    dataPts[ptCount] = rc.Geometry.Point3d(ptLocation.Location)
                     ptCount += 1
                 
                 transMtx = rc.Geometry.Transform.Translation(movingVector)
@@ -622,9 +646,11 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     for item in titleTextCurve: item.Transform(translation)
                     for item in finalChartCrvs: item.Transform(translation)
                     for point in titleBasePoints: point.Transform(translation)
+                    for point in dataPts: point.Transform(translation)
+                    for point in textPt: point.Transform(translation)
                 else: pass
                 
-                if bakeIt:
+                if bakeIt > 0:
                     studyLayerName = '3D_CHARTS'
                     legendText.append(titleStr)
                     # check the study type
@@ -633,7 +659,8 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                     except:
                         placeName = 'alternateLayerName'
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-                    lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, [], textPt, textSize, legendFont, finalChartCrvs+fullLegTxt)
+                    if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText+textStrings, textPt+textBasePts, textSize, legendFont, chartCrvs, decimalPlaces)
+                    else: lb_visualization.bakeObjects(newLayerIndex, coloredChart, legendSrfs, legendText+textStrings, textPt+textBasePts, textSize, legendFont, chartCrvs, decimalPlaces, False)
                 
                 res[0].append(coloredChart)
                 res[1].append([legendSrfs, legendTextCrv])
@@ -642,6 +669,7 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 res[4].append([titleBasePoints[0]])
                 res[5].append(hoursOfYear)
                 res[6].append(finalChartCrvs)
+                res[7].append(dataPts)
             return res
         elif str(inputData[0]) == "Connect input data here":
             print 'Connect inputData!'
@@ -672,6 +700,7 @@ if result!= -1:
     title = DataTree[System.Object]()
     titleBasePts = DataTree[System.Object]()
     conditionalHOY = DataTree[System.Object]()
+    dataPts = DataTree[System.Object]()
     
     for i, leg in enumerate(result[1]):
         p = GH_Path(i)
@@ -683,6 +712,7 @@ if result!= -1:
         titleBasePts.AddRange(result[4][i], p)
         conditionalHOY.AddRange(result[5][i], p)
         graphCurves.AddRange(result[6][i], p)
+        dataPts.AddRange(result[7][i], p)
     ghenv.Component.Params.Output[4].Hidden = True
     ghenv.Component.Params.Output[6].Hidden = True
     ghenv.Component.Params.Output[7].Hidden = True

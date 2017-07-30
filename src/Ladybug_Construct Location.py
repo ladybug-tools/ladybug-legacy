@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari - based Brian Timothy Ringley suggestion <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari - based Brian Timothy Ringley suggestion <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component if you do not have an .epw weather file but have a latitude or other information on the site.
 The location output of this component can be used to make a sun plot in the absence of an .epw weather file.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
 
     Args:
         _locationName: A name for the location you are constructing. (ie. Steventon Island, Antarctica)
@@ -41,7 +41,8 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Construct Location"
 ghenv.Component.NickName = 'constructLocation'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

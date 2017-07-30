@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -22,44 +22,36 @@
 
 #BTU to Wh
 """
-Use this component to convert energy values in BTU to Wh, kBTU to kWh, BTU/ft2 to Wh/m2, or kBTU/ft2 to kWh/m2.
+Use this component to convert energy values in BTU to Wh or kBTU to kWh.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
-        _BTU: An energy value or list of energy values in BTU, kBTU, BTU/ft2, or kBTU/ft2.  Note that, for the component to recognize flux (division by ft2), the input must have a Ladybug header.
+        _BTU: An energy value or list of energy values in BTU or kBTU.
     Returns:
-        Wh: The input enervy values converted to Wh, kWh, Wh/m2, or kWh/m2 (depeding on input).
+        Wh: The input enervy values converted to Wh or kWh (depeding on input).
 """
 
 ghenv.Component.Name = "Ladybug_BTU2Wh"
 ghenv.Component.NickName = 'BTU2Wh'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_21_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
-floorNorm = False
 Wh = []
 for num in _BTU:
-    if num == 'BTU/ft2':
-        Wh.append('Wh/m2')
-        floorNorm = True
-    elif num == 'BTU':
-        Wh.append('Wh')
-        floorNorm = False
-    elif num == 'kBTU':
-        Wh.append('kWh')
-        floorNorm = False
-    elif num == 'kBTU/ft2':
-        Wh.append('kWh/m2')
-        floorNorm = True
-    else:
-        if floorNorm == True:
-            try: Wh.append(float(num)*0.316998331)
-            except: Wh.append(num)
+    try:
+        if 'BTU' in num.upper():
+            Wh.append('Wh')
+        elif 'KBTU' in num.upper():
+            Wh.append('kWh')
         else:
-            try: Wh.append(float(num)*3.41214163)
+            try: Wh.append(float(num)/3.41214163)
             except: Wh.append(num)
+    except:
+        try: Wh.append(float(num)/3.41214163)
+        except: Wh.append(num)

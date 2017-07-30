@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -40,7 +40,7 @@ _
 _
 The code that makes this component possible is a Python version of the original Fortran code for calculating UTCI.  Information on UTCI and the original Fortran code can be found here: http://www.utci.org/.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
@@ -75,7 +75,8 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -264,6 +265,7 @@ def main():
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -281,16 +283,27 @@ def main():
         checkData, epwData, epwStr, calcLength, airTemp, radTemp, windSpeed, relHumid = checkTheInputs()
         
         #Check if there is an analysisPeriod_ connected and, if not, run it for the whole year.
-        if calcLength == 8760 and len(analysisPeriod_)!=0 and epwData == True:
-            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+        if calcLength == 8760 and len(analysisPeriod_)!=0:
+            ##HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+            HOYSInit, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
+            HOYS = []
+            for hour in HOYSInit: HOYS.append(hour-1)
             runPeriod = analysisPeriod_
             calcLength = len(HOYS)
-        elif len(analysisPeriod_)==0 and epwData == True:
+        elif epwData == True:
             HOYS = range(calcLength)
             runPeriod = [epwStr[5], epwStr[6]]
+            if calcLength != 8760 and len(analysisPeriod_) != 0:
+                periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+                print periodMsg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
         else:
             HOYS = range(calcLength)
             runPeriod = [(1,1,1), (12,31,24)]
+            if calcLength != 8760 and len(analysisPeriod_) != 0:
+                periodMsg = "You have connected an analysisPeriod_ for input data that is not for a full year. \n Your connected analysisPeriod_ will be ignored and the full stream of connected data will be run."
+                print periodMsg
+                ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, periodMsg)
         
         #If things are good, run it through the comfort model.
         universalThermalClimateIndex = []
@@ -359,6 +372,7 @@ def main():
                 thermalStressType.extend(thermalStr)
                 coldStressComfortableHeatStress.extend(coldComfHot)
             except:
+                print 'EXCEPT'
                 universalThermalClimateIndex = []
                 comfortableOrNot = []
                 thermalStressType = []
@@ -367,7 +381,7 @@ def main():
                 percentComfForShortPeriod = None
                 percentHeatStress = None
                 percentColdStress = None
-                print "The calculation has been terminated by the user!"
+                print "The calculation has been terminated by the user!AA"
                 e = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(e, "The calculation has been terminated by the user!")
         

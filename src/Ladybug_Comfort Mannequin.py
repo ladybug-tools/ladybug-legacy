@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to color a mannequin based on their relation to a comfort temperature.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _ambientTemperature: The temperture around the mannequin, which can be either UTCI (outdoor comfort), Standard Effective Temperature (PMV comfort), or Operative Temperature (Adaptive Comfort).
@@ -35,6 +35,10 @@ Provided by Ladybug 0.0.60
         rotationAngle_: An optional rotation angle in degrees.  Use this number to adjust the angle of the comfort mannequin in space.  The angle of the mannequin in relation to the sun can have a large effect on the amount of radiation that falls on it and thus largely affect the resulting mean radiant temperature.
         bodyLocation_: An optional point that sets the position of the comfort mannequin in space.  Use this to move the comfort mannequin around in relation to contextShading_ connected below. The default is set to the Rhino origin.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
+        bakeIt_ : An integer that tells the component if/how to bake the bojects in the Rhino scene.  The default is set to 0.  Choose from the following options:
+            0 (or False) - No geometry will be baked into the Rhino scene (this is the default).
+            1 (or True) - The geometry will be baked into the Rhino scene as a colored hatch and Rhino text objects, which facilitates easy export to PDF or vector-editing programs. 
+            2 - The geometry will be baked into the Rhino scene as colored meshes, which is useful for recording the results of paramteric runs as light Rhino geometry.
     Returns:
         mannequinMesh: A colored mesh of a comfort mannequin showing the amount of radiation falling over the mannequin's body.
         legend: A legend that corresponds to the colors on the mannequinMesh and shows the relative W/m2.
@@ -43,11 +47,12 @@ Provided by Ladybug 0.0.60
 """
 ghenv.Component.Name = "Ladybug_Comfort Mannequin"
 ghenv.Component.NickName = 'ComfortMannequin'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "4 | Extra"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 
@@ -64,6 +69,7 @@ def checkTheInputs():
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return -1
+            #if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \
@@ -169,7 +175,7 @@ def checkTheInputs():
 
 def main(ambTemp, targetTemp, comfRange, mannequinMesh, lb_preparation, lb_visualization):
     # read legend parameters
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold = lb_preparation.readLegendParameters(legendPar_, False)
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
     if lowB == "min":
         lowB = targetTemp - (comfRange)
@@ -193,7 +199,7 @@ def main(ambTemp, targetTemp, comfRange, mannequinMesh, lb_preparation, lb_visua
     lb_visualization.calculateBB(mannequinMesh, True)
     # create legend geometries
     legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(range
-        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold)
+        , lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
     # generate legend colors
     legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
     # color legend surfaces
@@ -206,6 +212,17 @@ def main(ambTemp, targetTemp, comfRange, mannequinMesh, lb_preparation, lb_visua
     
     if legendBasePoint == None:
         legendBasePoint = lb_visualization.BoundingBoxPar[0]
+    
+    #If the user has set bakeIt to true, bake the geometry.
+    if bakeIt_ > 0:
+        #Set up the new layer.
+        studyLayerName = 'COMFORT_MANNEQUINS'
+        placeName = 'Target Temperature = ' + str(targetTemp)
+        analysisTime = 'Ambient Temperature = ' + str(ambTemp)
+        newLayerIndex, l = lb_visualization.setupLayers(analysisTime, 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
+        #Bake the objects.
+        if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, joinedManMesh, legendSrfs, legendText, textPt, textSize, legendFont, None, 0, True)
+        else: lb_visualization.bakeObjects(newLayerIndex, joinedManMesh, legendSrfs, legendText, textPt, textSize, legendFont, None, 0, False)
     
     
     return joinedManMesh, [legendSrfs, lengdTxt], legendBasePoint

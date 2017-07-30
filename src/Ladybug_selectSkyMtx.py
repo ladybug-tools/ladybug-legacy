@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,11 +25,11 @@
 Use this component to select a specific sky matrix (skyMxt) for an hour of the year or for an analysis period.
 
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _cumulativeSkyMtx: The output from a GenCumulativeSkyMtx component.
-        HOY_: An hour of the year for which you would like to select a sky.  This must be a value between 1 and 8760.
+        HOY_: An hour of the year or list of hours of the year for which you would like to select a sky.  This must be a value between 1 and 8760.
         _analysisPeriod_: An analysis period from Analysis Period component.  This will override an input HOY (hour of the year).
         removeDiffuse_: Set to "True" if you want to remove the diffuse component of the selected sky.
         removeDirect_: Set to "True" if you want to remove the direct component of the selected sky.
@@ -40,7 +40,8 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_selectSkyMtx"
 ghenv.Component.NickName = 'selectSkyMtx'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -58,16 +59,33 @@ from Grasshopper.Kernel.Data import GH_Path
 def getHourlySky(daylightMtxDict, HOY):
     # for presentation
     lb_preparation = sc.sticky["ladybug_Preparation"]()
-    stDate = lb_preparation.hour2Date(HOY, 1)
-    analysisP = ((stDate[1]+1, stDate[0], stDate[2]-1),(stDate[1]+1, stDate[0], stDate[2]))
+    HOY.sort()
+    stDate = lb_preparation.hour2Date(HOY[0], 1)
+    if len(HOY) == 1:
+        analysisP = ((stDate[1]+1, stDate[0], stDate[2]-1),(stDate[1]+1, stDate[0], stDate[2]))
+    else:
+        endDate = lb_preparation.hour2Date(HOY[-1], 1)
+        analysisP = ((stDate[1]+1, stDate[0], stDate[2]-1),(endDate[1]+1, endDate[0], endDate[2]-1))
     
     hourlyMtx = []
     for patchNumber in daylightMtxDict.keys():
-        convertedMtx = []
-        for val in daylightMtxDict[patchNumber][HOY]: convertedMtx.append(val/1000)
-        hourlyMtx.append(convertedMtx)
-    return hourlyMtx, analysisP
+        cumulativeDifValue = 0
+        cumulativeDirValue = 0
+        # adding upp the values
+        try:
+            for hoy in HOY:
+                difValue, dirValue = daylightMtxDict[patchNumber][hoy]
+                cumulativeDifValue += difValue
+                cumulativeDirValue += dirValue 
+        except Exception, e:
+            warning = 'One of the HOYs is less than 1 or greater than 8760.'
+            print warning
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        
+        hourlyMtx.append([cumulativeDifValue/1000, cumulativeDirValue/1000])
     
+    return hourlyMtx, analysisP
+
 def getCumulativeSky(daylightMtxDict, runningPeriod):
     
     lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -149,6 +167,7 @@ def isLadybugFlying():
     if sc.sticky.has_key('ladybug_release'):
         try:
             if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): return False
+            if sc.sticky['ladybug_release'].isInputMissing(ghenv.Component): return -1
         except:
             warning = "You need a newer version of Ladybug to use this compoent." + \
             "Use updateLadybug component to update userObjects.\n" + \

@@ -29,13 +29,15 @@ Useful links
 ========================================
 [Ladybug group page on Grasshopper](http://www.grasshopper3d.com/group/ladybug)
 
-[Facebook page](https://www.facebook.com/LadyBugforGrasshopper)
+[Facebook page](https://www.facebook.com/LadybugAnalysisTools)
 
 [Ladybug on Twitter](https://www.twitter.com/ladybug_tool)
 
 Contributors(a-z):
 ========================================
 [Anton Szilasi](https://github.com/antonszilasi)
+
+[Antonello Di Nunzio](https://github.com/AntonelloDN)
 
 Alex Jacobson
 
@@ -46,6 +48,8 @@ Alex Jacobson
 [Chris Mackey](https://github.com/chriswmackey)
 
 [Djordje Spasic](https://github.com/stgeorges)
+
+Jason Sensibaugh
 
 [Mostapha Roudsari](https://github.com/mostapharoudsari)
 

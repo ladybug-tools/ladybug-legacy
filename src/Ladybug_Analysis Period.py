@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to set an analysis period, which can be used as input for a variety of other Ladybug and Honeybee components.  Default analysis period without any inputs is set to the entire year.
 -
-Provided by Ladybug 0.0.60
+Provided by Ladybug 0.0.65
     
     Args:
         _fromMonth_: A number between 1 and 12 that represents the month of the year for the start of the analysis.  Default starting month is set to 1 (January).
@@ -41,7 +41,8 @@ Provided by Ladybug 0.0.60
 
 ghenv.Component.Name = "Ladybug_Analysis Period"
 ghenv.Component.NickName = 'analysisPeriod'
-ghenv.Component.Message = 'VER 0.0.60\nJUL_06_2015'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -79,22 +80,6 @@ def main(fromMonth, fromDay, fromHour, toMonth, toDay, toHour):
         print error
         ghenv.Component.AddRuntimeMessage(we, error)
         return -1
-    
-    elif toHour == fromHour and toHour!=24:
-        warning1 = 'Start and finish hour inputs are the same...' + \
-                   'Ladybug added 1 hour to toHour not to crash!'
-        print warning1
-        ghenv.Component.AddRuntimeMessage(ww, warning1)
-        toHour += 1
-        toHour = lb_preparation.checkHour(toHour)
-        #return -1
-    
-    elif toHour == fromHour and toHour==24:
-        warning1 = 'I guess by setting both toHour and fromHour to 24 ' + \
-                   'you mean fromHour = 1 toHour = 24...right?'
-        print warning1
-        ghenv.Component.AddRuntimeMessage(ww, warning1)
-        fromHour = 1
     
     elif toHour < fromHour:
         warning2 = 'Well! I think I know what do you mean by ' + \
