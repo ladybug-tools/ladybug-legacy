@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Update File"
 ghenv.Component.NickName = 'updateGHFile'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJUL_31_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -48,6 +48,7 @@ import Grasshopper
 import System
 import os
 from datetime import datetime
+import time
 
 
 def markComponent(doc, comp, note=None):
@@ -105,7 +106,11 @@ def collectGHPythonComponents(document=None):
 def parseVersionAndDate(version, date):
     version = sum(int(n) * 10 ** i for i, n
         in enumerate(reversed(version.split("VER ")[1].split("."))))
-    date = datetime.strptime(date, '%b_%d_%Y')    
+    try:
+        date = datetime.strptime(date, '%b_%d_%Y')
+    except AttributeError:
+        date = time.strptime(date, '%b_%d_%Y')
+
     return version, date
 
 
