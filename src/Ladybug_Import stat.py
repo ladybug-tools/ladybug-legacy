@@ -33,12 +33,12 @@ Provided by Ladybug 0.0.65
         
     Returns:
         readMe!: ...
-        ashraeClimateZone: The estimated ASHRAE climate zone of the STAT file.  ASHRAE climate zones are frequently used to make suggestions for heating and cooling systems and correspond to recommendations for insulation levels of a building.  For more information, see this pdf: https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf
+        ashraeClimateZone: The estimated ASHRAE climate zone of the STAT file.  ASHRAE climate zones are frequently used to make suggestions for heating and cooling systems and correspond to recommendations for insulation levels of a building.
+        ashraeClimateZoneDescription: The description of ASHRAE climate zone provided in the output above. For more information on ASHRAE climate names, please the PDF at https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf
         koppenClimateZone: The estimated Koppen climate zone of the STAT file.  The Koppen climate classification is the most widely used climate classification system and is based on the concept that native vegetation is the best expression of climate. Thus, Koppen climate zones combine average annual and monthly temperatures, precipitation, and the seasonality of precipitation.  For more information, see the wikipendia page on Koppen climate: http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification.
-        --------------------: ...
+        koppenClimateZoneDescription: The description of koppen climate zone number provided by the output above. To know more about koppen climate zones and their definitions, please visit, http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/koppen-climate-classification.html and https://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
         heatingDesignTemp: The temperature in Celcius that ASHRAE recommends using to design a heating system for a building.  It rempresents the one of the coldest temperatures of the year for which only 0.4% of the hours are below.
         coolingDesignTemp: The temperature in Celcius that ASHRAE recommends using to design a cooling system for a building.  It rempresents the one of the hottest temperatures of the year for which only 0.4% of the hours are above.
-        --------------------: ...
         extremeHotWeek: An analysis period representing the hottest week of the typical mean year.  If the stat file does not specify an extreme hot week, it is the most extreme week of the hottest season.
         typicalHotWeek: An analysis period representing a typical week of the hottest season in the typical mean year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
         typicalWeek: An analysis period representing a typical week of the typical mean year.  If the stat file does not specify a typical week, it is the typical week of Autumn.
@@ -115,7 +115,7 @@ if _statFile and _statFile.lower().endswith(".stat"):
                     break
             
             # Add climate definition for koppenClimate types
-            # Climate definitions mentioned below are taken from following two links
+            # Climate descriptions mentioned below are taken from following two links;
             # http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/koppen-climate-classification.html
             # https://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
             koppenClimateName = {
@@ -411,9 +411,12 @@ if _statFile and _statFile.lower().endswith(".stat"):
                     "Highland areas can encompass any of the previously mentioned major categories  the determining factor is one of altitude (temperature decreases roughly 2 C for every increase of 305 m). This is a complex climate zone. Highland regions roughly correspond to the major categories change in temperature with latitude - with one important exception. Seasons only exist in highlands if they also exist in the nearby lowland regions. For example, although A climates have cooler temperatures at higher elevations, the seasonal changes of C, D and E climates are not present."
                     ]
             }
+            # This is the list container for koppenClimateZoneDescription output from this component.
+            koppenClimateZoneDescription = []
+            
             if koppenClimateZone.lower() in koppenClimateName.keys():
                 key = koppenClimateZone.lower()
-                koppenClimateZone = [koppenClimateZone] + koppenClimateName[key]
+                koppenClimateZoneDescription = koppenClimateName[key]
             else:
                 pass
 
@@ -429,26 +432,28 @@ if _statFile and _statFile.lower().endswith(".stat"):
             # Add the ASHRAE climate name for the climate number
             # Following climate names are taken from https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf
             climateName = {
-            "1A" : " | Very Hot - Humid",
-            "1B" : " | Dry",
-            "2A" : " | Hot - Humid",
-            "2B" : " | Dry",
-            "3A" : " | Warm - Humid",
-            "3B" : " | Dry",
-            "3C" : " | Warm - Marine",
-            "4A" : " | Mixed - Humid",
-            "4B" : " | Dry",
-            "4C" : " | Mixed - Marine",
-            "5A" : " | Cold - Humid",
-            "5B" : " | Dry",
-            "5C" : " | Marine",
-            "6A" : " | Cold - Humid",
-            "6B" : " | Dry",
-            "7" : " | Very Cold",
-            "8" : " | Subarctic",
+            "1A" : "Very Hot - Humid",
+            "1B" : "Dry",
+            "2A" : "Hot - Humid",
+            "2B" : "Dry",
+            "3A" : "Warm - Humid",
+            "3B" : "Dry",
+            "3C" : "Warm - Marine",
+            "4A" : "Mixed - Humid",
+            "4B" : "Dry",
+            "4C" : "Mixed - Marine",
+            "5A" : "Cold - Humid",
+            "5B" : "Dry",
+            "5C" : "Marine",
+            "6A" : "Cold - Humid",
+            "6B" : "Dry",
+            "7" : "Very Cold",
+            "8" : "Subarctic",
             }
+            # This is the string variable for the output of ashraeClimateZoneName on this component.
+            ashraeClimateZoneDescription = ""
             if ashraeClimateZone in climateName.keys():
-                ashraeClimateZone += climateName[ashraeClimateZone]
+                ashraeClimateZoneDescription = climateName[ashraeClimateZone]
             else:
                 pass
             
