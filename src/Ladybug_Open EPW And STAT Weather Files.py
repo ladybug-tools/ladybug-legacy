@@ -143,9 +143,9 @@ def addresses(directory):
         keyText = ''
     for file in os.listdir(directory):
         if file.endswith('.epw') and keyText in file.replace('.','_'):
-            epw = directory + '/' + file
+            epw = directory + file
         elif file.endswith('.stat')and keyText in file.replace('.','_'):
-            stat = directory + '/' + file
+            stat = directory + file
     
     return epw, stat
 
