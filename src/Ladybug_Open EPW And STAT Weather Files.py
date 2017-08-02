@@ -111,7 +111,7 @@ def download(url, workingDir):
         return webFile
         
     except Exception, e:
-        warning = 'You are not connected to the internet and you do not have the weather files already on your computer. You must be connected to the internet to download the files with this component.'
+        warning = 'You are not connected to the internet or a firewall is preventing you from downloading the EPW file.\nConnect to the internet or make an exception for Rhino in your firewall and try again.'
         warning += '\n' + `e`
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
