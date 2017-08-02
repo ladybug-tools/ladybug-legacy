@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'EPW+STAT'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -74,7 +74,11 @@ def checkTheInputs(_weatherFileURL):
         lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
         
         if _weatherFileURL and (_weatherFileURL.startswith('https://') or _weatherFileURL.startswith('http://')):
-            folderName = _weatherFileURL.split('/')[-2]
+            if _weatherFileURL.endswith('.zip') or _weatherFileURL.endswith('.ZIP') or _weatherFileURL.endswith('.Zip'):
+                folderName = _weatherFileURL.split('/')[-1][:-4]
+            else:
+                folderName = _weatherFileURL.split('/')[-2]
+            
             checkData = True
         else:
             checkData = False
@@ -111,7 +115,7 @@ def download(url, workingDir):
         return webFile
         
     except Exception, e:
-        warning = 'You are not connected to the internet or a firewall is preventing you from downloading the EPW file.\nConnect to the internet or make an exception for Rhino in your firewall and try again.'
+        warning = 'You are not connected to the internet and you do not have the weather files already on your computer. You must be connected to the internet to download the files with this component.'
         warning += '\n' + `e`
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
