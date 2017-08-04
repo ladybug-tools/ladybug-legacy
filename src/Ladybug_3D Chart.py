@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_04_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -253,12 +253,13 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
             if boolean == False:
                 cullFaceIndices.append(count)
                 cullPtIndices.append(count)
-                if count < len(values)-yCount:
-                    cullFaceIndices.append(count+len(values))
-                    cullFaceIndices.append(count+len(values)-yCount)
-                extraVal = int((count - (yCount+1))/yCount)-1
-                cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal)
-                cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal+1)
+                if zScale > 0.0:
+                    if count < len(values)-yCount:
+                        cullFaceIndices.append(count+len(values))
+                        cullFaceIndices.append(count+len(values)-yCount)
+                    extraVal = int((count - (yCount+1))/yCount)-1
+                    cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal)
+                    cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal+1)
             else: pass
         cullPtIndices.reverse()
         for count in cullPtIndices: del dataPts[count]
