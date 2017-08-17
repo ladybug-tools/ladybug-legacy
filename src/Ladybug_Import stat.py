@@ -34,11 +34,18 @@ Provided by Ladybug 0.0.65
     Returns:
         readMe!: ...
         ashraeClimateZone: The estimated ASHRAE climate zone of the STAT file.  ASHRAE climate zones are frequently used to make suggestions for heating and cooling systems and correspond to recommendations for insulation levels of a building.
-        ashraeClimateZoneDescription: The description of ASHRAE climate zone provided in the output above. For more information on ASHRAE climate names, please the PDF at https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf
+        ashraeZoneDescription: The description of ASHRAE climate zone provided in the output above. For more information on ASHRAE climate names, please the PDF at https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf
         koppenClimateZone: The estimated Koppen climate zone of the STAT file.  The Koppen climate classification is the most widely used climate classification system and is based on the concept that native vegetation is the best expression of climate. Thus, Koppen climate zones combine average annual and monthly temperatures, precipitation, and the seasonality of precipitation.  For more information, see the wikipendia page on Koppen climate: http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification.
-        koppenClimateZoneDescription: The description of koppen climate zone number provided by the output above. To know more about koppen climate zones and their definitions, please visit, http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/koppen-climate-classification.html and https://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
-        heatingDesignTemp: The temperature in Celcius that ASHRAE recommends using to design a heating system for a building.  It rempresents the one of the coldest temperatures of the year for which only 0.4% of the hours are below.
-        coolingDesignTemp: The temperature in Celcius that ASHRAE recommends using to design a cooling system for a building.  It rempresents the one of the hottest temperatures of the year for which only 0.4% of the hours are above.
+        koppenZoneDescription: The description of koppen climate zone number provided by the output above. To know more about koppen climate zones and their definitions, please visit, http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/koppen-climate-classification.html and https://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
+        ---------------: ...
+        heatingDesignDay: An analysis period that represents the day of the year that should be used to size the heating system.
+        coolingDesignDay: An analysis period that represents the day of the year that should be used to size the cooling system.
+        heatingDesignTemps: The temperatures in celcius that ASHRAE recommends using to size a heating system to meet a building's sensible heating demand.  The two values output here represent some of the coldest temperatures of the year for which only 0.4% and 1.0% of the hours are below (respectively).
+        coolingDesignTemps: The temperatures in celcius that ASHRAE recommends using to size a cooling system to meet a building's sensible cooling demand.  The two values output here represent some of the hottest temperatures of the year for which only 0.4% and 1.0% of the hours are above (respectively).
+        coolingDayTempRange: The temperature difference between the hottest and coolest outdoor temperatures on the cooling design day.  This is used on conjunction with the warmest temperature (above) and a "Daily Temperature Range Profile" defined by ASHRAE to produce hourly temperatures for a cooling system sizing calculation.
+        monthlyTauBeam: Values representing the monthly optical sky depth for beam (direct) solar radiation.  These can be used with the "Ladybug_Design Day Sky" component to create ASHRAE Tau design day solar radiation values.  These values can then be used for sizing HVAC cooling systems.
+        monthlyTauDiffuse: Values representing the monthly optical sky depth for diffuse solar radiation.  These can be used with the "Ladybug_Design Day Sky" component to create ASHRAE Tau design day solar radiation values.  These values can then be used for sizing HVAC cooling systems.
+        ---------------:...
         extremeHotWeek: An analysis period representing the hottest week of the typical mean year.  If the stat file does not specify an extreme hot week, it is the most extreme week of the hottest season.
         typicalHotWeek: An analysis period representing a typical week of the hottest season in the typical mean year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
         typicalWeek: An analysis period representing a typical week of the typical mean year.  If the stat file does not specify a typical week, it is the typical week of Autumn.
@@ -47,7 +54,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Import stat"
 ghenv.Component.NickName = 'importSTAT'
-ghenv.Component.Message = 'VER 0.0.65\nAUG_01_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_17_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -58,54 +65,113 @@ except: pass
 
 import Grasshopper.Kernel as gh
 
-if _statFile and _statFile.lower().endswith(".stat"):
+if _statFile != None and _statFile.lower().endswith(".stat"):
     # I read all the lines as a list
     try:
         with open(_statFile, 'r') as statFile:
             statFileLines = statFile.readlines()
             
             #Search the first part of the file for heating design temperatures.
-            heatCount = 1
-            for line in statFileLines[:26]:
+            heatingDesignTemps = []
+            htrigger = False
+            heatCount1 = None
+            heatCount2 = None
+            for line in statFileLines:
                 if 'Coldest' in line:
+                    htrigger = True
                     heatLineSplit = line.split('\t')
                     for elementCount, element in enumerate(heatLineSplit):
                         if element == 'HDB 99.6%':
-                            heatCount = elementCount
+                            heatCount1 = elementCount
                         elif element == 'DB996':
-                            heatCount = elementCount
-                        else: pass
-                else: pass
-                if 'Heating' in line:
-                    heatingDesignTemp = line.split('\t')[heatCount]
-                else: pass
-            if heatingDesignTemp == None or heatingDesignTemp == 'Heating':
+                            heatCount1 = elementCount
+                        elif element == 'HDB 99%':
+                            heatCount2 = elementCount
+                        elif element == 'DB990':
+                            heatCount2 = elementCount
+                if 'Heating' in line and htrigger == True:
+                    htrigger = False
+                    if heatCount1 != None:
+                        heatingDesignTemps.append(line.split('\t')[heatCount1].strip())
+                    if heatCount2 != None:
+                        heatingDesignTemps.append(line.split('\t')[heatCount2].strip())
+            if heatingDesignTemps == None or heatingDesignTemps == 'Heating':
                 warning = 'Failed to find a heating design temperature in the stat file.'
                 print warning
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
-            else: pass
             
             #Search the second part of the file for cooling design temperatures.
-            coolCount = 1
-            for line in statFileLines[:26]:
+            coolingDesignTemps = []
+            ctrigger = False
+            coolCount1 = None
+            coolCount2 = None
+            coolCount3 = None
+            for line in statFileLines:
                 if 'Hottest' in line:
+                    ctrigger = True
                     coolLineSplit = line.split('\t')
                     for elementCount, element in enumerate(coolLineSplit):
                         if element == 'CDB .4%':
-                            coolCount = elementCount
+                            coolCount1 = elementCount
                         elif element == 'DB004':
-                            coolCount = elementCount
-                        else:pass
-                else: pass
-                if 'Cooling' in line:
-                    coolingDesignTemp = line.split('\t')[coolCount]
-                else: pass
-            if coolingDesignTemp == None or coolingDesignTemp == 'Cooling':
+                            coolCount1 = elementCount
+                        elif element == 'CDB 1%':
+                            coolCount2 = elementCount
+                        elif element == 'DB010':
+                            coolCount2 = elementCount
+                        elif 'Avg DB Range' in element:
+                            coolCount3 = elementCount
+                        elif element == 'DBR':
+                            coolCount3 = elementCount
+                if 'Cooling' in line and ctrigger == True:
+                    ctrigger = False
+                    if coolCount1 != None:
+                        coolingDesignTemps.append(line.split('\t')[coolCount1].strip())
+                    if coolCount2 != None:
+                        coolingDesignTemps.append(line.split('\t')[coolCount2].strip())
+                    if coolCount3 != None:
+                        coolingDayTempRange = line.split('\t')[coolCount3].strip()
+            if coolingDesignTemps == None or coolingDesignTemps == 'Cooling':
                 warn = 'Failed to find a cooling design temperature in the stat file.'
                 print warn
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warn)
-            else: pass
             
+            # Search for the Monthly Optical Sky Depth.
+            location = statFileLines[2].split('-- ')[-1].strip()
+            monthlyTauBeam = ["key:location/dataType/units/frequency/startsAt/endsAt", location, 'Clear Sky Optical Depth for Beam Irradiance', 'Continuous', 'Monthly', (1, 1, 1), (12, 31, 24)]
+            monthlyTauDiffuse = ["key:location/dataType/units/frequency/startsAt/endsAt", location, 'Clear Sky Optical Depth for Diffuse Irradiance', 'Continuous', 'Monthly', (1, 1, 1), (12, 31, 24)]
+            for line in statFileLines[:43]:
+                if 'taub (beam)' in line:
+                    beamLineSplit = line.split('\t')
+                    monthlyTauBeam.extend(beamLineSplit[2:14])
+                elif 'taud (diffuse)' in line:
+                    diffLineSplit = line.split('\t')
+                    monthlyTauDiffuse.extend(diffLineSplit[2:14])
+            if len(monthlyTauBeam) == 7:
+                monthlyTauBeam = []
+            if len(monthlyTauDiffuse) == 7:
+                monthlyTauDiffuse = []
+            
+            # Figure out the design days from the monthly average temperatures.
+            heatingDesignDay = []
+            coolingDesignDay = []
+            daytrigger = False
+            for line in statFileLines[:63]:
+                if 'Drybulb 0.4%' in line and not '=' in line:
+                    designLineSplit = line.split('\t')[2:14]
+                    designLineSplit = [float(i) for i in designLineSplit]
+                    designLineSplit, designMonths = zip(*sorted(zip(designLineSplit, range(1,12))))
+                    heatingDesignDay = [(designMonths[0], 21, 1),(designMonths[0], 21, 24)]
+                    coolingDesignDay = [(designMonths[-1], 21, 1),(designMonths[-1], 21, 24)]
+                elif 'Monthly Statistics for Dry Bulb temperatures' in line and heatingDesignDay == [] and coolingDesignDay == []:
+                    daytrigger = True
+                elif daytrigger == True and 'Daily Avg' in line:
+                    daytrigger = False
+                    designLineSplit = line.split('\t')[2:14]
+                    designLineSplit = [float(i) for i in designLineSplit]
+                    designLineSplit, designMonths = zip(*sorted(zip(designLineSplit, range(1,12))))
+                    heatingDesignDay = [(designMonths[0], 21, 1),(designMonths[0], 21, 24)]
+                    coolingDesignDay = [(designMonths[-1], 21, 1),(designMonths[-1], 21, 24)]
             
             # Search line by line  after line 220 for the climate zones.
             for line in statFileLines[220:]:
@@ -411,12 +477,12 @@ if _statFile and _statFile.lower().endswith(".stat"):
                     "Highland areas can encompass any of the previously mentioned major categories  the determining factor is one of altitude (temperature decreases roughly 2 C for every increase of 305 m). This is a complex climate zone. Highland regions roughly correspond to the major categories change in temperature with latitude - with one important exception. Seasons only exist in highlands if they also exist in the nearby lowland regions. For example, although A climates have cooler temperatures at higher elevations, the seasonal changes of C, D and E climates are not present."
                     ]
             }
-            # This is the list container for koppenClimateZoneDescription output from this component.
-            koppenClimateZoneDescription = []
+            # This is the list container for koppenZoneDescription output from this component.
+            koppenZoneDescription = []
             
             if koppenClimateZone.lower() in koppenClimateName.keys():
                 key = koppenClimateZone.lower()
-                koppenClimateZoneDescription = koppenClimateName[key]
+                koppenZoneDescription = koppenClimateName[key]
             else:
                 pass
 
@@ -451,9 +517,9 @@ if _statFile and _statFile.lower().endswith(".stat"):
             "8" : "Subarctic",
             }
             # This is the string variable for the output of ashraeClimateZoneName on this component.
-            ashraeClimateZoneDescription = ""
+            ashraeZoneDescription = ""
             if ashraeClimateZone in climateName.keys():
-                ashraeClimateZoneDescription = climateName[ashraeClimateZone]
+                ashraeZoneDescription = climateName[ashraeClimateZone]
             else:
                 pass
             
@@ -541,11 +607,12 @@ if _statFile and _statFile.lower().endswith(".stat"):
             if extremeColdWeek == None:
                 print 'No extreme cold week was found in the stat file.'
             else: pass
-            
-            
     except Exception, e:
-        msg = "Invalid stat file path."
+        msg = "Failed to parse stat file." + str(e)
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
-        pass
+elif _statFile != None:
+    warning = '_statFile is not a valid .stat file.'
+    print warning
+    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
 else:
     print "Please connect a stat file path location."
