@@ -143,10 +143,16 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             for line in statFileLines[:43]:
                 if 'taub (beam)' in line:
                     beamLineSplit = line.split('\t')
-                    monthlyTauBeam.extend(beamLineSplit[2:14])
+                    beamVals = [float(i) if 'N' not in i else None for i in beamLineSplit[2:14]]
+                    avgOptDepth = sum(filter(None, beamVals))/len(filter(None, beamVals))
+                    beamVals = [i if i != None else avgOptDepth for i in beamVals]
+                    monthlyTauBeam.extend(beamVals)
                 elif 'taud (diffuse)' in line:
                     diffLineSplit = line.split('\t')
-                    monthlyTauDiffuse.extend(diffLineSplit[2:14])
+                    diffVals = [float(i) if 'N' not in i else None for i in diffLineSplit[2:14]]
+                    avgOptDepth = sum(filter(None, diffVals))/len(filter(None, diffVals))
+                    diffVals = [i if i != None else avgOptDepth for i in diffVals]
+                    monthlyTauDiffuse.extend(diffVals)
             if len(monthlyTauBeam) == 7:
                 monthlyTauBeam = []
             if len(monthlyTauDiffuse) == 7:
