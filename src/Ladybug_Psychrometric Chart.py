@@ -90,11 +90,11 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_30_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nAUG_30_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -458,23 +458,54 @@ def checkTheInputs():
     
     #Check the annualhourly data and conditional statement
     checkData11 = True
+    listInfo = []
     annualHourlyData = _dryBulbTemperature + _relativeHumidity + annualHourlyData_
     if epwData == True and len(_dryBulbTemperature + _relativeHumidity) > 17533 and conditionalStatement_:
-        titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement_)
+        titleStatement, patternList, indexList, listInfo = checkConditionalStatement(annualHourlyData, conditionalStatement_)
         if titleStatement == -1 or patternList == -1:
             checkData11 = False
     else:
         titleStatement = None
         patternList = []
     
-    #Check the passive strategy inputs to be sure that they are correct.
+    # Check the passive strategy inputs to be sure that they are correct.
     checkData12 = True
+    solarCheck = False
     if len(passiveStrategy_) > 0:
         for item in passiveStrategy_:
-            if item == "Evaporative Cooling" or item == "Thermal Mass + Night Vent"  or item == "Occupant Use of Fans" or item == "Internal Heat Gain" or item == "Humidification Only" or item == "Dehumidification Only" or item == "Dessicant Dehumidification": pass
-            else: checkData12 = False
+            if item == "Evaporative Cooling" or item == "Thermal Mass + Night Vent"  or item == "Occupant Use of Fans" or item == "Internal Heat Gain" or item == "Humidification Only" or item == "Dehumidification Only" or item == "Dessicant Dehumidification":
+                pass
+            elif item == "Passive Solar Heating":
+                solarCheck = True
+            else:
+                checkData12 = False
     if checkData12 == False:
         warning = 'Input for passiveStrategy_ is not valid.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    
+    # If passive solar is connected as a strategy, make sure that globalHorizontalRadiation is connected for annualHourlyData.
+    globHorizRad = []
+    checkData15 = True
+    if solarCheck == True:
+        if annualHourlyData_ == []:
+            checkData15 = False
+        elif listInfo == []:
+            lb_preparation = sc.sticky["ladybug_Preparation"]()
+            indexList, listInfo = lb_preparation.separateList(annualHourlyData_, lb_preparation.strToBeFound)
+        
+        if checkData15 == True:
+            checkData15 = False
+            for count, datList in enumerate(listInfo):
+                if 'Radiation' in datList[2]:
+                    checkData15 = True
+                    globHorizRad = annualHourlyData_[indexList[count]+7:indexList[count+1]]
+    if checkData15 == False:
+        warning = 'If "Passive Solar Heating" is requested on the passiveStrategy_ input, you must connect\n' + \
+        "solar radiation values to the annualHourlyData_ input of this component.\n" + \
+        "These radiation values should be the total solar falling on a window surface.\n" +\
+        "So connecting an EPW's globalHorizontalRadiation will approximate passive solar heat through a skylight\n"+\
+        "and using the Ladybug_Surface Hourly Solar component will allow you to calculate this for a window facing any direction."
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
@@ -572,7 +603,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1, -1
         
-        return titleStatement, patternList
+        return titleStatement, patternList, indexList, listInfo
 
 
 def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, opTemp, lb_visualization):
@@ -1068,7 +1099,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         upTemperPts = []
         downTemperPts = []
         for count, humidity in enumerate(range(0,150,50)):
-            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh, opTemp)
+            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh, opTemp)
             if IPTrigger == True: upTemper, downTemper = C2F([upTemper])[0], C2F([downTemper])[0]
             
             if upTemper < maxTempe:
@@ -1389,7 +1420,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         #Calculate the upper boundary of Natural ventilation.
                         upTemperPts = []
                         for count, humidity in enumerate(range(0,150,50)):
-                            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh, opTemp)
+                            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh, opTemp)
                             
                             if IPTrigger: upTemperSpatial, downTemperSpatial = C2F([upTemper])[0], C2F([downTemper])[0]
                             else: upTemperSpatial, downTemperSpatial = upTemper, downTemper
@@ -1868,7 +1899,6 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         # Calculate the comfort and strategy polygons.
         try:
             comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp)
-            
             #Calculate how many hours are in each comfort or strategy and comfort polygons.
             totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList)
         except:

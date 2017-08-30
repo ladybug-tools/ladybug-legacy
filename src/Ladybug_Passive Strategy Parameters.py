@@ -39,14 +39,14 @@ Provided by Ladybug 0.0.65
     Args:
         maxTempAboveComf_: An optional number in degrees C representing the maximum daily temperature above the comfort range which can still be counted in the Thermal Mass + Night Flush polygon.  The default is set to 16.7 C above the highest comfort temperature.
         minNightDiffBelowComf_: An optional number in degrees C representing the minimum temperature below the maximum comfort temperature that the outdoor temperature must drop at night in order to count towards the Thermal Mass + Night Flush polygon. The default is set to 2.8 C.
-        maxComfortableAirSpeed_: An optional number in m/s that represents the maximum winds speed tolerable before it starts blowing papers and becomes annoying to occupants.  This is used to shape the "Occupant Use of Fans" Polygon and the default is set ot 1.5 m/s.
+        maxComfortableAirSpeed_: An optional number in m/s that represents the maximum winds speed tolerable before becomes annoying to occupants.  This is used to shape the "Occupant Use of Fans" Polygon and the default is set ot 1.5 m/s, which is just above the speed at which papers on a desk might move in the wind.
         lowestBldgBalancePt_: An optional number representing the building balance point, which will be used to shape the "Internal Heat Gain" strategy polygon.  The default is set to 12.8 C and it is assumed that, above this outdoor temperature, the building is free-running and occupants are able to open windows as they wish.  Note that this default balance temperature of 12.8 is fairly low and assumes a large number of inside heat sources or people as well as in insulated envelope.
     Returns:
         strategyPar: Passive strategy parameters that can be plugged into the "Ladybug_Psychrometric Chart" to adjust the assumptions of the passive strategy polygons.
 """
 ghenv.Component.Name = "Ladybug_Passive Strategy Parameters"
 ghenv.Component.NickName = 'StrategyPar'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_30_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

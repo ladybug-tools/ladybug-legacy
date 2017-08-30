@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_30_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -3787,9 +3787,7 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD, opTemp=False):
-        upTemper = initialGuessUp
-        upDelta = 3
+    def calcComfRange(self, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD, opTemp=False):
         if targetPPD == 10.0: targetPMV = 0.5
         elif targetPPD == 6.0: targetPMV = 0.220
         elif targetPPD == 15.0: targetPMV = 0.690
@@ -3810,25 +3808,64 @@ class ComfortModels(object):
             intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
             targetPMV = intersectPts[0].PointA.X
         
-        while abs(upDelta) > 0.01:
-            if opTemp == True:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
+        def utilSecant(a, b, epsilon, target):
+            # root-finding only
+            res = []
+            def fn(upTemper):
+                if opTemp == True:
+                    return self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+                else:
+                    return self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+            f1 = fn(a)
+            if abs(f1) <= epsilon: res.append(a)
             else:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            upDelta = targetPMV - pmv
-            upTemper = upTemper + upDelta
+                f2 = fn(b)
+                if abs(f2) <= epsilon: res.append(b)
+                else:
+                    count = range(100)
+                    for i in count:
+                        if (b - a) != 0 and (f2 - f1) != 0:
+                            slope = (f2 - f1) / (b - a)
+                            c = b - f2/slope
+                            f3 = fn(c)
+                            if abs(f3) < epsilon:
+                                res.append(c)
+                            a = b
+                            b = c
+                            f1 = f2
+                            f2 = f3
+                res.append('NaN')
+            
+            return res[0]
         
-        if initialGuessDown == None:
-            downTemper = upTemper - 6
-        else: downTemper = initialGuessDown
-        downDelta = 3
-        while abs(downDelta) > 0.01:
-            if opTemp == True:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
-            else:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            downDelta = -targetPMV - pmv
-            downTemper = downTemper + downDelta
+        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilBisect function definition.
+        def utilBisect(a, b, epsilon, target):
+            def fn(t):
+                if opTemp == True:
+                    return self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+                else:
+                    return self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+            while abs(b - a) > (2 * epsilon):
+                midpoint = (b + a) / 2
+                a_T = fn(a)
+                b_T = fn(b)
+                midpoint_T = fn(midpoint)
+                if (a_T - target) * (midpoint_T - target) < 0: b = midpoint
+                elif (b_T - target) * (midpoint_T - target) < 0: a = midpoint
+                else: return -999
+            return midpoint
+        
+        # Calculate the lower limit of comfort.
+        epsilon = 0.001
+        a = -50
+        b = 50
+        upTemper = utilSecant(a, b, epsilon, targetPMV)
+        if upTemper == 'NaN':
+            upTemper = utilBisect(a, b, epsilon, targetPMV)
+        downTemper = utilSecant(a, b, epsilon, -targetPMV)
+        if downTemper == 'NaN':
+            downTemper = utilBisect(a, b, epsilon, -targetPMV)
         
         return upTemper, downTemper
     
