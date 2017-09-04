@@ -50,11 +50,11 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Design Day Sky Model"
 ghenv.Component.NickName = 'DesignDaySky'
-ghenv.Component.Message = 'VER 0.0.65\nAUG_17_2017'
+ghenv.Component.Message = 'VER 0.0.65\nSEP_03_2017'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import scriptcontext as sc
