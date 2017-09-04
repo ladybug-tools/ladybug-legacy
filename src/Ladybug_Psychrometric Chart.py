@@ -1079,7 +1079,7 @@ def unionAllCurves(Curves):
     return res
 
 
-def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp, globHorizRad, airTemp):
+def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp, globHorizRad, airTemp, origAirTemp, origGlobHorizRad, origHrs):
     #Take just the top middle and bottom lines for making the comofrt range in order to speed up the calculation.
     relHumidLines = [relHumidLines[0], relHumidLines[5], relHumidLines[10]]
     
@@ -1507,7 +1507,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                             comfFound = 0
                             solarHeatContribs = []
                             for pastRad in range(int(solarTimeConst)):
-                                heatContrib = ((int(solarTimeConst)-pastRad)/solarTimeConst)*globHorizRad[hourCt-pastRad]
+                                heatContrib = ((int(solarTimeConst)-pastRad)/solarTimeConst)*origGlobHorizRad[int(origHrs[hourCt]-1-pastRad)]
                                 solarHeatContribs.append(heatContrib)
                             if sum(solarHeatContribs) > solarHeatCap*tempDelta:
                                 deltas.append(tempDelta)
@@ -1660,7 +1660,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
     else:
         return [], [], [], [], [], [], 3, 0, 30, 8, 12.8
 
-def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, globHorizRad, solarHeatCap, solarTimeConst, bldgBalPt, patternList, IPTrigger):
+def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, globHorizRad, origAirTemp, origGlobHorizRad, origHrs, solarHeatCap, solarTimeConst, bldgBalPt, patternList, IPTrigger):
     #Define lists to be filled up with the data.
     strategyPercent = []
     strategyOrNot = []
@@ -1715,7 +1715,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
                     if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" or hourPt.DistanceTo(comfortPolygon.PointAt(comfortPolygon.ClosestPoint(hourPt)[1])) < curveTolerance:
                         comfFound = 0
                         for pastAir in range(int(solarTimeConst)):
-                            if airTemp[hourCt-pastAir] < maxComfortPolyTemp-tempBelowComf:
+                            if origAirTemp[int(origHrs[hourCt]-1-pastAir)] < maxComfortPolyTemp-tempBelowComf:
                                 comfFound = 1
                         comfBool.append(comfFound)
                     else:
@@ -1727,7 +1727,7 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
                         comfFound = 0
                         solarHeatContribs = []
                         for pastRad in range(int(solarTimeConst)):
-                            heatContrib = ((int(solarTimeConst)-pastRad)/solarTimeConst)*globHorizRad[hourCt-pastRad]
+                            heatContrib = ((int(solarTimeConst)-pastRad)/solarTimeConst)*origGlobHorizRad[origHrs[hourCt]-1-pastRad]
                             solarHeatContribs.append(heatContrib)
                         if sum(solarHeatContribs) > solarHeatCap*tempDelta:
                             comfFound = 1
@@ -1750,7 +1750,8 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
                 comfBool.insert(0, epwStr[1])
                 comfBool.insert(0, epwStr[0])
             strategyOrNot.append(comfBool)
-        except:
+        except Exception as e:
+            print e
             strategyPercent.append(0)
             for count in range(len(hourPts)):
                 comfBool.append(0)
@@ -1859,6 +1860,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
+        
         # Read the legend parameters.
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
         
@@ -1881,7 +1883,19 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for list in annualHourlyDataSplit:
                 annualDataStr.append(list[:7])
         
+        # Make copies of important lists.
+        origAirTemp = airTemp[:]
+        origGlobHorizRad = []
+        for count, datList in enumerate(annualDataStr):
+            if 'Radiation' in datList[2] and ('Total' in datList[2] or 'Global' in datList[2]):
+                origGlobHorizRad = annualHourlyDataSplit[count]
+        if len(origAirTemp) == 8767:
+            origAirTemp = origAirTemp[7:]
+        if len(origGlobHorizRad) == 8767:
+            origGlobHorizRad = origGlobHorizRad[7:]
+        
         # If an analysis period is selected, use that to select out the data.
+        origHrs = range(1,8761)
         if analysisPeriod_ != [] and epwData == True and calcLength == 8760:
             airTemp = lb_preparation.selectHourlyData(_dryBulbTemperature, analysisPeriod_)[7:]
             relHumid = lb_preparation.selectHourlyData(_relativeHumidity, analysisPeriod_)[7:]
@@ -1892,6 +1906,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 for num in range(len(airTemp)):
                     barPress2.append(barPress[0])
                 barPress = barPress2
+            origHrs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
             if len(patternList) == 8760:
                 HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
                 newPatternList = []
@@ -1914,6 +1929,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             newAirTemp = []
             newRelHumid = []
             newBarPress = []
+            newOrigHrs = []
             newAnnualHourlyDataSplit = []
             for list in annualHourlyDataSplit:
                 newAnnualHourlyDataSplit.append([])
@@ -1922,12 +1938,14 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                     newAirTemp.append(airTemp[count])
                     newRelHumid.append(relHumid[count])
                     newBarPress.append(barPress[count])
+                    newOrigHrs.append(origHrs[count])
                     if annualHourlyDataSplit != [[]]:
                         for listCount in range(len(annualHourlyDataSplit)):
                             newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
             airTemp = newAirTemp
             relHumid = newRelHumid
             barPress = newBarPress
+            origHrs = newOrigHrs
             annualHourlyDataSplit = newAnnualHourlyDataSplit
         
         # Pull out solar radiation if it's needed for the passive solar heating polygon.
@@ -1993,9 +2011,9 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         
         # Calculate the comfort and strategy polygons.
         try:
-            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp, solarHeatCap, solarTimeConst, bldgBalPt = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp, globHorizRad, airTemp)
+            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp, solarHeatCap, solarTimeConst, bldgBalPt = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp, globHorizRad, airTemp, origAirTemp, origGlobHorizRad, origHrs)
             #Calculate how many hours are in each comfort or strategy and comfort polygons.
-            totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, globHorizRad, solarHeatCap, solarTimeConst, bldgBalPt, patternList, IPTrigger)
+            totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, globHorizRad, origAirTemp, origGlobHorizRad, origHrs, solarHeatCap, solarTimeConst, bldgBalPt, patternList, IPTrigger)
         except Exception as e:
             comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp, solarHeatCap, solarTimeConst, bldgBalPt = None, None, [], [], [], [], None, None, None, None, None
             totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = None, [], None, []
