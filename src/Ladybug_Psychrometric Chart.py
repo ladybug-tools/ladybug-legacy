@@ -835,10 +835,13 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     
     #Make axis labels for the chart.
     xAxisLabels = []
+    unitlLabel = ' [C]'
+    if IPTrigger:
+        unitlLabel = ' [F]'
     if opTemp == True:
-        xAxisTxt = ["Operative Temperature"]
+        xAxisTxt = ["Operative Temperature" + unitlLabel]
     else:
-        xAxisTxt = ["Dry Bulb Temperature"]
+        xAxisTxt = ["Dry Bulb Temperature" + unitlLabel]
     if mollierHX_ == True: xAxisPt = [rc.Geometry.Point3d(-5*legendFontSize, 15, 0)]
     else: xAxisPt = [rc.Geometry.Point3d(tempChartVals[0]-0.5, -4*legendFontSize, 0)]
     xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
@@ -849,16 +852,19 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     chartText.extend(xAxisTxt)
     chartTextPt.extend(xAxisPt)
     
+    unitlLabel = ' [kg water/ kg air]'
+    if IPTrigger:
+        unitlLabel = ' [lb water/ lb air]'
     yAxisLabels = []
-    yAxisTxt = ["Humidity Ratio"]
+    yAxisTxt = ["Humidity Ratio" + unitlLabel]
     if mollierHX_ == True:
         if IPTrigger: yAxisPt = [rc.Geometry.Point3d(40, 115+(4*legendFontSize), 0)]
-        else: yAxisPt = [rc.Geometry.Point3d(20, 50+(4*legendFontSize), 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(15, 50+(4*legendFontSize), 0)]
         yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     else:
-        yAxisPt = [rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.0245*scaleFactor, 0)]
+        yAxisPt = [rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.018*scaleFactor, 0)]
         yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
-        rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.0245*scaleFactor, 0))
+        rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.018*scaleFactor, 0))
         for geo in yAxisLabels:
             geo.Transform(rotateTransf)
     chartText.extend(yAxisTxt)
@@ -1136,7 +1142,8 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
             joinedCurves = rc.Geometry.Curve.JoinCurves([upperBoundary, topCurve, lowerBoundary, bottomCurve])[0]
             comfortCrvSegments.append([upperBoundary, lowerBoundary, topCurve, bottomCurve])
             comfortCurves.append(joinedCurves)
-        except:
+        except Exception as e:
+            print e
             warning = 'Comfort polygon has fallen completely off of the psych chart.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
@@ -1148,6 +1155,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
     bldgBalPt = 12.8
     solarHeatCap = 50
     solarTimeConst = 8
+    polyStart = None
     
     if comfortCurves != []:
         #If the user has speified a max or a min humidity ratio, use that to trim the comfort boundary.
