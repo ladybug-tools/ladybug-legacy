@@ -37,6 +37,8 @@ Provided by Ladybug 0.0.65
         averagedDaily: The averaged data for each day during the analysis period.
         averagedMonthly: The averaged data for each month during the analysis period.
         avrMonthlyPerHour: The data for the average hour of each month during the analysis period.
+        avrMonthlyMinPerHour: The data for the minimal average hour of each month during the analysis period.
+        avrMonthlyMaxPerHour: The data for the maximal average hour of each month during the analysis period.
 """
 
 ghenv.Component.Name = "Ladybug_Average Data"
@@ -70,8 +72,8 @@ outputsDictTot = {
 2: ["totaledDaily", "The totaled data for each day during the analysis period."],
 3: ["totaledMonthly", "The totaled data for each month during the analysis period."],
 4: ["totMonthlyPerHour", "The data for the totaled hour of each month during the analysis period."],
-5: ["totMonthlyMinPerHour", "The minimal monthly value."],
-6: ["totMonthlyMaxPerHour", "The maximal monthly value."]
+5: ["totMonthlyMinPerHour", "The total minimal monthly value."],
+6: ["totMonthlyMaxPerHour", "The total maximal monthly value."]
 }
 
 def restoreOutput():
