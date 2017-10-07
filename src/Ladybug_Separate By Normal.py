@@ -36,9 +36,9 @@ ghenv.Component.NickName = 'separate By Normal'
 ghenv.Component.Message = 'VER 0.0.65\nOCT_06_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
 import rhinoscriptsyntax as rs
