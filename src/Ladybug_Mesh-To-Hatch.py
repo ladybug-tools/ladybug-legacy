@@ -48,11 +48,17 @@ import scriptcontext as sc
 
 def main():
     #Create a layer to hold the hatches.
-    parentLayerName = 'LADYBUG_Hatch'
+    if layerName_ == None:
+        parentLayerName = 'LADYBUG_Hatch'
+    else:
+        parentLayerName = str(layerName_)
     layerT = rc.RhinoDoc.ActiveDoc.Layers #layer table
     parentLayer = rc.DocObjects.Layer()
     parentLayer.Name = parentLayerName
-    parentLayer.IsVisible = True
+    if visible_ == True:
+        parentLayer.IsVisible = True
+    else:
+        parentLayer.IsVisible = False
     parentLayer.Color =  System.Drawing.Color.Pink
     # Add Parent layer if it's not already created
     parentLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, parentLayerName, True)
