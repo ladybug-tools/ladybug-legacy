@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.65\nAUG_17_2017'
+ghenv.Component.Message = 'VER 0.0.65\nNOV_18_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -404,13 +404,15 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 patternList = [False] * 8760
                 titleStatement = False
             
-            hoursOfYear = []
-            for hoy, pattern in enumerate(patternList):
-                if pattern: hoursOfYear.append(hoy + 1)
-            
             # separate the data
             indexList, listInfo = lb_preparation.separateList(inputData, lb_preparation.strToBeFound)
-        
+            
+            # get conditional HOYs.
+            hoursOfYear = []
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod((listInfo[0][5], listInfo[0][6]), 1)
+            for hoy, pattern in enumerate(patternList):
+                if pattern: hoursOfYear.append(HOYS[hoy])
+            
             #separate total, diffuse and direct radiations
             separatedLists = []
             for i in range(len(indexList)-1):
