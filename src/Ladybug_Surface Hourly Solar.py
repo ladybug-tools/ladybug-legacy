@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Surface Hourly Solar"
 ghenv.Component.NickName = 'SrfSolar'
-ghenv.Component.Message = 'VER 0.0.65\nSEP_03_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_05_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -126,8 +126,8 @@ def main(location, directNormal, diffuseHorizontal, analysisPeriod, header, srfA
     endAnnualHour = lb_preparation.date2Hour(endMonth, endDay, endHour)
     HOYS = range(stAnnualHour,endAnnualHour+1)
     for hour in HOYS:
-        d, m, t = lb_preparation.hour2Date(hour, True)
-        lb_sunpath.solInitOutput(m+1, d, t)
+        d, m, t = lb_preparation.hour2Date(hour-1, True)
+        lb_sunpath.solInitOutput(m+1, d, t+0.5)
         altitude = lb_sunpath.solAlt
         if altitude > 0:
             sunVec = lb_sunpath.sunReverseVectorCalc()
