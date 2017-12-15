@@ -1150,9 +1150,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             except: pass
                         #Put all of the text together.
                         legendText.extend(compassText)
-                        #legendText = legendText + freqTextList + velTextList
                         textPt.extend(compassTextPts)
-                        #textPt = textPt + freqTextPts + velTextPts
                         #Make labels for the layer.
                         studyLayerName = 'WINDROSE'
                         try:

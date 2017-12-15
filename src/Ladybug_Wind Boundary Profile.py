@@ -889,7 +889,6 @@ def makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, w
 
 
 def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, metD, metA, metrl, windSpeed, windDir, epwData, epwStr, windArrowStyle, lb_preparation, lb_visualization, lb_wind, windVectorScale, scaleFactor):
-
     #Read the legend parameters.
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
     
@@ -1228,13 +1227,11 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
             if windVecMesh != None and windVecMesh != []:
                 for geo in windVecMesh:
                     geo.Transform(transformMtx)
-                    
             if keepLegendStatic == False:
                 if legendBasePoint != None: legendBasePoint.Transform(transformMtx)
                 if legend != []:
                     for geo in legend:
                         if geo != -1: geo.Transform(transformMtx)
-
             for geo in anchorPts:
                 geo.Transform(transformMtx)
             for geo in profileAxes:
@@ -1264,12 +1261,9 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
             try:
                 finalMesh = rc.Geometry.Mesh()
                 for mesh in windVecMesh:
-                    try: 
-                        finalMesh.Append(mesh)
-                    except: 
-                        finalCrvs.append(rc.Geometry.LineCurve(mesh))
-            except: 
-                finalMesh = None
+                    try: finalMesh.Append(mesh)
+                    except: finalCrvs.append(rc.Geometry.LineCurve(mesh))
+            except: finalMesh = None
             #Adding axes arrows to the final mesh
             for arrow in axesArrows:
                 finalMesh.Append(arrow)
@@ -1286,15 +1280,10 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
             except: legendSrfs = None
             # check the study type
             try:
-                if 'Wind Speed' in _windSpeed_tenMeters[2]: 
-                    placeName = _windSpeed_tenMeters[1]
-                elif 'Wind Direction' in windDirection_[2]: 
-                    placeName = windDirection_[1]
-                else: 
-                    placeName = 'alternateLayerName'
-            except: 
-                placeName = 'alternateLayerName'
-
+                if 'Wind Speed' in _windSpeed_tenMeters[2]: placeName = _windSpeed_tenMeters[1]
+                elif 'Wind Direction' in windDirection_[2]: placeName = windDirection_[1]
+                else: placeName = 'alternateLayerName'
+            except: placeName = 'alternateLayerName'
             studyLayerName = 'WIND_BOUNDARY_PROFILE'
             dataType = 'Wind Bundary Profle'
             newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName)
