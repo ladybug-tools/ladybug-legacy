@@ -1285,7 +1285,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
                 else: placeName = 'alternateLayerName'
             except: placeName = 'alternateLayerName'
             studyLayerName = 'WIND_BOUNDARY_PROFILE'
-            dataType = 'Wind Bundary Profle'
+            dataType = 'Wind Boundary Profle'
             newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName)
             if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, True)
             else: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, False)
