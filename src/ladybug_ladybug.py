@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.65\nSEP_07_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_15_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2385,7 +2385,7 @@ class RunAnalysisInsideGH(object):
         vecImportance = []
         if viewType == 0:
             for vec in viewPoints:
-                vecImportance.append(1)
+                vecImportance.append(100/len(viewPoints))
         else:
             totalArea = sum(patchAreas)
             for area in patchAreas:
@@ -2480,7 +2480,7 @@ class RunAnalysisInsideGH(object):
         
         # Calculate average view
         averageView = sum(viewResult)/len(viewResult)
-            
+        
         return viewResult, averageView, ptVisibility
 
 class ExportAnalysis2Radiance(object):
@@ -3092,9 +3092,9 @@ class ResultVisualization(object):
             try:
                 angleTextPts.append(intPt[-1])
                 if projection == 1 or projection == 2:
-                    angleText.append(str(angle))
+                    angleText.append(str(angle) + "")
                 else:
-                    angleText.append(str(90-angle))
+                    angleText.append(str(90-angle) + "" )
             except:
                 pass
         
