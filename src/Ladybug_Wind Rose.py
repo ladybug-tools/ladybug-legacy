@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.65\nNOV_01_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_15_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1069,7 +1069,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         velTextMesh.append(velMesh)
                     else:
                         velTextMesh = []
-    
+                    
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
                     numberCrvs = numberCrvs 
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
@@ -1162,9 +1162,25 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         
                         # check the study type
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
-                        if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
-                        else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
-
+                        if bakeIt == 1: 
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+                            #Baking Wind Velocities and Wind Frequencies
+                            finalJoinedMesh = None
+                            legendSrfs = None
+                            legendText = freqTextList + velTextList
+                            textPt = freqTextPts + velTextPts
+                            textSize /= 2
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+                        else:
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
+                            #Baking Wind Velocities and Wind Frequencies
+                            finalJoinedMesh = None
+                            legendSrfs = None
+                            legendText = freqTextList + velTextList
+                            textPt = freqTextPts + velTextPts
+                            textSize /= 2
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+            
             return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurveFinal, velTextMeshOut, freqTextMeshOut, averageVelocityOutput, frequencyOutput
             
     else:

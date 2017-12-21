@@ -83,7 +83,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_15_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1214,7 +1214,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
         
         # Create the axes text lables
         axesText, axesTextStr, axesTextPt = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
-        
+   
         #i love rosi.
         #Create the units labels of the axes.
         unitsTextLabels, untisTxt, unitsTxtPts = makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, windVectorScale, axesLines, epwStr, terrainType, analysisPeriod, titleStatement, legendFont, textSize, legendBold, lb_visualization, lb_preparation)
@@ -1236,9 +1236,17 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
                 geo.Transform(transformMtx)
             for geo in profileAxes:
                 geo.Transform(transformMtx)
+            for geo in axesTextPt:
+                geo.Transform(transformMtx)
             for geo in axesText:
                 geo.Transform(transformMtx)
-        
+            for geo in unitsTxtPts:
+                geo.Transform(transformMtx)
+            for geo in unitsTextLabels:
+                geo.Transform(transformMtx)
+            for geo in textPt:
+                geo.Transform(transformMtx)
+
         # If bakeIt is set to true, then bake all of the geometry.
         if bakeIt_ > 0:
             #Group all of the curves together.
@@ -1256,7 +1264,9 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
                     try: finalMesh.Append(mesh)
                     except: finalCrvs.append(rc.Geometry.LineCurve(mesh))
             except: finalMesh = None
-            
+            #Adding axes arrows to the final mesh
+            for arrow in axesArrows:
+                finalMesh.Append(arrow)
             #Group all of the Text together.
             allText = []
             allTextPt = []
@@ -1275,8 +1285,8 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
                 else: placeName = 'alternateLayerName'
             except: placeName = 'alternateLayerName'
             studyLayerName = 'WIND_BOUNDARY_PROFILE'
-            newLayerIndex, l = lb_visualization.setupLayers(str(analysisPeriod), 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-            
+            dataType = 'Wind Boundary Profile'
+            newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName)
             if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, True)
             else: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, False)
         
