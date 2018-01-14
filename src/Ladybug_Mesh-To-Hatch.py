@@ -26,6 +26,8 @@ Provided by Ladybug 0.0.65
     
     Args:
         _mesh: A colored mesh (or list of colored meshes) that you would like to bake into the Rhino scene as a series of colored hatches.
+        layerName_: Optional text for the layer name on which the hatch will be added.
+        visible_: An optional boolean to set whether the layer that the hatch is baked on is visible.  The default is set to True to have the hatch layer visible.
         _runIt: Set to 'True' to run to run the component and bake the mesh into the scene as a series of hatches.
     Returns:
         readMe!: ...
@@ -33,12 +35,12 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Mesh-To-Hatch"
 ghenv.Component.NickName = 'Mesh2Hatch'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJAN_14_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nNOV_05_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "7"
 except: pass
 
 
@@ -55,10 +57,10 @@ def main():
     layerT = rc.RhinoDoc.ActiveDoc.Layers #layer table
     parentLayer = rc.DocObjects.Layer()
     parentLayer.Name = parentLayerName
-    if visible_ == True:
-        parentLayer.IsVisible = True
-    else:
+    if visible_ == False:
         parentLayer.IsVisible = False
+    else:
+        parentLayer.IsVisible = True
     parentLayer.Color =  System.Drawing.Color.Pink
     # Add Parent layer if it's not already created
     parentLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, parentLayerName, True)

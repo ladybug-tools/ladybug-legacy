@@ -36,12 +36,12 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Set Rhino Sun"
 ghenv.Component.NickName = 'rhinoSun'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJAN_14_2018'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Extra"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 #compatibleHBVersion = VER 0.0.56\nFEB_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "7"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.Kernel as gh
