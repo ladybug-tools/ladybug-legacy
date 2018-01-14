@@ -30,13 +30,10 @@ Provided by Ladybug 0.0.65
     
     Args:
         _statFile: A .stat file path on your system from the Open STAT file component (or typed out as a string).
-        
     Returns:
-        readMe!: ...
+        readMe!: The description of ASHRAE anf koppen climate zones. For more information on ASHRAE climate names, please see the PDF at https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf. To know more about koppen climate zones and their definitions, please visit, http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/koppen-climate-classification.html and https://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
         ashraeClimateZone: The estimated ASHRAE climate zone of the STAT file.  ASHRAE climate zones are frequently used to make suggestions for heating and cooling systems and correspond to recommendations for insulation levels of a building.
-        ashraeZoneDescription: The description of ASHRAE climate zone provided in the output above. For more information on ASHRAE climate names, please the PDF at https://www.ashrae.org/File%20Library/docLib/Public/20081111_CZTables.pdf
         koppenClimateZone: The estimated Koppen climate zone of the STAT file.  The Koppen climate classification is the most widely used climate classification system and is based on the concept that native vegetation is the best expression of climate. Thus, Koppen climate zones combine average annual and monthly temperatures, precipitation, and the seasonality of precipitation.  For more information, see the wikipendia page on Koppen climate: http://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification.
-        koppenZoneDescription: The description of koppen climate zone number provided by the output above. To know more about koppen climate zones and their definitions, please visit, http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/koppen-climate-classification.html and https://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
         ---------------: ...
         heatingDesignDay: An analysis period that represents the day of the year that should be used to size the heating system.
         coolingDesignDay: An analysis period that represents the day of the year that should be used to size the cooling system.
@@ -46,15 +43,15 @@ Provided by Ladybug 0.0.65
         monthlyTauBeam: Values representing the monthly optical sky depth for beam (direct) solar radiation.  These can be used with the "Ladybug_Design Day Sky" component to create ASHRAE Tau design day solar radiation values.  These values can then be used for sizing HVAC cooling systems.
         monthlyTauDiffuse: Values representing the monthly optical sky depth for diffuse solar radiation.  These can be used with the "Ladybug_Design Day Sky" component to create ASHRAE Tau design day solar radiation values.  These values can then be used for sizing HVAC cooling systems.
         ---------------:...
-        extremeHotWeek: An analysis period representing the hottest week of the typical mean year.  If the stat file does not specify an extreme hot week, it is the most extreme week of the hottest season.
-        typicalHotWeek: An analysis period representing a typical week of the hottest season in the typical mean year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
-        typicalWeek: An analysis period representing a typical week of the typical mean year.  If the stat file does not specify a typical week, it is the typical week of Autumn.
-        typicalColdWeek: An analysis period representing a typical week of the coldest season in the typical mean year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
-        extremeColdWeek: An analysis period representing the coldest week of the typical mean year.  If the stat file does not specify an extreme cold week, it is the most extreme week of the coldest season.
+        extremeHotWeek: An analysis period representing the hottest week of the typical meteorological year.  If the stat file does not specify an extreme hot week, it is the most extreme week of the hottest season.
+        typicalHotWeek: An analysis period representing a typical week of the hottest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
+        typicalWeek: An analysis period representing a typical autumn week of the typical meteorological year.  If the stat file does not specify a typical week, it is the typical week of Autumn.
+        typicalColdWeek: An analysis period representing a typical week of the coldest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
+        extremeColdWeek: An analysis period representing the coldest week of the typical meteorological year.  If the stat file does not specify an extreme cold week, it is the most extreme week of the coldest season.
 """
 ghenv.Component.Name = "Ladybug_Import stat"
 ghenv.Component.NickName = 'importSTAT'
-ghenv.Component.Message = 'VER 0.0.65\nAUG_17_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJAN_14_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -74,8 +71,8 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             #Search the first part of the file for heating design temperatures.
             heatingDesignTemps = []
             htrigger = False
-            heatCount1 = None
-            heatCount2 = None
+            heatCount1 = 4
+            heatCount2 = 3
             for line in statFileLines:
                 if 'Coldest' in line:
                     htrigger = True
@@ -89,12 +86,15 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
                             heatCount2 = elementCount
                         elif element == 'DB990':
                             heatCount2 = elementCount
-                if 'Heating' in line and htrigger == True:
+                if 'Heating' in line and htrigger == True and not 'Heating DB' in line:
                     htrigger = False
-                    if heatCount1 != None:
-                        heatingDesignTemps.append(line.split('\t')[heatCount1].strip())
-                    if heatCount2 != None:
-                        heatingDesignTemps.append(line.split('\t')[heatCount2].strip())
+                    heatingDesignTemps.append(line.split('\t')[heatCount1].strip())
+                    heatingDesignTemps.append(line.split('\t')[heatCount2].strip())
+                    try:
+                        heatingDesignTemps = [float(x) for x in heatingDesignTemps]
+                        heatingDesignTemps.sort()
+                    except:
+                        pass
             if heatingDesignTemps == None or heatingDesignTemps == 'Heating':
                 warning = 'Failed to find a heating design temperature in the stat file.'
                 print warning
@@ -103,9 +103,9 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             #Search the second part of the file for cooling design temperatures.
             coolingDesignTemps = []
             ctrigger = False
-            coolCount1 = None
-            coolCount2 = None
-            coolCount3 = None
+            coolCount1 = 4
+            coolCount2 = 6
+            coolCount3 = 3
             for line in statFileLines:
                 if 'Hottest' in line:
                     ctrigger = True
@@ -123,14 +123,11 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
                             coolCount3 = elementCount
                         elif element == 'DBR':
                             coolCount3 = elementCount
-                if 'Cooling' in line and ctrigger == True:
+                if 'Cooling' in line and ctrigger == True and not 'Cooling DB' in line:
                     ctrigger = False
-                    if coolCount1 != None:
-                        coolingDesignTemps.append(line.split('\t')[coolCount1].strip())
-                    if coolCount2 != None:
-                        coolingDesignTemps.append(line.split('\t')[coolCount2].strip())
-                    if coolCount3 != None:
-                        coolingDayTempRange = line.split('\t')[coolCount3].strip()
+                    coolingDesignTemps.append(line.split('\t')[coolCount1].strip())
+                    coolingDesignTemps.append(line.split('\t')[coolCount2].strip())
+                    coolingDayTempRange = line.split('\t')[coolCount3].strip()
             if coolingDesignTemps == None or coolingDesignTemps == 'Cooling':
                 warn = 'Failed to find a cooling design temperature in the stat file.'
                 print warn
@@ -140,7 +137,7 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             location = statFileLines[2].split('-- ')[-1].strip()
             monthlyTauBeam = ["key:location/dataType/units/frequency/startsAt/endsAt", location, 'Clear Sky Optical Depth for Beam Irradiance', 'Continuous', 'Monthly', (1, 1, 1), (12, 31, 24)]
             monthlyTauDiffuse = ["key:location/dataType/units/frequency/startsAt/endsAt", location, 'Clear Sky Optical Depth for Diffuse Irradiance', 'Continuous', 'Monthly', (1, 1, 1), (12, 31, 24)]
-            for line in statFileLines[:43]:
+            for line in statFileLines:
                 if 'taub (beam)' in line:
                     beamLineSplit = line.split('\t')
                     beamVals = [float(i) if 'N' not in i else None for i in beamLineSplit[2:14]]
@@ -163,7 +160,7 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             coolingDesignDay = []
             daytrigger = False
             for line in statFileLines[:63]:
-                if 'Drybulb 0.4%' in line and not '=' in line:
+                if 'Drybulb 0.4%' in line and not '=' in line and not 'Monthly Design Drybulb Temperature' in line:
                     designLineSplit = line.split('\t')[2:14]
                     designLineSplit = [float(i) for i in designLineSplit]
                     designLineSplit, designMonths = zip(*sorted(zip(designLineSplit, range(1,12))))
@@ -191,307 +188,264 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             # http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/koppen-climate-classification.html
             # https://en.wikipedia.org/wiki/K%C3%B6ppen_climate_classification
             koppenClimateName = {
-            "af" : [
-                    "Tropical Rainforest Climate",
-                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher, with precipitation all year long. Monthly temperature variations in this climate are less than 3 degrees Celsius. Because of intense surface heating and high humidity cumulus and cumulonimbus clouds form early in the afternoons almost every day. Daily highs are about 32 degrees Celsius while night time temperatures average 22 degrees Celsius.",
-                    "Examples;",
-                    "Singapore",
-                    "West Palm Beach, Florida, USA",
+            "af" : "Tropical Rainforest Climate\n" + \
+                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher, with precipitation all year long. Monthly temperature variations in this climate are less than 3 degrees Celsius. Because of intense surface heating and high humidity cumulus and cumulonimbus clouds form early in the afternoons almost every day. Daily highs are about 32 degrees Celsius while night time temperatures average 22 degrees Celsius.\n" + \
+                    "Examples;\n" + \
+                    "Singapore\n" + \
+                    "West Palm Beach, Florida, USA\n" + \
                     "Hilo, Hawai, USA"
-                    ],
-            "am" : [
-                    "Tropical monsoon climate",
-                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher, with substantial rainfall during the 7 to 9 hottest months of the year. During the dry months, very little rainfall occurs.",
-                    "Examples;",
+                    ,
+            "am" : "Tropical monsoon climate\n" + \
+                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher, with substantial rainfall during the 7 to 9 hottest months of the year. During the dry months, very little rainfall occurs.\n" + \
+                    "Examples;\n" + \
                     "Maimi ,Florida, USA"
-                    ],
-             "aw" : [
-                    "Tropical wet and dry or Savanna climate",
-                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher. This climate has a pronounced dry season during the winter months with the driest month having precipitation less than 60mm (2.4 in) and less than 4% of the total annual precipitation.",
-                    "Examples;",
-                    "Mumbai, India",
-                    "Key West, Florida, USA",
-                    "Naples, Florida, USA",
-                    "Panama City",
+                    ,
+             "aw" : "Tropical wet and dry or Savanna climate\n" + \
+                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher. This climate has a pronounced dry season during the winter months with the driest month having precipitation less than 60mm (2.4 in) and less than 4% of the total annual precipitation.\n" + \
+                    "Examples;\n" + \
+                    "Mumbai, India\n" + \
+                    "Key West, Florida, USA\n" + \
+                    "Naples, Florida, USA\n" + \
+                    "Panama City\n" + \
                     "Rio de Janeiro, Rio de Janeiro, Brazil"
-                    ],
-             "as" : [
-                    "Tropical wet and dry or Savanna climate",
-                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher. This climate has a pronounced dry season during the winter months with the driest month having precipitation less than 60mm (2.4 in) and less than 4% of the total annual precipitation.",
-                    "Examples;",
-                    "Mumbai, India",
-                    "Key West, Florida, USA",
-                    "Naples, Florida, USA",
-                    "Panama City",
+                    ,
+             "as" : "Tropical wet and dry or Savanna climate\n" + \
+                    "This type of climate has every month of the year with an average temperature of 18 C (64.4 F) or higher. This climate has a pronounced dry season during the winter months with the driest month having precipitation less than 60mm (2.4 in) and less than 4% of the total annual precipitation.\n" + \
+                    "Examples;\n" + \
+                    "Mumbai, India\n" + \
+                    "Key West, Florida, USA\n" + \
+                    "Naples, Florida, USA\n" + \
+                    "Panama City\n" + \
                     "Rio de Janeiro, Rio de Janeiro, Brazil"
-                    ],
-            "bwh" : [
-                    "Dry climate with a little precipitation throughout most of the year.",
-                    "This is hot and arid desert climate and is often dominated by xerophytic vegetation (The vegetation that has adapted to survive in an environment with little liquid water).",
-                    "Examples;",
-                    "Doha, Qatar",
-                    "Riyadh, Saudi Arabia",
-                    "Dubai, UAE",
-                    "Las Vegas, Nevada, USA",
+                    ,
+            "bwh" : "Dry climate with a little precipitation throughout most of the year.\n" + \
+                    "This is hot and arid desert climate and is often dominated by xerophytic vegetation (The vegetation that has adapted to survive in an environment with little liquid water).\n" + \
+                    "Examples;\n" + \
+                    "Doha, Qatar\n" + \
+                    "Riyadh, Saudi Arabia\n" + \
+                    "Dubai, UAE\n" + \
+                    "Las Vegas, Nevada, USA\n" + \
                     "Phoenix, Arizona, USA"
-                    ],
-            "bwk" : [
-                    "Dry climate with a little precipitation throughout most of the year.",
-                    "This is cold and arid desert climate and is often dominated by xerophytic vegetation (The vegetation that has adapted to survive in an environment with little liquid water).",
-                    "Examples;",
+                    ,
+            "bwk" : "Dry climate with a little precipitation throughout most of the year.\n" + \
+                    "This is cold and arid desert climate and is often dominated by xerophytic vegetation (The vegetation that has adapted to survive in an environment with little liquid water).\n" + \
+                    "Examples;\n" + \
                     "Turpan, Xinjiang, China"
-                    ],
-            "bwn" : [
-                    "Dry climate with a little precipitation throughout most of the year.",
-                    "This is mild and arid desert climate and is often dominated by xerophytic vegetation (The vegetation that has adapted to survive in an environment with little liquid water).",
-                    "Examples;",
+                    ,
+            "bwn" : "Dry climate with a little precipitation throughout most of the year.\n" + \
+                    "This is mild and arid desert climate and is often dominated by xerophytic vegetation (The vegetation that has adapted to survive in an environment with little liquid water).\n" + \
+                    "Examples;\n" + \
                     "Lima, Peru"
-                    ],
-            "bsh" : [
-                    "Dry climate with a little precipitation throughout most of the year.",
-                    "This is hot semi-arid climate. It receives a little more precipitation than the arid (desert) climate. This climate receives this precipitation from the ITCZ (inter-tropical convergence zone) or from mid-latitude cyclones.",
-                    "Examples;",
-                    "Lahore, Pakistan",
-                    "Odessa, Texas, USA",
+                    ,
+            "bsh" : "Dry climate with a little precipitation throughout most of the year.\n" + \
+                    "This is hot semi-arid climate. It receives a little more precipitation than the arid (desert) climate. This climate receives this precipitation from the ITCZ (inter-tropical convergence zone) or from mid-latitude cyclones.\n" + \
+                    "Examples;\n" + \
+                    "Lahore, Pakistan\n" + \
+                    "Odessa, Texas, USA\n" + \
                     "Yuanjian, Yunnan, China"
-                    ],
-            "bsk" : [
-                    "Dry climate with a little precipitation throughout most of the year.",
-                    "This is cold semi-arid climate. It receives a little more precipitation than the arid (desert) climate. This climate receives this precipitation from the ITCZ (inter-tropical convergence zone) or from mid-latitude cyclones.",
-                    "Examples;",
-                    "Denver, Colorado, USA",
-                    "Tabriz, East Azerbaijan Province, Iran",
-                    "Brooks, Alberta, Canada",
-                    "Shijiazhuang, Hebel, China",
-                    ],
-            "bsn" : [
-                    "Dry climate with a little precipitation throughout most of the year.",
-                    "This is mild semi-arid climate. It receives a little more precipitation than the arid (desert) climate. This climate receives this precipitation from the ITCZ (inter-tropical convergence zone) or from mid-latitude cyclones.",
-                    "Examples;",
+                    ,
+            "bsk" : "Dry climate with a little precipitation throughout most of the year.\n" + \
+                    "This is cold semi-arid climate. It receives a little more precipitation than the arid (desert) climate. This climate receives this precipitation from the ITCZ (inter-tropical convergence zone) or from mid-latitude cyclones.\n" + \
+                    "Examples;\n" + \
+                    "Denver, Colorado, USA\n" + \
+                    "Tabriz, East Azerbaijan Province, Iran\n" + \
+                    "Brooks, Alberta, Canada\n" + \
+                    "Shijiazhuang, Hebel, China"
+                    ,
+            "bsn" : "Dry climate with a little precipitation throughout most of the year.\n" + \
+                    "This is mild semi-arid climate. It receives a little more precipitation than the arid (desert) climate. This climate receives this precipitation from the ITCZ (inter-tropical convergence zone) or from mid-latitude cyclones.\n" + \
+                    "Examples;\n" + \
                     "Sanaa, Yemen"
-                    ],
-            "cfa" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate without dry season and a hot summer.", 
-                    "Examples;",
-                    "Sao Paulo, Brazil",
-                    "Brisbane, Australia",
-                    "Sydney, Australia",
-                    "Orlando, Florida, USA",
-                    "New Orleans, Florida, USA",
-                    "Washington D.C. USA",
-                    "Dallas, Texas, USA",
-                    "Srinagar, India",
-                    "Shanghai, China",
-                    "Nanjing, China",
-                    "Tokyo, Japan",
-                    "Osaka, Japan",
-                    "Milan, Italy",
+                    ,
+            "cfa" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate without dry season and a hot summer.\n" + \
+                    "Examples;\n" + \
+                    "Sao Paulo, Brazil\n" + \
+                    "Brisbane, Australia\n" + \
+                    "Sydney, Australia\n" + \
+                    "Orlando, Florida, USA\n" + \
+                    "New Orleans, Florida, USA\n" + \
+                    "Washington D.C. USA\n" + \
+                    "Dallas, Texas, USA\n" + \
+                    "Srinagar, India\n" + \
+                    "Shanghai, China\n" + \
+                    "Nanjing, China\n" + \
+                    "Tokyo, Japan\n" + \
+                    "Osaka, Japan\n" + \
+                    "Milan, Italy\n" + \
                     "Durban, South Africa"
-                    ],
-            "cfb" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate without dry season and a warm summer.  This climate is also known as the oceanic (marine) climate. Heavy precipitation occurs during the mild winters because of continuous presence of mid-latitude cyclones.",
-                    "Examples;",
+                    ,
+            "cfb" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate without dry season and a warm summer.  This climate is also known as the oceanic (marine) climate. Heavy precipitation occurs during the mild winters because of continuous presence of mid-latitude cyclones.\n" + \
+                    "Examples;\n" + \
                     "Mexico City, Mexico"
-                    ],
-            "cfc" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate without dry season and a cold summer. This climate is also known as the subpolar oceanic climate.",
-                    "Examples;",
-                    "Mount Read, Tasmania, Australia",
-                    "Punta Arenas, Chile",
-                    ],
-            "csa" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate with dry and hot summer. This climate is also known as the Mediterranean climate.",
-                    "Examples;",
-                    "Beirut, Lebanon",
-                    "Tel Aviv, Israel",
-                    "Los Angeles, California, USA",
-                    "Perth, Australia",
-                    "Tangier, Morocco",
-                    "Rome, Italy",
-                    "Seville, Spain",
-                    "Madrid, Spain",
-                    "Marseille, France",
+                    ,
+            "cfc" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate without dry season and a cold summer. This climate is also known as the subpolar oceanic climate.\n" + \
+                    "Examples;\n" + \
+                    "Mount Read, Tasmania, Australia\n" + \
+                    "Punta Arenas, Chile"
+                    ,
+            "csa" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate with dry and hot summer. This climate is also known as the Mediterranean climate.\n" + \
+                    "Examples;\n" + \
+                    "Beirut, Lebanon\n" + \
+                    "Tel Aviv, Israel\n" + \
+                    "Los Angeles, California, USA\n" + \
+                    "Perth, Australia\n" + \
+                    "Tangier, Morocco\n" + \
+                    "Rome, Italy\n" + \
+                    "Seville, Spain\n" + \
+                    "Madrid, Spain\n" + \
+                    "Marseille, France\n" + \
                     "Athens, Greece"
-                    ],
-            "csb" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate with dry and warm summer.", 
-                    "Examples;",
-                    "San Francisco, California, USA",
-                    "Seattle, Washington, USA",
-                    "Cape Town, South Africa",
+                    ,
+            "csb" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate with dry and warm summer.\n" + \
+                    "Examples;\n" + \
+                    "San Francisco, California, USA\n" + \
+                    "Seattle, Washington, USA\n" + \
+                    "Cape Town, South Africa\n" + \
                     "Kington SE, Australia"
-                    ],
-            "csc" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate with dry and cold summer. This is apparently a rare climate type.",
-                    "Examples;",
-                    "Balmaceda, Chile",
-                    "Haleakala Summit, Hawaii, USA",
-                    ],
-            "cwa" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate with dry winter and hot summer. This climate has a classic dry winter / wet summer pattern associated with tropical monsoonal climates.",
-                    "Examples;",
-                    "Islamabad, Pakistan",
-                    "New Delhi, India",
-                    "Zhengzhou, China",
-                    "Hong Kong",
+                    ,
+            "csc" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate with dry and cold summer. This is apparently a rare climate type.\n" + \
+                    "Examples;\n" + \
+                    "Balmaceda, Chile\n" + \
+                    "Haleakala Summit, Hawaii, USA"
+                    ,
+            "cwa" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate with dry winter and hot summer. This climate has a classic dry winter / wet summer pattern associated with tropical monsoonal climates.\n" + \
+                    "Examples;\n" + \
+                    "Islamabad, Pakistan\n" + \
+                    "New Delhi, India\n" + \
+                    "Zhengzhou, China\n" + \
+                    "Hong Kong\n" + \
                     "Hanoi, Vietnam"
-                    ],
-            "cwb" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate with dry winter and warm summer. In this climate winters are noticeable and dry, and summers can be very rainy.",
-                    "Examples;",
-                    "Nairobi, Kenya",
-                    "Mexico City, Mexico",
-                    "Johannesburg, South Africa",
+                    ,
+            "cwb" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate with dry winter and warm summer. In this climate winters are noticeable and dry, and summers can be very rainy.\n" + \
+                    "Examples;\n" + \
+                    "Nairobi, Kenya\n" + \
+                    "Mexico City, Mexico\n" + \
+                    "Johannesburg, South Africa\n" + \
                     "Kunming, China"
-                    ],
-            "cwc" : [
-                    "Moist mid-latitude climate with mild winters.",
-                    "This is a temperate climate with dry winter and cold summer.", 
-                    "Examples;",
+                    ,
+            "cwc" : "Moist mid-latitude climate with mild winters.\n" + \
+                    "This is a temperate climate with dry winter and cold summer.\n" + \
+                    "Examples;\n" + \
                     "EI Alto, Bolivia"
-                    ],
-            "dsa" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate with dry and hot summer.", 
-                    "Examples;",
-                    "Saqqez, Iran",
+                    ,
+            "dsa" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate with dry and hot summer.\n" + \
+                    "Examples;\n" + \
+                    "Saqqez, Iran\n" + \
                     "Cambridge, Idaho, USA"
-                    ],
-            "dsb" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate with dry and warm summer.", 
-                    "Examples;",
-                    "South Lake Tahoe, California, USA",
+                    ,
+            "dsb" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate with dry and warm summer.\n" + \
+                    "Examples;\n" + \
+                    "South Lake Tahoe, California, USA\n" + \
                     "Bridgeport, California, USA"
-                    ],
-            "dsc" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate with dry and cold summer.", 
-                    "Examples;",
-                    "Homer, Alaska, USA",
+                    ,
+            "dsc" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate with dry and cold summer.\n" + \
+                    "Examples;\n" + \
+                    "Homer, Alaska, USA\n" + \
                     "Brian Head, Utah, USA"
-                    ],
-            "dsd" : [
-                    "Moist mid-latitude climate with cold winters.",
+                    ,
+            "dsd" : "Moist mid-latitude climate with cold winters.\n" + \
                     "This is a cold climate with dry summer and very cold winter."
-                    ],
-            "dwa" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate with dry winter and hot summer.", 
-                    "Examples;",
-                    "Beijing, China",
-                    "Seoul, South Korea",
-                    ],
-            "dwb" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate with dry winter and warm summer.", 
-                    "Examples;",
-                    "Pembina, North Dakota, USA",
+                    ,
+            "dwa" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate with dry winter and hot summer.\n" + \
+                    "Examples;\n" + \
+                    "Beijing, China\n" + \
+                    "Seoul, South Korea"
+                    ,
+            "dwb" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate with dry winter and warm summer.\n" + \
+                    "Examples;\n" + \
+                    "Pembina, North Dakota, USA\n" + \
                     "Heihe, China"
-                    ],
-            "dwc" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate with dry winter and cold summer.", 
-                    "Examples;",
-                    "Mohe County, Heliongjiang, China",
+                    ,
+            "dwc" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate with dry winter and cold summer.\n" + \
+                    "Examples;\n" + \
+                    "Mohe County, Heliongjiang, China\n" + \
                     "Yushu City, Qinghai, China"
-                    ],
-            "dwd" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate with dry and very cold winter.", 
-                    "Examples;",
-                    "Seymchan, Magadan Oblast, Russia",
+                    ,
+            "dwd" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate with dry and very cold winter.\n" + \
+                    "Examples;\n" + \
+                    "Seymchan, Magadan Oblast, Russia\n" + \
                     "Oymyakon, Sakha Republic, Russia"
-                    ],
-            "dfa" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate without dry season and hot summer.", 
-                    "Examples;",
-                    "Chicago, Illinois, USA",
-                    "Columbus, Ohio, USA",
-                    "Boston, Massachusetts, USA",
-                    "Omaha, Nebraska, USA",
-                    "Minneapolis, Minnesota, USA",
+                    ,
+            "dfa" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate without dry season and hot summer.\n" + \
+                    "Examples;\n" + \
+                    "Chicago, Illinois, USA\n" + \
+                    "Columbus, Ohio, USA\n" + \
+                    "Boston, Massachusetts, USA\n" + \
+                    "Omaha, Nebraska, USA\n" + \
+                    "Minneapolis, Minnesota, USA\n" + \
                     "Windsor, Ontario, Canada"
-                    ],
-            "dfb" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate without dry season and warm summer.", 
-                    "Examples;",
-                    "Calgary, Alberta, Canada", 
-                    "Winnipeg, Manitoba, Canada", 
-                    "Ottawa, Ontario, Canada", 
-                    "Toronto Islands, Ontario, Canada", 
-                    "London, Ontario, Canada", 
-                    "Kiev, Ukraine", 
-                    "Moscow, Russia", 
-                    "Saint Petersburg, Russia", 
-                    "Stockholm, Sweden", 
-                    "Oslo, Norway", 
-                    "Lillehammer, Norway", 
-                    "Portland, Maine, USA",
-                    "Montpelier, Vermont, USA",
-                    "Binghamton, New York, USA",
-                    ],
-            "dfc" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate without dry season and cold summer.", 
-                    "Examples;",
-                    "Fraser, Colorado, USA",
-                    "Fairbanks, Alaska, USA", 
-                    "Whitehorse, Yukon, Canada", 
+                    ,
+            "dfb" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate without dry season and warm summer.\n" + \
+                    "Examples;\n" + \
+                    "Calgary, Alberta, Canada\n" + \
+                    "Winnipeg, Manitoba, Canada\n" + \
+                    "Ottawa, Ontario, Canada\n" + \
+                    "Toronto Islands, Ontario, Canada\n" + \
+                    "London, Ontario, Canada\n" + \
+                    "Kiev, Ukraine\n" + \
+                    "Moscow, Russia\n" + \
+                    "Saint Petersburg, Russia\n" + \
+                    "Stockholm, Sweden\n" + \
+                    "Oslo, Norway\n" + \
+                    "Lillehammer, Norway\n" + \
+                    "Portland, Maine, USA\n" + 
+                    "Montpelier, Vermont, USA\n" + \
+                    "Binghamton, New York, USA"
+                    ,
+            "dfc" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate without dry season and cold summer.\n" + \
+                    "Examples;\n" + \
+                    "Fraser, Colorado, USA\n" + \
+                    "Fairbanks, Alaska, USA\n" + \
+                    "Whitehorse, Yukon, Canada\n" + \
                     "Churchill, Manitoba, Canada"
-                    ],
-            "dfd" : [
-                    "Moist mid-latitude climate with cold winters.",
-                    "This is a cold climate without dry season and very cold winter.", 
-                    "Examples;",
-                    "Yakutsk, Sakha Republic, Russia", 
+                    ,
+            "dfd" : "Moist mid-latitude climate with cold winters.\n" + \
+                    "This is a cold climate without dry season and very cold winter.\n" + \
+                    "Examples;\n" + \
+                    "Yakutsk, Sakha Republic, Russia\n" + \
                     "Verkhoyansk, Sakha Republic, Russia"
-                    ],
-             "et" : [
-                    "Polar climate with extremely cold winters and summers",
-                    "Polar climates have year-round cold temperatures with warmest month less than 10 C. Polar climates are found on the northern coastal areas of North America and Europe, Asia and on the landmasses of Greenland and Antarctica. Two minor climate types exist. ET or polar tundra is a climate where the soil is permanently frozen to depths of hundreds of meters, a condition known as permafrost. Vegetation is dominated by mosses, lichens, dwarf trees and scattered woody shrubs.",
-                    "Examples;",
-                    "Mount Rainier, Washington, USA",
-                    "Macquarie Island",
+                    ,
+             "et" : "Polar climate with extremely cold winters and summers\n" + \
+                    "Polar climates have year-round cold temperatures with warmest month less than 10 C. Polar climates are found on the northern coastal areas of North America and Europe, Asia and on the landmasses of Greenland and Antarctica. Two minor climate types exist. ET or polar tundra is a climate where the soil is permanently frozen to depths of hundreds of meters, a condition known as permafrost. Vegetation is dominated by mosses, lichens, dwarf trees and scattered woody shrubs.\n" + \
+                    "Examples;\n" + \
+                    "Mount Rainier, Washington, USA\n" + \
+                    "Macquarie Island\n" + \
                     "Nagqu, Tibet, China"
-                    ],
-             "ef" : [
-                    "Polar climate with extremely cold winters and summers",
-                    "Polar climates have year-round cold temperatures with warmest month less than 10 C. Polar climates are found on the northern coastal areas of North America and Europe, Asia and on the landmasses of Greenland and Antarctica. Two minor climate types exist. EF or polar ice caps has a surface that is permanently covered with snow and ice.",
-                    "Examples;",
-                    "Mount Ararat, Turkey",
-                    "Grossglockner, Carinthia, Austria",
-                    "Mount Everest, Nepal",
-                    "Summit Camp, Greenland",
-                    "Scott Base, Antarctica",
-                    "Vostok Station, Antarctica, location of the lowest air temperature ever recorded on Earth.",
-                    "McMurdo Station, Antarctica",
+                    ,
+             "ef" : "Polar climate with extremely cold winters and summers\n" + \
+                    "Polar climates have year-round cold temperatures with warmest month less than 10 C. Polar climates are found on the northern coastal areas of North America and Europe, Asia and on the landmasses of Greenland and Antarctica. Two minor climate types exist. EF or polar ice caps has a surface that is permanently covered with snow and ice.\n" + \
+                    "Examples;\n" + \
+                    "Mount Ararat, Turkey\n" + \
+                    "Grossglockner, Carinthia, Austria\n" + \
+                    "Mount Everest, Nepal\n" + \
+                    "Summit Camp, Greenland\n" + \
+                    "Scott Base, Antarctica\n" + \
+                    "Vostok Station, Antarctica, location of the lowest air temperature ever recorded on Earth.\n" + \
+                    "McMurdo Station, Antarctica\n" + \
                     "Byrd Station, Antarctica"
-                    ],
-              "h" : [
-                    "Highland areas due to mountainous areas. This classification can encompass any of the climate type",
+                    ,
+              "h" : "Highland areas due to mountainous areas. This classification can encompass any of the climate type\n" + \
                     "Highland areas can encompass any of the previously mentioned major categories  the determining factor is one of altitude (temperature decreases roughly 2 C for every increase of 305 m). This is a complex climate zone. Highland regions roughly correspond to the major categories change in temperature with latitude - with one important exception. Seasons only exist in highlands if they also exist in the nearby lowland regions. For example, although A climates have cooler temperatures at higher elevations, the seasonal changes of C, D and E climates are not present."
-                    ]
             }
-            # This is the list container for koppenZoneDescription output from this component.
-            koppenZoneDescription = []
             
-            if koppenClimateZone.lower() in koppenClimateName.keys():
-                key = koppenClimateZone.lower()
-                koppenZoneDescription = koppenClimateName[key]
-            else:
-                pass
-
             count = 0
             for line in statFileLines[220:]:
                 if 'Climate type' in line:
@@ -520,14 +474,9 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             "6A" : "Cold - Humid",
             "6B" : "Dry",
             "7" : "Very Cold",
-            "8" : "Subarctic",
+            "8" : "Subarctic"
             }
-            # This is the string variable for the output of ashraeClimateZoneName on this component.
-            ashraeZoneDescription = ""
-            if ashraeClimateZone in climateName.keys():
-                ashraeZoneDescription = climateName[ashraeClimateZone]
-            else:
-                pass
+            
             
             # Search the last part of the file for typical and extreme periods.
             #First define a function that will convert the text month to a number.
@@ -613,8 +562,28 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
             if extremeColdWeek == None:
                 print 'No extreme cold week was found in the stat file.'
             else: pass
+            
+            
+            # This is the list container for koppenZoneDescription output from this component.
+            koppenZoneDescription = []
+            if koppenClimateZone.lower() in koppenClimateName.keys():
+                key = koppenClimateZone.lower()
+                koppenZoneDescription = koppenClimateName[key]
+                print'Koppen Zone Description:\n' + koppenZoneDescription
+            else:
+                pass
+            
+            # This is the string variable for the output of ashraeClimateZoneName on this component.
+            ashraeZoneDescription = ""
+            if ashraeClimateZone in climateName.keys():
+                ashraeZoneDescription = climateName[ashraeClimateZone]
+                print 'ASHRAE Zone Description:\n' + ashraeZoneDescription
+            else:
+                pass
+            
     except Exception, e:
         msg = "Failed to parse stat file." + str(e)
+        print msg
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
 elif _statFile != None:
     warning = '_statFile is not a valid .stat file.'
