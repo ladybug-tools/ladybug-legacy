@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Update File"
 ghenv.Component.NickName = 'updateGHFile'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_31_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJAN_14_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -218,14 +218,6 @@ def updateComponent(component, uofolder):
     # check the version and the date between component and userobject
     if not isNewerVersion(uo, component):
         return False 
-    
-    # check if inputs or outputs has changed
-    if inputOutputChanged(uo, component):
-        insertNewUO(uo, component, doc)
-        
-        # add a group note to the component
-        markComponent(doc, component)
-        return 'Cannot update %s. Replace manually.' % component.Name
 
     # it is a newer version
     component.Code = uo.Code
@@ -237,6 +229,14 @@ def updateComponent(component, uofolder):
     # Update the solution
     doc.ScheduleSolution(2,
         Grasshopper.Kernel.GH_Document.GH_ScheduleDelegate(callBack))
+
+    # check if inputs or outputs has changed
+    if inputOutputChanged(uo, component):
+        insertNewUO(uo, component, doc)
+        
+        # add a group note to the component
+        markComponent(doc, component)
+        return 'Cannot update %s. Replace manually.' % component.Name
 
     return 'Updated %s' % component.Name
 
