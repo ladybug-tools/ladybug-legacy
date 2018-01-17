@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.65
         ---------------: ...
         _delaunayHeight_: Distance from base curve and top intersection points. Used by the Delauney Mesh component. Default is 5.
         _offsetFactor_: VERY important input!! The offset factor for the ConvexHull curve. Will be used for the Delauneay mesh. Default is 40.
-        _res_: Divide the offset curve for the Delaunay operation.
+        _cullRes_: Resolution for culling points. 0=Don't cull, 1= Regular cull, 2= Cull a lot. Check the final surface for quality of results, 3= Extreme cull. Be carefull with the results. Default is 1
     Returns:
         readMe!: ...
         pointsOnWindow: Net of points on window
@@ -54,12 +54,12 @@ Provided by Ladybug 0.0.65
 ##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJAN_17_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "3"
 except: pass
 
 
@@ -101,7 +101,7 @@ inputsDict = {
 12: ["---------------", "---------------"],
 13: ["_delaunayHeight_", "Distance from base curve and top intersection points. Used by the Delauney Mesh component. Default is 5."],
 14: ["_offsetFactor_", "VERY important input!! The offset factor for the ConvexHull curve. Will be used for the Delauneay mesh. Default is 40."],
-15: ["_res_", "Divide the offset curve for the Delaunay operation."],
+15: ["_cullRes_", "Resolution for culling points. 0=Don't cull, 1= Regular cull, 2= Cull a lot. Check the final surface for quality of results, 3= Extreme cull. Be carefull with the results. Default is 1."],
 }
 
 # manage component inputs
@@ -109,9 +109,11 @@ inputsDict = {
 if _SurfaceOrPergola_ == None: _SurfaceOrPergola_ = 0
 numInputs = ghenv.Component.Params.Input.Count
 
-if _SurfaceOrPergola_ == 0 and shadeSurface_ == None:
+#if _SurfaceOrPergola_ == 0 and shadeSurface_ == None:
+if (_SurfaceOrPergola_ == 0 or _SurfaceOrPergola_ == 2): # and shadeSurface_ == None:
     for input in range(numInputs):
-        if input == 9 or input == 10:
+        #if input == 9 or input == 10:
+        if input ==  10 or input == 11:
             ghenv.Component.Params.Input[input].NickName = "."
             ghenv.Component.Params.Input[input].Name = "."
             ghenv.Component.Params.Input[input].Description = " "
@@ -125,26 +127,31 @@ elif _SurfaceOrPergola_ == 1 and shadeSurface_ == None:
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
         ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
-elif (_SurfaceOrPergola_ == 0 or _SurfaceOrPergola_ == 2) and shadeSurface_ != None:
-    for input in range(numInputs):
-        if input == 7 or input == 8 or input == 9 or input == 10:
-            ghenv.Component.Params.Input[input].NickName = "."
-            ghenv.Component.Params.Input[input].Name = "."
-            ghenv.Component.Params.Input[input].Description = " "
-        else:
-            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
-            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
-            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+#elif (_SurfaceOrPergola_ == 0 or _SurfaceOrPergola_ == 2) and shadeSurface_ != None:
+#elif (_SurfaceOrPergola_ == 2) and shadeSurface_ != None:
+#    for input in range(numInputs):
+#        if input == 7 or input == 8 or input == 9 or input == 10:
+#            ghenv.Component.Params.Input[input].NickName = "."
+#            ghenv.Component.Params.Input[input].Name = "."
+#            ghenv.Component.Params.Input[input].Description = " "
+#        else:
+#            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+#            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+#            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 elif _SurfaceOrPergola_ == 1 and shadeSurface_ != None:
     for input in range(numInputs):
-        if input == 7 or input == 8:
-            ghenv.Component.Params.Input[input].NickName = "."
-            ghenv.Component.Params.Input[input].Name = "."
-            ghenv.Component.Params.Input[input].Description = " "
-        else:
-            ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
-            ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
-            ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+        #if input == 7 or input == 8:
+        #if input == 7:
+        #    ghenv.Component.Params.Input[input].NickName = "."
+        #    ghenv.Component.Params.Input[input].Name = "."
+        #    ghenv.Component.Params.Input[input].Description = " "
+        #else:
+        #    ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+        #    ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+        #    ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
+        ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Name = inputsDict[input][0]
+        ghenv.Component.Params.Input[input].Description = inputsDict[input][1]
 else:
     for input in range(numInputs):
         ghenv.Component.Params.Input[input].NickName = inputsDict[input][0]
@@ -182,20 +189,25 @@ def identifyRectangularWindow(window):
     if len(pts) == 4:
         points = rc.Collections.Point3dList(pts)
         points_Sort = rc.Geometry.Point3d.SortAndCullPointList(points, sc.doc.ModelAbsoluteTolerance)
-        if points_Sort[0][0] == points_Sort[1][0] and points_Sort[0][1] == points_Sort[1][1] and \
+        ## Check for both cases of rectangular window: Taller than wider or Wider than Taller
+        if (points_Sort[0][0] == points_Sort[1][0] and points_Sort[0][1] == points_Sort[1][1] and \
            points_Sort[2][0] == points_Sort[3][0] and points_Sort[2][1] == points_Sort[3][1] and \
-           points_Sort[0][2] == points_Sort[3][2] and points_Sort[1][2] == points_Sort[2][2]:
+           points_Sort[0][2] == points_Sort[3][2] and points_Sort[1][2] == points_Sort[2][2]) or \
+           (points_Sort[0][0] == points_Sort[3][0] and points_Sort[0][1] == points_Sort[3][1] and \
+           points_Sort[1][0] == points_Sort[2][0] and points_Sort[1][1] == points_Sort[2][1] and \
+           points_Sort[0][2] == points_Sort[1][2] and points_Sort[2][2] == points_Sort[3][2]):
            rectangularWindow = True
         else:
             rectangularWindow = False
     else:
         rectangularWindow = False
+
     return rectangularWindow
 
 def pointsOfWindow(window, udiv, numOfShds):
     rectangularWindow = identifyRectangularWindow(window)
     if rectangularWindow == False:
-        print 'NO rectangular window'
+        #print 'NO rectangular window'
         pointsOnWindow = []
         edges = window.DuplicateEdgeCurves()
         if len(edges) == 1:
@@ -204,24 +216,64 @@ def pointsOfWindow(window, udiv, numOfShds):
                 pointsOnWindow.append(edges[0].PointAt(t))
             
         else:
-            points = []
+            uPoints = []
             for edge in edges:
                 t_vals = edge.DivideByCount(udiv, True)
                 for t in t_vals:
-                    points.append(edge.PointAt(t))
+                    uPoints.append(edge.PointAt(t))
             
-            pointsOnWindow = rc.Geometry.Point3d.CullDuplicates(points, sc.doc.ModelAbsoluteTolerance)
+            pointsOnWindow = rc.Geometry.Point3d.CullDuplicates(uPoints, sc.doc.ModelAbsoluteTolerance)
     else:
         #print 'YES rectangular window'
         pts = rc.Geometry.Brep.DuplicateVertices(window)
         
         points = rc.Collections.Point3dList(pts)
-        points_Sort = rc.Geometry.Point3d.SortAndCullPointList(points, sc.doc.ModelAbsoluteTolerance)
+        points_Sort1 = rc.Geometry.Point3d.SortAndCullPointList(points, sc.doc.ModelAbsoluteTolerance)
         
-    
+        points_Sort = []
+        for i in range(len(points_Sort1)):
+            ptSrt1 = rc.Geometry.Point3d(points_Sort1[i][0], points_Sort1[i][1],points_Sort1[i][2]) 
+            points_Sort.append( rc.Geometry.Point3d(ptSrt1) )
+        if points_Sort1[0][2] > points_Sort1[2][2]:     # For those cases where the first point is higher than the second point.
+                                                        # Without this the finalSrf is twisted towards the first point of each row
+                                                        # which is wrong (not planar)
+            for i in range(len(points_Sort1)):
+                tmpPtSrt = rc.Geometry.Point3d(points_Sort1[i][0], points_Sort1[i][1],points_Sort1[i][2]) 
+                points_Sort.append( rc.Geometry.Point3d(points_Sort1[i][0], points_Sort1[i][1],points_Sort1[i][2] ) )
+                ##points_Sort.append( rc.Geometry.Point3d(tmpPtSrt) )
+                
+            ##print 'Swapping'
+            swapPointA        = points_Sort1[0][2]
+            swapPointB        = points_Sort1[2][2]
+            points_Sort[0][2] = swapPointB
+            points_Sort[3][2] = swapPointB
+            points_Sort[2][2] = swapPointA
+            points_Sort[1][2] = swapPointA
+        #else:
+            
         frame = []
-        frame.append(rc.Geometry.LineCurve( points_Sort[1], points_Sort[0]) )    # in RS the order was 0 and 1
-        frame.append(rc.Geometry.LineCurve( points_Sort[0], points_Sort[3]) )
+        ########################################################################
+        ##print points_Sort[0], '\n', points_Sort[1], '\n', points_Sort[2],  '\n', points_Sort[3]
+
+        ## Case where the window is WIDER than taller
+        if points_Sort[0][0] == points_Sort[1][0] and points_Sort[0][1] == points_Sort[1][1] and \
+           points_Sort[2][0] == points_Sort[3][0] and points_Sort[2][1] == points_Sort[3][1] and \
+           points_Sort[0][2] == points_Sort[3][2] and points_Sort[1][2] == points_Sort[2][2]:
+            frame.append(rc.Geometry.LineCurve( points_Sort[1], points_Sort[0]) )    # in RS the order was 0 and 1
+            frame.append(rc.Geometry.LineCurve( points_Sort[0], points_Sort[3]) )
+            #print 'Wider'
+        ## Case where the window is TALLER than wider
+        elif points_Sort[0][0] == points_Sort[3][0] and points_Sort[0][1] == points_Sort[3][1] and \
+           points_Sort[1][0] == points_Sort[2][0] and points_Sort[1][1] == points_Sort[2][1] and \
+           points_Sort[0][2] == points_Sort[1][2] and points_Sort[2][2] == points_Sort[3][2]:
+            frame.append(rc.Geometry.LineCurve( points_Sort[3], points_Sort[0]) )    # in RS the order was 0 and 1
+            frame.append(rc.Geometry.LineCurve( points_Sort[0], points_Sort[1]) )
+            #print 'Taller'
+
+        ########################################################################    #CHECK WITH ANTONELLO
+        #frame = []
+        #frame.append(rc.Geometry.LineCurve( points_Sort[1], points_Sort[0]) )    # in RS the order was 0 and 1
+        #frame.append(rc.Geometry.LineCurve( points_Sort[0], points_Sort[3]) )
         
         ##vCol = rc.Geometry.Curve.DivideByCount(frame[0], udiv, True)
         vCol = rc.Geometry.Curve.DivideByCount(frame[0], numOfShds, True)
@@ -233,12 +285,13 @@ def pointsOfWindow(window, udiv, numOfShds):
         for t in uRow:
             horP.append(frame[1].PointAt(t))
         
-        vPoints = []
+        ##vPoints = []
         uPoints = []
         for i in range(0, len(verP) + 0, 1): #vdiv or numOfShds
             for j in range(0, len(horP) + 0, 1):
                 newPt = ( rc.Geometry.Point3d(horP[j][0], horP[j][1], verP[i][2]) )
                 uPoints.append(newPt)   # This is the full grid of point on window
+
         row1 = 0                        # First row of points. Usually the bottom line
         row2 = numOfShds #vdiv               # Top row of points. Usually the top line
         rowsOfWindows = 2               # Number of rows to calculate later on. Should be 2
@@ -252,9 +305,9 @@ def pointsOfWindow(window, udiv, numOfShds):
         
         for i in range(start, end +1, 1):
             pointsOnWindow.append( uPoints[i] )
+            #@print i, uPoints[i][2], pointsOnWindow[i][2]
         for i in range(start1, end1 +1, 1):
             pointsOnWindow.append( uPoints[i] )
-    
     return pointsOnWindow, uPoints
 
 def loopRowPoints(uPoints, udiv, numOfShds):
@@ -294,10 +347,28 @@ def getSrfPlane(brep):
     normalVector = brep.Faces[0].NormalAt(centerPtU, centerPtV)
     return rc.Geometry.Plane(cenPt, normalVector), cenPt
 
-def raysIntersection(rays, shade):
-    if   sc.doc.ModelAbsoluteTolerance * 1000 <=   5: tolFactor = 100   #0.001
-    elif sc.doc.ModelAbsoluteTolerance * 1000 <=  50: tolFactor = 10    #0.01
-    elif sc.doc.ModelAbsoluteTolerance * 1000 <= 500: tolFactor = 1     #0.1
+def raysIntersection(rays, shade, cullRes):
+    if cullRes == 0:
+        culFactor = 1 #0.1
+        pass
+    elif cullRes == 1:
+        culFactor = 5 #1
+    elif cullRes == 2:
+        culFactor = 10 #2
+        pass
+    elif cullRes == 3:
+        culFactor = 20
+        pass
+    ##if   sc.doc.ModelAbsoluteTolerance * 1000 <=   5: tolFactor = 100   #0.001
+    ##elif sc.doc.ModelAbsoluteTolerance * 1000 <=  50: tolFactor = 10    #0.01
+    ##elif sc.doc.ModelAbsoluteTolerance * 1000 <= 500: tolFactor = 1     #0.1
+    
+    ## Reducing even more the points to be used for calculation
+    if   sc.doc.ModelAbsoluteTolerance * 1000 <=   5: tolFactor = 150   * culFactor   #0.001
+    elif sc.doc.ModelAbsoluteTolerance * 1000 <=  50: tolFactor =  15   * culFactor   #0.01
+    elif sc.doc.ModelAbsoluteTolerance * 1000 <= 500: tolFactor =   1.5 * culFactor   #0.1
+    #print sc.doc.ModelAbsoluteTolerance * 1000, tolFactor
+    
     points_on_ShdSrf = []
     for i, ray in enumerate(rays):
         # ShdSrf intersection
@@ -324,7 +395,7 @@ def fromPlaneToSrf(plane):
     
     return shadeSurface
 
-def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShift, shdSrfAngle, window, context):
+def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShift, shdSrfAngle, window, context, uPoints, cullRes):
     ##################################################################### WINDOW
     # from Brep to surface
     surface_window = window.Surfaces[0]
@@ -332,9 +403,7 @@ def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShif
     # find the normal of each surface
     brepPlane, cenPt = getSrfPlane(window)
     normalVector = brepPlane.Normal
-    
     ######################################################### PLANE IF NO SHDSRF
-    
     if shadeSurface: # for very complex pergola shades
         # tangents vectors
         vec = rc.Geometry.Surface.Evaluate(surface_window, 0.5, 0.5, 1)[2]
@@ -377,8 +446,9 @@ def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShif
         point_test = linea_test.PointAt(0.5)
         line_from_point = rc.Geometry.Line(point_test, cenPt)
         direction_test = line_from_point.Direction
-        if isSrfFacingTheVector(direction_test, normalVector) == False:
-            plane.Rotate(m.radians(-shdSrfAngle * 2), vector_p, base_point)
+        #if isSrfFacingTheVector(direction_test, normalVector) == False:
+        #    plane.Rotate(m.radians(-shdSrfAngle * 2), vector_p, base_point)
+        #    print 'here'
             
     ############################################################## INTERSECTIONS
     # generate rays
@@ -412,11 +482,20 @@ def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShif
     
     # intersections
     if shadeSurface:
-        cullPts = raysIntersection(sun_rays, [shadeSurface])
+        tmp_cullPts = raysIntersection(sun_rays, [shadeSurface], cullRes)
     else:
         shadeSurface = fromPlaneToSrf(plane)
-        cullPts = raysIntersection(sun_rays, [shadeSurface])
-    
+        ##@@cullPts = raysIntersection(sun_rays, [shadeSurface], cullRes)
+        tmp_cullPts = raysIntersection(sun_rays, [shadeSurface], cullRes)
+        
+    ### Forcing the Upper left point on window to be part of the cullPoints
+    cullPts = []
+    if shadeSurface_ == None:
+        ##cullPts.append(uPoints[0])
+        cullPts.append(uPoints[ grPt[0] ])  # Include the first point of EACH shading division
+    for i in range(0, len(tmp_cullPts)): 
+        cullPts.append(tmp_cullPts[i])
+
     return cullPts, ptsContext, normalVector, cenPt, vector_p
 
 def finalSurfStuff(cullPts, delaunayHeight, offsetFactor, shadeSurface):
@@ -550,9 +629,9 @@ def finalSurfStuff(cullPts, delaunayHeight, offsetFactor, shadeSurface):
     for srf in splitSrf:
         cent = rc.Geometry.AreaMassProperties.Compute(srf).Centroid
         distance = centerH.DistanceTo(cent)
-        #print distance
         distances.append(distance)
-        
+    
+    #print ' Min distance for split surface ', min(distances), distances
     finalSrf = splitSrf[distances.index(min(distances))]
     
     """
@@ -742,18 +821,11 @@ def calculatePergola(finalSrf, vectorP, normalVector, cenPt, numPergolaFins, fin
 
     return pergola
 
-def main():
-    
+##def main():
+def main(_numPergolaFins_, _shdSrfShift_):
     # inputs
-    window = _window
+    window     = _window
     sunVectors = _sunVectors
-    try:
-        _numPergolaFins_
-        _shdSrfShift_
-    except:
-        _numPergolaFins_ =  None
-        _shdSrfShift_    = None
-
 
     if _numOfShds_       == None:                         numOfShds         = 1
     else:                                                 numOfShds         = _numOfShds_
@@ -771,6 +843,9 @@ def main():
     else:                                                 udiv              = _udiv_ 
     if _offsetFactor_    == None:                         offsetFactor      = 40
     else:                                                 offsetFactor      = _offsetFactor_
+    if _cullRes_         == None:                         cullRes           = 1
+    else:                                                 cullRes           = _cullRes_
+    if cullRes < 0 or cullRes> 3: cullRes = 1
     
     # points
     pointsOnWindow, uPoints = pointsOfWindow(window, udiv, numOfShds)
@@ -782,7 +857,7 @@ def main():
     allptsContext = []
     for i in range(len(rowPoints)):    # List or pair of rows index points (Upoints) to be analysed later on
         # intersections
-        cullPts, ptsContext, normalVector, cenPt, vector_p = calcIntersections(shadeSurface_, rowPoints[i], groupPoints[i], sunVectors, shdSrfShift, shdSrfAngle, window, context_)
+        cullPts, ptsContext, normalVector, cenPt, vector_p = calcIntersections(shadeSurface_, rowPoints[i], groupPoints[i], sunVectors, shdSrfShift, shdSrfAngle, window, context_, uPoints, cullRes)
         
         allptsContext.extend(ptsContext)
         
@@ -809,8 +884,21 @@ def main():
 #Check the data
 #checkData = False
 checkData = checkTheData(_window, _sunVectors, context_)
+
+try:                                              ########   CHECK with ANTONELLO
+    _numPergolaFins_                              ########   with this block the variables are NONE
+    _shdSrfShift_                                 ########   Don't understand WHY  ?????
+    _shdSrfAngle_
+    _finsAngle_
+except:
+    _numPergolaFins_ = None
+    _shdSrfShift_    = None
+    _shdSrfAngle_    = None
+    _finsAngle_      = None
+
 if checkData == True:
-    result = main()
+    ##result = main()
+    result = main(_numPergolaFins_, _shdSrfShift_)
     if result != -1:
         ##finalSrf, cullPts, ptsContext = result
         finalSrf, cullPts, ptsContext, pointsOnWindow, uPoints = result
