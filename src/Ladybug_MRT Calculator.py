@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_MRT Calculator"
 ghenv.Component.NickName = 'MRT'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_18_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -44,6 +44,9 @@ except: pass
 
 import math
 import Grasshopper.Kernel as gh
+from System import Object
+from Grasshopper import DataTree
+from Grasshopper.Kernel.Data import GH_Path
 
 def getMRT(temperatures, viewFactors):
     equRight = 0
@@ -64,9 +67,25 @@ def main(temperatures, viewFactors):
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         return -1
     
-    return getMRT(temperatures, viewFactors)
+    #Create a Python list from the temperature data tree.
+    dataPyList = []
+    for i in range(temperatures.BranchCount):
+        branchList = temperatures.Branch(i)
+        dataVal = []
+        for item in branchList:
+            try: dataVal.append(float(item))
+            except: dataVal.append(item)
+        dataPyList.append(dataVal)
+    
+    MRTs = DataTree[Object]()
+    for count, templist in enumerate(dataPyList):
+        mrt = getMRT(templist, viewFactors)
+        p = GH_Path(count)
+        MRTs.Add(mrt, p)
+    
+    return MRTs
 
-if _temperatures != [] and _temperatures != [None] and _viewFactors != [] and _viewFactors != [None]:
+if _temperatures.BranchCount >0 and _viewFactors != [] and _viewFactors != [None]:
     result = main(_temperatures, _viewFactors)
     if result != -1:
         MRT = result

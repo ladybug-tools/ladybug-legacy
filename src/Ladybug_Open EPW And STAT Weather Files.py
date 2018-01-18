@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'EPW+STAT'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nAUG_02_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -74,7 +74,11 @@ def checkTheInputs(_weatherFileURL):
         lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
         
         if _weatherFileURL and (_weatherFileURL.startswith('https://') or _weatherFileURL.startswith('http://')):
-            folderName = _weatherFileURL.split('/')[-2]
+            if _weatherFileURL.endswith('.zip') or _weatherFileURL.endswith('.ZIP') or _weatherFileURL.endswith('.Zip'):
+                folderName = _weatherFileURL.split('/')[-1][:-4]
+            else:
+                folderName = _weatherFileURL.split('/')[-2]
+            
             checkData = True
         else:
             checkData = False
@@ -139,9 +143,9 @@ def addresses(directory):
         keyText = ''
     for file in os.listdir(directory):
         if file.endswith('.epw') and keyText in file.replace('.','_'):
-            epw = directory + '/' + file
+            epw = directory + file
         elif file.endswith('.stat')and keyText in file.replace('.','_'):
-            stat = directory + '/' + file
+            stat = directory + file
     
     return epw, stat
 
