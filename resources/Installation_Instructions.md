@@ -11,7 +11,7 @@
 
 2. Open Rhino and type "Grasshopper" into the command line (without quotations). Wait for grasshopper to load.
 
-3. Install GHPython 0.6.0.3 by downloading the file [here](http://www.food4rhino.com/project/ghpython?ufh) and drag the .gha file onto the Grasshopper canvas.
+3. Install GHPython 0.6.0.3 by downloading the file [here](http://www.food4rhino.com/app/ghpython) and drag the .gha file onto the Grasshopper canvas.
 
 4. Select and drag all of the userObject files (downloaded with this instructions file) onto your Grasshopper canvas. You should see Ladybug and Honeybee appear as tabs on the grasshopper tool bar.  If you are reading this instruction on github you can download the LB+HB components by following [this link](http://www.food4rhino.com/project/ladybug-honeybee)
 
@@ -20,11 +20,11 @@
 
 ### HONEYBEE
 
-6. Install Radiance to C:\Radiance by downloading it from [this link](https://github.com/NREL/Radiance/releases/download/5.0.a.6/radiance-5.0.a.6-win64.exe) and running the exe.
+6. Install Radiance to C:\Radiance by downloading it from [this link](https://github.com/NREL/Radiance/releases) and running the exe.
 
 7. Install Daysim 4.0 for Windows to C:\DAYSIM by downloading it at [this link](http://daysim.ning.com/page/download) and running the exe.
 
-8. Install the Latest OpenStudio by downloading and running the .exe file from [this link](https://github.com/NREL/OpenStudio/releases/tag/v1.12.0).
+8. Install the Latest OpenStudio by downloading and running the .exe file from [this link](https://www.openstudio.net/downloads).
 
 9. Finally, copy [falsecolor2.exe](https://github.com/mostaphaRoudsari/honeybee/blob/master/resources/falsecolor2.exe?raw=true) to C:\Radiance\bin
 
