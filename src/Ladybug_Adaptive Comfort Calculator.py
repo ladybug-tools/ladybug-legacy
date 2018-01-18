@@ -39,7 +39,7 @@ Provided by Ladybug 0.0.65
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
         meanRadiantTemperature_: A number representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  If no value is plugged in here, this component will assume that the mean radiant temperature is equal to air temperature value above.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
-        _prevailingOutdoorTemp: A number representing the average monthly outdoor temperature in degrees Celcius.  This average monthly outdoor temperature is the temperature that occupants in naturally ventilated buildings tend to adapt themselves to. For this reason, this input can also accept the direct output of dryBulbTemperature from the Import EPW component if houlry values for the full year are connected for the other inputs of this component.
+        _outdoorTemperature: The direct output of dryBulbTemperature from the Import EPW component.  Alternatively, this can be a number representing the prevailing outdoor temperature in degrees Celcius. It can also be a list of prevailing outdoor temperatures that corresponds with the number of values connected above.  Note that, when putting in values without a header like this, the values are meant to be the PREVAILING temperature (not the actual hourly outdoor temperature).
         windSpeed_: A number representing the wind speed of the air in meters per second.  If no value is plugged in here, this component will assume a very low wind speed of 0.3 m/s, characteristic of most naturally ventilated buildings.  This input can also accept a list of wind speeds representing conditions at different times or the direct output of windSpeed from of the Import EPW component.
         ------------------------------: ...
         comfortPar_: Optional comfort parameters from the "Ladybug_Adaptive Comfort Parameters" component.  Use this to select either the US or European comfort model, set the threshold of acceptibility for comfort or compute prevailing outdoor temperature by a monthly average or running mean.  These comfortPar can also be used to set a levelOfConditioning, which makes use of research outside of the official published standards that surveyed people in air conditioned buildings.
@@ -62,7 +62,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Adaptive Comfort Calculator"
 ghenv.Component.NickName = 'AdaptiveComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_21_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -188,16 +188,16 @@ def checkTheInputs():
         if len (radTemp) > 1: radMultVal = True
         print 'No value connected for meanRadiantTemperature_.  It will be assumed that the radiant temperature is the same as the air temperature.'
     
-    #Check lenth of the _prevailingOutdoorTemp list and evaluate the contents.
+    #Check lenth of the _outdoorTemperature list and evaluate the contents.
     checkData3 = False
     prevailTemp = []
     prevailMultVal = False
-    if len(_prevailingOutdoorTemp) != 0:
+    if len(_outdoorTemperature) != 0:
         try:
-            if _prevailingOutdoorTemp[2] == 'Dry Bulb Temperature' and _prevailingOutdoorTemp[3] == 'C' and _prevailingOutdoorTemp[4] == 'Hourly' and _prevailingOutdoorTemp[5] == (1, 1, 1) and _prevailingOutdoorTemp[6] == (12, 31, 24):
+            if _outdoorTemperature[2] == 'Dry Bulb Temperature' and _outdoorTemperature[3] == 'C' and _outdoorTemperature[4] == 'Hourly' and _outdoorTemperature[5] == (1, 1, 1) and _outdoorTemperature[6] == (12, 31, 24):
                 if avgMonthOrRunMean == True:
                     #Calculate the monthly average temperatures.
-                    monthPrevailList = [float(sum(_prevailingOutdoorTemp[7:751])/744), float(sum(_prevailingOutdoorTemp[751:1423])/672), float(sum(_prevailingOutdoorTemp[1423:2167])/744), float(sum(_prevailingOutdoorTemp[2167:2887])/720), float(sum(_prevailingOutdoorTemp[2887:3631])/744), float(sum(_prevailingOutdoorTemp[3631:4351])/720), float(sum(_prevailingOutdoorTemp[4351:5095])/744), float(sum(_prevailingOutdoorTemp[5095:5839])/744), float(sum(_prevailingOutdoorTemp[5839:6559])/720), float(sum(_prevailingOutdoorTemp[6559:7303])/744), float(sum(_prevailingOutdoorTemp[7303:8023])/720), float(sum(_prevailingOutdoorTemp[8023:])/744)]
+                    monthPrevailList = [float(sum(_outdoorTemperature[7:751])/744), float(sum(_outdoorTemperature[751:1423])/672), float(sum(_outdoorTemperature[1423:2167])/744), float(sum(_outdoorTemperature[2167:2887])/720), float(sum(_outdoorTemperature[2887:3631])/744), float(sum(_outdoorTemperature[3631:4351])/720), float(sum(_outdoorTemperature[4351:5095])/744), float(sum(_outdoorTemperature[5095:5839])/744), float(sum(_outdoorTemperature[5839:6559])/720), float(sum(_outdoorTemperature[6559:7303])/744), float(sum(_outdoorTemperature[7303:8023])/720), float(sum(_outdoorTemperature[8023:])/744)]
                     hoursInMonth = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]
                     for monthCount, monthPrevailTemp in enumerate(monthPrevailList):
                         prevailTemp.extend(duplicateData([monthPrevailTemp], hoursInMonth[monthCount]))
@@ -206,10 +206,10 @@ def checkTheInputs():
                     #Calculate a running mean temperature.
                     alpha = 0.8
                     divisor = 1 + alpha + math.pow(alpha,2) + math.pow(alpha,3) + math.pow(alpha,4) + math.pow(alpha,5)
-                    dividend = (sum(_prevailingOutdoorTemp[-24:-1] + [_prevailingOutdoorTemp[-1]])/24) + (alpha*(sum(_prevailingOutdoorTemp[-48:-24])/24)) + (math.pow(alpha,2)*(sum(_prevailingOutdoorTemp[-72:-48])/24)) + (math.pow(alpha,3)*(sum(_prevailingOutdoorTemp[-96:-72])/24)) + (math.pow(alpha,4)*(sum(_prevailingOutdoorTemp[-120:-96])/24)) + (math.pow(alpha,5)*(sum(_prevailingOutdoorTemp[-144:-120])/24))
+                    dividend = (sum(_outdoorTemperature[-24:-1] + [_outdoorTemperature[-1]])/24) + (alpha*(sum(_outdoorTemperature[-48:-24])/24)) + (math.pow(alpha,2)*(sum(_outdoorTemperature[-72:-48])/24)) + (math.pow(alpha,3)*(sum(_outdoorTemperature[-96:-72])/24)) + (math.pow(alpha,4)*(sum(_outdoorTemperature[-120:-96])/24)) + (math.pow(alpha,5)*(sum(_outdoorTemperature[-144:-120])/24))
                     startingTemp = dividend/divisor
                     if startingTemp < 10: coldTimes.append(0)
-                    outdoorTemp = _prevailingOutdoorTemp[7:]
+                    outdoorTemp = _outdoorTemperature[7:]
                     startingMean = sum(outdoorTemp[:24])/24
                     dailyRunMeans = [startingTemp]
                     dailyMeans = [startingMean]
@@ -225,21 +225,21 @@ def checkTheInputs():
                         startHour +=24
                 checkData3 = True
                 epwPrevailTemp = True
-                epwPrevailStr = _prevailingOutdoorTemp[0:7]
+                epwPrevailStr = _outdoorTemperature[0:7]
         except: pass
         if checkData3 == False:
             checkData3 = True
-            for item in _prevailingOutdoorTemp:
+            for item in _outdoorTemperature:
                 try:
                     prevailTemp.append(float(item))
                 except: checkData3 = False
         if len(prevailTemp) > 1: prevailMultVal = True
         if checkData3 == False:
-            warning = '_prevailingOutdoorTemp input must either be the annual hourly dryBulbTemperature from the ImportEPW component, a list of temperature values that matches the length other inputs or a single temperature to be used for all cases.'
+            warning = '_outdoorTemperature input must either be the annual hourly dryBulbTemperature from the ImportEPW component, a list of temperature values that matches the length other inputs or a single temperature to be used for all cases.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
-        print 'Connect a temperature in degrees celcius for _prevailingOutdoorTemp'
+        print 'Connect a temperature in degrees celcius for _outdoorTemperature'
     
     #Check lenth of the windSpeed_ list and evaluate the contents.
     checkData4 = False

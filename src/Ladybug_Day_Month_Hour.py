@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Day_Month_Hour"
 ghenv.Component.NickName = 'Day_Month_Hour_Calculator'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_15_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -76,7 +76,11 @@ def main(HOY):
             day.append(d)
             month.append(m + 1)
             hour.append(t)
-            date.append(lb_preparation.hour2Date(hoy))
+            dat = lb_preparation.hour2Date(hoy)
+            
+            if dat.endswith('24:00'):
+                dat = dat.replace("24:00", "00:00")
+            date.append(dat)
         
         return day, month, hour, date
     else:

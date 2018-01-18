@@ -108,7 +108,7 @@ public class Script_Instance : GH_ScriptInstance
     Component.NickName = "FLY!";
     Component.Category = "Ladybug";
     Component.SubCategory = "5 | Extra";
-    Component.Message = "VER 0.0.62\nAUG_08_2016";
+    Component.Message = "VER 0.0.65\nJUL_29_2017";
 
     //add a toggle if we need one
     // I comment out this based on some user feedback. It's cool but can be pretty confusing

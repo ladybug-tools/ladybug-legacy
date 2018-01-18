@@ -48,7 +48,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nSEP_15_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -65,8 +65,8 @@ import Grasshopper.Kernel as gh
 
 def checkTheInputs():
     #Check to make sure that the number of shade mesh faces matches the length of the shade New Effect.
-    if _inputMesh.Faces.Count == len(_analysisResult): checkData1 = True
-    else:
+    checkData1 = True
+    if _inputMesh.Faces.Count != len(_analysisResult) and _inputMesh.Vertices.Count != len(_analysisResult):
         checkData1 = False
         print "The number of faces in the _inputMesh does not equal the number of values in the _analysisResult.  Are you sure that you connected a mesh that matches your input data?"
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "The number of faces in the _inputMesh does not equal the number of values in the _analysisResult.  Are you sure that you connected a mesh that matches your input data?")
@@ -143,16 +143,18 @@ def main(percent, operator):
     #Remove the unnecessary cells from the shade mesh.
     newMesh = _inputMesh
     areaList = []
-    for fnum in faceNumbersKept:
-        face = newMesh.Faces[fnum]
-        if face.IsQuad:
-            srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), rc.Geometry.Point3d(newMesh.Vertices[face.D]), sc.doc.ModelAbsoluteTolerance)
-        else:
-            srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), sc.doc.ModelAbsoluteTolerance)
-        areaList.append(rc.Geometry.AreaMassProperties.Compute(srfBrep).Area)
-    
-    # Delete unwanted faces.
-    newMesh.Faces.DeleteFaces(faceNumbersHarm)
+    if _inputMesh.Faces.Count == len(_analysisResult):
+        for fnum in faceNumbersKept:
+            face = newMesh.Faces[fnum]
+            if face.IsQuad:
+                srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), rc.Geometry.Point3d(newMesh.Vertices[face.D]), sc.doc.ModelAbsoluteTolerance)
+            else:
+                srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), sc.doc.ModelAbsoluteTolerance)
+            areaList.append(rc.Geometry.AreaMassProperties.Compute(srfBrep).Area)
+        # Delete unwanted faces.
+        newMesh.Faces.DeleteFaces(faceNumbersHarm)
+    else:
+        newMesh.Vertices.Remove(faceNumbersHarm, True)
     
     #Try to simplify the brep.
     try:
@@ -169,11 +171,15 @@ def main(percent, operator):
             joinedCrv = None
     
     #Calculate the total area and the energy saved by the new mesh.
-    totalArea = sum(areaList)
-    totalEnergyList = []
-    for count, area in enumerate(areaList):
-        totalEnergyList.append(shadeNetFinal[count]*area)
-    totalEnergy = sum(totalEnergyList)
+    if _inputMesh.Faces.Count == len(_analysisResult):
+        totalArea = sum(areaList)
+        totalEnergyList = []
+        for count, area in enumerate(areaList):
+            totalEnergyList.append(shadeNetFinal[count]*area)
+        totalEnergy = sum(totalEnergyList)
+    else:
+        totalArea = rc.Geometry.AreaMassProperties.Compute(newMesh).Area
+        totalEnergy = (sum(shadeNetFinal)/len(shadeNetFinal))*totalArea
     
     return totalEnergy, totalArea, newMesh, joinedCrv
 

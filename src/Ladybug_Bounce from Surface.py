@@ -37,11 +37,12 @@ Provided by Ladybug 0.0.65
     Returns:
         bouncePts: The generated base points on the _sourceSrfs to which the sun rays will be directed. The preview of this output is set to be hidden by default.  Connect to a Grasshopper "Point" component to visualize.
         rays: The sun rays traced forward through the geometry.
+        _runIt: Set to True to run the reflection study.
 """
 
 ghenv.Component.Name = "Ladybug_Bounce from Surface"
 ghenv.Component.NickName = 'bounceFromSurface'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nJAN_10_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -171,12 +172,12 @@ def main(sourceSrfs, gridSizeOrPoints, sunVectors, context, numOfBounce, firstBo
                     # no bounce so let's just create a line form the point
                     firstRay = rc.Geometry.Line(testPt, lastBounceLen * vector).ToNurbsCurve()
                     rays.append(firstRay)
-                    
-    if len(rays) == 0:
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "No reflection!")
+            else:
+                rays.append(None)
+    
     return rays, initialTestPoints
 
-if (_sourceSrfs and _sourceSrfs[0]!=None) and (_sunVectors and _sunVectors[0]!=None) and (_gridSizeOrPoints and _gridSizeOrPoints[0]!=None):
+if (_sourceSrfs and _sourceSrfs[0]!=None) and (_sunVectors and _sunVectors[0]!=None) and (_gridSizeOrPoints and _gridSizeOrPoints[0]!=None) and _runIt == True:
     results = main(_sourceSrfs, _gridSizeOrPoints, _sunVectors, context_, _numOfBounce_, firstBounceLen_, _lastBounceLen_)
     if results!=-1:
         rays, bouncePts = results

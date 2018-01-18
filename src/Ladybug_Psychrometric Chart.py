@@ -90,11 +90,11 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nSEP_04_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-#compatibleLBVersion = VER 0.0.59\nJAN_24_2016
+#compatibleLBVersion = VER 0.0.59\nAUG_30_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
@@ -458,23 +458,53 @@ def checkTheInputs():
     
     #Check the annualhourly data and conditional statement
     checkData11 = True
+    listInfo = []
     annualHourlyData = _dryBulbTemperature + _relativeHumidity + annualHourlyData_
     if epwData == True and len(_dryBulbTemperature + _relativeHumidity) > 17533 and conditionalStatement_:
-        titleStatement, patternList = checkConditionalStatement(annualHourlyData, conditionalStatement_)
+        titleStatement, patternList, indexList, listInfo = checkConditionalStatement(annualHourlyData, conditionalStatement_)
         if titleStatement == -1 or patternList == -1:
             checkData11 = False
     else:
         titleStatement = None
         patternList = []
     
-    #Check the passive strategy inputs to be sure that they are correct.
+    # Check the passive strategy inputs to be sure that they are correct.
     checkData12 = True
+    solarCheck = False
     if len(passiveStrategy_) > 0:
         for item in passiveStrategy_:
-            if item == "Evaporative Cooling" or item == "Thermal Mass + Night Vent"  or item == "Occupant Use of Fans" or item == "Internal Heat Gain" or item == "Humidification Only" or item == "Dehumidification Only" or item == "Dessicant Dehumidification": pass
-            else: checkData12 = False
+            if item == "Evaporative Cooling" or item == "Thermal Mass + Night Vent"  or item == "Occupant Use of Fans" or item == "Internal Heat Gain" or item == "Humidification Only" or item == "Dehumidification Only" or item == "Dessicant Dehumidification":
+                pass
+            elif item == "Passive Solar Heating":
+                solarCheck = True
+            else:
+                checkData12 = False
     if checkData12 == False:
         warning = 'Input for passiveStrategy_ is not valid.'
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    
+    # If passive solar is connected as a strategy, make sure that globalHorizontalRadiation is connected for annualHourlyData.
+    globHorizRad = []
+    checkData15 = True
+    if solarCheck == True:
+        if annualHourlyData_ == []:
+            checkData15 = False
+        elif listInfo == []:
+            lb_preparation = sc.sticky["ladybug_Preparation"]()
+            indexList, listInfo = lb_preparation.separateList(annualHourlyData_, lb_preparation.strToBeFound)
+        
+        if checkData15 == True:
+            checkData15 = False
+            for count, datList in enumerate(listInfo):
+                if 'Radiation' in datList[2] and ('Total' in datList[2] or 'Global' in datList[2]):
+                    checkData15 = True
+    if checkData15 == False:
+        warning = 'If "Passive Solar Heating" is requested on the passiveStrategy_ input, you must connect\n' + \
+        "solar radiation values to the annualHourlyData_ input of this component.\n" + \
+        "These radiation values should be the total solar flux falling on a window surface.\n" +\
+        "So connecting an EPW's globalHorizontalRadiation will approximate passive solar heat through a skylight\n"+\
+        "and using the Ladybug_Surface Hourly Solar component will allow you to calculate this for a window facing any direction."
         print warning
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
@@ -572,7 +602,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
             return -1, -1
         
-        return titleStatement, patternList
+        return titleStatement, patternList, indexList, listInfo
 
 
 def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, legendBold, scaleFactor, epwData, epwStr, IPTrigger, opTemp, lb_visualization):
@@ -805,10 +835,13 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     
     #Make axis labels for the chart.
     xAxisLabels = []
+    unitlLabel = ' [C]'
+    if IPTrigger:
+        unitlLabel = ' [F]'
     if opTemp == True:
-        xAxisTxt = ["Operative Temperature"]
+        xAxisTxt = ["Operative Temperature" + unitlLabel]
     else:
-        xAxisTxt = ["Dry Bulb Temperature"]
+        xAxisTxt = ["Dry Bulb Temperature" + unitlLabel]
     if mollierHX_ == True: xAxisPt = [rc.Geometry.Point3d(-5*legendFontSize, 15, 0)]
     else: xAxisPt = [rc.Geometry.Point3d(tempChartVals[0]-0.5, -4*legendFontSize, 0)]
     xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
@@ -819,16 +852,19 @@ def drawPsychChart(avgBarPress, lb_comfortModels, legendFont, legendFontSize, le
     chartText.extend(xAxisTxt)
     chartTextPt.extend(xAxisPt)
     
+    unitlLabel = ' [kg water/ kg air]'
+    if IPTrigger:
+        unitlLabel = ' [lb water/ lb air]'
     yAxisLabels = []
-    yAxisTxt = ["Humidity Ratio"]
+    yAxisTxt = ["Humidity Ratio" + unitlLabel]
     if mollierHX_ == True:
         if IPTrigger: yAxisPt = [rc.Geometry.Point3d(40, 115+(4*legendFontSize), 0)]
-        else: yAxisPt = [rc.Geometry.Point3d(20, 50+(4*legendFontSize), 0)]
+        else: yAxisPt = [rc.Geometry.Point3d(15, 50+(4*legendFontSize), 0)]
         yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
     else:
-        yAxisPt = [rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.0245*scaleFactor, 0)]
+        yAxisPt = [rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.018*scaleFactor, 0)]
         yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
-        rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.0245*scaleFactor, 0))
+        rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(tempChartVals[-1]+(7*legendFontSize), 0.018*scaleFactor, 0))
         for geo in yAxisLabels:
             geo.Transform(rotateTransf)
     chartText.extend(yAxisTxt)
@@ -1049,7 +1085,7 @@ def unionAllCurves(Curves):
     return res
 
 
-def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp):
+def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy, relHumidLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp, globHorizRad, airTemp, origAirTemp, origGlobHorizRad, origHrs):
     #Take just the top middle and bottom lines for making the comofrt range in order to speed up the calculation.
     relHumidLines = [relHumidLines[0], relHumidLines[5], relHumidLines[10]]
     
@@ -1068,7 +1104,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         upTemperPts = []
         downTemperPts = []
         for count, humidity in enumerate(range(0,150,50)):
-            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index]+2, radTemp[index]-2, radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh, opTemp)
+            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[index], windSpeed[index], humidity, metRate[index], cloLevel[index], exWork[index], PPDComfortThresh, opTemp)
             if IPTrigger == True: upTemper, downTemper = C2F([upTemper])[0], C2F([downTemper])[0]
             
             if upTemper < maxTempe:
@@ -1106,10 +1142,20 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
             joinedCurves = rc.Geometry.Curve.JoinCurves([upperBoundary, topCurve, lowerBoundary, bottomCurve])[0]
             comfortCrvSegments.append([upperBoundary, lowerBoundary, topCurve, bottomCurve])
             comfortCurves.append(joinedCurves)
-        except:
+        except Exception as e:
+            print e
             warning = 'Comfort polygon has fallen completely off of the psych chart.'
             print warning
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+    
+    # Default strategy parameters.
+    tempAboveComf = 12
+    tempBelowComf = 3
+    maxWindSpeed = 1
+    bldgBalPt = 12.8
+    solarHeatCap = 50
+    solarTimeConst = 8
+    polyStart = None
     
     if comfortCurves != []:
         #If the user has speified a max or a min humidity ratio, use that to trim the comfort boundary.
@@ -1177,6 +1223,10 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         lowBoundXList, lowBoundCrv = zip(*sorted(zip(lowBoundXList, lowBoundCrv)))
         comfortCrvSegments[0][1] = lowBoundCrv[0]
         
+        # Calculate max and min temp.
+        maxComfortPolyTemp = comfortCrvSegments[0][0].PointAt(0.5).X
+        minComfortPolyTemp = comfortCrvSegments[0][1].PointAtEnd.X
+        
         #Define a function to offset curves and return things that will stand out on the psychrometric chart.
         def outlineCurve(curve):
             try:
@@ -1212,25 +1262,18 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         if len(passiveStrategy) != 0:
             #If the user has connected strategy parameters, read them out.
             if strategyPar_ != []:
-                if len(strategyPar_) == 4:
+                if len(strategyPar_) == 6:
                     tempAboveComf = strategyPar_[0]
                     tempBelowComf = strategyPar_[1]
                     maxWindSpeed = strategyPar_[2]
                     bldgBalPt = strategyPar_[3]
+                    solarHeatCap = strategyPar_[4]
+                    solarTimeConst = strategyPar_[5]
                 else:
                     warning = 'The strategyPar_ list does not contain valid data.  StrategyPar_ must come from the "Ladybug_Passive Strategy Parameters" component.'
                     print warning
                     w = gh.GH_RuntimeMessageLevel.Warning
                     ghenv.Component.AddRuntimeMessage(w, warning)
-                    tempAboveComf = 16.7
-                    tempBelowComf = 2.8
-                    maxWindSpeed = 1.5
-                    bldgBalPt = 12.8
-            else:
-                tempAboveComf = 16.7
-                tempBelowComf = 2.8
-                maxWindSpeed = 1.5
-                bldgBalPt = 12.8
             
             if IPTrigger:
                 tempAboveComf = C2F([tempAboveComf])[0]-32
@@ -1389,7 +1432,7 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         #Calculate the upper boundary of Natural ventilation.
                         upTemperPts = []
                         for count, humidity in enumerate(range(0,150,50)):
-                            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount]+2, radTemp[comfCount]-2, radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh, opTemp)
+                            upTemper, downTemper = lb_comfortModels.calcComfRange(radTemp[comfCount], maxWindSpeed, humidity, metRate[comfCount], cloLevel[comfCount], exWork[comfCount], PPDComfortThresh, opTemp)
                             
                             if IPTrigger: upTemperSpatial, downTemperSpatial = C2F([upTemper])[0], C2F([downTemper])[0]
                             else: upTemperSpatial, downTemperSpatial = upTemper, downTemper
@@ -1450,11 +1493,90 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, heatBoundaryNew.PointAtStart)
                         joinedHeatBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, heatBoundaryNew])[0]
                     
+                    if humidRatioUp != 0.03:
+                        try:
+                            heatBoundaryNew = joinedHeatBound.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[-1]
+                            if not heatBoundaryNew.IsClosed:
+                                heatBoundaryCloser = rc.Geometry.LineCurve(heatBoundaryNew.PointAtStart, heatBoundaryNew.PointAtEnd)
+                                joinedHeatBound2 = rc.Geometry.Curve.JoinCurves([heatBoundaryNew, heatBoundaryCloser])[0]
+                                if joinedHeatBound2 != None and joinedHeatBound2.IsClosed:
+                                    joinedHeatBound = joinedHeatBound2
+                        except:
+                            pass
+                    
                     passiveStrategyCurves.append(joinedHeatBound)
                     passiveStrategyBreps.append(outlineCurve(joinedHeatBound))
                     strategyListTest.append("Internal Heat Gain")
                 
-                #If the user has hooked up humidification only, add a humidification only curve to the chart.
+                # If the user has connected passive solar heating and radiation to be used for this, make a solar radiation polygon.
+                if "Passive Solar Heating" in passiveStrategy and globHorizRad != []:
+                    # calculate the maximum temperature delta.
+                    deltas = []
+                    maxDelta = 1
+                    if "Internal Heat Gain" in passiveStrategy:
+                        polyStart = bldgBalPt
+                    else:
+                        polyStart = minComfortPolyTemp
+                    for hourCt, hourPt in enumerate(globHorizRad):
+                        if airTemp[hourCt] < polyStart:
+                            tempDelta = polyStart - airTemp[hourCt]
+                            comfFound = 0
+                            solarHeatContribs = []
+                            for pastRad in range(int(solarTimeConst)):
+                                heatContrib = ((int(solarTimeConst)-pastRad)/solarTimeConst)*origGlobHorizRad[int(origHrs[hourCt]-1-pastRad)]
+                                solarHeatContribs.append(heatContrib)
+                            if sum(solarHeatContribs) > solarHeatCap*tempDelta:
+                                deltas.append(tempDelta)
+                    if len(deltas) >0:
+                        deltas.sort()
+                        deltaDesignIndex = int(len(deltas)/100)
+                        maxDelta = deltas[-deltaDesignIndex]
+                        if polyStart - maxDelta < -20:
+                            maxDelta = 20 + polyStart
+                        elif maxDelta < 1:
+                            maxDelta = 1
+                    
+                    solarBoundary = rc.Geometry.LineCurve(rc.Geometry.Point3d(polyStart-maxDelta, 0, 0), rc.Geometry.Point3d(polyStart-maxDelta, scaleFactor*0.03, 0))
+                    solarBoundary = solarBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                    
+                    if "Internal Heat Gain" in passiveStrategy:
+                        heatBoundary = rc.Geometry.LineCurve(rc.Geometry.Point3d(polyStart, 0, 0), rc.Geometry.Point3d(polyStart, scaleFactor*0.03, 0))
+                        heatBoundary = heatBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
+                    else:
+                        heatBoundary = comfortCrvSegments[comfCount][1]
+                    
+                    if humidRatioLow == 0:
+                        strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                        strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        joinedSolarBound = rc.Geometry.Curve.JoinCurves([strategyLine1, heatBoundary, strategyLine2, solarBoundary])[0]
+                    else:
+                        heatBoundaryNew = heatBoundary.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                        try:
+                            solarBoundaryNew = solarBoundary.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                            strategyLine2 = rc.Geometry.LineCurve(heatBoundaryNew.PointAtStart, solarBoundaryNew.PointAtStart)
+                            joinedSolarBound = rc.Geometry.Curve.JoinCurves([strategyLine1, heatBoundaryNew, strategyLine2, solarBoundaryNew])[0]
+                        except:
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[-1]
+                            closer = rc.Geometry.LineCurve(heatBoundaryNew.PointAtStart, strategyLine1.PointAtStart)
+                            joinedSolarBound = rc.Geometry.Curve.JoinCurves([strategyLine1, heatBoundaryNew, closer])[0]
+                    
+                    if humidRatioUp != 0.03:
+                        try:
+                            solarBoundaryNew = joinedSolarBound.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[-1]
+                            if not solarBoundaryNew.IsClosed:
+                                solarBoundaryCloser = rc.Geometry.LineCurve(solarBoundaryNew.PointAtStart, solarBoundaryNew.PointAtEnd)
+                                joinedSolarBound2 = rc.Geometry.Curve.JoinCurves([solarBoundaryNew, solarBoundaryCloser])[0]
+                                if joinedSolarBound2 != None and joinedSolarBound2.IsClosed:
+                                    joinedSolarBound = joinedSolarBound2
+                        except:
+                            pass
+                    
+                    passiveStrategyCurves.append(joinedSolarBound)
+                    passiveStrategyBreps.append(outlineCurve(joinedSolarBound))
+                    strategyListTest.append("Passive Solar Heating")
+                
+                # If the user has hooked up humidification only, add a humidification only curve to the chart.
                 if "Humidification Only" in passiveStrategy and humidRatioLow != 0:
                     boundary1 = comfortCrvSegments[comfCount][1].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
                     boundary2 = comfortCrvSegments[comfCount][0].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[0]
@@ -1489,11 +1611,20 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     dessicantLine = rc.Geometry.LineCurve(startPt, endPt)
                     boundary1 = dessicantLine.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
                     try:
-                        boundary2 = comfortCrvSegments[comfCount][1].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
-                        boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
-                        boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
-                        joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
-                        
+                        if not "Internal Heat Gain" in passiveStrategy:
+                            boundary2 = comfortCrvSegments[comfCount][1].Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[1]
+                            boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
+                            boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
+                            if boundary1.PointAtEnd.X < boundary2.PointAtEnd.X:
+                                boundary12 = boundary1.Split(rc.Geometry.Surface.CreateExtrusion(boundary2, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                                boundary22 = boundary2.Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                                joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary12, boundary22, boundary3])[0]
+                            else:
+                                joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
+                        else:
+                            boundary2 = chartBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                            boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
+                            joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3])[0]
                     except:
                         boundary2 = chartBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
                         boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
@@ -1529,8 +1660,6 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         else:
             tempBelowComf = 2.8
         
-        maxComfortPolyTemp = comfortCrvSegments[0][0].PointAt(0.5).X
-        
         #Try to boolean all of the strategy and comfort curves together so that we can get a sense of comfort over the whole graph.
         allCurves = []
         for crv in mergedCurvesFinal:
@@ -1554,22 +1683,29 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
             brep.Transform(transformMatrix)
         
         
-        return mergedCurvesFinal, finalComfortBreps, passiveStrategyCurves, passiveStrategyBreps, strategyListTest, allCurves, tempBelowComf, maxComfortPolyTemp
+        return mergedCurvesFinal, finalComfortBreps, passiveStrategyCurves, passiveStrategyBreps, strategyListTest, allCurves, tempBelowComf, maxComfortPolyTemp, solarHeatCap, solarTimeConst, bldgBalPt, polyStart
     else:
-        return [], [], [], [], [], [], 2.8, 0
+        return [], [], [], [], [], [], 3, 0, 30, 8, 12.8
 
-
-def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList):
+def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, globHorizRad, origAirTemp, origGlobHorizRad, origHrs, solarHeatCap, solarTimeConst, bldgBalPt, polyStart, patternList, IPTrigger):
     #Define lists to be filled up with the data.
     strategyPercent = []
     strategyOrNot = []
+    if IPTrigger == False:
+        curveTolerance = sc.doc.ModelAbsoluteTolerance*5
+    else:
+        curveTolerance = 0.4
     
     #For each of the comfort polygons, determine how many of the hour points are inside of them and make a comfort or not list.
     for countComf, comfortPolygon in enumerate(comfortPolyline):
         comfBool = []
         for hourPt in hourPts:
-            if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
-            else:comfBool.append(0)
+            if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside":
+                comfBool.append(1)
+            elif hourPt.DistanceTo(comfortPolygon.PointAt(comfortPolygon.ClosestPoint(hourPt)[1])) < curveTolerance:
+                comfBool.append(1)
+            else:
+                comfBool.append(0)
         if len(comfBool) != 0:
             comfPercent = (sum(comfBool)/len(comfBool))*100
         else:
@@ -1593,14 +1729,42 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
     for countStrat, comfortPolygon in enumerate(strategyPolylines):
         comfBool = []
         try:
-            if strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" or epwData == False or patternList != []:
+            if (strategyTextNames[countComf + countStrat + 1] != "Thermal Mass + Night Vent" and strategyTextNames[countComf + countStrat + 1] != "Passive Solar Heating") or epwData == False or patternList != []:
                 for hourPt in hourPts:
-                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
-                    else:comfBool.append(0)
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside":
+                        comfBool.append(1)
+                    elif hourPt.DistanceTo(comfortPolygon.PointAt(comfortPolygon.ClosestPoint(hourPt)[1])) < curveTolerance:
+                        comfBool.append(1)
+                    else:
+                        comfBool.append(0)
+            elif strategyTextNames[countComf + countStrat + 1] == "Thermal Mass + Night Vent":
+                for hourCt, hourPt in enumerate(hourPts):
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" or hourPt.DistanceTo(comfortPolygon.PointAt(comfortPolygon.ClosestPoint(hourPt)[1])) < curveTolerance:
+                        comfFound = 0
+                        for pastAir in range(int(solarTimeConst)):
+                            if origAirTemp[int(origHrs[hourCt]-1-pastAir)] < maxComfortPolyTemp-tempBelowComf:
+                                comfFound = 1
+                        comfBool.append(comfFound)
+                    else:
+                        comfBool.append(0)
             else:
                 for hourCt, hourPt in enumerate(hourPts):
-                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" and airTemp[hourCt-12] < maxComfortPolyTemp-tempBelowComf: comfBool.append(1)
-                    else:comfBool.append(0)
+                    if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" or hourPt.DistanceTo(comfortPolygon.PointAt(comfortPolygon.ClosestPoint(hourPt)[1])) < curveTolerance:
+                        if "Internal Heat Gain" in strategyTextNames:
+                            tempDelta = bldgBalPt - airTemp[hourCt]
+                        else:
+                            tempDelta = polyStart - airTemp[hourCt]
+                        comfFound = 0
+                        solarHeatContribs = []
+                        for pastRad in range(int(solarTimeConst)):
+                            heatContrib = ((int(solarTimeConst)-pastRad)/solarTimeConst)*origGlobHorizRad[origHrs[hourCt]-1-pastRad]
+                            solarHeatContribs.append(heatContrib)
+                        if sum(solarHeatContribs) > solarHeatCap*tempDelta:
+                            comfFound = 1
+                        comfBool.append(comfFound)
+                    else:
+                        comfBool.append(0)
+            
             comfPercent = (sum(comfBool)/len(comfBool))*100
             strategyPercent.append(comfPercent)
             if epwData == True:
@@ -1616,7 +1780,8 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
                 comfBool.insert(0, epwStr[1])
                 comfBool.insert(0, epwStr[0])
             strategyOrNot.append(comfBool)
-        except:
+        except Exception as e:
+            print e
             strategyPercent.append(0)
             for count in range(len(hourPts)):
                 comfBool.append(0)
@@ -1636,29 +1801,15 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
             strategyOrNot.append(comfBool)
     
     #For the total comfort, determine how many of the hour points are inside of them and make a comfort or not list.
-    temporaryPercent = []
-    temporaryComfOrNot = []
-    for polygon in unionedCurves:
+    finalComfOrNot = [0 for x in range(len(hourPts))]
+    for polygon in strategyOrNot:
         comfBool = []
-        for hourPt in hourPts:
-            if str(polygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside": comfBool.append(1)
-            else:comfBool.append(0)
-        if len(comfBool) != 0:
-            comfPercent = (sum(comfBool)/len(comfBool))*100
-        else:
-            comfPercent = 100
-        temporaryPercent.append(comfPercent)
-        temporaryComfOrNot.append(comfBool)
+        for count, hourPt in enumerate(polygon[7:]):
+            if hourPt == 1:
+                finalComfOrNot[count] = 1
     
     #Build the final percent and comfort or not lists.
-    finalTotalPercent = sum(temporaryPercent)
-    finalComfOrNot = []
-    for listCount, list in enumerate(temporaryComfOrNot):
-        for count, item in enumerate(list):
-            if listCount == 0:
-                finalComfOrNot.append(item)
-            else:
-                finalComfOrNot[count] = finalComfOrNot[count] + item
+    finalTotalPercent = sum(finalComfOrNot)/len(finalComfOrNot)*100
     
     if epwData == True:
         if analysisPeriod_:
@@ -1688,9 +1839,9 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     pointColors.append(lb_visualization.gradientColor(totalComfOrNot, 0, 1, customColors))
     
     #Get the colors for annualHourly Data.
-    for list in annualHourlyDataSplit:
-        if len(list) != 0:
-            pointColors.append(lb_visualization.gradientColor(list, "min", "max", customColors))
+    for datalist in annualHourlyDataSplit:
+        if len(datalist) != 0:
+            pointColors.append(lb_visualization.gradientColor(datalist, "min", "max", customColors))
     
     #Generate a legend for comfort.
     legend = []
@@ -1698,21 +1849,21 @@ def getPointColors(totalComfOrNot, annualHourlyDataSplit, annualDataStr, numSeg,
     legendColors = lb_visualization.gradientColor(legendText[:-1], 0, 1, customColors)
     legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
     legend.append(legendSrfs)
-    for list in legendTextCrv:
-        for item in list:
+    for datalist in legendTextCrv:
+        for item in datalist:
             legend.append(item)
     colorLegends.append(legend)
     
     #Generate legends for annualHourly Data.
-    for listCount, list in enumerate(annualHourlyDataSplit):
-        if len(list) != 0:
+    for listCount, datalist in enumerate(annualHourlyDataSplit):
+        if len(datalist) != 0:
             legend = []
-            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(list, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
+            legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(datalist, "min", "max", numSeg, annualDataStr[listCount][3], lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
             legendColors = lb_visualization.gradientColor(legendText[:-1], "min", "max", customColors)
             legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
             legend.append(legendSrfs)
-            for list in legendTextCrv:
-                for item in list:
+            for datalist in legendTextCrv:
+                for item in datalist:
                     legend.append(item)
             colorLegends.append(legend)
     
@@ -1739,6 +1890,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
+        
         # Read the legend parameters.
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
         
@@ -1761,7 +1913,19 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             for list in annualHourlyDataSplit:
                 annualDataStr.append(list[:7])
         
+        # Make copies of important lists.
+        origAirTemp = airTemp[:]
+        origGlobHorizRad = []
+        for count, datList in enumerate(annualDataStr):
+            if 'Radiation' in datList[2] and ('Total' in datList[2] or 'Global' in datList[2]):
+                origGlobHorizRad = annualHourlyDataSplit[count]
+        if len(origAirTemp) == 8767:
+            origAirTemp = origAirTemp[7:]
+        if len(origGlobHorizRad) == 8767:
+            origGlobHorizRad = origGlobHorizRad[7:]
+        
         # If an analysis period is selected, use that to select out the data.
+        origHrs = range(1,8761)
         if analysisPeriod_ != [] and epwData == True and calcLength == 8760:
             airTemp = lb_preparation.selectHourlyData(_dryBulbTemperature, analysisPeriod_)[7:]
             relHumid = lb_preparation.selectHourlyData(_relativeHumidity, analysisPeriod_)[7:]
@@ -1772,6 +1936,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                 for num in range(len(airTemp)):
                     barPress2.append(barPress[0])
                 barPress = barPress2
+            origHrs, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
             if len(patternList) == 8760:
                 HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod(analysisPeriod_, 1)
                 newPatternList = []
@@ -1794,6 +1959,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             newAirTemp = []
             newRelHumid = []
             newBarPress = []
+            newOrigHrs = []
             newAnnualHourlyDataSplit = []
             for list in annualHourlyDataSplit:
                 newAnnualHourlyDataSplit.append([])
@@ -1802,13 +1968,21 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                     newAirTemp.append(airTemp[count])
                     newRelHumid.append(relHumid[count])
                     newBarPress.append(barPress[count])
+                    newOrigHrs.append(origHrs[count])
                     if annualHourlyDataSplit != [[]]:
                         for listCount in range(len(annualHourlyDataSplit)):
                             newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
             airTemp = newAirTemp
             relHumid = newRelHumid
             barPress = newBarPress
+            origHrs = newOrigHrs
             annualHourlyDataSplit = newAnnualHourlyDataSplit
+        
+        # Pull out solar radiation if it's needed for the passive solar heating polygon.
+        globHorizRad = []
+        for count, datList in enumerate(annualDataStr):
+            if 'Radiation' in datList[2] and ('Total' in datList[2] or 'Global' in datList[2]):
+                globHorizRad = annualHourlyDataSplit[count]
         
         #As long as the calculation length is more than 1, make a colored mesh and get chart points for the input data.
         legend = []
@@ -1867,15 +2041,15 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         
         # Calculate the comfort and strategy polygons.
         try:
-            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp)
-            
+            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp, solarHeatCap, solarTimeConst, bldgBalPt, polyStart = calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, humidRatioUp, humidRatioLow, passiveStrategy_, humidityLines, calcLengthComf, lb_comfortModels, chartBoundary, scaleFactor, PPDComfortThresh, IPTrigger, opTemp, globHorizRad, airTemp, origAirTemp, origGlobHorizRad, origHrs)
             #Calculate how many hours are in each comfort or strategy and comfort polygons.
-            totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, patternList)
-        except:
-            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp = None, None, [], [], [], [], None, None
+            totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, unionedCurves, epwData, epwStr, strategyTextNames, tempBelowComf, airTemp, maxComfortPolyTemp, globHorizRad, origAirTemp, origGlobHorizRad, origHrs, solarHeatCap, solarTimeConst, bldgBalPt, polyStart, patternList, IPTrigger)
+        except Exception as e:
+            comfortPolyline, comfortPolygon, strategyPolylines, strategyPolygons, strategyTextNames, unionedCurves, tempBelowComf, maxComfortPolyTemp, solarHeatCap, solarTimeConst, bldgBalPt = None, None, [], [], [], [], None, None, None, None, None
             totalComfPercent, totalComfOrNot, strategyPercent, strategyOrNot = None, [], None, []
             warning = 'Comfort polygon has fallen completely off of the psych chart.'
             print warning
+            print e
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         
         #Generate colors for the points.
@@ -1981,7 +2155,8 @@ if checkData == True:
     results = main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, \
                    avgBarPress, radTemp, windSpeed, metRate, cloLevel, exWork, \
                    humidRatioUp, humidRatioLow, calcLengthComf, \
-                   PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals, opTemp)
+                   PPDComfortThresh, titleStatement, patternList, IPTrigger, farenheitVals, \
+                   opTemp)
                    
     if results != -1:
         totalComfortPercent, totalComfortOrNot, strategyNames, strategyPercentOfTime, \

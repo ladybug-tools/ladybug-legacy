@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Create Legend"
 ghenv.Component.NickName = 'createLegend'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_21_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -73,8 +73,12 @@ def main(results, legendPar, legendTitle, legendWidth):
     # read the legend parameters legend
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     
-    if legendBasePoint == None and legendBasePt_ != None: legendBasePoint = legendBasePt_
+    if legendBasePoint == None and legendBasePt_ != None:
+        legendBasePoint = legendBasePt_
+    elif legendBasePoint != None and legendBasePt_ != None:
+        legendBasePoint = legendBasePt_
     else: legendBasePoint = rc.Geometry.Point3d(0,0,0)
+    
     if legendWidth == None: legendWidth = 10
     boundingBoxPar = [legendBasePoint, None, 10 * legendWidth] 
     

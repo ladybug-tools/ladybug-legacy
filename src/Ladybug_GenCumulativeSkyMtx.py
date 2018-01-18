@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_GenCumulativeSkyMtx"
 ghenv.Component.NickName = 'genCumulativeSkyMtx'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_21_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -176,10 +176,16 @@ def main(epwFile, skyType, workingDir, useOldRes):
                 w = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(w, "Can't find epw file at " + epwFile)
                 return -1
-                
+            
+            # Get the year of the epw for the file name.
+            year = 0
+            with open(epwFile,"r") as epw_file:
+                for lineCount, line in enumerate(epw_file):
+                    year = (line.split(',')[0])
+            
             # import data from epw file
             locName, lat, lngt, timeZone, elev, locationStr = lb_preparation.epwLocation(epwFile)
-            newLocName = lb_preparation.removeBlank(locName)
+            newLocName = lb_preparation.removeBlank(locName + "_" + str(year))
             
             # make new folder for each city
             subWorkingDir = lb_preparation.makeWorkingDir(workingDir + "\\" + newLocName)

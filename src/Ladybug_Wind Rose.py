@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.65\nDEC_15_2017'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -617,17 +617,19 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
             endingHour =  lb_preparation.date2Hour(endMonth, endDay, endHour)
             if startHour <= endingHour: studyHours = range(startHour-1, endingHour)
             else: studyHours = range(startHour - 1, 8760) + range(0, endingHour)
-            
+
             calmHour = [] # count hours with no wind
             separatedBasedOnAngle = []
             [separatedBasedOnAngle.append([]) for i in range(len(roseAngles))]
             #print len(studyHours)
             #print len(selectedWindDir)
+
             for hour, windDirection in enumerate(selectedWindDir):
                 h = studyHours[hour]
                 if patternList[h]: # if the hour pass the conditional statement
                     # check if windSpeed is 0 so collect it in center
                     if windSpeed[h] == 0: calmHour.append(h)
+                    
                     else:
                         for angleCount in range(len(roseAngles)-1):
                             # print roseAngles[angleCount], roseAngles[angleCount + 1]
@@ -637,24 +639,27 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             if roseAngles[angleCount]-(segAngle/2)<= windDirection < roseAngles[angleCount + 1]-(segAngle/2):
                                 separatedBasedOnAngle[angleCount].append(h)
                                 break
-                            elif roseAngles[-1]<= windDirection:
+                            elif roseAngles[-1]-(segAngle/2)<= windDirection < roseAngles[-1]+(segAngle/2):
                                 separatedBasedOnAngle[-1].append(h)
+                                break
+                            elif 360-(segAngle/2)<= windDirection:
+                                separatedBasedOnAngle[0].append(h)
                                 break
             
             # calculate the frequency
             calmFreq = (100*len(calmHour)/len(studyHours))
-            
+
             comment1 = 'Calm for ' + '%.2f'%calmFreq + '% of the time = ' + `len(calmHour)` + ' hours.'
             print comment1
             windFreq = []
+
             for angle in separatedBasedOnAngle:
                 windFreq.append(100*len(angle)/len(studyHours))
             
             calmFreq = (100*len(calmHour)/len(studyHours))/numOfDirections
-            
-            
+
             # draw the basic geometry for windRose
-            
+
             ## draw the first polygon for calm period of the year
             def freqPolyline(cenPt, freq, vectorList, scale, onlyPts = False):
                 pts = []
@@ -795,7 +800,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                             # Making a list of angles to rotate vecotrs
                             angleList, angleRanges = makeRanges(numOfDirections)
                             angleList = angleList[1:]                               
-                                       
+                            
                             # Getting wind speeds and wind directions
                             wind_Speeds, wind_Directions = unpackPatternList(patternList, analysisPeriod, _hourlyWindSpeed, _hourlyWindDirection)
                             wind_Directions = [int(x) for x in windDirections[7:]]
@@ -1064,7 +1069,7 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         velTextMesh.append(velMesh)
                     else:
                         velTextMesh = []
-    
+                    
                     numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, True)
                     numberCrvs = numberCrvs 
                     compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
@@ -1157,9 +1162,25 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
                         
                         # check the study type
                         newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', layerName, studyLayerName)
-                        if bakeIt == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
-                        else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
-
+                        if bakeIt == 1: 
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+                            #Baking Wind Velocities and Wind Frequencies
+                            finalJoinedMesh = None
+                            legendSrfs = None
+                            legendText = freqTextList + velTextList
+                            textPt = freqTextPts + velTextPts
+                            textSize /= 2
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+                        else:
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, False)
+                            #Baking Wind Velocities and Wind Frequencies
+                            finalJoinedMesh = None
+                            legendSrfs = None
+                            legendText = freqTextList + velTextList
+                            textPt = freqTextPts + velTextPts
+                            textSize /= 2
+                            lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legendSrfs, legendText, textPt, textSize, legendFont, finalCrvs, decimalPlaces, True)
+            
             return allWindRoseMesh, allWindCenMesh, cenPts, legendBasePoints, allWindRoseCrvs, windSpeeds, windDirections, allLegend, legendBasePoints, titleTextCurveFinal, velTextMeshOut, freqTextMeshOut, averageVelocityOutput, frequencyOutput
             
     else:
