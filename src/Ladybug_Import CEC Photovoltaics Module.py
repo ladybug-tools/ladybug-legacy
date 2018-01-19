@@ -26,7 +26,7 @@ Use this component to import Photovoltaics module settings for particular module
 Download library's newest version from the bottom of the following page:
 https://sam.nrel.gov/libraries
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     input:
         _modulesLibraryFile: Add "California Energy Commission (CEC) Modules" .csv file path to this input.
@@ -90,7 +90,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Import CEC Photovoltaics Module"
 ghenv.Component.NickName = "ImportCECPhotovoltaicsModule"
-ghenv.Component.Message = 'VER 0.0.65\nJAN_14_2018'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

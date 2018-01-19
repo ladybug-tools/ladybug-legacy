@@ -30,7 +30,7 @@ An Orientation Study will automatically rotate your geometry around several time
 
 
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _divisionAngle: A number between 0 and 180 that represents the degrees to rotate the geometry for each step of the Orientation Study.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Orientation Study Parameters"
 ghenv.Component.NickName = 'orientationStudyPar'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

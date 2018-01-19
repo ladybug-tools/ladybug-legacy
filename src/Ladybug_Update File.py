@@ -26,7 +26,7 @@ This component doesn't update the installation. It will only update the file
 to your current installation. The components that can't be updated automatically
 will be marked and should be replaced manually.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _update: Set to "True" if you want this component to search through the current Grasshopper file and update ladybug tools components.
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Update File"
 ghenv.Component.NickName = 'updateGHFile'
-ghenv.Component.Message = 'VER 0.0.65\nJAN_14_2018'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"

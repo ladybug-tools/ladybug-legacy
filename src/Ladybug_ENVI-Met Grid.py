@@ -27,7 +27,7 @@ Use this component to visualize ENVI-Met v4.0 data. Connect "resultFileAddress" 
 Component mainly based on:
 https://www.researchgate.net/publication/281031049_Outdoor_Comfort_the_ENVI-BUG_tool_to_evaluate_PMV_values_point_by_point
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         basePoint_: Input a point here to move ENVI-Met grid. If no input is provided it will be origin point.
@@ -52,7 +52,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Grid"
 ghenv.Component.NickName = 'ENVI-MetGrid'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
