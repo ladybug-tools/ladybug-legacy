@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com>
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com>
 # with assistance of Dr. Krzysztof Blazejczyk <k.blaz@twarda.pan.pl>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 

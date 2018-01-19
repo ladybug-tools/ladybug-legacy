@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Chris Mackey, Alex Jacobson and Djordje Spasic <Chris@MackeyArchitecture.com, Jacobson@gsd.harvard.edu and issworld2000@yahoo.com> 
+# Copyright (c) 2013-2018, Chris Mackey, Alex Jacobson and Djordje Spasic <Chris@MackeyArchitecture.com, Jacobson@gsd.harvard.edu and issworld2000@yahoo.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 

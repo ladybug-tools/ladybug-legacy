@@ -2,7 +2,7 @@
 #
 # This file is part of Ladybug.
 #
-# Copyright (c) 2013-2015, ....(YOUR NAME).... <....(YOUR EMAIL)....>
+# Copyright (c) 2013-2018, ....(YOUR NAME).... <....(YOUR EMAIL)....>
 # Ladybug is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; either version 3 of the License,
