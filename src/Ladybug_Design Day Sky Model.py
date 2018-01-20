@@ -247,7 +247,7 @@ def main(location, monthlyTauBeam, monthlyTauDiffuse, skyDensity, workingDir, us
     months = []
     HOYS = range(1,8761)
     for hour in HOYS:
-        d, m, t = lb_preparation.hour2Date(hour, True)
+        d, m, t = lb_preparation.hour2Date(hour-0.5, True)
         months.append(m)
         lb_sunpath.solInitOutput(m+1, d, t)
         altitude = math.degrees(lb_sunpath.solAlt)
