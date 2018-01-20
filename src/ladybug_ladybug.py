@@ -1492,7 +1492,7 @@ class Sunpath(object):
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
     def solInitOutput(self, month, day, hour, solarTime = False):
-        year = 2016
+        year = 2018
         self.time = hour
         
         a = 1 if (month < 3) else 0
