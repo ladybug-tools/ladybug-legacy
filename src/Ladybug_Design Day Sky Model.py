@@ -63,6 +63,7 @@ import Rhino as rc
 import math
 import os
 from itertools import izip
+import shutil
 
 w = gh.GH_RuntimeMessageLevel.Warning
 
