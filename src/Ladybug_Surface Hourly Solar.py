@@ -33,6 +33,7 @@ Provided by Ladybug 0.0.66
         _diffuseHorizontal: A list of 8760 hourly values (with an optional Ladybug header on it) that denotes diffuse horizontal solar.  This can be either globalHorizontalRadiation or globalHorizontallIlluminance (depending on what output is needed).  These values can be obtained from the "Ladybug_Import EPW" component or the "Ladybug_Design Day Sky Model" component.
         _srfAzimuth_: A number between 0 and 360 that represents the azimuth that a surface is facing in degrees.  A value of 0 means North, 90 means East, 180 means South, and 270 means West.  If no value is connected here, a default azimuth of 180 will be assumed for a south facing window.
         _srfAltitude_: A number between 0 and 90 that represents the altitude that a surface is facing in degrees.  A value of 0 means the surface is facing the horizon and a value of 90 means a surface is facing straight up.  If no value is connected here, a default altitude of 90 will be assumed for a surface facing straignt up.
+        skyModel_: Set to "True" to use an isotropic sky model, which assumes that diffuse radiation is evenly distributed across the sky and is suitale for both cloudy and clear skies.  Set to "False" to use an anisotropic sky model, that places more diffuse radiation near the solar disc and is more accourate for clear skies but is not suitable for cloudy skies.  The default is set to "True" of an isotropic sky model.
     Returns:
         readMe!: ...
         srfDirect: Hourly direct solar falling on the surface.
@@ -98,7 +99,7 @@ def pol2cart(phi, theta):
 def createHeader(studyType, header):
     return header[:2] + [studyType] + header[3:]
 
-def main(location, directNormal, diffuseHorizontal, analysisPeriod, header, srfAzimuth, srfAltitude, lb_preparation, lb_sunpath):
+def main(location, directNormal, diffuseHorizontal, analysisPeriod, header, srfAzimuth, srfAltitude, skyModel, lb_preparation, lb_sunpath):
     #Pull the location data from the inputs.
     locName = _location.split('\n')[1].replace(',','')
     lat = None
@@ -155,17 +156,24 @@ def main(location, directNormal, diffuseHorizontal, analysisPeriod, header, srfA
         srfGlobal = createHeader('Total ' + dataType + ' for Surface - Az' + str(int(srfAzimuth)) + ', Alt' + str(int(srfAltitude)), header)
     
     # Calculate solar on the surface.
+    anisotropicViews = []
     for i, vec in enumerate(sunVectors):
         srfDir = 0
         if vec != None:
             angle = rc.Geometry.Vector3d.VectorAngle(vec, normalVec)
+            y = max(0.45, 0.55 + (0.437*math.cos(angle)) + 0.313 * math.cos(angle) * 0.313 * math.cos(angle))
+            anisotropicViews.append(y)
             if angle < math.pi/2:
                 srfDir = directNormal[i]*math.cos(angle)
             srfDirect.append(srfDir)
         else:
+            anisotropicViews.append(0)
             srfDirect.append(0)
         
-        srfDif = diffuseHorizontal[i] * ((math.sin(math.radians(srfAltitude))/2) + 0.5)
+        if skyModel == False:
+            srfDif = diffuseHorizontal[i] * (anisotropicViews[i]*(math.sin(math.radians(abs(90-srfAltitude)))) + math.cos(math.radians(abs(90-srfAltitude))))
+        else:
+            srfDif = diffuseHorizontal[i] * ((math.sin(math.radians(srfAltitude))/2) + 0.5)
         srfDiffuse.append(srfDif)
         srfGlobal.append(srfDir+srfDif)
     
@@ -199,6 +207,6 @@ if initCheck == True:
     checkData = checkInputs()
     if checkData != -1:
        directNormal, diffuseHorizontal, analysisPeriod, header = checkData
-       result = main(_location, directNormal, diffuseHorizontal, analysisPeriod, header, _srfAzimuth_, _srfAltitude_, lb_preparation, lb_sunpath)
+       result = main(_location, directNormal, diffuseHorizontal, analysisPeriod, header, _srfAzimuth_, _srfAltitude_, skyModel_, lb_preparation, lb_sunpath)
        if result != -1:
            srfDirect, srfDiffuse, srfTotal, srfDirection = result
