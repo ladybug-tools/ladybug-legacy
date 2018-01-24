@@ -13,7 +13,7 @@
 
 3. Install GHPython 0.6.0.3 by downloading the file [here](http://www.food4rhino.com/app/ghpython) and drag the .gha file onto the Grasshopper canvas.
 
-4. Select and drag all of the userObject files (downloaded with this instructions file) onto your Grasshopper canvas. You should see Ladybug and Honeybee appear as tabs on the grasshopper tool bar.  If you are reading this instruction on github you can download the LB+HB components by following [this link](http://www.food4rhino.com/project/ladybug-honeybee)
+4. Select and drag all of the userObject files (downloaded with this instructions file) onto your Grasshopper canvas. You should see Ladybug and Honeybee appear as tabs on the grasshopper tool bar.  If you are reading this instruction on github you can download the LB+HB components by following [this link](http://www.food4rhino.com/app/ladybug-tools)
 
 5. Restart Rhino and Grasshopper. You now have a fully-functioning Ladybug.  For Honeybee, continue to the following:
 
