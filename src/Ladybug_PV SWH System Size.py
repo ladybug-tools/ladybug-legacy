@@ -133,7 +133,7 @@ ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.64\nAPR_12_2017
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
 import Grasshopper.Kernel as gh
