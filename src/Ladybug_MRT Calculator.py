@@ -26,7 +26,7 @@ Where V corresponds to a view factor and T corresponds to a temperature.
 -
 Provided by Ladybug 0.0.66
     Args:
-        _temperatures: A list of radiant temperatures that correspond to view factors below.
+        _temperatures: A list of radiant temperatures in Celcius that correspond to view factors below.
         _viewFactors: A list of viewFactors that correspond to the temperatures above.  These should sum to 1.
     Returns:
         MRT: The Mean Radiant Temperature that results from the input temperatures and view factors.
@@ -50,10 +50,12 @@ from Grasshopper.Kernel.Data import GH_Path
 
 def getMRT(temperatures, viewFactors):
     equRight = 0
-    for count, temp in enumerate(temperatures):
-        equRight = equRight + math.pow(temp, 4)*viewFactors[count]
+    for i, temp in enumerate(temperatures):
+        tempK = temp + 273.15
+        equRight = equRight + math.pow(tempK, 4)*viewFactors[i]
     MRT = math.pow(equRight, 0.25)
-    return MRT
+    MRTC = MRT - 273.15
+    return MRTC
 
 def main(temperatures, viewFactors):
     if sum(viewFactors) < 0.99:
