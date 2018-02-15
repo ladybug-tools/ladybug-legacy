@@ -7,7 +7,7 @@
 # 
 # Sun Shades Calculator is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of 
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 # 
 # See <http://www.gnu.org/licenses/>.
@@ -24,7 +24,7 @@ Shaviv E., 1975. "A Method for the Design of Fixed External Sun-Shades". "Build 
 Shaviv E., 1984. "A Design Tool for Determining the Form of Fixed & Movable Sun-Shades".  "ASHRAE Trans." Vol. 90, AT-84-18 No. 4, Atlanta (pp.1-14).
 
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.65
     
     Args:
         _SurfaceOrPergola_: 0= Device optimised for period, will give the horizontal or tilted surface over the top of the window, or the cut profile device on a provided shading surface. 1= Pergola with fins. Default is 0.
@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.66
 ##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.65\nFEB_14_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -493,8 +493,14 @@ def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShif
     if shadeSurface_ == None:
         ##cullPts.append(uPoints[0])
         cullPts.append(uPoints[ grPt[0] ])  # Include the first point of EACH shading division
-    for i in range(0, len(tmp_cullPts)): 
-        cullPts.append(tmp_cullPts[i])
+    
+    if tmp_cullPts!= None:
+        for i in range(0, len(tmp_cullPts)): 
+            cullPts.append(tmp_cullPts[i])
+    else:
+        warning = "Seems to be that the shading surface doesn't intersect any sun vector.\n" + \
+        "    If you are giving a surface for the shadeSurface_ input, be sure that it will affect your window."
+        giveWarning(warning)
 
     return cullPts, ptsContext, normalVector, cenPt, vector_p
 
