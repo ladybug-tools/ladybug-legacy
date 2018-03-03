@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.66\nMAR_03_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_04_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -60,7 +60,6 @@ import sys
 import os
 import System.Threading.Tasks as tasks
 import System
-System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
 import time
 from itertools import chain
 import datetime
@@ -7285,24 +7284,46 @@ if checkIn.letItFly:
     sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
-        greeting = "Hi{}!\n" \
-                   "Ladybug is Flying! Vviiiiiiizzz...\n\n" \
-                   "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
-        # Try to infer the username
-        # If windows
-        username = ''
-        if os.name == 'nt':
-            try:
-                username = ' ' + os.getenv('USERNAME')
-            except:
-                pass
-        elif os.name == 'posix':
-            try:
-                username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
-            except:
-                pass           
-        
-        print greeting.format(username)
+        now = time.localtime()
+        hour = now[3]
+        day = time.strftime("%A")
+        if hour in range(0,6):
+            comment = "Looks like you're burning the midnight oil. Be sure to reset your circadian rhythm later!"
+            greeting = "Hi {}! \n\n" + "{} \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username, comment ,sc.sticky["Ladybug_DefaultFolder"] )
+        else:
+            greeting = "Hi {}! \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username,sc.sticky["Ladybug_DefaultFolder"] )
             
         # push ladybug component to back
         ghenv.Component.OnPingDocument().SelectAll()
