@@ -60,6 +60,7 @@ import sys
 import os
 import System.Threading.Tasks as tasks
 import System
+System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
 import time
 from itertools import chain
 import datetime
