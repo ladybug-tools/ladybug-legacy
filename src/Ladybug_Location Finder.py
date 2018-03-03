@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Location Finder"
 ghenv.Component.NickName = 'LocationFinder'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_03_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -59,6 +59,7 @@ import scriptcontext as sc
 import urllib
 import socket
 import System
+System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
 import os
 import re
 
