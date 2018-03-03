@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.66\nFEB_11_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_03_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -7285,47 +7285,46 @@ if checkIn.letItFly:
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
         
-        country = time.tzname[0].split(" ")[0]
         now = time.localtime()
         hour = now[3]
         day = time.strftime("%A")
-        weekends = ["Saturday", "Sunday"]
-        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        if day in weekends:
-            if hour in range(0,6):
-                comment = "Looks like you're burning the midnight oil on a weekend. Take it easy!"
-            elif hour in range(6,18):
-                comment = "Hope you are having a good weekend!"
-            elif hour in range(18,24):
-                comment = "It is a weekend evening and looks are like you are preparing for the week coming up. Try to take some time off!"
-        if day in weekdays:
-            if hour in range(0,6):
-                comment = "Looks like you're burning the midnight oil. Make sure to recover later!"
-            elif hour in range(6,8):
-                comment = "Wish you have a good day ahead!"
-            elif hour in range(8,18):
-                comment = "Hope you are having a productive day!"
-            elif hour in range(18,24):
-                comment = "Still at work? You're making an impact!" 
-
-        greeting = "Hi {}! \n\n" + "{} \n\n" + \
-            "The default path is set to: {} \n\n" + \
-            "Ladybug is Flying! Vviiiiiiizzz..."
-        # Try to infer the username
-        # If windows
-        username = ''
-        if os.name == 'nt':
-            try:
-                username = ' ' + os.getenv('USERNAME')
-            except:
-                pass
-        elif os.name == 'posix':
-            try:
-                username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
-            except:
-                pass           
-        
-        print greeting.format(username, comment ,sc.sticky["Ladybug_DefaultFolder"] )
+        if hour in range(0,6):
+            comment = "Looks like you're burning the midnight oil. Be sure to reset your circadian rhythm later!"
+            greeting = "Hi {}! \n\n" + "{} \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username, comment ,sc.sticky["Ladybug_DefaultFolder"] )
+        else:
+            greeting = "Hi {}! \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username,sc.sticky["Ladybug_DefaultFolder"] )
             
         # push ladybug component to back
         ghenv.Component.OnPingDocument().SelectAll()
