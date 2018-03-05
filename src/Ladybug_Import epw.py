@@ -56,7 +56,7 @@ Provided by Ladybug 0.0.66
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_05_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -128,9 +128,13 @@ else:
         "into canvas and try again."
         ghenv.Component.AddRuntimeMessage(w, warning)
 
-if initCheck == True and _epwFile:
+if initCheck == True and _epwFile and _epwFile.lower().endswith('.epw'):
     result = main(_epwFile)
     if result!= -1:
         location, locName, latitude = result[0][-1], result[0][0], result[0][1]
         dryBulbTemperature, dewPointTemperature, relativeHumidity, windSpeed, windDirection, directNormalRadiation, diffuseHorizontalRadiation, globalHorizontalRadiation, directNormalIlluminance, diffuseHorizontalIlluminance, globalHorizontalIlluminance, totalSkyCover, horizontalInfraredRadiation, barometricPressure, modelYear = result[1][:]
         print 'Hourly weather data for ' + locName + ' is imported successfully!'
+elif initCheck == True:
+    print "Please connect a valid epw file address to _epw_file input..."
+    w = gh.GH_RuntimeMessageLevel.Warning
+    ghenv.Component.AddRuntimeMessage(w, "Please connect a valid epw file address to _epw_file input...")
