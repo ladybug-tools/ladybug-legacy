@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.66
 """
 ghenv.Component.Name = "Ladybug_Import Location"
 ghenv.Component.NickName = 'importLocation'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_05_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -85,7 +85,7 @@ def main(_epw_file):
 
 
 # Collecting Data
-if _epwFile and _epwFile.endswith('.epw'):
+if _epwFile and _epwFile.lower().endswith('.epw'):
     result = main(_epwFile)
     if result!= -1:
         location = result[-1]
