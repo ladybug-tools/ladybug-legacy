@@ -43,7 +43,7 @@ Provided by Ladybug 0.0.66
 """
 ghenv.Component.Name = "Ladybug_Clothing Function"
 ghenv.Component.NickName = 'CloFunction'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_15_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -215,7 +215,7 @@ def getHOYsBasedOnPeriod(analysisPeriod, timeStep, lb_preparation):
 
 
 def schiavonClo(airTemp, maxClo, maxCloTemp,  minClo, minCloTemp, f1Slope, f1yInt, f2Slope, f2yInt):
-    if airTemp < maxCloTemp:
+    if airTemp <= maxCloTemp:
         cloVal = maxClo
     elif airTemp > maxCloTemp and airTemp < maxCloTemp+10:
         cloVal = airTemp*f1Slope + f1yInt
