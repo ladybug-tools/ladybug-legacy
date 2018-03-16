@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Search"
 ghenv.Component.NickName = 'Search'
-ghenv.Component.Message = 'VER 0.0.66\nMAR_15_2018' #Change this date to be that of your commit or pull request.
+ghenv.Component.Message = 'VER 0.0.66\nMAR_16_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:
@@ -162,7 +162,7 @@ def main():
         level = 3
         print "The value of occurrences cannot be None. Default value 3 is applied."
         print "-"*50
-    elif _occurrences_ < 0:
+    elif _occurrences_ < 1:
         level = 3
         print "The value of occurrences cannot be less than 1. Default value 3 is applied."
         print "-"*50
@@ -322,7 +322,7 @@ def main():
         
         if result == []:
             print "-"*50
-            print "This keyword did not produce result. Please try some other alternative"
+            print "This keyword did not produce result. Please try some other alternative keyword. You can join words or add spaces. Examples are, 'DryBulb', 'DryBulb Temperature', 'DrybulbTemperature'."
         if result != []:
             print "-"*50
             print "Please check the result"
