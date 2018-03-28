@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_28_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -462,6 +462,7 @@ def checkTheInputs():
     annualHourlyData = _dryBulbTemperature + _relativeHumidity + annualHourlyData_
     if epwData == True and len(_dryBulbTemperature + _relativeHumidity) > 17533 and conditionalStatement_:
         titleStatement, patternList, indexList, listInfo = checkConditionalStatement(annualHourlyData, conditionalStatement_)
+        
         if titleStatement == -1 or patternList == -1:
             checkData11 = False
     else:
@@ -1890,7 +1891,6 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         lb_comfortModels = sc.sticky["ladybug_ComfortModels"]()
         lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
         
-        
         # Read the legend parameters.
         lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar_, False)
         
@@ -1929,6 +1929,8 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
         if analysisPeriod_ != [] and epwData == True and calcLength == 8760:
             airTemp = lb_preparation.selectHourlyData(_dryBulbTemperature, analysisPeriod_)[7:]
             relHumid = lb_preparation.selectHourlyData(_relativeHumidity, analysisPeriod_)[7:]
+            if farenheitVals != []:
+                farenheitVals = lb_preparation.selectHourlyData(epwStr + farenheitVals, analysisPeriod_)[7:]
             if len(barPress) == 8760:
                 barPress = lb_preparation.selectHourlyData(barPress, analysisPeriod_)[7:]
             else:
@@ -1960,6 +1962,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             newRelHumid = []
             newBarPress = []
             newOrigHrs = []
+            newFarenheitVals = []
             newAnnualHourlyDataSplit = []
             for list in annualHourlyDataSplit:
                 newAnnualHourlyDataSplit.append([])
@@ -1969,6 +1972,8 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
                     newRelHumid.append(relHumid[count])
                     newBarPress.append(barPress[count])
                     newOrigHrs.append(origHrs[count])
+                    if farenheitVals != []:
+                        newFarenheitVals.append(farenheitVals[count])
                     if annualHourlyDataSplit != [[]]:
                         for listCount in range(len(annualHourlyDataSplit)):
                             newAnnualHourlyDataSplit[listCount].append(annualHourlyDataSplit[listCount][count])
@@ -1976,6 +1981,7 @@ def main(epwData, epwStr, calcLength, airTemp, relHumid, barPress, avgBarPress, 
             relHumid = newRelHumid
             barPress = newBarPress
             origHrs = newOrigHrs
+            farenheitVals = newFarenheitVals
             annualHourlyDataSplit = newAnnualHourlyDataSplit
         
         # Pull out solar radiation if it's needed for the passive solar heating polygon.
