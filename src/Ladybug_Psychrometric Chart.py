@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.66\nMAR_28_2018'
+ghenv.Component.Message = 'VER 0.0.66\nAPR_02_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1136,7 +1136,10 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
         except: pass
         upperBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(upperBoundary, rc.Geometry.Vector3d.ZAxis))
         lowerBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(lowerBoundary, rc.Geometry.Vector3d.ZAxis))
-        splitCurve = chartBoundary.Split(upperBrep, sc.doc.ModelAbsoluteTolerance)[0]
+        if str(rc.RhinoApp.Version).startswith('6'):
+            splitCurve = chartBoundary.Split(upperBrep, sc.doc.ModelAbsoluteTolerance)[-1]
+        else:
+            splitCurve = chartBoundary.Split(upperBrep, sc.doc.ModelAbsoluteTolerance)[0]
         try:
             bottomCurve = splitCurve.Split(lowerBrep, sc.doc.ModelAbsoluteTolerance)[0]
             topCurve = splitCurve.Split(lowerBrep, sc.doc.ModelAbsoluteTolerance)[2]
@@ -1337,9 +1340,18 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     joinedEvapBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(joinedEvapBound, rc.Geometry.Vector3d.ZAxis))
                     chartBoundSegments = chartBoundary.Split(joinedEvapBrep, sc.doc.ModelAbsoluteTolerance)
                     if len(chartBoundSegments) == 3:
-                        segment = chartBoundSegments[2]
-                    else: segment = chartBoundSegments[1]
+                        if str(rc.RhinoApp.Version).startswith('6'):
+                            segment = chartBoundSegments[1]
+                        else:
+                            segment = chartBoundSegments[2]
+                    else: 
+                        if str(rc.RhinoApp.Version).startswith('6'):
+                            segment = chartBoundSegments[0]
+                        else:
+                            segment = chartBoundSegments[1]
                     joinedEvapCoolBound = rc.Geometry.Curve.JoinCurves([joinedEvapBound, segment])[0]
+                    if humidRatioLow != 0 and str(rc.RhinoApp.Version).startswith('6'):
+                        joinedEvapCoolBound.Reverse()
                     passiveStrategyCurves.append(joinedEvapCoolBound)
                     passiveStrategyBreps.append(outlineCurve(joinedEvapCoolBound))
                     strategyListTest.append("Evaporative Cooling")
@@ -1415,7 +1427,10 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                     joinedMassBrep = rc.Geometry.Brep.CreateFromSurface(rc.Geometry.Surface.CreateExtrusion(joinedMassBound, rc.Geometry.Vector3d.ZAxis))
                     chartBoundSegments = chartBoundary.Split(joinedMassBrep, sc.doc.ModelAbsoluteTolerance)
                     if ChartBoundCheck == 1:
-                        segment = chartBoundSegments[0]
+                        if str(rc.RhinoApp.Version).startswith('6') and humidRatioUp*scaleFactor >= comfortCrvSegments[comfCount][0].PointAtEnd.Y:
+                            segment = chartBoundSegments[1]
+                        else:
+                            segment = chartBoundSegments[0]
                     elif ChartBoundCheck == 2:
                         try: segment = chartBoundSegments[2]
                         except: segment = chartBoundSegments[1]
@@ -1481,16 +1496,22 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                 if "Internal Heat Gain" in passiveStrategy:
                     heatBoundary = rc.Geometry.LineCurve(rc.Geometry.Point3d(bldgBalPt, 0, 0), rc.Geometry.Point3d(bldgBalPt, scaleFactor*0.03, 0))
                     heatBoundary = heatBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
-                    
                     if humidRatioLow == 0:
                         boundaryLine = comfortCrvSegments[comfCount][1]
-                        strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
-                        strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        if str(rc.RhinoApp.Version).startswith('6'):
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[-1].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                            strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[-1].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        else:
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                            strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(boundaryLine, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
                         joinedHeatBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, heatBoundary])[0]
                     else:
                         boundaryLine = comfortCrvSegments[comfCount][1].Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
                         heatBoundaryNew = heatBoundary.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
-                        strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(comfortCrvSegments[comfCount][1], rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        if str(rc.RhinoApp.Version).startswith('6'):
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(comfortCrvSegments[comfCount][1], rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[-1].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        else:
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(comfortCrvSegments[comfCount][1], rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
                         strategyLine2 = rc.Geometry.LineCurve(boundaryLine.PointAtStart, heatBoundaryNew.PointAtStart)
                         joinedHeatBound = rc.Geometry.Curve.JoinCurves([strategyLine1, boundaryLine, strategyLine2, heatBoundaryNew])[0]
                     
@@ -1547,8 +1568,12 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         heatBoundary = comfortCrvSegments[comfCount][1]
                     
                     if humidRatioLow == 0:
-                        strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
-                        strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        if str(rc.RhinoApp.Version).startswith('6'):
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[-1].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                            strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[-1].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
+                        else:
+                            strategyLine1 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
+                            strategyLine2 = chartBoundary.Split(rc.Geometry.Surface.CreateExtrusion(heatBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(solarBoundary, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[2]
                         joinedSolarBound = rc.Geometry.Curve.JoinCurves([strategyLine1, heatBoundary, strategyLine2, solarBoundary])[0]
                     else:
                         heatBoundaryNew = heatBoundary.Split(splittingBrepLow, sc.doc.ModelAbsoluteTolerance)[1]
@@ -1649,12 +1674,12 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
                         boundary4 = rc.Geometry.LineCurve(boundary1.PointAtEnd, boundary2.PointAtEnd)
                         joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3, boundary4])[0]
-                        
                     except:
                         boundary2 = chartBoundary.Split(splittingBrepUp, sc.doc.ModelAbsoluteTolerance)[0].Split(rc.Geometry.Surface.CreateExtrusion(boundary1, rc.Geometry.Vector3d.ZAxis), sc.doc.ModelAbsoluteTolerance)[0]
                         boundary3 = rc.Geometry.LineCurve(boundary1.PointAtStart, boundary2.PointAtStart)
                         joinedHumidBound = rc.Geometry.Curve.JoinCurves([boundary1, boundary2, boundary3])[0]
-                    
+                    if str(rc.RhinoApp.Version).startswith('6'):
+                        joinedHumidBound.Reverse()
                     passiveStrategyCurves.append(joinedHumidBound)
                     passiveStrategyBreps.append(outlineCurve(joinedHumidBound))
                     strategyListTest.append("Dehumidification Only")
