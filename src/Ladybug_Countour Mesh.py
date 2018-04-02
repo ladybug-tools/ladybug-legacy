@@ -63,8 +63,8 @@ ghenv.Component.NickName = 'contourMesh'
 ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Extra"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+ghenv.Component.SubCategory = "7 | WIP"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 #compatibleLBVersion = VER 0.0.59\nJAN_05_2017
 

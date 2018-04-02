@@ -40,7 +40,7 @@ ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nNOV_05_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "7"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
 
