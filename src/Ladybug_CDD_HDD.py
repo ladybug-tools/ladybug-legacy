@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_CDD_HDD"
 ghenv.Component.NickName = "CDD_HDD"
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nAPR_13_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -115,37 +115,37 @@ def main(coolingSetPoint, heatingSetPoint, hourlyDryBulbTemperature, useDailyAvr
             
             for l in range(len(separatedLists)):
                     [daily_coolingDegDays.append(item) for item in listInfo[l][:2]]
-                    daily_coolingDegDays.append('Daily_coolingDegDays')
+                    daily_coolingDegDays.append('Daily_coolingDegHours')
                     daily_coolingDegDays.append('Degree Hours')
                     daily_coolingDegDays.append('Daily')
                     [daily_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [daily_heatingDegDays.append(item) for item in listInfo[l][:2]]
-                    daily_heatingDegDays.append('Daily_heatingDegDays')
+                    daily_heatingDegDays.append('Daily_heatingDegHours')
                     daily_heatingDegDays.append('Degree Hours')
                     daily_heatingDegDays.append('Daily')
                     [daily_heatingDegDays.append(item) for item in listInfo[l][5:7]]
 
                     [monthly_coolingDegDays.append(item) for item in listInfo[l][:2]]
-                    monthly_coolingDegDays.append('monthly_coolingDegDays')
+                    monthly_coolingDegDays.append('monthly_coolingDegHours')
                     monthly_coolingDegDays.append('Degree Hours')
                     monthly_coolingDegDays.append('Monthly')
                     [monthly_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [monthly_heatingDegDays.append(item) for item in listInfo[l][:2]]
-                    monthly_heatingDegDays.append('monthly_heatingDegDays')
+                    monthly_heatingDegDays.append('monthly_heatingDegHours')
                     monthly_heatingDegDays.append('Degree Hours')
                     monthly_heatingDegDays.append('Monthly')
                     [monthly_heatingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [annual_coolingDegDays.append(item) for item in listInfo[l][:2]]
-                    annual_coolingDegDays.append('annual_coolingDegDays')
+                    annual_coolingDegDays.append('annual_coolingDegHours')
                     annual_coolingDegDays.append('Degree Hours')
                     annual_coolingDegDays.append('Annual')
                     [annual_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [annual_heatingDegDays.append(item) for item in listInfo[l][:2]]
-                    annual_heatingDegDays.append('annual_heatingDegDays')
+                    annual_heatingDegDays.append('annual_heatingDegHours')
                     annual_heatingDegDays.append('Degree Hours')
                     annual_heatingDegDays.append('Annual')
                     [annual_heatingDegDays.append(item) for item in listInfo[l][5:7]]
