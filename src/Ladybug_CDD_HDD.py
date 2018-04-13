@@ -32,8 +32,8 @@ Provided by Ladybug 0.0.66
     
     Args:
         _hourlyDryBulbTemperature: Annual dry bulb temperature from the Import epw component (in degrees Celsius).
-        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius).  Default is set to 23.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
-        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius).  Default is set to 18.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
+        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius).  Default is set to 23.3C but this can be much lower if the analysis is for a building with high heat gain or insulation. It is highly recommended that you change this number based the temperature at which the buildiing will start cooling.
+        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius).  Default is set to 18.3C but this can be much lower if the analysis is for a building with high heat gain or insulation. It is highly recommended that you change this number based the temperature at which the buildiing will start heating.
         useDailyAvrMethod_: set to "True" to use the traditional method of degree days calculation, which will calculate the average temperature of each day and sum up all of these temperatures over the year.  This is opoosed to this component's default analysis, which will will examine each hour of the year and then convert results to degree-days.
     Returns:
         readMe!: A summary of the input.
@@ -115,38 +115,38 @@ def main(coolingSetPoint, heatingSetPoint, hourlyDryBulbTemperature, useDailyAvr
             
             for l in range(len(separatedLists)):
                     [daily_coolingDegDays.append(item) for item in listInfo[l][:2]]
-                    daily_coolingDegDays.append('Daily_coolingDegHours')
-                    daily_coolingDegDays.append('Degree Hours')
+                    daily_coolingDegDays.append('Daily_coolingDegDays')
+                    daily_coolingDegDays.append('Degree Days')
                     daily_coolingDegDays.append('Daily')
                     [daily_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [daily_heatingDegDays.append(item) for item in listInfo[l][:2]]
-                    daily_heatingDegDays.append('Daily_heatingDegHours')
-                    daily_heatingDegDays.append('Degree Hours')
+                    daily_heatingDegDays.append('Daily_heatingDegDays')
+                    daily_heatingDegDays.append('Degree Days')
                     daily_heatingDegDays.append('Daily')
                     [daily_heatingDegDays.append(item) for item in listInfo[l][5:7]]
 
                     [monthly_coolingDegDays.append(item) for item in listInfo[l][:2]]
-                    monthly_coolingDegDays.append('monthly_coolingDegHours')
-                    monthly_coolingDegDays.append('Degree Hours')
+                    monthly_coolingDegDays.append('monthly_coolingDegDays')
+                    monthly_coolingDegDays.append('Degree Days')
                     monthly_coolingDegDays.append('Monthly')
                     [monthly_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [monthly_heatingDegDays.append(item) for item in listInfo[l][:2]]
-                    monthly_heatingDegDays.append('monthly_heatingDegHours')
-                    monthly_heatingDegDays.append('Degree Hours')
+                    monthly_heatingDegDays.append('monthly_heatingDegDays')
+                    monthly_heatingDegDays.append('Degree Days')
                     monthly_heatingDegDays.append('Monthly')
                     [monthly_heatingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [annual_coolingDegDays.append(item) for item in listInfo[l][:2]]
-                    annual_coolingDegDays.append('annual_coolingDegHours')
-                    annual_coolingDegDays.append('Degree Hours')
+                    annual_coolingDegDays.append('annual_coolingDegDays')
+                    annual_coolingDegDays.append('Degree Days')
                     annual_coolingDegDays.append('Annual')
                     [annual_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [annual_heatingDegDays.append(item) for item in listInfo[l][:2]]
-                    annual_heatingDegDays.append('annual_heatingDegHours')
-                    annual_heatingDegDays.append('Degree Hours')
+                    annual_heatingDegDays.append('annual_heatingDegDays')
+                    annual_heatingDegDays.append('Degree Days')
                     annual_heatingDegDays.append('Annual')
                     [annual_heatingDegDays.append(item) for item in listInfo[l][5:7]]
                     
