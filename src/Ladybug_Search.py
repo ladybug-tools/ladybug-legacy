@@ -322,7 +322,7 @@ def main():
         
         if result == []:
             print "-"*50
-            print "This keyword did not produce result. Please try some other alternative keyword. You can join words or add spaces. Examples are, 'DryBulb', 'DryBulb Temperature', 'DrybulbTemperature'."
+            print "This keyword did not produce result. Please try reducing the number of occurences. You should also try an alternative keyword. You can join words or add spaces. Examples are, 'DryBulb', 'DryBulb Temperature', 'DrybulbTemperature'."
         if result != []:
             print "-"*50
             print "Please check the result"
@@ -362,3 +362,6 @@ if initCheck:
     result = main()
     if result != -1:
         output = result
+    else:
+        output = result
+        result = "No components were found. Please check the log."
