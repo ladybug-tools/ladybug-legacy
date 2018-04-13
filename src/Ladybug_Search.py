@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Search"
 ghenv.Component.NickName = 'Search'
-ghenv.Component.Message = 'VER 0.0.66\nMAR_16_2018'
+ghenv.Component.Message = 'VER 0.0.66\nAPR_13_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:
@@ -168,9 +168,9 @@ def main():
         print "-"*50
     else:
         level = _occurrences_
-        print "The value of occurrences is set to 5."
+        print "The value of occurrences is set to {}.".format(level)
         print "-"*50 
-        
+    
     open = open_
     
     # Links to primers
@@ -232,7 +232,7 @@ def main():
             markDownList = os.listdir(searchFolderPath)
             for item in markDownList:
                 filePath = os.path.join(searchFolderPath, item)
-                if countOccurrences(filePath, keyword) > level:
+                if countOccurrences(filePath, keyword) >= level:
                     mdPath.append(filePath)
                     hitCount.append(countOccurrences(filePath, keyword))
                 else:
@@ -322,7 +322,7 @@ def main():
         
         if result == []:
             print "-"*50
-            print "This keyword did not produce result. Please try some other alternative keyword. You can join words or add spaces. Examples are, 'DryBulb', 'DryBulb Temperature', 'DrybulbTemperature'."
+            print "This keyword did not produce result. Please try reducing the number of occurences. You should also try an alternative keyword. You can join words or add spaces. Examples are, 'DryBulb', 'DryBulb Temperature', 'DrybulbTemperature'."
         if result != []:
             print "-"*50
             print "Please check the result"
@@ -362,3 +362,6 @@ if initCheck:
     result = main()
     if result != -1:
         output = result
+    else:
+        output = result
+        result = "No components were found. Please check the log."
