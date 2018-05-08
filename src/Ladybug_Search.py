@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Search"
 ghenv.Component.NickName = 'Search'
-ghenv.Component.Message = 'VER 0.0.66\nAPR_13_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:
@@ -59,7 +59,13 @@ import zipfile
 import time
 import webbrowser as wb
 from itertools import izip
-System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
+
 w = gh.GH_RuntimeMessageLevel.Warning
 
 

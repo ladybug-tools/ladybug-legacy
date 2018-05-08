@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.66\nMAR_04_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -60,14 +60,15 @@ import sys
 import os
 import System.Threading.Tasks as tasks
 import System
+import time
+from itertools import chain
+import datetime
+
 try:
     System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
 except AttributeError:
     # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
     System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
-import time
-from itertools import chain
-import datetime
 
 PI = math.pi
 rc.Runtime.HostUtils.DisplayOleAlerts(False)

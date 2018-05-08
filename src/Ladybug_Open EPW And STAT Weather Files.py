@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.66
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'EPW+STAT'
-ghenv.Component.Message = 'VER 0.0.66\nMAR_03_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -53,7 +53,12 @@ import zipfile,os.path
 import Grasshopper.Kernel as gh
 import time
 import System
-System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
 
 
 def checkTheInputs(_weatherFileURL):

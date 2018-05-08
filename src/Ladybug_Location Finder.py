@@ -59,9 +59,14 @@ import scriptcontext as sc
 import urllib
 import socket
 import System
-System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
 import os
 import re
+
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
 
 
 class GoogleToolsLocation:
