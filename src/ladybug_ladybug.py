@@ -60,7 +60,11 @@ import sys
 import os
 import System.Threading.Tasks as tasks
 import System
-System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # Ignore the lack of the Tls12 on MacOS .NET Core; else component wont fly
+    pass
 import time
 from itertools import chain
 import datetime
