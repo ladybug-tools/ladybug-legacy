@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to select the data out of an annual hourly data stream (from the importEPW component) using the "Analysis Period" component.
 This componenent also averages or totals the connected hourly data for each day, month, and average hour of each month in the analysis period.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _annualHourlyData: An hourly data stream from the "Import epw" component.
@@ -37,12 +37,13 @@ Provided by Ladybug 0.0.65
         averagedDaily: The averaged data for each day during the analysis period.
         averagedMonthly: The averaged data for each month during the analysis period.
         avrMonthlyPerHour: The data for the average hour of each month during the analysis period.
-        avrAnalysisPeriod: The averaged data for the analysis period.
+        avrMonthlyMinPerHour: The data for the minimal average hour of each month during the analysis period.
+        avrMonthlyMaxPerHour: The data for the maximal average hour of each month during the analysis period.
 """
 
 ghenv.Component.Name = "Ladybug_Average Data"
 ghenv.Component.NickName = 'selectAndAverageData'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -61,7 +62,8 @@ outputsDictAvg = {
 2: ["averagedDaily", "The averaged data for each day during the analysis period."],
 3: ["averagedMonthly", "The averaged data for each month during the analysis period."],
 4: ["avrMonthlyPerHour", "The data for the average hour of each month during the analysis period."],
-5: ["avrAnalysisPeriod", "The averaged data for the analysis period."]
+5: ["avrMonthlyMinPerHour", "The data for the max average hour of each month during the analysis period."],
+6: ["avrMonthlyMaxPerHour", "The data for the min average hour of each month during the analysis period."]
 }
 
 outputsDictTot = {
@@ -70,17 +72,18 @@ outputsDictTot = {
 2: ["totaledDaily", "The totaled data for each day during the analysis period."],
 3: ["totaledMonthly", "The totaled data for each month during the analysis period."],
 4: ["totMonthlyPerHour", "The data for the totaled hour of each month during the analysis period."],
-5: ["totAnalysisPeriod", "The totaled data for the analysis period."]
+5: ["totMonthlyMinPerHour", "The total minimal monthly value."],
+6: ["totMonthlyMaxPerHour", "The total maximal monthly value."]
 }
 
 def restoreOutput():
-    for output in range(6):
+    for output in range(7):
         ghenv.Component.Params.Output[output].NickName = outputsDictAvg[output][0]
         ghenv.Component.Params.Output[output].Name = outputsDictAvg[output][0]
         ghenv.Component.Params.Output[output].Description = outputsDictAvg[output][1]
 
 def totalOutput():
-    for output in range(6):
+    for output in range(7):
         ghenv.Component.Params.Output[output].NickName = outputsDictTot[output][0]
         ghenv.Component.Params.Output[output].Name = outputsDictTot[output][0]
         ghenv.Component.Params.Output[output].Description = outputsDictTot[output][1]
@@ -137,6 +140,7 @@ def main(annualHourlyData, analysisPeriod):
             selMonthlyData = []; avMonthlyData = []
             avrAnalysisPeriod =[]
             
+            selMonthlyDataMax = []; selMonthlyDataMin = []
             
             for l in range(len(separatedLists)):
                 [selHourlyData.append(item) for item in listInfo[l][:4]]
@@ -212,17 +216,42 @@ def main(annualHourlyData, analysisPeriod):
 
                 # average monthly
                 [selMonthlyData.append(item) for item in listInfo[l][:4]]
-                if totalOrAverage_: selMonthlyData.append('Monthly-> total for each hour')
-                else: selMonthlyData.append('Monthly-> averaged for each hour')
+                
+                ###########################
+                [selMonthlyDataMax.append(item) for item in listInfo[l][:4]]
+                [selMonthlyDataMin.append(item) for item in listInfo[l][:4]]
+                ###########################
+                
+                if totalOrAverage_:
+                    selMonthlyData.append('Monthly-> total for each hour')
+                    selMonthlyDataMin.append('Monthly-> total for each hour')
+                    selMonthlyDataMax.append('Monthly-> total for each hour')
+                else: 
+                    selMonthlyData.append('Monthly-> averaged for each hour')
+                    ###########################
+                    selMonthlyDataMax.append('Monthly-> averaged for each hour')
+                    selMonthlyDataMin.append('Monthly-> averaged for each hour')
+                    ##########################
+                
                 selMonthlyData.append((stMonth, stDay, stHour))
                 selMonthlyData.append((endMonth, endDay, endHour))
+
+                ###########################
+                selMonthlyDataMax.append((stMonth, stDay, stHour))
+                selMonthlyDataMax.append((endMonth, endDay, endHour))
+
+                selMonthlyDataMin.append((stMonth, stDay, stHour))
+                selMonthlyDataMin.append((endMonth, endDay, endHour))
+                ###########################
                 
                 [avMonthlyData.append(item) for item in listInfo[l][:4]]
-                if totalOrAverage_: avMonthlyData.append('Monthly-> total')
+                if totalOrAverage_: 
+                    avMonthlyData.append('Monthly-> total')
                 else: avMonthlyData.append('Monthly-> averaged')
+                    
                 avMonthlyData.append((stMonth, stDay, stHour))
                 avMonthlyData.append((endMonth, endDay, endHour))
-
+                
                 monthDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31] 
                 if type:
                     for month in range(stMonth, endMonth + 1):
@@ -233,15 +262,25 @@ def main(annualHourlyData, analysisPeriod):
                         for i, item in enumerate(monthlyData):
                             if stHour-1 <= (i + stHour -1)%24 <= endHour-1: selMonthly.append(item)
                         
-                        if totalOrAverage_: avMonthlyData.append(total(selMonthly))
+                        if totalOrAverage_: 
+                            avMonthlyData.append(total(selMonthly))
                         else: avMonthlyData.append(average(selMonthly))
                         
                         for hour in range(endHour - stHour + 1):
                             eachHourData = []
                             for day in range(monthDays[month]):
                                 eachHourData.append(monthlyData[hour + (day * (endHour - stHour + 1))])
-                            if totalOrAverage_: selMonthlyData.append(total(eachHourData))
-                            else: selMonthlyData.append(average(eachHourData))
+                            if totalOrAverage_:
+                                selMonthlyData.append(total(eachHourData))
+                                selMonthlyDataMax.append(total([max(eachHourData) for x in range(len(eachHourData))]))
+                                selMonthlyDataMin.append(total([min(eachHourData) for x in range(len(eachHourData))]))
+                            else: 
+                                selMonthlyData.append(average(eachHourData))
+                                
+                                ###########################
+                                selMonthlyDataMax.append(max(eachHourData))
+                                selMonthlyDataMin.append(min(eachHourData))
+                                ###########################
                 else:
                     for month in range(stMonth, 12 + 1):
                         stJD = lb_preparation.getJD(month, 1)
@@ -277,7 +316,7 @@ def main(annualHourlyData, analysisPeriod):
                             if totalOrAverage_: selMonthlyData.append(average(eachHourData))
                             else: selMonthlyData.append(average(eachHourData))
                 
-            return selHourlyData, avDailyData, selDailyData, selWeeklyData, selMonthlyData, avMonthlyData, avrAnalysisPeriod
+            return selHourlyData, avDailyData, selDailyData, selWeeklyData, selMonthlyData, avMonthlyData, avrAnalysisPeriod, selMonthlyDataMin, selMonthlyDataMax
         elif _annualHourlyData[0] == "Connect Data Here!":
             print "Connect annualHourlyData from the importEPW component!"
             return -1
@@ -299,7 +338,7 @@ result = main(_annualHourlyData, _analysisPeriod_)
 if result!= -1:
     if totalOrAverage_:
         selHourlyData, totaledDaily, totDailyPerHour, totWeeklyPerHour, \
-        totMonthlyPerHour, totaledMonthly, totAnalysisPeriod = result
+        totMonthlyPerHour, totaledMonthly, totAnalysisPeriod, totMonthlyMinPerHour, totMonthlyMaxPerHour = result
     else:
         selHourlyData, averagedDaily, avrDailyPerHour, avrWeeklyPerHour, \
-        avrMonthlyPerHour, averagedMonthly, avrAnalysisPeriod = result
+        avrMonthlyPerHour, averagedMonthly, avrAnalysisPeriod, avrMonthlyMinPerHour, avrMonthlyMaxPerHour = result

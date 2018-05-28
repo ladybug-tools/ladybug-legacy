@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> and Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> and Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to create contoured visualizations of any analysis mesh and corresponding numerical dataset in Ladybug + Honeybee.
 Note that this component currently only works for planar meshes.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _analysisResult: A numerical data set whose length corresponds to the number of faces in the _inputMesh.  This data will be used to generate contours from the mesh.
@@ -60,11 +60,11 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Countour Mesh"
 ghenv.Component.NickName = 'contourMesh'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "5 | Extra"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
+ghenv.Component.SubCategory = "7 | WIP"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 #compatibleLBVersion = VER 0.0.59\nJAN_05_2017
 

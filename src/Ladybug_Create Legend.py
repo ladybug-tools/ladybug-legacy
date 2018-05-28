@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to create a custom legend for any set of data or to create a more flexible legend for any ladybug component with a legend.  Specifically, this component outputs data that can be plugged into the grasshopper "Text Tag 3D" component so that the legend text can be baked into the Rhino scene as actual text instead of surfaces representing text.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
 
     Args:
         _valuesOrRange: The list of numerical data that the legend refers to (or just the minimum and maximum numerical values of this data).  If the original numerical data is hooked up, the legend's maximum and minimum values will be set by the max and min of the data set.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Create Legend"
 ghenv.Component.NickName = 'createLegend'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -73,8 +73,12 @@ def main(results, legendPar, legendTitle, legendWidth):
     # read the legend parameters legend
     lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
     
-    if legendBasePoint == None and legendBasePt_ != None: legendBasePoint = legendBasePt_
+    if legendBasePoint == None and legendBasePt_ != None:
+        legendBasePoint = legendBasePt_
+    elif legendBasePoint != None and legendBasePt_ != None:
+        legendBasePoint = legendBasePt_
     else: legendBasePoint = rc.Geometry.Point3d(0,0,0)
+    
     if legendWidth == None: legendWidth = 10
     boundingBoxPar = [legendBasePoint, None, 10 * legendWidth] 
     

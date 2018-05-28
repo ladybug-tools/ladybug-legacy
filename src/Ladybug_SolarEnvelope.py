@@ -7,7 +7,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Boris Plotnikov <pborisp@gmail.com> and with the assistance and guidance of Prof. Guedi Capeluto, based on SustArc model
+# Copyright (c) 2013-2018, Boris Plotnikov <pborisp@gmail.com> and with the assistance and guidance of Prof. Guedi Capeluto, based on SustArc model
 # For further reading it might be worth taking a look at Ralph Knowles's work, e.g - http://www.fau.usp.br/aut5823/Acesso_ao_Sol/Knowles_2003_Solar_Envelope.pdf
 # and G. Capeluto and E. Shaviv's, e.g - http://www.ibpsa.org/proceedings/BS1999/BS99_C-22.pdf
 # the component relies to a great extend on the concepts described there
@@ -30,12 +30,12 @@
 Use this component to generate a solar envelope for a given test surface, set of solar vectors, and context geometry that you want to ensure solar access to.  Solar envelopes are typically used to illustrate the volume that can be built within in order to ensure that a new development does not shade the surrounding properties for a given set of sun vectors.
 
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
 """
 
 ghenv.Component.Name = 'Ladybug_SolarEnvelope'
 ghenv.Component.NickName = 'SolarEnvelope'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

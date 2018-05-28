@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2018, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -34,7 +34,7 @@ Special thanks goes to the author of the function, Vincente Soler.
 .
 http://www.grasshopper3d.com/forum/topics/how-to-render-mesh-colors
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _analysisMesh: A list of colored Meshes that comes from Grasshopper OR
@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Texture Maker"
 ghenv.Component.NickName = 'Texture Maker'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ This component doesn't update the installation. It will only update the file
 to your current installation. The components that can't be updated automatically
 will be marked and should be replaced manually.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _update: Set to "True" if you want this component to search through the current Grasshopper file and update ladybug tools components.
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Update File"
 ghenv.Component.NickName = 'updateGHFile'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -48,6 +48,7 @@ import Grasshopper
 import System
 import os
 from datetime import datetime
+import time
 
 
 def markComponent(doc, comp, note=None):
@@ -105,7 +106,11 @@ def collectGHPythonComponents(document=None):
 def parseVersionAndDate(version, date):
     version = sum(int(n) * 10 ** i for i, n
         in enumerate(reversed(version.split("VER ")[1].split("."))))
-    date = datetime.strptime(date, '%b_%d_%Y')    
+    try:
+        date = datetime.strptime(date, '%b_%d_%Y')
+    except AttributeError:
+        date = time.strptime(date, '%b_%d_%Y')
+
     return version, date
 
 
@@ -213,14 +218,6 @@ def updateComponent(component, uofolder):
     # check the version and the date between component and userobject
     if not isNewerVersion(uo, component):
         return False 
-    
-    # check if inputs or outputs has changed
-    if inputOutputChanged(uo, component):
-        insertNewUO(uo, component, doc)
-        
-        # add a group note to the component
-        markComponent(doc, component)
-        return 'Cannot update %s. Replace manually.' % component.Name
 
     # it is a newer version
     component.Code = uo.Code
@@ -232,6 +229,14 @@ def updateComponent(component, uofolder):
     # Update the solution
     doc.ScheduleSolution(2,
         Grasshopper.Kernel.GH_Document.GH_ScheduleDelegate(callBack))
+
+    # check if inputs or outputs has changed
+    if inputOutputChanged(uo, component):
+        insertNewUO(uo, component, doc)
+        
+        # add a group note to the component
+        markComponent(doc, component)
+        return 'Cannot update %s. Replace manually.' % component.Name
 
     return 'Updated %s' % component.Name
 

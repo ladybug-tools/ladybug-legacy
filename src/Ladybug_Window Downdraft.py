@@ -2,7 +2,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2018, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,7 +27,7 @@ _
 Heiselberg, P. (1994). Draft Risk from Cold Vertical Surfaces. Building and Environment, 29: 297-301.
 Manz, H. and Frank, T. (2003). "Analysis of Thermal Comfort near Cold Vertical Surfaces by Means of Computational Fluid Dynamics." Indoor Built Environment. 13: 233-242.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _testPts: The test points at which downdraft conditions will be evaluated.
@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -125,9 +125,9 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
         pointIntersectDict = {}
         for srfCount, srf in enumerate(windowSrfs):
             closestPt = srf.ClosestPoint(testPts[i])
-            srfLine = rc.Geometry.Line(testPts[i], closestPt)
+            srfLine = rc.Geometry.Line(rc.Geometry.Point3d(testPts[i].X, testPts[i].Y, closestPt.Z), closestPt)
             distToSrf = srfLine.Length
-            srfVec = rc.Geometry.Vector3d(closestPt.X-testPts[i].X, closestPt.Y-testPts[i].Y, closestPt.Z-testPts[i].Z)
+            srfVec = rc.Geometry.Vector3d(closestPt.X-testPts[i].X, closestPt.Y-testPts[i].Y, 0)
             angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
             if abs(angle2Srf) > 90:
                 angFactor = 0
@@ -187,6 +187,7 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
             dist = ptDict[srf][0]
             angFac = ptDict[srf][3]
             windowHgt = ptDict[srf][4]
+            
             if dist < 0.4: windSpd = velMaxClose(glassAirDelta, windowHgt)
             elif dist < 2: windSpd = velMaxMid(dist, glassAirDelta, windowHgt)
             else: windSpd = velMaxFar(glassAirDelta, windowHgt)

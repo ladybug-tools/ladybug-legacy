@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -31,7 +31,7 @@ along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -63,6 +63,12 @@ import System
 import time
 from itertools import chain
 import datetime
+
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
 
 PI = math.pi
 rc.Runtime.HostUtils.DisplayOleAlerts(False)
@@ -1492,7 +1498,7 @@ class Sunpath(object):
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
     def solInitOutput(self, month, day, hour, solarTime = False):
-        year = 2016
+        year = 2018
         self.time = hour
         
         a = 1 if (month < 3) else 0
@@ -2385,7 +2391,7 @@ class RunAnalysisInsideGH(object):
         vecImportance = []
         if viewType == 0:
             for vec in viewPoints:
-                vecImportance.append(1)
+                vecImportance.append(100/len(viewPoints))
         else:
             totalArea = sum(patchAreas)
             for area in patchAreas:
@@ -2480,7 +2486,7 @@ class RunAnalysisInsideGH(object):
         
         # Calculate average view
         averageView = sum(viewResult)/len(viewResult)
-            
+        
         return viewResult, averageView, ptVisibility
 
 class ExportAnalysis2Radiance(object):
@@ -2993,7 +2999,11 @@ class ResultVisualization(object):
     
     def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False, font = None, fontSize = None, fontBold = False):
         #Define a function to create surfaces from input curves.
-        if Heading==None: Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
+        if Heading==None:
+            if listInfo[0][3].startswith('(') or listInfo[0][3].startswith('['):
+                Heading = listInfo[0][2] + ' ' + listInfo[0][3] + ' - ' + listInfo[0][4]
+            else:
+                Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
         stMonth, stDay, stHour, endMonth, endDay, endHour = self.readRunPeriod((listInfo[0][5], listInfo[0][6]), False)
         period = `stDay`+ ' ' + self.monthList[stMonth-1] + ' ' + `stHour` + ':00' + \
                  " - " + `endDay`+ ' ' + self.monthList[endMonth-1] + ' ' + `endHour` + ':00'
@@ -3087,10 +3097,10 @@ class ResultVisualization(object):
             intPt = rc.Geometry.Intersect.Intersection.LineCircle(ns,angleCircle)
             try:
                 angleTextPts.append(intPt[-1])
-                if projection == 1:
-                    angleText.append(str(angle))
+                if projection == 1 or projection == 2:
+                    angleText.append(str(angle) + "")
                 else:
-                    angleText.append(str(90-angle))
+                    angleText.append(str(90-angle) + "" )
             except:
                 pass
         
@@ -3787,9 +3797,7 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD, opTemp=False):
-        upTemper = initialGuessUp
-        upDelta = 3
+    def calcComfRange(self, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD, opTemp=False):
         if targetPPD == 10.0: targetPMV = 0.5
         elif targetPPD == 6.0: targetPMV = 0.220
         elif targetPPD == 15.0: targetPMV = 0.690
@@ -3810,25 +3818,64 @@ class ComfortModels(object):
             intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
             targetPMV = intersectPts[0].PointA.X
         
-        while abs(upDelta) > 0.01:
-            if opTemp == True:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
+        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
+        def utilSecant(a, b, epsilon, target):
+            # root-finding only
+            res = []
+            def fn(upTemper):
+                if opTemp == True:
+                    return self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+                else:
+                    return self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+            f1 = fn(a)
+            if abs(f1) <= epsilon: res.append(a)
             else:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            upDelta = targetPMV - pmv
-            upTemper = upTemper + upDelta
+                f2 = fn(b)
+                if abs(f2) <= epsilon: res.append(b)
+                else:
+                    count = range(100)
+                    for i in count:
+                        if (b - a) != 0 and (f2 - f1) != 0:
+                            slope = (f2 - f1) / (b - a)
+                            c = b - f2/slope
+                            f3 = fn(c)
+                            if abs(f3) < epsilon:
+                                res.append(c)
+                            a = b
+                            b = c
+                            f1 = f2
+                            f2 = f3
+                res.append('NaN')
+            
+            return res[0]
         
-        if initialGuessDown == None:
-            downTemper = upTemper - 6
-        else: downTemper = initialGuessDown
-        downDelta = 3
-        while abs(downDelta) > 0.01:
-            if opTemp == True:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, downTemper, windSpeed, relHumid, metRate, cloLevel, exWork)
-            else:
-                pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            downDelta = -targetPMV - pmv
-            downTemper = downTemper + downDelta
+        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilBisect function definition.
+        def utilBisect(a, b, epsilon, target):
+            def fn(t):
+                if opTemp == True:
+                    return self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+                else:
+                    return self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+            while abs(b - a) > (2 * epsilon):
+                midpoint = (b + a) / 2
+                a_T = fn(a)
+                b_T = fn(b)
+                midpoint_T = fn(midpoint)
+                if (a_T - target) * (midpoint_T - target) < 0: b = midpoint
+                elif (b_T - target) * (midpoint_T - target) < 0: a = midpoint
+                else: return -999
+            return midpoint
+        
+        # Calculate the lower limit of comfort.
+        epsilon = 0.001
+        a = -50
+        b = 50
+        upTemper = utilSecant(a, b, epsilon, targetPMV)
+        if upTemper == 'NaN':
+            upTemper = utilBisect(a, b, epsilon, targetPMV)
+        downTemper = utilSecant(a, b, epsilon, -targetPMV)
+        if downTemper == 'NaN':
+            downTemper = utilBisect(a, b, epsilon, -targetPMV)
         
         return upTemper, downTemper
     
@@ -7243,24 +7290,46 @@ if checkIn.letItFly:
     sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
-        greeting = "Hi{}!\n" \
-                   "Ladybug is Flying! Vviiiiiiizzz...\n\n" \
-                   "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
-        # Try to infer the username
-        # If windows
-        username = ''
-        if os.name == 'nt':
-            try:
-                username = ' ' + os.getenv('USERNAME')
-            except:
-                pass
-        elif os.name == 'posix':
-            try:
-                username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
-            except:
-                pass           
-        
-        print greeting.format(username)
+        now = time.localtime()
+        hour = now[3]
+        day = time.strftime("%A")
+        if hour in range(0,6):
+            comment = "Looks like you're burning the midnight oil. Be sure to reset your circadian rhythm later!"
+            greeting = "Hi {}! \n\n" + "{} \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username, comment ,sc.sticky["Ladybug_DefaultFolder"] )
+        else:
+            greeting = "Hi {}! \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username,sc.sticky["Ladybug_DefaultFolder"] )
             
         # push ladybug component to back
         ghenv.Component.OnPingDocument().SelectAll()

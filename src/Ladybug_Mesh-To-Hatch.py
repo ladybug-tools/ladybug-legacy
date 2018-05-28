@@ -2,7 +2,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2018, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -22,10 +22,12 @@
 """
 Use this component to bake a clored mesh into the Rhino scene as a series of colored hatches.  This is particularly useful if you are trying to export ladybug graphics from Rhino to vector-based programs like Inkscape or Illustrator.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _mesh: A colored mesh (or list of colored meshes) that you would like to bake into the Rhino scene as a series of colored hatches.
+        layerName_: Optional text for the layer name on which the hatch will be added.
+        visible_: An optional boolean to set whether the layer that the hatch is baked on is visible.  The default is set to True to have the hatch layer visible.
         _runIt: Set to 'True' to run to run the component and bake the mesh into the scene as a series of hatches.
     Returns:
         readMe!: ...
@@ -33,12 +35,12 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Mesh-To-Hatch"
 ghenv.Component.NickName = 'Mesh2Hatch'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nNOV_05_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "5"
 except: pass
 
 
@@ -48,11 +50,17 @@ import scriptcontext as sc
 
 def main():
     #Create a layer to hold the hatches.
-    parentLayerName = 'LADYBUG_Hatch'
+    if layerName_ == None:
+        parentLayerName = 'LADYBUG_Hatch'
+    else:
+        parentLayerName = str(layerName_)
     layerT = rc.RhinoDoc.ActiveDoc.Layers #layer table
     parentLayer = rc.DocObjects.Layer()
     parentLayer.Name = parentLayerName
-    parentLayer.IsVisible = True
+    if visible_ == False:
+        parentLayer.IsVisible = False
+    else:
+        parentLayer.IsVisible = True
     parentLayer.Color =  System.Drawing.Color.Pink
     # Add Parent layer if it's not already created
     parentLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, parentLayerName, True)

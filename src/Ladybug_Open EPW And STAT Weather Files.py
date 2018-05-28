@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2018, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ Use this component to automatically download a .zip file from the Department of 
 The component requires the URL of the zipped file for the specific climate that you want to import from the DOE's website.  To open the DOE's website, use the Ladybug_download EPW Weather File component.
 Note that you can copy the zip file URL to your clipboard by right-clicking on the "ZIP" link for the climate that you want on the DOE's website and choosing "Copy Link Address."
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _weatherFileURL: A text string representing the .zip file URL from the Department of Energy's (DOE's) website. To open the DOE's website, use the Ladybug_download EPW Weather File component. Note that you can copy the zip file URL to your clipboard by right-clicking on the "ZIP" link for the climate that you want on the DOE's website and choosing "Copy Link Address."
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'EPW+STAT'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -54,6 +54,11 @@ import Grasshopper.Kernel as gh
 import time
 import System
 
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
 
 
 def checkTheInputs(_weatherFileURL):
@@ -74,7 +79,11 @@ def checkTheInputs(_weatherFileURL):
         lb_defaultFolder = sc.sticky["Ladybug_DefaultFolder"]
         
         if _weatherFileURL and (_weatherFileURL.startswith('https://') or _weatherFileURL.startswith('http://')):
-            folderName = _weatherFileURL.split('/')[-2]
+            if _weatherFileURL.endswith('.zip') or _weatherFileURL.endswith('.ZIP') or _weatherFileURL.endswith('.Zip'):
+                folderName = _weatherFileURL.split('/')[-1][:-4]
+            else:
+                folderName = _weatherFileURL.split('/')[-2]
+            
             checkData = True
         else:
             checkData = False
@@ -139,9 +148,9 @@ def addresses(directory):
         keyText = ''
     for file in os.listdir(directory):
         if file.endswith('.epw') and keyText in file.replace('.','_'):
-            epw = directory + '/' + file
+            epw = directory + file
         elif file.endswith('.stat')and keyText in file.replace('.','_'):
-            stat = directory + '/' + file
+            stat = directory + file
     
     return epw, stat
 

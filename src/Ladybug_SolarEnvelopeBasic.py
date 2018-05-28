@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Saeran Vasanthakumar <saeranv@gmail.com> 
+# Copyright (c) 2013-2018, Saeran Vasanthakumar <saeranv@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -38,7 +38,7 @@ Reference: Niemasz, J., Sargent, J., Reinhart D.F., "Solar Zoning and Energy in
 Detached Residential Dwellings," Proceedings of SIMAUD 2011, Boston, April 2011.
 
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _boundary: A closed boundary curve representing a piece of land (such as a property to be developed) for which solar access of the surrounding land is desired.
@@ -67,7 +67,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_SolarEnvelopeBasic"
 ghenv.Component.NickName = 'SolarEnvelopeBasic'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

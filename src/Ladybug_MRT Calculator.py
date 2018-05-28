@@ -2,7 +2,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2018, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,9 +24,9 @@ Use this component calculate Mean Radiant Temperature (MRT) given a set of tempe
 MRT = (V1*T1^4 + V2*T2^4 + ...) ^ (1/4)
 Where V corresponds to a view factor and T corresponds to a temperature.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     Args:
-        _temperatures: A list of radiant temperatures that correspond to view factors below.
+        _temperatures: A list of radiant temperatures in Celcius that correspond to view factors below.
         _viewFactors: A list of viewFactors that correspond to the temperatures above.  These should sum to 1.
     Returns:
         MRT: The Mean Radiant Temperature that results from the input temperatures and view factors.
@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_MRT Calculator"
 ghenv.Component.NickName = 'MRT'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -44,13 +44,18 @@ except: pass
 
 import math
 import Grasshopper.Kernel as gh
+from System import Object
+from Grasshopper import DataTree
+from Grasshopper.Kernel.Data import GH_Path
 
 def getMRT(temperatures, viewFactors):
     equRight = 0
-    for count, temp in enumerate(temperatures):
-        equRight = equRight + math.pow(temp, 4)*viewFactors[count]
+    for i, temp in enumerate(temperatures):
+        tempK = temp + 273.15
+        equRight = equRight + math.pow(tempK, 4)*viewFactors[i]
     MRT = math.pow(equRight, 0.25)
-    return MRT
+    MRTC = MRT - 273.15
+    return MRTC
 
 def main(temperatures, viewFactors):
     if sum(viewFactors) < 0.99:
@@ -64,9 +69,25 @@ def main(temperatures, viewFactors):
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
         return -1
     
-    return getMRT(temperatures, viewFactors)
+    #Create a Python list from the temperature data tree.
+    dataPyList = []
+    for i in range(temperatures.BranchCount):
+        branchList = temperatures.Branch(i)
+        dataVal = []
+        for item in branchList:
+            try: dataVal.append(float(item))
+            except: dataVal.append(item)
+        dataPyList.append(dataVal)
+    
+    MRTs = DataTree[Object]()
+    for count, templist in enumerate(dataPyList):
+        mrt = getMRT(templist, viewFactors)
+        p = GH_Path(count)
+        MRTs.Add(mrt, p)
+    
+    return MRTs
 
-if _temperatures != [] and _temperatures != [None] and _viewFactors != [] and _viewFactors != [None]:
+if _temperatures.BranchCount >0 and _viewFactors != [] and _viewFactors != [None]:
     result = main(_temperatures, _viewFactors)
     if result != -1:
         MRT = result

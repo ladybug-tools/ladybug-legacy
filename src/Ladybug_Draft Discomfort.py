@@ -2,7 +2,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2018, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ This model used to be the standard endorsed by ASHRAE 55 and EN-12521 for all dr
 _
 Fanger, P.O., Melikov, A.K., Hanzawa, H., Ring, J. Air Turbulence and Sensation of Draught. Energy and Buildings 12, no. 1 (1988): 2139.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _draftAirTemp: The air temperature of the draft in degrees Celcius.
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Draft Discomfort"
 ghenv.Component.NickName = 'draftComf'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"

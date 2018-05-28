@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -33,7 +33,7 @@ source: https://pypi.python.org/pypi/geomag
 Based on World Magnetic Model of the NOAA:
 http://www.ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     input:
         _location: Input data from Ladybug's "Import epw" "location" output, or create your own location data with Ladybug's "Construct Location" component.
@@ -65,7 +65,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_True North"
 ghenv.Component.NickName = "TrueNorth"
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

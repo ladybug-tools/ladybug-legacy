@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -23,7 +23,7 @@
 """
 Use this component to convert volume flow rate from U.S. cubic feet per minute (cfm) to S.I. cubic meters per second (m3/s).
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _cfm: A value or list of values in cubic feet per minute (cfm).
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Cfm2M3s"
 ghenv.Component.NickName = "cfm2m3s"
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

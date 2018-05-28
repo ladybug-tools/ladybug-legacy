@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@ Use this component to get a sense of how direct sunlight is reflected off of an 
 Examples where this component might be useful include the evaluation of the diffusion of light by a light shelf, or testing to see whether a parabolic building geometry (like a Ghery building) might focus sunlight to dangerous levels at certain times of the year.
 Note that this component assumes that all sun light is reflected off of these geometries specularly (as if they were a mirror) and, for more detailed raytrace analysis, the Honeybee daylight components should be used.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _sourceSrfs: A brep or mesh representing a surface that you are interested in seeing direct sunlight bounce off of.  You can also put in lists of breps or meshes. These surfaces will be used to generate the initial sun rays in a grid-like pattern.  Note that, for curved surfaces, smooth meshes of the geometry will be more accurate than inputing a Brep.
@@ -37,11 +37,12 @@ Provided by Ladybug 0.0.65
     Returns:
         bouncePts: The generated base points on the _sourceSrfs to which the sun rays will be directed. The preview of this output is set to be hidden by default.  Connect to a Grasshopper "Point" component to visualize.
         rays: The sun rays traced forward through the geometry.
+        _runIt: Set to True to run the reflection study.
 """
 
 ghenv.Component.Name = "Ladybug_Bounce from Surface"
 ghenv.Component.NickName = 'bounceFromSurface'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -171,12 +172,12 @@ def main(sourceSrfs, gridSizeOrPoints, sunVectors, context, numOfBounce, firstBo
                     # no bounce so let's just create a line form the point
                     firstRay = rc.Geometry.Line(testPt, lastBounceLen * vector).ToNurbsCurve()
                     rays.append(firstRay)
-                    
-    if len(rays) == 0:
-        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "No reflection!")
+            else:
+                rays.append(None)
+    
     return rays, initialTestPoints
 
-if (_sourceSrfs and _sourceSrfs[0]!=None) and (_sunVectors and _sunVectors[0]!=None) and (_gridSizeOrPoints and _gridSizeOrPoints[0]!=None):
+if (_sourceSrfs and _sourceSrfs[0]!=None) and (_sunVectors and _sunVectors[0]!=None) and (_gridSizeOrPoints and _gridSizeOrPoints[0]!=None) and _runIt == True:
     results = main(_sourceSrfs, _gridSizeOrPoints, _sunVectors, context_, _numOfBounce_, firstBounceLen_, _lastBounceLen_)
     if results!=-1:
         rays, bouncePts = results

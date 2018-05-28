@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Dr. Chengchu Yan and Djordje Spasic <ycc05ster@gmail.com, djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Dr. Chengchu Yan and Djordje Spasic <ycc05ster@gmail.com, djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -34,7 +34,7 @@ http://www.wiley.com/WileyCDA/WileyTitle/productCd-0470873663.html
 https://sam.nrel.gov/system/tdf/SimpleSolarWaterHeatingModel_SAM_0.pdf?file=1&type=node&id=69521
 http://www.sciencedirect.com/science/article/pii/S0960148114004807
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -124,7 +124,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating Surface"
 ghenv.Component.NickName = "SolarWaterHeatingSurface"
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

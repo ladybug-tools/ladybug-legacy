@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Chris Mackey <Chris@MackeyArchitecture.com>, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools>, and Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2018, Chris Mackey <Chris@MackeyArchitecture.com>, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools>, and Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,13 +24,13 @@
 """
 Use this component to make a 3D chart in the Rhino scene of any climate data or hourly simulation data.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _inputData: A list of input data to plot.
-        _xScale_: The scale of the X axis of the graph. The default will plot the X axis with a length of 3650 Rhino model units (for 365 days of the year). Connect a list of values for multiple graphs.
-        _yScale_: The scale of the Y axis of the graph. The default will plot the Y axis with a length of 240 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
-        _zScale_: The scale of the Z axis of the graph. The default will plot the Z axis with a number of Rhino model units corresponding to the input data values.  Set to 0 to see graphCurves appear on top of the mesh.  Connect a list of values for multiple graphs.
+        _xScale_: The scale of the X axis of the graph. The default is set to 0.25, which will will plot each cell of the graph with an x dimension that is 0.25 of the y. Connect a list of values for multiple graphs.
+        _yScale_: The scale of the Y axis of the graph. The default is set to 1, which will plot the Y axis with a length of 240 Rhino model units (for 24 hours of the day). Connect a list of values for multiple graphs.
+        _zScale_: The scale of the Z axis of the graph. The default is set to 1, which will plot the Z axis with a number of Rhino model units corresponding to the input data values.  Set to 0 to see graphCurves appear on top of the mesh.  Connect a list of values for multiple graphs.
         _yCount_: The number of segments on your y-axis.  The default is set to 24 for 24 hours of the day. This variable is particularly useful for input data that is not for each hour of the year.
         legendPar_: Optional legend parameters from the Ladybug Legend Parameters component.
         _basePoint_: An optional point with which to locate the 3D chart in the Rhino Model.  The default is set to the Rhino origin at (0,0,0).
@@ -53,7 +53,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_3D Chart"
 ghenv.Component.NickName = '3DChart'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -253,12 +253,13 @@ def makeChart(values, xSize, xScale, yScale, zScale, patternList, basePoint, col
             if boolean == False:
                 cullFaceIndices.append(count)
                 cullPtIndices.append(count)
-                if count < len(values)-yCount:
-                    cullFaceIndices.append(count+len(values))
-                    cullFaceIndices.append(count+len(values)-yCount)
-                extraVal = int((count - (yCount+1))/yCount)-1
-                cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal)
-                cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal+1)
+                if zScale > 0.0:
+                    if count < len(values)-yCount:
+                        cullFaceIndices.append(count+len(values))
+                        cullFaceIndices.append(count+len(values)-yCount)
+                    extraVal = int((count - (yCount+1))/yCount)-1
+                    cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal)
+                    cullFaceIndices.append(count+(2*len(values))-(yCount+3)-extraVal+1)
             else: pass
         cullPtIndices.reverse()
         for count in cullPtIndices: del dataPts[count]
@@ -403,13 +404,15 @@ def main(inputData, basePoint, xScale, yScale, zScale, yCount, legendPar, condSt
                 patternList = [False] * 8760
                 titleStatement = False
             
-            hoursOfYear = []
-            for hoy, pattern in enumerate(patternList):
-                if pattern: hoursOfYear.append(hoy + 1)
-            
             # separate the data
             indexList, listInfo = lb_preparation.separateList(inputData, lb_preparation.strToBeFound)
-        
+            
+            # get conditional HOYs.
+            hoursOfYear = []
+            HOYS, months, days = lb_preparation.getHOYsBasedOnPeriod((listInfo[0][5], listInfo[0][6]), 1)
+            for hoy, pattern in enumerate(patternList):
+                if pattern: hoursOfYear.append(HOYS[hoy])
+            
             #separate total, diffuse and direct radiations
             separatedLists = []
             for i in range(len(indexList)-1):

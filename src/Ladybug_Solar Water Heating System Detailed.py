@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ If nothing inputed, the following swh system will be used by default:
 - pipe length: 20 meters
 - unshaded
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     input:
         collectorOpticalEfficiency_: Fr(tau alpha) Collector's optical efficiency coefficient. Also called Collector heat removal factor. Varies based on collector's type. Some default values by type:
@@ -232,7 +232,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating System Detailed"
 ghenv.Component.NickName = "SolarWaterHeatingSystemDetailed"
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

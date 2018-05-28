@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -37,7 +37,7 @@ Also for choosing a specific module, not a simplified one, use one of those two 
 Sources:
 http://prod.sandia.gov/techlib/access-control.cgi/2004/043535.pdf
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     input:
         mountType_: Mounting type (configuration) of a module. There are three of them:
@@ -73,12 +73,12 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Simplified Photovoltaics Module"
 ghenv.Component.NickName = "SimplifiedPhotovoltaicsModule"
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.64\nAPR_12_2017
-try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 import Grasshopper.Kernel as gh

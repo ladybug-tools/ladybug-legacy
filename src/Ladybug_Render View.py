@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -27,11 +27,12 @@ _
 This component is particularly useful if you are trying to create animations of Grasshopper geometry and want to automate the capturing of views.
 
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
 
     Args:
         _fileName: The file name that you would like the image to be saved as.  Note that, for animations, you want to make sure that each saved images has a different filename otherwise the previous image will be overwritten by each successive image.
         folder_: The folder into which you would like to write the image file.  This should be a complete file path to the folder.  If no folder is provided, the images will be written to C:/Ladybug/Capturedviews/.
+        renderTime_: An optional number in seconds that represents the time you anticipate the render taking.  This can be used to create rendered animations for V-Ray 3, which currently does not have a dot net interface.
         viewNames_: The Rhino viewport name which you would like to render.  Acceptable inputs include "Perspective", "Top", "Bottom", "Left", "Right", "Front", "Back" or any view name that you have already saved within the Rhino file (note that you do not need to input quotations).  If no text is input here, the default will be an image of the active viewport (or the last viewport in which you navigated).
         imageWidth_: The width of the image that you would like to render in pixels.  If no value is provided here, the component will set the width to that of the active Rhino viewport on your screen.
         imageHeight_: The height of the image that you would like to render in pixels.  If no value is provided here, the component will set the height to that of the active Rhino viewport on your screen.
@@ -44,7 +45,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_Render View"
 ghenv.Component.NickName = 'renderView'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -57,6 +58,7 @@ import System
 import rhinoscriptsyntax as rs
 import scriptcontext as sc
 import Rhino as rc
+import time
 import clr
 try:
     clr.AddReferenceToFileAndPath("C:\ProgramData\ASGVIS\VfR564\VRayForRhinoNETInterface.dll")
@@ -160,12 +162,29 @@ def viewCapture(fileName, directory, viewNames, image_width, image_height, keepA
                     os.remove(alphaPath)
                 except: pass
         except:
-            # Rhino is the renderer.
-            print "Rendering " + viewName + "..."
-            
-            rs.Command("!_render")
-            rs.Command("_-SaveRenderWindowAs \"" + directory + "\\" + fileName +'_'+ viewName + ".png\"")
-            rs.Command ("_-CloseRenderWindow") #close the rendered window when in saving mode to avoid stacking a series of renderWindows when running on Rhino renderer.
+            if renderTime_ != None:
+                # V-Ray is probably the renderer.
+                start = time.clock()
+                
+                rs.Command("!_Render", echo=False)
+                print "Rendering " + viewName + "..."
+                
+                while float(time.clock() - start) < renderTime_:
+                    rs.Sleep(10)
+                
+                rs.Command("_-SaveRenderWindowAs \"" + directory + "\\" + fileName +'_'+ viewName + ".jpeg\"")
+                rs.Command ("_-CloseRenderWindow") #close the rendered window when in saving mode to avoid stacking a series of renderWindows when running on Rhino renderer.
+                if saveAlpha == False:
+                    try:
+                        alphaPath = os.path.join(directory, fileName +'_'+ viewName + '.Alpha.jpeg')
+                        os.remove(alphaPath)
+                    except: pass
+            else:
+                # Hopefully Rhino is the renderer.
+                print "Rendering " + viewName + "..."
+                rs.Command("!_render")
+                rs.Command("_-SaveRenderWindowAs \"" + directory + "\\" + fileName +'_'+ viewName + ".png\"")
+                rs.Command ("_-CloseRenderWindow") #close the rendered window when in saving mode to avoid stacking a series of renderWindows when running on Rhino renderer.
     
     
     return fullPathList

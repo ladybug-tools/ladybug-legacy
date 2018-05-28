@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Byron Mardas <byronmardas@gmail.com>, Chris Mackey <Chris@MackeyArchitecture.com>, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools>
+# Copyright (c) 2013-2018, Byron Mardas <byronmardas@gmail.com>, Chris Mackey <Chris@MackeyArchitecture.com>, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@ Use this component to see the portion of the sky dome that is masked by context 
 The component will generate separate meshs for the portions of the sky dome that are masked and visible.
 The component will also calculate the percentage of the sky that is masked by the context geometry and the percentage that is visible (the sky view factor).
 -output
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _centerPtOrPlane_: A point or plane from which the visible portion of the sky will be evaluated.  If a point is input here, the component will calculate Sky Exposure (or the fraction of the sky hemisphere that is visible from the point).  If a plane is input here, the component will calculate Sky View (or the fraction of the sky visible from a surface in this plane).  If no value is input here, the component will assume a point (Sky Exposure) at the Rhino origin.
@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

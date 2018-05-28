@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2018, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -29,7 +29,7 @@ https://www.researchgate.net/publication/281031049_Outdoor_Comfort_the_ENVI-BUG_
 -
 Special thanks goes to MIT.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         _outputFolder: ENVI-Met output folder path. E.g. 'C:\...\\NewSimulation_output'
@@ -90,7 +90,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Results Reader"
 ghenv.Component.NickName = 'ENVI-MetResultsReader'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

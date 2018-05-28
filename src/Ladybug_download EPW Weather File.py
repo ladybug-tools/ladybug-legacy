@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to open the epwmap page in your default web browser and download an .epw weather file.
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
 
     Args:
         _download: Set Boolean to True to open the epw map page
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.65
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nMAR_04_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -41,11 +41,18 @@ ghenv.Component.SubCategory = "0 | Ladybug"
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
-
 import webbrowser as wb
+import os
+
 if _download:
-    url = 'http://www.ladybug.tools/epwmap/'
-    wb.open(url,2,True)
-    print 'Happy downloading!'
+   url = 'http://www.ladybug.tools/epwmap/'
+   chrome_path="C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
+   if os.path.isfile(chrome_path) == True:
+       wb.register('chrome', None,wb.BackgroundBrowser(chrome_path),1)
+       wb.get('chrome').open(url,2,True)
+   else:
+       print "Chrome browser not found on your machine. Therefore, the default browser is used."
+       wb.open(url,2,True)
+   print 'Happy downloading!'
 else:
-    print 'Set download to true...'
+   print 'Set download to true...'

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2017, Trygve Wastvedt <Trygve.Wastvedt@gmail.com>, Chris Mackey <Chris@MackeyArchitecture.com>, and Byron Mardas <byronmardas@gmail.com>
+# Copyright (c) 2013-2018, Trygve Wastvedt <Trygve.Wastvedt@gmail.com>, Chris Mackey <Chris@MackeyArchitecture.com>, and Byron Mardas <byronmardas@gmail.com>
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to visualize a Perez sky as a colored mesh in the Rhino scene using the weather file location, a time and date, and an estimate of turbidity (or amount of particulates in the atmosphere.
 
 -
-Provided by Ladybug 0.0.65
+Provided by Ladybug 0.0.66
     
     Args:
         north_: Input a vector to be used as a true North direction for the sky dome or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.65
 
 ghenv.Component.Name = "Ladybug_Colored Sky Visualizer"
 ghenv.Component.NickName = 'skyVizualizer'
-ghenv.Component.Message = 'VER 0.0.65\nJUL_28_2017'
+ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
