@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
+ghenv.Component.Message = 'VER 0.0.66\nMAY_27_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -120,10 +120,10 @@ class CheckIn():
             # The shortcoming of os.name is that it returns "posix" for both
             # Mac and Linux, here we don't care (and anyways, rhino isn't on linux)
             if os.name =='nt':
-                if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
+                if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.X_OK):
                     # folder already exists so it is all fine
                     sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-                elif os.access(os.path.dirname("c:\\"), os.F_OK):
+                elif os.access(os.path.dirname("c:\\"), os.X_OK):
                     #the folder does not exists but write privileges are given so it is fine
                     sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
                 else:
@@ -7336,3 +7336,4 @@ if checkIn.letItFly:
         ghenv.Component.Attributes.Selected = False
         ghenv.Component.OnPingDocument().BringSelectionToTop()
         ghenv.Component.OnPingDocument().DeselectAll()
+        
