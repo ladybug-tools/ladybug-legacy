@@ -120,10 +120,10 @@ class CheckIn():
             # The shortcoming of os.name is that it returns "posix" for both
             # Mac and Linux, here we don't care (and anyways, rhino isn't on linux)
             if os.name =='nt':
-                if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.X_OK):
+                if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
                     # folder already exists so it is all fine
                     sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-                elif os.access(os.path.dirname("c:\\"), os.X_OK):
+                elif os.access(os.path.dirname("c:\\"), os.F_OK):
                     #the folder does not exists but write privileges are given so it is fine
                     sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
                 else:
@@ -145,7 +145,7 @@ class CheckIn():
                 default_path = os.path.expanduser('~/ladybug/')
                 # folder already exists and there is write privileges, or
                 # there's write privileges for the parent folder
-                if (os.path.exists(default_path) and  os.access(os.path.dirname(default_path), os.X_OK)) or (os.access(os.path.expanduser('~'), os.X_OK)):
+                if (os.path.exists(default_path) and  os.access(os.path.dirname(default_path), os.F_OK)) or (os.access(os.path.expanduser('~'), os.F_OK)):
                     sc.sticky["Ladybug_DefaultFolder"] = default_path
                 else:
                      # let's use the Rhino AppData folder
