@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Update File"
 ghenv.Component.NickName = 'updateGHFile'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nJUN_14_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -64,11 +64,11 @@ def markComponent(doc, comp, note=None):
     return True
 
 ladybugTools = set(('Ladybug', 'Honeybee', 'Butterfly',
-                    'Dragonfly', 'LadybugPlus', 'HoneybeePlus'))
+                    'DF', 'LadybugPlus', 'HoneybeePlus'))
 
 def isLadybugTools(component):
     """Return True if a component is part of ladybug tools."""
-    if component.Name.split('_')[0] in ladybugTools:
+    if component.Name.split('_')[0] in ladybugTools or component.Name.split(' ')[0] in ladybugTools:
         return True
 
     return False
@@ -207,7 +207,14 @@ def insertNewUO(uo, component, doc):
 
 def updateComponent(component, uofolder):
     """update component from userobject."""
-    fp = os.path.join(uofolder, '%s.ghuser' % component.Name)
+    if str(component.Name).startswith('HoneybeePlus'):
+        fp = os.path.join(uofolder, 'HoneybeePlus', '%s.ghuser' % component.Name)
+    elif str(component.Name).startswith('LadybugPlus'):
+        fp = os.path.join(uofolder, 'LadybugPlus', '%s.ghuser' % component.Name)
+    elif str(component.Name).startswith('DF'):
+        fp = os.path.join(uofolder, 'Dragonfly', '%s.ghuser' % component.Name)
+    else:
+        fp = os.path.join(uofolder, '%s.ghuser' % component.Name)
 
     if not os.path.isfile(fp):
         warning = 'Failed to find the userobject for %s' % component.Name
