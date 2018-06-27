@@ -31,7 +31,7 @@ Provided by Ladybug 0.0.66
         _inTemp: A number (or list of numbers) that represent the indoor air temperature in degrees Celcius.
         _uValue: A number that represents the U-Value of the surface dividing the interior and exterior in SI (W/Km2).
         intEmiss_: A number between 0 and 1 that represents the interior emissivity of the surface dividing the interior and exterior.  The default is set to 0.9 for a non-metallic surface.
-        srfOrient_: A number between 180 (downwards) and -180 (upwards) that represents the angle in degrees of the direction of heat flow.  This is related to the orientation of the surface dividing the interior and exterior. This input can also be the normal vector of a surface that is facing the correct direction of heat flow.  The default is set to 0 degrees for a verically-oriented surface (horizontal heat flow).
+        srfOrient_: A number between 180 (downwards) and 0 (upwards) that represents the angle in degrees of the direction of heat flow.  This is related to the orientation of the surface dividing the interior and exterior. This input can also be the normal vector of a surface that is facing the correct direction of heat flow.  The default is set to 0 degrees for a verically-oriented surface (horizontal heat flow).
         outWindSpd_: A number (or list of numbers) that represents the outdoor wind speed in m/s.  This is used to calculate the outdoor film coefficient.  If no value is input here, a default of 6.7 m/s will be assumed (indicating a winter design day).
     Returns:
         inFilmCoeff: The interior film coefficient as calculated by the interior emissivity, surface orientation and Chapter 26, Table 10 of AHSHRAE Fundemantals.
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Steady State Surface Temperature"
 ghenv.Component.NickName = 'ssSrfTemp'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nJUN_27_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
