@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.66\nJUN_02_2018'
+ghenv.Component.Message = 'VER 0.0.66\nJUL_11_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -850,7 +850,7 @@ class Preparation(object):
             lngt+',     !Longitude\n' + \
             timeZone+',     !Time Zone\n' + \
             elev + ';       !Elevation'
-        epwfile.close
+        epwfile.close()
         return locName, lat, lngt, timeZone, elev, locationString
 
     def decomposeLocation(self, location):
