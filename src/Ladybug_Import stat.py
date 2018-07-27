@@ -44,14 +44,14 @@ Provided by Ladybug 0.0.66
         monthlyTauDiffuse: Values representing the monthly optical sky depth for diffuse solar radiation.  These can be used with the "Ladybug_Design Day Sky" component to create ASHRAE Tau design day solar radiation values.  These values can then be used for sizing HVAC cooling systems.
         ---------------:...
         extremeHotWeek: An analysis period representing the hottest week of the typical meteorological year.  If the stat file does not specify an extreme hot week, it is the most extreme week of the hottest season.
-        typicalHotWeek: An analysis period representing a typical week of the hottest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
-        typicalWeek: An analysis period representing a typical autumn week of the typical meteorological year.  If the stat file does not specify a typical week, it is the typical week of Autumn.
-        typicalColdWeek: An analysis period representing a typical week of the coldest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
+        typicalSummerWeek: An analysis period representing a typical week of the hottest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
+        typicalAutumnWeek: An analysis period representing a typical autumn week of the typical meteorological year.
+        typicalWinterWeek: An analysis period representing a typical week of the coldest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be "Null."
         extremeColdWeek: An analysis period representing the coldest week of the typical meteorological year.  If the stat file does not specify an extreme cold week, it is the most extreme week of the coldest season.
 """
 ghenv.Component.Name = "Ladybug_Import stat"
 ghenv.Component.NickName = 'importSTAT'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nJUL_26_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -501,55 +501,84 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
                     extHotStart = (line.split(':'))[1].split()
                     extHotEnd = (line.split(':'))[2].split(',')[0].split()
                     extremeHotWeek = ((monthNumber(extHotStart[0]), int(extHotStart[1]), 1), ((monthNumber(extHotEnd[0]), int(extHotEnd[1]), 24)))
-                else: pass
             if extremeHotWeek == None:
                 print 'No extreme hot week was found in the stat file.'
             else: pass
             
             #Search for the typical hot period.
-            typicalHotWeek = None
+            typicalSummerWeek = None
             for lineCount, line in enumerate(statFileLines):
                 if 'Typical Summer Week' in line:
                     hotStart =(statFileLines[lineCount+1].split(':'))[1].split()
                     hotEnd = (statFileLines[lineCount+1].split(':'))[2].split(',')[0].split()
-                    typicalHotWeek = ((monthNumber(hotStart[0]), int(hotStart[1]), 1), ((monthNumber(hotEnd[0]), int(hotEnd[1]), 24)))
-                else: pass
-            if typicalHotWeek == None:
-                print 'No typical hot week was found in the stat file.'
-            else: pass
+                    typicalSummerWeek = ((monthNumber(hotStart[0]), int(hotStart[1]), 1), ((monthNumber(hotEnd[0]), int(hotEnd[1]), 24)))
+            if typicalSummerWeek == None:
+                print 'No typical Summer week was found in the stat file.'
+                ghenv.Component.Params.Output[10].NickName = "."
+                ghenv.Component.Params.Output[10].Name = "."
+                ghenv.Component.Params.Output[10].Description = " "
+            else:
+                ghenv.Component.Params.Output[10].NickName = "typicalSummerWeek"
+                ghenv.Component.Params.Output[10].Name = "typicalSummerWeek"
+                ghenv.Component.Params.Output[10].Description = "An analysis period representing a typical week of the hottest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be 'Null.'"
             
-            #Search for the typical period.
-            typicalWeek = None
+            #Search for the typical autumn period.
+            typicalAutumnWeek = None
             for lineCount, line in enumerate(statFileLines):
+                ghenv.Component.Params.Output[11].NickName = "typicalAutumnWeek"
+                ghenv.Component.Params.Output[11].Name = "typicalAutumnWeek"
+                ghenv.Component.Params.Output[11].Description = "An analysis period representing a typical Autumn week of the typical meteorological year."
                 if 'Typical Autumn Week' in line:
                     #The file contains multiple typical periods and I just want the Autumn one.
                     typStart =(statFileLines[lineCount+1].split(':'))[1].split()
                     typEnd = (statFileLines[lineCount+1].split(':'))[2].split(',')[0].split()
-                    typicalWeek = ((monthNumber(typStart[0]), int(typStart[1]), 1), ((monthNumber(typEnd[0]), int(typEnd[1]), 24)))
-                else: pass
-            if typicalWeek == None:
+                    typicalAutumnWeek = ((monthNumber(typStart[0]), int(typStart[1]), 1), ((monthNumber(typEnd[0]), int(typEnd[1]), 24)))
+            if typicalAutumnWeek == None:
+                ghenv.Component.Params.Output[11].NickName = "typicalWeek"
+                ghenv.Component.Params.Output[11].Name = "typicalWeek"
+                ghenv.Component.Params.Output[11].Description = "An analysis period representing a typical week of the typical meteorological year."
                 #The file contains only one typical period and I will take that one.
                 for line in statFileLines:
                     if 'Typical Week Period selected' in line:
                         typStart = (line.split(':'))[1].split()
                         typEnd = (line.split(':'))[2].split(',')[0].split()
                         typicalWeek = ((monthNumber(typStart[0]), int(typStart[1]), 1), ((monthNumber(typEnd[0]), int(typEnd[1]), 24)))
-                else: pass
-            if typicalWeek == None:
-                print 'No typical week was found in the stat file.'
-            else: pass
+            
+            typicalSpringWeek = None
+            for lineCount, line in enumerate(statFileLines):
+                if 'Typical Spring Week' in line:
+                    #The file contains multiple typical periods and I just want the Spring one.
+                    typStart =(statFileLines[lineCount+1].split(':'))[1].split()
+                    typEnd = (statFileLines[lineCount+1].split(':'))[2].split(',')[0].split()
+                    typicalSpringWeek = ((monthNumber(typStart[0]), int(typStart[1]), 1), ((monthNumber(typEnd[0]), int(typEnd[1]), 24)))
+            if typicalSpringWeek == None:
+                print 'No typical Spring week was found in the stat file.'
+                ghenv.Component.Params.Output[12].NickName = "."
+                ghenv.Component.Params.Output[12].Name = "."
+                ghenv.Component.Params.Output[12].Description = " "
+            else:
+                ghenv.Component.Params.Output[12].NickName = "typicalSpringWeek"
+                ghenv.Component.Params.Output[12].Name = "typicalSpringWeek"
+                ghenv.Component.Params.Output[12].Description = "An analysis period representing a typical Spring week of the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be 'Null.'"
+            
             
             #Search for the typical cold period.
-            typicalColdWeek = None
+            typicalWinterWeek = None
             for lineCount, line in enumerate(statFileLines):
                 if 'Typical Winter Week' in line:
                     coldStart =(statFileLines[lineCount+1].split(':'))[1].split()
                     coldEnd = (statFileLines[lineCount+1].split(':'))[2].split(',')[0].split()
-                    typicalColdWeek = ((monthNumber(coldStart[0]), int(coldStart[1]), 1), ((monthNumber(coldEnd[0]), int(coldEnd[1]), 24)))
+                    typicalWinterWeek = ((monthNumber(coldStart[0]), int(coldStart[1]), 1), ((monthNumber(coldEnd[0]), int(coldEnd[1]), 24)))
                 else: pass
-            if typicalColdWeek == None:
-                print 'No typical cold week was found in the stat file.'
-            else: pass
+            if typicalWinterWeek == None:
+                print 'No typical Winter week was found in the stat file.'
+                ghenv.Component.Params.Output[13].NickName = "."
+                ghenv.Component.Params.Output[13].Name = "."
+                ghenv.Component.Params.Output[13].Description = " "
+            else:
+                ghenv.Component.Params.Output[13].NickName = "typicalWinterWeek"
+                ghenv.Component.Params.Output[13].Name = "typicalWinterWeek"
+                ghenv.Component.Params.Output[13].Description = "An analysis period representing a typical week of the coldest season in the typical meteorological year.  Not all stat files specify such a week and, in this case, the output here will be 'Null.'"
             
             #Search for the extreme cold period.
             extremeColdWeek = None
@@ -561,7 +590,6 @@ if _statFile != None and _statFile.lower().endswith(".stat"):
                 else: pass
             if extremeColdWeek == None:
                 print 'No extreme cold week was found in the stat file.'
-            else: pass
             
             
             # This is the list container for koppenZoneDescription output from this component.
