@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nAUG_04_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -726,7 +726,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
                 textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.5), txtPt.Z))
             additionalSrf = None
             comfortTextPt = None
-
+        
         return legendSrf, textPt, additionalSrf, comfortTextPt
     
     #Make Legend Text
@@ -1224,7 +1224,6 @@ if checkData == True:
         for listCount, lst in enumerate(dataLabelPtsPy):
             for item in lst:
                 dataLabelPts.Add(item, GH_Path(listCount))
-
 
 ghenv.Component.Params.Output[7].Hidden = True
 ghenv.Component.Params.Output[9].Hidden = True
