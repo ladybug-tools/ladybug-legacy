@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Line Chart"
 ghenv.Component.NickName = 'LineChart'
-ghenv.Component.Message = 'VER 0.0.66\nAUG_04_2018'
+ghenv.Component.Message = 'VER 0.0.66\nAUG_05_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
