@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Line Chart"
 ghenv.Component.NickName = 'LineChart'
-ghenv.Component.Message = 'VER 0.0.66\nAUG_05_2018'
+ghenv.Component.Message = 'VER 0.0.66\nAUG_12_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -146,9 +146,10 @@ def makeChartCrvs(separatedLists, listInfo, chartType, xS, yS, legendPs, lb_prep
         
         #Append everything to the full list of data.
         if listInfo[listCount][3] in unitsList and chartType > 0:
+            stackIndices.append([])
             for formatCount, formatList in enumerate(unitsList):
                 if listInfo[listCount][3] == formatList:
-                    stackIndices.append(formatCount)
+                    stackIndices[listCount].append(formatCount)
         else:
             stackIndices.append(-1)
         
@@ -392,8 +393,10 @@ def plotData(dataLists, startVals, scaleFacs, dataWidth, width, colors, stackInd
         for count, val in enumerate(dataList):
             # generate the polyline points for each day.
             yPos = (val - startVals[dataCount]) / scaleFacs[dataCount]
+            
             if stackIndices[dataCount] != -1:
-                yPos = yPos + stackPositions[stackIndices[dataCount]][count]
+                #for c in stackIndices[dataCount]:
+                yPos = yPos + stackPositions[stackIndices[dataCount][-1]][count]
             stackPositions[dataCount].append(yPos)
             point = rc.Geometry.Point3d(count * interval, yPos, 0)
             pLinePts.append(point)
@@ -408,7 +411,7 @@ def plotData(dataLists, startVals, scaleFacs, dataWidth, width, colors, stackInd
             if stackIndices[dataCount] == -1:
                 theBottom = bottomLine
             else:
-                theBottom = bottomLines[stackIndices[dataCount]]
+                theBottom = bottomLines[stackIndices[dataCount][-1]]
             
             # make a list of curves surrounding the mesh
             leftSideLine = rc.Geometry.LineCurve(theBottom.PointAtStart, pLine.PointAtStart)
