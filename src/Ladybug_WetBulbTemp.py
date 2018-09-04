@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_WetBulbTemp"
 ghenv.Component.NickName = 'WetBulbTemp & DewPointTemp'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nSEP_03_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -127,7 +127,7 @@ def checkTheData():
     nonPositive = True
     if len(_barometricPressure_) != 0:
         try:
-            if _barometricPressure_[2] == 'Wind Speed':
+            if _barometricPressure_[2] == 'Barometric_Pressure':
                 barPress = _barometricPressure_[7:]
                 checkData3 = True
                 epwData = True
@@ -149,7 +149,7 @@ def checkTheData():
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         checkData3 = True
-        barPress = [0.05]
+        barPress = [101325]
         print 'No value connected for _barometricPressure_.  It will be assumed that the pressure is at seal level.'
     
     
@@ -195,7 +195,6 @@ def checkTheData():
 #dbTemp [Celsius], RH [%], Psta [Pa]
 def WBFUNC(dbTemp, RH, Psta):
     es = 6.112 * math.e**((17.67 * dbTemp) / (dbTemp + 243.5))
-    
     e = (es * RH) / 100
     
     
