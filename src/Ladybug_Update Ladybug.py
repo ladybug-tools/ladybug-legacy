@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
+ghenv.Component.Message = 'VER 0.0.66\nSEP_08_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
@@ -242,7 +242,10 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
                 continue            
             elif fileName.StartsWith('Ladybug') and fileName not in srcFiles:
                 fullPath = os.path.join(destinationDirectory, fileName)
-                os.remove(fullPath)                
+                try:
+                    os.remove(fullPath)
+                except:
+                    'Failed to remove older user objects. New ones will be overwritten but you may have some deprecated components remaining.'
 
         print 'Updating...'
         
