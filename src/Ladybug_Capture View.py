@@ -70,9 +70,8 @@ def mdPath(workDir):
     return workDir
 
 def viewCapture(fileName, directory, viewNames, image_width, image_height, dispModeStr, keepAspectRatio, transparent):
-    
+    fullPaths = []
     for viewName in viewNames:
-        
         if viewName in rs.ViewNames():
             rs.CurrentView(viewName, True)
         else:
@@ -131,8 +130,9 @@ def viewCapture(fileName, directory, viewNames, image_width, image_height, dispM
                 return
                 pass
         
-        return fullPath
-        
+        fullPaths.append(fullPath)
+    
+    return fullPaths
 
 if _capture and _fileName!=None:
     
@@ -151,5 +151,6 @@ if _capture and _fileName!=None:
     if len(viewNames_)==0: viewNames_ = [sc.doc.Views.ActiveView.ActiveViewport.Name]
     
     fullPath = viewCapture(_fileName, directory, viewNames_, imageWidth_, imageHeight_, displayMode_, keepAspectR_, transparBack_)
-    if fullPath:
-        print fullPath
+    if fullPath != []:
+        for fullP in fullPath:
+            print fullP
