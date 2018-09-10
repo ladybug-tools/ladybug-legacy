@@ -72,7 +72,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_SunriseSunset"
 ghenv.Component.NickName = 'Sunrise Sunset'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nSEP_08_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -100,8 +100,8 @@ def sunVectorCalc(azimut, zenit):
     y = 100 * math.sin(math.radians(90 - zenit)) * math.sin(math.radians(90 - azimut))
     z = 100 * math.cos(math.radians(90 - zenit))
     
-    refPoint = rs.AddPoint(x,y,z)
-    vector = rs.VectorCreate([0,0,0] , refPoint)
+    #refPoint = rs.AddPoint(x,y,z)
+    vector = rs.VectorCreate([0,0,0] , [x,y,z])
     vector = rs.VectorUnitize(vector)
     return vector
 
