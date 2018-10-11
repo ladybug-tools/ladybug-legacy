@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.66\nJUL_11_2018'
+ghenv.Component.Message = 'VER 0.0.66\nOCT_11_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -2930,6 +2930,16 @@ class ResultVisualization(object):
         # Thanks to Giulio Piacentino for his version of text to curve
         textCrvs = []
         textJustification = self.textJustificationEnumeration(justificationIndex)
+        try:
+            # exposed only in Rhino 6
+            scale = rc.RhinoDoc.ActiveDoc.DimStyles.CurrentDimensionStyle.DimensionScale
+        except AttributeError:
+            # Rhino 5
+            pass
+        else:
+            scale = scale or 1  # ensure it is not 0
+            textHeight = textHeight / scale
+
         for n in range(len(text)):
             plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
             if type(text[n]) is not str:
@@ -2949,6 +2959,17 @@ class ResultVisualization(object):
         textSrfs = []
         textJustification = self.textJustificationEnumeration(justificationIndex)
         planeCheck = False
+
+        try:
+            # exposed only in Rhino 6
+            scale = rc.RhinoDoc.ActiveDoc.DimStyles.CurrentDimensionStyle.DimensionScale
+        except AttributeError:
+            # Rhino 5
+            pass
+        else:
+            scale = scale or 1  # ensure it is not 0
+            textHeight = textHeight / scale
+
         for n in range(len(text)):
             if plane == None or planeCheck == True:
                 plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
@@ -3344,6 +3365,16 @@ class ResultVisualization(object):
         
         #Write the text into the document
         formatString = "%." + str(decimalPlaces) + "f"
+        try:
+            # exposed only in Rhino 6
+            scale = rc.RhinoDoc.ActiveDoc.DimStyles.CurrentDimensionStyle.DimensionScale
+        except AttributeError:
+            # Rhino 5
+            pass
+        else:
+            scale = scale or 1  # ensure it is not 0
+            textSize = textSize / scale
+
         for text in range(len(legendText)):
             plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
             if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
