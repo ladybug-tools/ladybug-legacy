@@ -48,7 +48,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nSEP_22_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -150,7 +150,10 @@ def main(percent, operator):
                 srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), rc.Geometry.Point3d(newMesh.Vertices[face.D]), sc.doc.ModelAbsoluteTolerance)
             else:
                 srfBrep = rc.Geometry.Brep.CreateFromCornerPoints(rc.Geometry.Point3d(newMesh.Vertices[face.A]), rc.Geometry.Point3d(newMesh.Vertices[face.B]), rc.Geometry.Point3d(newMesh.Vertices[face.C]), sc.doc.ModelAbsoluteTolerance)
-            areaList.append(rc.Geometry.AreaMassProperties.Compute(srfBrep).Area)
+            if type(srfBrep) != rc.Geometry.Brep:
+                pass
+            else:
+                areaList.append(rc.Geometry.AreaMassProperties.Compute(srfBrep).Area)
         # Delete unwanted faces.
         newMesh.Faces.DeleteFaces(faceNumbersHarm)
     else:
