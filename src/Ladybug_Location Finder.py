@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Location Finder"
 ghenv.Component.NickName = 'LocationFinder'
-ghenv.Component.Message = 'VER 0.0.66\nMAR_03_2018'
+ghenv.Component.Message = 'VER 0.0.66\nOct_22_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -73,9 +73,9 @@ except AttributeError:
 
 class GoogleToolsLocation:
     
-    def __init__(self, address, APIKey):
+    def __init__(self, address, _APIKey):
         self.address = address
-        self.key = APIKey
+        self.key = _APIKey
     
     
     def findLatLonName(self):
@@ -169,10 +169,10 @@ def checkInternetConnection():
 
 
 def main():
-    if _address:
+    if _address and _APIKey:
         address = urllib.quote(_address.encode('utf8'), '%')
         
-        location = GoogleToolsLocation(address, APIKey)
+        location = GoogleToolsLocation(address, _APIKey)
         
         latitude, longitude, completeAddress = location.findLatLonName()
         
@@ -185,9 +185,9 @@ def main():
             location = createLocation(locationName, latitude, longitude, timeZone, elevation)
         else:
             w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "location not found, please try to change the address.")
+            ghenv.Component.AddRuntimeMessage(w, "Location not found, please try to change the address or connect the correct API Key.")
             return -1
-        return location, "Test"
+        return location
 
 
 initCheck = False
@@ -215,7 +215,7 @@ if initCheck:
         result = main()
         if result != -1:
             
-            location, address = result
+            location = result
             
     else:
         warning = "Please enable your internet connection."
