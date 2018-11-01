@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.66\nOCT_11_2018'
+ghenv.Component.Message = 'VER 0.0.66\nNOV_01_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -3008,9 +3008,14 @@ class ResultVisualization(object):
                 meshSrfs = []
                 for srf in srfs:
                     srf.Flip()
-                    meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
-                    meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
-                    meshSrfs.append(meshSrf)
+                    try:
+                        meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
+                    except TypeError:
+                        # pass very small surfaces
+                        continue
+                    else:
+                        meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+                        meshSrfs.append(meshSrf)
                 
                 textSrfs.append(meshSrfs)
             
