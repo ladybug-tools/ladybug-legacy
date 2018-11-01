@@ -70,7 +70,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Dome"
 ghenv.Component.NickName = 'radiationCallaDome'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nNOV_01_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -145,7 +145,9 @@ def createSkyDomeMesh(basePoint, resolution, scale):
 
 
 
-def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projection, north, centerPoint, legendPar, bakeIt, domeOrLily=True):
+def main(genCumSkyResult, horAngleStep, verAngleStep, horScale,
+         projection, north, centerPoint, legendPar, bakeIt, domeOrLily=True):
+    
     # import the classes
     if sc.sticky.has_key('ladybug_release'):
         try:
@@ -190,8 +192,10 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
             [selList.append(float(x)) for x in genCumSkyResult[indexList[0]+7:indexList[1]]]
             genCumSkyResult = selList
             
-            if indexList[-1] == 456: patchesNormalVectors = lb_preparation.TregenzaPatchesNormalVectors
-            elif indexList[-1] == 1752: patchesNormalVectors = lb_preparation.getReinhartPatchesNormalVectors()
+            if indexList[-1] == 456:
+                patchesNormalVectors = lb_preparation.TregenzaPatchesNormalVectors
+            elif indexList[-1] == 1752:
+                patchesNormalVectors = lb_preparation.getReinhartPatchesNormalVectors()
             
             
             # check the scale
@@ -203,47 +207,40 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
                     horScale = 1/conversionFac
             except:
                 horScale = 1/conversionFac
-            
+
             horScale = horScale * .2
             
-            try:
-                if float(verScale) >= 0:
-                    try: verScale = float(verScale) * 1/conversionFac
-                    except: verScale = 1/conversionFac
-                else:
-                    verScale = 1/conversionFac
-            except:
-                verScale = 1/conversionFac
-            
-            verScale= .1*verScale
+            verScale = horScale / 2
 
             cenPt = lb_preparation.getCenPt(centerPoint)
             
-            if not horAngleStep or int(horAngleStep) < 5: horAngleStep = 10
-            elif int(horAngleStep)> 90: horAngleStep = 90
-            else:
-                try: horAngleStep = int(horAngleStep)
-                except: horAngleStep = 10
+            horAngleStep = horAngleStep or 1
             
-            if not verAngleStep or int(verAngleStep) < 5: verAngleStep = 10
-            elif int(verAngleStep)> 90: verAngleStep = 90
-            else:
-                try: verAngleStep = int(verAngleStep)
-                except: verAngleStep = 10
-            
-            
+            if horAngleStep > 90:
+                horAngleStep = 90
+            elif horAngleStep < 1:
+                horAngleStep = 1
+
+            if verAngleStep > 90:
+                verAngleStep = 90
+            elif verAngleStep < 1:
+                verAngleStep = 1
+
             # find the range of angles 
-            
             roseHAngles = rs.frange(0, 360, horAngleStep)
             roseVAngles = rs.frange(0, 90, verAngleStep)
             
-            if round(roseHAngles[-1]) == 360: roseHAngles.remove(roseHAngles[-1])
-            if round(roseVAngles[-1]) > 90: roseVAngles.remove(roseVAngles[-1])
-            elif round(roseVAngles[-1]) < 90: roseVAngles.append(90)
+            if round(roseHAngles[-1]) == 360:
+                roseHAngles.remove(roseHAngles[-1])
+            if round(roseVAngles[-1]) > 90:
+                roseVAngles.remove(roseVAngles[-1])
+            elif round(roseVAngles[-1]) < 90:
+                roseVAngles.append(90)
             
             hRotationVectors = [];
             northAngle, northVector = lb_preparation.angle2north(north)
-            eastVector = rc.Geometry.Vector3d(northVector); eastVector.Rotate(math.radians(-90), rc.Geometry.Vector3d.ZAxis)
+            eastVector = rc.Geometry.Vector3d(northVector)
+            eastVector.Rotate(math.radians(-90), rc.Geometry.Vector3d.ZAxis)
             # print eastVector
             
             def radiationForVector(vec, genCumSkyResult, TregenzaPatchesNormalVectors = lb_preparation.TregenzaPatchesNormalVectors):
@@ -263,8 +260,9 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
             [pts.append([]) for a in range(len(roseVAngles))]
             [radResult.append([]) for a in range(len(roseVAngles))]
             
-            radius = 100 * len(roseVAngles) * horScale
-            
+            totAngleCount = len(roseVAngles)
+            radius = 100 * totAngleCount * horScale
+         
             for angleCount, angle in enumerate(roseVAngles):
                 vectorVRotated = rc.Geometry.Vector3d(northVector)
                 
@@ -289,7 +287,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
                     if domeOrLily == True or domeOrLily == None:
                         #User has requested a dome.
                         vertVector = rc.Geometry.Vector3d(vectorVRotated.X, vectorVRotated.Y, vectorVRotated.Z)
-                        vertVector = rc.Geometry.Vector3d.Multiply(vertVector, 1000 * horScale)
+                        vertVector = rc.Geometry.Vector3d.Multiply(vertVector, 100 * totAngleCount * horScale)
                         pt = rc.Geometry.Point3d.Add(cenPt, vertVector)
                         pointRotation = rc.Geometry.Transform.Rotation(northVector, movingVector, cenPt)
                         pt.Transform(pointRotation)
@@ -305,7 +303,7 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
                         pts[angleCount].append(pt)
                         ptsClean.append(pt)
                     
-                    testPtsInfo = "%.2f"%radiation + ' ' + listInfo[0][3] + '\nHRA='+ `hAngle` + '; VRA=' + `90-angle`
+                    testPtsInfo = "%.2f"%radiation + ' ' + listInfo[0][3] + '\nHRA='+ `hAngle` + '; VRA=' + `angle`
                     testPtsInfos.append(testPtsInfo)
                     testPtsVectors.append(hVector)
                     
@@ -349,7 +347,6 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
                             vaseMesh.Append(singleMesh)
                         except:
                             pass
-        
             
             values = lb_preparation.flattenList(values)
             # color the mesh
@@ -384,9 +381,15 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
             customHeading = '\n\nRadiation Calla Dome (' + listInfo[0][3] + ')'
             titleTextCurve, titleStr, titlebasePt = lb_visualization.createTitle(listInfo, lb_visualization.BoundingBoxPar, legendScale, customHeading, False, legendFont, legendFontSize, legendBold)
             
-            if domeOrLily == False: cenPtMoved = rc.Geometry.Point3d.Add(cenPt, 0.9*lb_visualization.BoundingBoxPar[3]*rc.Geometry.Vector3d.ZAxis)
-            else: cenPtMoved = cenPt
-            compassCrvs, compassTextPts, compassText = lb_visualization. compassCircle(cenPtMoved, northVector, maxHorRadius, roseHAngles, 1.2*textSize)
+            if domeOrLily == False:
+                cenPtMoved = rc.Geometry.Point3d.Add(cenPt, 0.9*lb_visualization.BoundingBoxPar[3]*rc.Geometry.Vector3d.ZAxis)
+            else:
+                cenPtMoved = cenPt
+            compassCrvs, compassTextPts, compassText = \
+                lb_visualization. compassCircle(
+                    cenPtMoved, northVector, maxHorRadius,
+                    roseHAngles, 1.2*textSize)
+
             numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.2)
             compassCrvs = compassCrvs + lb_preparation.flattenList(numberCrvs)
             angleCrvs = []
@@ -447,8 +450,8 @@ def main(genCumSkyResult, horAngleStep, verAngleStep, horScale, verScale, projec
 
 if _runIt:
     north_ = 0
-    result = main(_selectedSkyMtx, _horAngleStep_, _verAngleStep_, _scale_, None, _projection_,
-                   north_, _centerPoint_, legendPar_, bakeIt_)
+    result = main(_selectedSkyMtx, _horAngleStep_, _verAngleStep_, _scale_,
+                  _projection_, north_, _centerPoint_, legendPar_, bakeIt_)
     maxPtAndValue = []
     if result!= -1:
        radiationMesh = result[1]       
