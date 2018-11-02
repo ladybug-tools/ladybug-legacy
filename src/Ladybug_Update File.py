@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Update File"
 ghenv.Component.NickName = 'updateGHFile'
-ghenv.Component.Message = 'VER 0.0.66\nJUN_14_2018'
+ghenv.Component.Message = 'VER 0.0.66\nNOV_03_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -215,11 +215,15 @@ def updateComponent(component, uofolder):
         fp = os.path.join(uofolder, 'Dragonfly', '%s.ghuser' % component.Name)
     else:
         fp = os.path.join(uofolder, '%s.ghuser' % component.Name)
+        if not os.path.isfile(fp):
+            category = str(component.Name).split('_')[0]
+            fp = os.path.join(uofolder, category, '%s.ghuser' % component.Name)
 
     if not os.path.isfile(fp):
         warning = 'Failed to find the userobject for %s' % component.Name
         ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, warning)
         return False
+
     uo = Grasshopper.Kernel.GH_UserObject(fp).InstantiateObject()
 
     # check the version and the date between component and userobject
