@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.66\nJUN_22_2018'
+ghenv.Component.Message = 'VER 0.0.66\nNOV_03_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -67,8 +67,11 @@ exposureDict = {0 : ghenv.Component.Exposure.dropdown,
                 }
 
 def exportToUserObject(component, targetFolder, lb_preparation):
+    
     targetFolder = os.path.join(targetFolder, "userObjects")
-    if not os.path.isdir(targetFolder): os.mkdir(targetFolder)
+    
+    if not os.path.isdir(targetFolder):
+        os.mkdir(targetFolder)
     
     def isNewerVersion(currentUO, component):
         # check if the component has a newer version than the current userObjects
@@ -135,20 +138,29 @@ def exportToUserObject(component, targetFolder, lb_preparation):
         filePath = os.path.join(UOFolder, component.Name + ".ghuser")
         currentUO = gh.GH_UserObject(filePath)
     except:
-        # the userobject is not there so just create it
-        currentUO = None
- 
-    if currentUO!=None:
+        try:
+            #  new folder structure
+            filePath = os.path.join(UOFolder, component.Category,
+                                    component.Name + ".ghuser")
+            currentUO = gh.GH_UserObject(filePath)
+        except:
+            # the userobject is not there so just create it
+            currentUO = None
+
+
+    if currentUO != None:
         # if is newer remove
         if isNewerVersion(currentUO, component):
-            # it has a newer version so let's remove the old one and creat a new userobject
+            # it has a newer version so let's remove the old one and creat
+            # a new userobject
             pass
             if not component.Category == "Maths":
                 removeNicely = cs.RemoveCachedObject(filePath)
-                if not removeNicely: os.remove(filePath)
+                if not removeNicely:
+                    os.remove(filePath)
         else:
-            # there is already a newer version so just copy that to the folder instead
-            # and return
+            # there is already a newer version so just copy that to the folder
+            # instead and return
             dstFullPath = os.path.join(targetFolder, component.Name + ".ghuser")
             shutil.copy2(filePath, dstFullPath)
             return
@@ -156,7 +168,7 @@ def exportToUserObject(component, targetFolder, lb_preparation):
     # create the new userObject in Grasshopper folder
     uo = gh.GH_UserObject()
     uo.Icon = component.Icon_24x24
-    
+
     try: uo.Exposure = exposureDict[int(component.AdditionalHelpFromDocStrings)]
     except:
         try:
@@ -172,7 +184,8 @@ def exportToUserObject(component, targetFolder, lb_preparation):
     uo.Description.Name = component.Name
     uo.Description.Description = component.Description
     
-    # if user hasn't identified the category then put it into honeybee as an unknown!
+    # if user hasn't identified the category then put it
+    # into honeybee as an unknown!
     if component.Category == "Maths":
         uo.Description.Category = "Honeybee"
     else:
@@ -188,17 +201,27 @@ def exportToUserObject(component, targetFolder, lb_preparation):
     uo.SaveToFile()
     
     # copy the component over
+    uoFullPath = os.path.join(UOFolder, component.Name + ".ghuser")
     dstFullPath = os.path.join(targetFolder, component.Name + ".ghuser")
-    shutil.copy2(filePath, dstFullPath)
+    shutil.copy2(uoFullPath, dstFullPath)
     
+    # move under the folder for the plugin
+    uoPluginFullPath = os.path.join(UOFolder, component.Category,
+                                    component.Name + ".ghuser")
+    try:
+        os.remove(uoPluginFullPath)
+    except:
+        pass
+    shutil.move(uoFullPath, uoPluginFullPath)
+
     gh.GH_ComponentServer.UpdateRibbonUI()
     
-    print "UserObject successfully added to: "
-    
-    
+    print "Added UserObject successfully!"
+
 
 def exportToFile(component, targetFolder, lb_preparation):
-    
+    """Export userobject to a folder (usually clone of GitHub repo)."""
+
     targetFolder = os.path.join(targetFolder, "src")
     if not os.path.isdir(targetFolder): os.mkdir(targetFolder)
     
@@ -320,7 +343,8 @@ def getListOfConnectedComponents(componentInputParamIndex = 0, onlyGHPython = Tr
     return components
 
 def main(components, targetFolder):
-    if not sc.sticky.has_key('ladybug_release'): return "you need to let Ladybug fly first!"
+    if not sc.sticky.has_key('ladybug_release'):
+        return "you need to let Ladybug fly first!"
     lb_preparation = sc.sticky["ladybug_Preparation"]()
     
     if not os.path.isdir(targetFolder): os.mkdir(targetFolder)

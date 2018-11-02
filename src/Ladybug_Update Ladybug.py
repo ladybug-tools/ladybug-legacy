@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.66\nSEP_08_2018'
+ghenv.Component.Message = 'VER 0.0.66\nNOV_03_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
@@ -210,6 +210,28 @@ def updateTheComponent(component, newUOFolder, lb_preparation):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
 
+def removeOldUserObjects(destinationDirectory):
+    print 'Removing Old Version from: {}'.format(destinationDirectory)
+
+    # remove userobjects that are currently removed
+    fileNames = os.listdir(destinationDirectory)
+    for fileName in fileNames:
+        # check for ladybug userObjects and delete the files if they are not
+        # in source anymore
+        fullPath = os.path.join(destinationDirectory, fileName)
+        if os.path.isdir(fullPath):
+            # it's a directory. check inside the directory
+            removeOldUserObjects(fullPath)
+
+        elif fileName.StartsWith('LadybugPlus'):
+            continue            
+        elif fileName.StartsWith('Ladybug'):
+            try:
+                os.remove(fullPath)
+            except:
+                print('Failed to remove older user object: {}'.format(fileName))
+
+
 def main(sourceDirectory, updateThisFile, updateAllUObjects):
     if not sc.sticky.has_key('ladybug_release'): return "you need to let Ladybug fly first!", False
     lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -221,6 +243,10 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         userObjectsFolder = sourceDirectory
     
     destinationDirectory = folders.ClusterFolders[0]
+    final_destination = os.path.join(destinationDirectory, 'Ladybug')
+    
+    if not os.path.isdir(final_destination):
+        os.mkdir(final_destination)
     
     # copy files from source to destination
     if updateAllUObjects:
@@ -231,29 +257,16 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
         
-        srcFiles = os.listdir(userObjectsFolder)
-        print 'Removing Old Version...'
-        # remove userobjects that are currently removed
-        fileNames = os.listdir(destinationDirectory)
-        for fileName in fileNames:
-            # check for ladybug userObjects and delete the files if they are not
-            # in source anymore
-            if fileName.StartsWith('LadybugPlus'):
-                continue            
-            elif fileName.StartsWith('Ladybug') and fileName not in srcFiles:
-                fullPath = os.path.join(destinationDirectory, fileName)
-                try:
-                    os.remove(fullPath)
-                except:
-                    'Failed to remove older user objects. New ones will be overwritten but you may have some deprecated components remaining.'
+        removeOldUserObjects(destinationDirectory)
 
         print 'Updating...'
+        srcFiles = os.listdir(userObjectsFolder)
         
         for srcFileName in srcFiles:
             # check for ladybug userObjects
             if srcFileName.StartsWith('Ladybug'):
                 srcFullPath = os.path.join(userObjectsFolder, srcFileName)
-                dstFullPath = os.path.join(destinationDirectory, srcFileName) 
+                dstFullPath = os.path.join(final_destination, srcFileName) 
                 
                 # check if a newer version is not aleady exist
                 if not os.path.isfile(dstFullPath): shutil.copy2(srcFullPath, dstFullPath)
