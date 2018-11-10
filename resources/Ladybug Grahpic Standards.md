@@ -1,4 +1,4 @@
-#LADYBUG GRAPHIC STANDARDS
+# LADYBUG GRAPHIC STANDARDS
 
 Below are a list of component characteristics and standards that have been drafted to help ensure that the components have a consistent means of communicating with users.
 This communication is important for helping users understand how to use the components and how to solve issues when something has gone wrong.
@@ -6,7 +6,7 @@ These standards also help developers communicate with one another in a consisten
 Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless given permission otherwise and should generally strive to follow the Guidelines.
 
 
-#HARD AND FAST RULES
+# HARD AND FAST RULES
 
 1) All components should include the ladybug header at the top of the code.  This includes information on the GPL license, descriptions for the inputs/outputs, as well as name/date/and version of the component.  A template for this header can be found [here](https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/Ladybug_Component_Template.py).
 
@@ -40,7 +40,7 @@ Ladybug + Honeybee developers should adhere to the Hard and Fast Rules unless gi
 
 
 
-#GUIDELINES
+# GUIDELINES
 
 1) Please be mindful of the color schemes and fonts that other developers have implemented on the existing component icons.  Keeping with a consistent color scheme and font helps ensure a graphic identity for the project.
 
