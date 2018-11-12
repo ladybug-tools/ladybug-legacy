@@ -83,7 +83,7 @@ Provided by Ladybug 0.0.66
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.66\nNOV_12_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -343,7 +343,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement, analysisPe
         letters = [chr(i) for i in xrange(ord('a'), ord('z')+1)]
         # remove 'and' and 'or' from conditional statements
         csCleaned = conditionalStatement.replace('and', '',20000)
-        csCleaned = csCleaned.replace('or', '',20000)
+        csCleaned = csCleaned.replace('or', '',20000).replace('not', '',20000)
         
         # find the number of the lists that have assigned conditional statements
         listNum = []
