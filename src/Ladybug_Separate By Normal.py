@@ -17,13 +17,13 @@
 """
 Select surfaces based on orientation.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _geometry: Geometry for which facades will be selected.  Geometry must be either a Brep, a Mesh or a list of Breps or Meshes.
         _maxUpDecAngle_: Maximum normal declination angle from ZAxis that should be still considerd up
         _maxDownDecAngle_: Maximum normal declination angle from ZAxis that should be still considerd down
-        _orientation_: A number between 0 and 9 for desired orientation. 0 = North, 1 = NE, 2 = East, ... 7 = NW, 8 = Roof, 9 = Floor. Default is South.
+        _orientation_: A number between 0 and 8 for desired orientation. 0 = North, 1 = NE, 2 = East, ... 7 = NW, 8 = Roof. Default is South.
         _plusDeg_: Angle in degrees for deviation from _orientation. Default = 23. For selecting all vertical orientations give 359 for this input and 0 for the _minusDeg_ (or viceversa)
         _minusDeg_: Angle in degrees for deviation from _orientation. Default = 23. For selecting all vertical orientations give 359 for this input and 0 for the _plusDeg_ (or viceversa)
     Returns:
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Separate By Normal"
 ghenv.Component.NickName = 'separate By Normal'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

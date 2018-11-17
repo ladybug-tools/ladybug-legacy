@@ -24,7 +24,7 @@
 """
 This component let you select output folders from Workspace folder.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _folder: Workspace folder where there are output folders.
@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Find Output Folder"
 ghenv.Component.NickName = 'ENVI-MetFindOutputFolder'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

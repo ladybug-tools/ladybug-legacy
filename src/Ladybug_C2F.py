@@ -24,7 +24,7 @@
 """
 Use this component to convert temperatures from Celcius to Fahrenheit.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _C: A temperature or list of temperatures in Celcius.
@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_C2F"
 ghenv.Component.NickName = 'C2F'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

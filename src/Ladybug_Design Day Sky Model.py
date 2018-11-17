@@ -30,7 +30,7 @@ _
 More information on the calculation for the can be found in the EnergyPlus Input/Output reference:
 http://bigladdersoftware.com/epx/docs/8-4/engineering-reference/climate-calculations.html#ashrae-revised-clear-sky-model-tau-model
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -50,7 +50,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Design Day Sky Model"
 ghenv.Component.NickName = 'DesignDaySky'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015

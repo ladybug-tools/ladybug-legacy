@@ -24,7 +24,7 @@
 """
 Use this component to convert energy values in Wh/m2 to BTU/ft2 (or kWh/m2 to kBTU/ft2).
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _Wh_m2: An energy value or list of energy values in Wh/m2, kWh/m2.
@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Whm2BTUft"
 ghenv.Component.NickName = 'Wh2BTU'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

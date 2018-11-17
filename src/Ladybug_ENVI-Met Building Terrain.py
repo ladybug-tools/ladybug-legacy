@@ -26,7 +26,7 @@ Use this component to generate inputs for "LB ENVI-Met Spaces".
 -
 Sometimes some buildings are not generated when you connect terrain input. Try to move buildings or move the terrain to solve this issue.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _buildings: Geometry that represent ENVI-Met buildings.
@@ -51,7 +51,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Building Terrain"
 ghenv.Component.NickName = 'ENVI-MetBuildingTerrain'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

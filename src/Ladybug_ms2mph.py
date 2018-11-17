@@ -24,7 +24,7 @@
 """
 Convert from m/s to mile/h 
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         ms: Input wind speed in meters per second
@@ -34,7 +34,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_ms2mph"
 ghenv.Component.NickName = 'ms2mph'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

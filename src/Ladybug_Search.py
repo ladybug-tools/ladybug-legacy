@@ -22,7 +22,7 @@
 """
 Use this to look for the components in the Ladybug suite of tools that are most relevant to your query.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
 
     Args:
         _keyword: A word. This only accepts text inputs. Example is ("drybulb Temperature" or "tunnel") without quotation marks.
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Search"
 ghenv.Component.NickName = 'Search'
-ghenv.Component.Message = 'VER 0.0.66\nMAY_08_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:

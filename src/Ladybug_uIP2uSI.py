@@ -23,7 +23,7 @@
 """
 Use this component to convert U-Values in IP (BTU/hft2F) to U-Values in SI (W/Km2) to plug into any of the Honeybee material components.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _U_IP: A U-Value in IP (BTU/hft2F).
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_uIP2uSI"
 ghenv.Component.NickName = 'uIP2uSI'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

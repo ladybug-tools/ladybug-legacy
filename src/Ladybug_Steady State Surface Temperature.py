@@ -24,7 +24,7 @@ Use this component to calculate a steady state interior/exterior surface tempera
 _
 The formulas used to account for air film resistance in this component come from ASHRAE Fundementals 2013, Chapter 26, Table 10 (26.20).
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _outTemp: A number (or list of numbers) that represent the outdoor air temperature in degrees Celcius.
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_Steady State Surface Temperature"
 ghenv.Component.NickName = 'ssSrfTemp'
-ghenv.Component.Message = 'VER 0.0.66\nJUN_27_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

@@ -24,7 +24,7 @@
 """
 This component let you select materials from ENVI-Met library.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _dataType: Connect an integer from 0 to 6.
@@ -60,7 +60,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Read Library"
 ghenv.Component.NickName = 'ENVI-MetReadLibrary'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

@@ -23,7 +23,7 @@
 """
 Use this component to convert U-Values in SI (W/Km2) to U-Values in IP (BTU/hft2F).
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _U_SI: A U-Value in SI (W/Km2).
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_uSI2uIP"
 ghenv.Component.NickName = 'uSI2uIP'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

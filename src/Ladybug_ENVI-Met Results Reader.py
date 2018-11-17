@@ -29,7 +29,7 @@ https://www.researchgate.net/publication/281031049_Outdoor_Comfort_the_ENVI-BUG_
 -
 Special thanks goes to MIT.
 -
-Provided by Ladybug 0.0.66
+Provided by Ladybug 0.0.67
     
     Args:
         _outputFolder: ENVI-Met output folder path. E.g. 'C:\...\\NewSimulation_output'
@@ -90,7 +90,7 @@ Provided by Ladybug 0.0.66
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Results Reader"
 ghenv.Component.NickName = 'ENVI-MetResultsReader'
-ghenv.Component.Message = 'VER 0.0.66\nJAN_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
