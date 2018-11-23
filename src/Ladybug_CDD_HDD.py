@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -28,12 +28,12 @@ By default, this component uses a more accurate calculation than the traditional
 You may check the formulas in this page: "http://www.vesma.com/ddd/ddcalcs.htm"
 If you rather to use the traditional method, set useDailyAvrMethod to True.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _hourlyDryBulbTemperature: Annual dry bulb temperature from the Import epw component (in degrees Celsius).
-        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius).  Default is set to 23.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
-        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius).  Default is set to 18.3C but this can be much lower if the analysis is for a building with high heat gain or insulation.
+        _coolingBaseTemperature_: Base temperature for cooling (in degrees Celsius).  Default is set to 23.3C but this can be much lower if the analysis is for a building with high heat gain or insulation. Also, this number differs based on the factors that affect the human energy balance of the occupants inside of the buildings such as; building program, climate zone, solar exposure, number, age, activity, and clothing of occupants, lighting, equipment, insulation, etc. Therefore, it is highly recommended to set this number as a temperature at which the building will start cooling.
+        _heatingBaseTemperature_: Base temperature for heating (in degrees Celsius).  Default is set to 18.3C but this can be much lower if the analysis is for a building with high heat gain or insulation. Also, this number differs based on the factors that affect the human energy balance of the occupants inside of the buildings such as; building program, climate zone, solar exposure, number, age, activity, and clothing of occupants, lighting, equipment, insulation, etc. Therefore, it is highly recommended to set this number as a temperature at which the building will start heating.
         useDailyAvrMethod_: set to "True" to use the traditional method of degree days calculation, which will calculate the average temperature of each day and sum up all of these temperatures over the year.  This is opoosed to this component's default analysis, which will will examine each hour of the year and then convert results to degree-days.
     Returns:
         readMe!: A summary of the input.
@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_CDD_HDD"
 ghenv.Component.NickName = "CDD_HDD"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -116,37 +116,37 @@ def main(coolingSetPoint, heatingSetPoint, hourlyDryBulbTemperature, useDailyAvr
             for l in range(len(separatedLists)):
                     [daily_coolingDegDays.append(item) for item in listInfo[l][:2]]
                     daily_coolingDegDays.append('Daily_coolingDegDays')
-                    daily_coolingDegDays.append('Degree Hours')
+                    daily_coolingDegDays.append('Degree Days')
                     daily_coolingDegDays.append('Daily')
                     [daily_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [daily_heatingDegDays.append(item) for item in listInfo[l][:2]]
                     daily_heatingDegDays.append('Daily_heatingDegDays')
-                    daily_heatingDegDays.append('Degree Hours')
+                    daily_heatingDegDays.append('Degree Days')
                     daily_heatingDegDays.append('Daily')
                     [daily_heatingDegDays.append(item) for item in listInfo[l][5:7]]
 
                     [monthly_coolingDegDays.append(item) for item in listInfo[l][:2]]
                     monthly_coolingDegDays.append('monthly_coolingDegDays')
-                    monthly_coolingDegDays.append('Degree Hours')
+                    monthly_coolingDegDays.append('Degree Days')
                     monthly_coolingDegDays.append('Monthly')
                     [monthly_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [monthly_heatingDegDays.append(item) for item in listInfo[l][:2]]
                     monthly_heatingDegDays.append('monthly_heatingDegDays')
-                    monthly_heatingDegDays.append('Degree Hours')
+                    monthly_heatingDegDays.append('Degree Days')
                     monthly_heatingDegDays.append('Monthly')
                     [monthly_heatingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [annual_coolingDegDays.append(item) for item in listInfo[l][:2]]
                     annual_coolingDegDays.append('annual_coolingDegDays')
-                    annual_coolingDegDays.append('Degree Hours')
+                    annual_coolingDegDays.append('Degree Days')
                     annual_coolingDegDays.append('Annual')
                     [annual_coolingDegDays.append(item) for item in listInfo[l][5:7]]
                 
                     [annual_heatingDegDays.append(item) for item in listInfo[l][:2]]
                     annual_heatingDegDays.append('annual_heatingDegDays')
-                    annual_heatingDegDays.append('Degree Hours')
+                    annual_heatingDegDays.append('Degree Days')
                     annual_heatingDegDays.append('Annual')
                     [annual_heatingDegDays.append(item) for item in listInfo[l][5:7]]
                     

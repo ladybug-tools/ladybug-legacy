@@ -33,27 +33,7 @@ Useful links
 
 [Ladybug on Twitter](https://www.twitter.com/ladybug_tool)
 
-Contributors(a-z):
+[Contributors](https://github.com/mostaphaRoudsari/ladybug/graphs/contributors)
 ========================================
-[Anton Szilasi](https://github.com/antonszilasi)
-
-[Antonello Di Nunzio](https://github.com/AntonelloDN)
-
-Alex Jacobson
-
-[Abraham Yezioro](https://github.com/ayezioro)
-
-[Boris Plotnikov](https://github.com/boris-p)
-
-[Chris Mackey](https://github.com/chriswmackey)
-
-[Djordje Spasic](https://github.com/stgeorges)
-
-[Mostapha Roudsari](https://github.com/mostapharoudsari)
-
-[Saeran Vasanthakumar](https://github.com/saeranv)
-
-[Trygve Wastvedt](https://github.com/twastvedt)
-
 
 ![Screenshot](http://api.ning.com/files/n6JmThHrscbO0NxgLueUYrQPy4fLA8xdzP2COHyD1QEQ3DwfUxXlyjBtQMAxuSYvCXRAw0TfZ25DeARWbsMBKw0*wFlKWzeT/Untitledpresentation.png?width=1200)

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -25,7 +25,7 @@
 Use this component to make a radiation rose in the Rhino scene.  Radiation roses give a sense of how much radiation comes from the different cardinal directions, which will give an initial idea of where glazing should be minimized, shading applied, or solar collectors placed.
 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Radiation Rose"
 ghenv.Component.NickName = 'radiationRose'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -125,14 +125,19 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
     
             # check the scale
             if scale:
-                scale = 0.5 * float(scale)/conversionFac
+                HOY1 = lb_preparation.date2Hour(listInfo[0][5][0], listInfo[0][5][1], listInfo[0][5][1])
+                HOY2 = lb_preparation.date2Hour(listInfo[0][6][0], listInfo[0][6][1], listInfo[0][6][1])
+                if HOY2 - HOY1 > 24:
+                    scale = 1*scale/conversionFac
+                else:
+                    scale = 1000*scale/conversionFac
             else:
                 HOY1 = lb_preparation.date2Hour(listInfo[0][5][0], listInfo[0][5][1], listInfo[0][5][1])
                 HOY2 = lb_preparation.date2Hour(listInfo[0][6][0], listInfo[0][6][1], listInfo[0][6][1])
                 if HOY2 - HOY1 > 24:
-                    scale = 0.5/conversionFac
+                    scale = 1/conversionFac
                 else:
-                    scale = 500/conversionFac
+                    scale = 1000/conversionFac
             internalScale = 0.3
             
             # check vertical surface angle
@@ -158,9 +163,7 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
             customHeading = ['Total Radiation('+ listInfo[0][3]+')', 'Diffuse Radiation(' + listInfo[1][3] + ')', 'Direct Radiation(' + listInfo[2][3] + ')']
             
             def visualizeData(i, northAngle, northVector, results, arrows, legendTitle, legendPar, bakeIt, cenPt):
-                
                 movingVector = rc.Geometry.Vector3d(i * movingDist, 0, 0)
-                
                 overwriteScale = False
                 if legendPar == []: overwriteScale = True
                 elif legendPar[5] == None: overwriteScale = True
@@ -198,7 +201,6 @@ def main(north, genCumSkyResult, context, numOfArrows, surfaceTiltAngle, centerP
                     
                 # generate legend colors
                 legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
-                
                 # color legend surfaces
                 legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
                 legendSrfs.Translate(movingVector) # move it to the right place

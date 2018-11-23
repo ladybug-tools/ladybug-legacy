@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <chris@mackeyarchitecture.com> 
+# Copyright (c) 2013-2018, Chris Mackey <chris@mackeyarchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -31,12 +31,12 @@ Vaisala. (2013) Humidity Conversion Formulas: Calculation Formulas for Humidity.
 W. Wagner and A. Pru:" The IAPWS Formulation 1995 for the Thermodynamic Properties of Ordinary Water Substance for General and Scientific Use ", Journal of Physical and Chemical Reference Data, June 2002 ,Volume 31, Issue 2, pp. 387535
 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _dryBulbTemperature: The dry bulb temperature from the Import epw component.
         _relativeHumidity: The relative humidity from the Import epw component.
-        _barometricPressure: The barometric pressure from the Import epw component.
+        _barometricPressure: A number representing the barometric pressure in Pascals.  If no value is connected here, the default pressure will be 101325 Pa, which is air pressure at sea level.  It is recommended that you connect the barometric pressure from the Import epw component here as the air pressure at sea level can cause some misleading results for cities at higher elevations.
     Returns:
         readMe!: ...
         humidityRatio: The hourly humidity ratio (kg water / kg air).
@@ -47,7 +47,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Humidity Ratio Calculator"
 ghenv.Component.NickName = 'CalcHumidityRatio'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -150,7 +150,7 @@ def checkTheData():
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         checkData3 = True
-        barPress = [0.05]
+        barPress = [101325]
         print 'No value connected for barometricPressure_.  It will be assumed that the pressure is at seal level.'
     
     

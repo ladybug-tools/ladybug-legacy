@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -23,7 +23,7 @@
 """
 Use this component to calculate date information from an hour of the year.  Date information includes the day of the month, the month of the year and the hour of the day.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         HOY: A number between 1 and 8760 that represents an hour of the year.
@@ -38,7 +38,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Day_Month_Hour"
 ghenv.Component.NickName = 'Day_Month_Hour_Calculator'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -76,7 +76,11 @@ def main(HOY):
             day.append(d)
             month.append(m + 1)
             hour.append(t)
-            date.append(lb_preparation.hour2Date(hoy))
+            dat = lb_preparation.hour2Date(hoy)
+            
+            if dat.endswith('24:00'):
+                dat = dat.replace("24:00", "00:00")
+            date.append(dat)
         
         return day, month, hour, date
     else:

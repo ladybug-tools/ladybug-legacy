@@ -2,7 +2,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey <Chris@MackeyArchitecture.com> 
+# Copyright (c) 2013-2018, Chris Mackey <Chris@MackeyArchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -22,9 +22,12 @@
 """
 Use this component to compute the floor-level downdraft air temperature and velocity at a given set of points that are located close to a cold surface such as a window.  The draft conditions produced by this model are assumed to be 10 cm off of the floor.
 _
-The model used in this component comes from physical measurements of window downdraft conducted and published by Heiselberg.
+The model used in this component comes from physical measurements of window downdraft that were further validated using several CFD experiments.  Ther are published in these papers:
+_
+Heiselberg, P. (1994). Draft Risk from Cold Vertical Surfaces. Building and Environment, 29: 297-301.
+Manz, H. and Frank, T. (2003). "Analysis of Thermal Comfort near Cold Vertical Surfaces by Means of Computational Fluid Dynamics." Indoor Built Environment. 13: 233-242.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _testPts: The test points at which downdraft conditions will be evaluated.
@@ -36,14 +39,15 @@ Provided by Ladybug 0.0.63
      Returns:
         draftAirTemp: The air temperature of the draft 10 cm off of the floor in degrees Celcius.
         draftAirVeloc: The velocity of the draft 10 cm off of the floor in m/s.
+        airFlowPlanes: The planes in which the governing downdraft is flowing.
 """
 
 ghenv.Component.Name = "Ladybug_Window Downdraft"
 ghenv.Component.NickName = 'downDraft'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_17_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
@@ -54,6 +58,7 @@ import Rhino as rc
 import scriptcontext as sc
 import copy
 import System.Threading.Tasks as tasks
+import Grasshopper.Kernel as gh
 import copy
 
 def getSrfCenPtandNormal(surface):
@@ -79,17 +84,30 @@ def calcFloorAirTemp(airTemp, dist, deltaT):
     return airTemp - ((0.3-(0.034*dist))*deltaT)
 
 def velMaxClose(deltaT, windowHgt):
-    return 0.055*(math.sqrt(deltaT*windowHgt))
+    return 0.083*(math.sqrt(deltaT*windowHgt))
 
 def velMaxMid(dist, deltaT, windowHgt):
-    return 0.095*((math.sqrt(deltaT*windowHgt))/(dist+1.32))
+    return 0.143*((math.sqrt(deltaT*windowHgt))/(dist+1.32))
 
 def velMaxFar(deltaT, windowHgt):
-    return 0.028*(math.sqrt(deltaT*windowHgt))
+    return 0.043*(math.sqrt(deltaT*windowHgt))
 
 def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
     # Check Rhino model units.
     conversionFactor = lb_preparation.checkUnits()
+    
+    # Check the list of window surface temps.
+    winSrfTempFinal = []
+    if len(winSrfTemp) == 1:
+        for srf in range(len(windowSrfs)):
+            winSrfTempFinal.append(winSrfTemp[0])
+    elif len(winSrfTemp) == len(windowSrfs):
+        winSrfTempFinal = winSrfTemp
+    else:
+        warning = "The number of window surface temperatures does not match the number of windowSrfs."
+        print warning
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
+        return -1
     
     # Get the normal vectors of all the window surfaces.
     normalVecs = []
@@ -107,14 +125,14 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
         pointIntersectDict = {}
         for srfCount, srf in enumerate(windowSrfs):
             closestPt = srf.ClosestPoint(testPts[i])
-            srfLine = rc.Geometry.Line(testPts[i], closestPt)
+            srfLine = rc.Geometry.Line(rc.Geometry.Point3d(testPts[i].X, testPts[i].Y, closestPt.Z), closestPt)
             distToSrf = srfLine.Length
-            srfVec = rc.Geometry.Vector3d(closestPt.X-testPts[i].X, closestPt.Y-testPts[i].Y, closestPt.Z-testPts[i].Z)
+            srfVec = rc.Geometry.Vector3d(closestPt.X-testPts[i].X, closestPt.Y-testPts[i].Y, 0)
             angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
             if abs(angle2Srf) > 90:
-                normalVecs[srfCount].Reverse()
-                angle2Srf = math.degrees(rc.Geometry.Vector3d.VectorAngle(normalVecs[srfCount], srfVec))
-            angFactor = (90-abs(angle2Srf))/90
+                angFactor = 0
+            else:
+                angFactor = (90-abs(angle2Srf))/90
             
             pointIntersectDict[srfCount] = [distToSrf*conversionFactor, srfVec, angle2Srf, angFactor]
         
@@ -124,26 +142,37 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
         intRays(count)
     
     # For the points that are in the wake, find the height of the glazing at the point's downdraft location.
+    airFlowPlanes = []
+    
     for ptCount, ptDict in enumerate(ptIntList):
         for srf in ptDict.keys():
             intSrf = windowSrfs[srf]
             directVec = ptDict[srf][1]
             directAng = ptDict[srf][2]
-            normalPlaneVec = rc.Geometry.Vector3d(directVec.Y, directVec.X, 0)
-            intPlane = rc.Geometry.Plane(testPts[ptCount], normalPlaneVec)
-            try:
-                intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
-                startPtZ = intCurve.PointAtStart.Z
-                endPtZ = intCurve.PointAtEnd.Z
-                glzHeight  = (abs(endPtZ-startPtZ))*conversionFactor
-                ptDict[srf].append(glzHeight)
-            except:
-                srfBB = intSrf.GetBoundingBox(True)
-                glzHeight = (srfBB.Max.Z - srfBB.Min.Z)*conversionFactor
-                ptDict[srf].append(glzHeight)
+            if directAng < 90:
+                normalPlaneVec = rc.Geometry.Vector3d(directVec.X, directVec.Y, 0)
+                intPlane = rc.Geometry.Plane(testPts[ptCount], normalPlaneVec)
+                intPlane.Rotate((math.pi/2)+sc.doc.ModelAngleToleranceRadians, rc.Geometry.Vector3d.ZAxis)
+                airFlowPlanes.append(intPlane)
+                startPtZ = testPts[ptCount].Z
+                try:
+                    intCurve = rc.Geometry.Intersect.Intersection.BrepPlane(intSrf, intPlane, sc.doc.ModelAbsoluteTolerance)[1][0]
+                    endPtZ = max(intCurve.PointAtEnd.Z, intCurve.PointAtStart.Z)
+                    glzHeight  = (abs(endPtZ-startPtZ))*conversionFactor
+                    ptDict[srf].append(glzHeight)
+                except:
+                    srfBB = intSrf.GetBoundingBox(True)
+                    endPtZ = max(srfBB.Max.Z, srfBB.Min.Z)
+                    glzHeight = (endPtZ-startPtZ)*conversionFactor
+                    ptDict[srf].append(glzHeight)
+            else:
+                airFlowPlanes.append(None)
+                ptDict[srf].append(1)
     
-    # Compute the temperature difference.
-    glassAirDelta = airTemp - winSrfTemp
+    # Set a "spread factor" to ensure conservation of mass in the flow of air to the sides
+    spreadFac = .97
+    
+    
     
     # Compute the downdraft conditions for each point.
     ptVelLists = []
@@ -151,17 +180,21 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
     for ptCount, ptDict in enumerate(ptIntList):
         ptVelLists.append([])
         ptTemplists.append([])
-        for srf in ptDict.keys():
+        for srfCount, srf in enumerate(ptDict.keys()):
+            # Compute the temperature difference.
+            glassAirDelta = airTemp - winSrfTempFinal[srfCount]
+            
             dist = ptDict[srf][0]
             angFac = ptDict[srf][3]
             windowHgt = ptDict[srf][4]
+            
             if dist < 0.4: windSpd = velMaxClose(glassAirDelta, windowHgt)
             elif dist < 2: windSpd = velMaxMid(dist, glassAirDelta, windowHgt)
             else: windSpd = velMaxFar(glassAirDelta, windowHgt)
             floorAirTemp = calcFloorAirTemp(airTemp, dist, glassAirDelta)
             
-            ptVelLists[ptCount].append((windSpd*angFac))
-            ptTemplists[ptCount].append(airTemp-((airTemp-floorAirTemp)*angFac))
+            ptVelLists[ptCount].append((windSpd*((angFac/(1/spreadFac))+(1-spreadFac))))
+            ptTemplists[ptCount].append(airTemp-((airTemp-floorAirTemp)*((angFac/(1/spreadFac))+(1-spreadFac))))
     
     # Make final lists that just have the larger of the downdraft terms.
     draftSpeeds = []
@@ -175,12 +208,13 @@ def main(testPts, windowSrfs, winSrfTemp, airTemp, defaultVeloc = 0.05):
             draftAirTemps.append(min(ptTemplists[lCount]))
     
     
-    return draftSpeeds, draftAirTemps
+    return draftSpeeds, draftAirTemps, airFlowPlanes
 
 #If Ladybug is not flying or is an older version, give a warning.
 initCheck = True
 
 #Ladybug check.
+w = gh.GH_RuntimeMessageLevel.Warning
 if not sc.sticky.has_key('ladybug_release') == True:
     initCheck = False
     print "You should first let Ladybug fly..."
@@ -202,4 +236,8 @@ else:
 
 
 if initCheck == True and _testPts[0] != None and _windowSrfs[0] != None and _runIt == True:
-    draftAirVeloc, draftAirTemp = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_)
+    result = main(_testPts, _windowSrfs, _winSrfTemp, _airTemp, defaultVeloc_)
+    if result != -1:
+        draftAirVeloc, draftAirTemp, airFlowPlanes = result
+
+ghenv.Component.Params.Output[3].Hidden= True

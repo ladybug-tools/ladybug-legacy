@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,9 +26,9 @@ Use this component to calculate the cold (inlet, mains) water temperature, if wa
 Sources:
 http://www.energy.ca.gov/2013publications/CEC-400-2013-003/CEC-400-2013-003-CMF-REV.pdf
 http://www.nrel.gov/docs/fy04osti/35917.pdf
-http://www.retscreen.net/download.php/ang/120/0/Textbook_SWH.pdf
+http://www.solarthermalworld.org/sites/gstec/files/story/2015-05-31/textbook_swh.pdf
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     input:
         method_: A method by which the cold water temperature will be calculated:
@@ -91,7 +91,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Cold Water Temperature"
 ghenv.Component.NickName = "ColdWaterTemperature"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

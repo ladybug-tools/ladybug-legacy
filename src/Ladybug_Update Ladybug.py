@@ -3,7 +3,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 Code Developers and Beta Testers of new Ladybug components can use this component to remove old Ladybug components, add new Ladybug components, and update existing Ladybug components from a synced Github folder on their computer.
 This component can also update outdated Ladybug components in an old Grasshopper file so long as the updates to the components do not involve new inputs or outputs.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         sourceDirectory_: An optional address to a folder on your computer that contains the updated Ladybug userObjects. If no input is provided here, the component will download the latest version from GitHUB.
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
@@ -54,6 +54,12 @@ import time
 import urllib
 import Grasshopper.Folders as folders
 import System
+
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
 
 def downloadSourceAndUnzip(lb_preparation):
     """
@@ -114,6 +120,8 @@ def getAllTheComponents(onlyGHPython = True):
     for obj in objects:
         if type(obj) == gh.Special.GH_Cluster:
             clusterDoc = obj.Document("")
+            if not clusterDoc:
+                continue
             for clusterObj in  clusterDoc.Objects:
                 objects.append(clusterObj)
     
@@ -202,6 +210,28 @@ def updateTheComponent(component, newUOFolder, lb_preparation):
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     
 
+def removeOldUserObjects(destinationDirectory):
+    print 'Removing Old Version from: {}'.format(destinationDirectory)
+
+    # remove userobjects that are currently removed
+    fileNames = os.listdir(destinationDirectory)
+    for fileName in fileNames:
+        # check for ladybug userObjects and delete the files if they are not
+        # in source anymore
+        fullPath = os.path.join(destinationDirectory, fileName)
+        if os.path.isdir(fullPath):
+            # it's a directory. check inside the directory
+            removeOldUserObjects(fullPath)
+
+        elif fileName.StartsWith('LadybugPlus'):
+            continue            
+        elif fileName.StartsWith('Ladybug'):
+            try:
+                os.remove(fullPath)
+            except:
+                print('Failed to remove older user object: {}'.format(fileName))
+
+
 def main(sourceDirectory, updateThisFile, updateAllUObjects):
     if not sc.sticky.has_key('ladybug_release'): return "you need to let Ladybug fly first!", False
     lb_preparation = sc.sticky["ladybug_Preparation"]()
@@ -213,6 +243,10 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         userObjectsFolder = sourceDirectory
     
     destinationDirectory = folders.ClusterFolders[0]
+    final_destination = os.path.join(destinationDirectory, 'Ladybug')
+    
+    if not os.path.isdir(final_destination):
+        os.mkdir(final_destination)
     
     # copy files from source to destination
     if updateAllUObjects:
@@ -223,29 +257,28 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
             ghenv.Component.AddRuntimeMessage(w, warning)
             return -1
         
-        srcFiles = os.listdir(userObjectsFolder)
-        print 'Removing Old Version...'
-        # remove userobjects that are currently removed
-        fileNames = os.listdir(destinationDirectory)
-        for fileName in fileNames:
-            # check for ladybug userObjects and delete the files if they are not
-            # in source anymore
-            if fileName.StartsWith('Ladybug') and fileName not in srcFiles:
-                fullPath = os.path.join(destinationDirectory, fileName)
-                os.remove(fullPath)                
+        removeOldUserObjects(destinationDirectory)
 
         print 'Updating...'
+        srcFiles = os.listdir(userObjectsFolder)
         
         for srcFileName in srcFiles:
             # check for ladybug userObjects
             if srcFileName.StartsWith('Ladybug'):
                 srcFullPath = os.path.join(userObjectsFolder, srcFileName)
-                dstFullPath = os.path.join(destinationDirectory, srcFileName) 
+                dstFullPath = os.path.join(final_destination, srcFileName) 
                 
                 # check if a newer version is not aleady exist
                 if not os.path.isfile(dstFullPath): shutil.copy2(srcFullPath, dstFullPath)
                 # or is older than the new file
                 elif os.stat(srcFullPath).st_mtime - os.stat(dstFullPath).st_mtime > 1: shutil.copy2(srcFullPath, dstFullPath)
+        
+        # if item selector is not already copied, copy it to component folder
+        srcFullPath = os.path.join(userObjectsFolder, "Ladybug_ImageViewer.gha")
+        dstFullPath = os.path.join(folders.DefaultAssemblyFolder, "Ladybug_ImageViewer.gha")
+        if not os.path.isfile(dstFullPath):
+            shutil.copy2(srcFullPath, dstFullPath)
+        
         
         return "Done!" , True
     
@@ -260,7 +293,8 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         
         return "Done!", True
 
-if _updateThisFile or _updateAllUObjects:
+if _updateAllUObjects:
+    _updateThisFile = False
     msg, success = main(sourceDirectory_, _updateThisFile, _updateAllUObjects)
     if not success:
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2018, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -31,11 +31,10 @@ https://developers.google.com/maps/pricing-and-plans/#details
 -
 Special thanks goes to Google Maps and the authors of gHowl.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _location: It accepts two type of inputs.
-        _basePoint_: Input a point here to georeference the terrain model.
         a) latitude, longitude and elevation that represent WSG84 coordinates of the base point. You can achieve these type of coordinates from Google Maps or similar.
         e.g. 40.821796, 14.426439, 990
         -
@@ -43,13 +42,14 @@ Provided by Ladybug 0.0.63
         _radius_: A radius to make the terrain 3D model in Rhino model units. The default is set to 100.
         -
         If you provide a big radius, this could require lots of time (also a couple of minutes).
+        _basePoint_: Input a point here to georeference the terrain model.
         type_: Select the type of output:
         0 = rectangular mesh
         1 = rectangular surface
         -
         The default value is 0.
         _numOfTiles_: Set the number of tiles (e.g. 4, that means 4x4). If no input is connected this will be 3 (tiles: 3x3).
-        _numDivision_: Set the number of points for each tile. If no input is connected this will be 15 (grid: 16x16).
+        _numDivision_: Set the number of points for each tile. If no input is connected this will be 12 (grid: 13x13).
         _imgResolution_: Connect an integer number which manage the quality of single satellite image.
         -
         The following list shows the approximate level of detail you can expect to see at each _imgResolution_ level:
@@ -83,7 +83,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Terrain Generator"
 ghenv.Component.NickName = 'TerrainGenerator'
-ghenv.Component.Message = 'VER 0.0.63\nSEP_30_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
@@ -99,6 +99,13 @@ import System
 import os
 import clr
 from math import pi, log, tan, atan, exp, sqrt
+
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
+
 
 clr.AddReference("Grasshopper")
 import Grasshopper.Kernel as gh
@@ -150,7 +157,7 @@ def divideSrf(srf, numDivision):
     return pts
 
 
-def terrainGen(pts, xf, run):
+def terrainGen(pts, xf, run, name):
     if len(pts) > 257:
         warning = 'Your request is too big. The upper limit of _numDivision_ is 15.'
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
@@ -169,8 +176,6 @@ def terrainGen(pts, xf, run):
     # Temporary file
     # I should change this part here, the alternative way is to use urllib.request,
     # but it doesn't exist in GH. However this method works and it is fast enough.
-    appdata = os.getenv("APPDATA")
-    name = os.path.join(appdata, "Ladybug\\", "elevation.txt")
     if len(pts) <= 257:
         if run:
             try:
@@ -281,7 +286,7 @@ def createTiles(base_point, radius, numOfTiles):
 
 
 def cullAndSortPoints(pts, elevations):
-    terrain_pts = [Rhino.Geometry.Point3d(pt.X, pt.Y, elevations[i]) for i, pt in enumerate(pts)]
+    terrain_pts = [Rhino.Geometry.Point3d(pt.X/unitConversionFactor, pt.Y/unitConversionFactor, elevations[i]/unitConversionFactor) for i, pt in enumerate(pts)]
     cull_pts = list(set(terrain_pts))
     
     cull_pts.sort(key = lambda pt: pt.X)
@@ -299,18 +304,50 @@ def mdPath(folder):
                 os.mkdir(directory)
             except Exception:
                 appdata = os.getenv("APPDATA")
-                directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
+                try:
+                    directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
+                except:
+                    directory = os.path.join(appdata[:3], "Ladybug\IMG_Google\\")
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
                 w = gh.GH_RuntimeMessageLevel.Warning
                 ghenv.Component.AddRuntimeMessage(w, "Invalid Folder, you can find images here: {}".format(directory))
     else:
         appdata = os.getenv("APPDATA")
-        directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
-        if not os.path.exists(directory): os.makedirs(directory)
+        try:
+            directory = os.path.join(appdata, "Ladybug\IMG_Google\\")
+        except:
+            directory = os.path.join(appdata[:3], "Ladybug\IMG_Google\\")
+        if not os.path.exists(directory):
+            os.makedirs(directory)
     
     return directory
 
 
-def main():
+def writeFile():
+    # Make sure that the file exists
+    appdata = os.getenv("APPDATA")
+    try:
+        folder = os.path.join(appdata, "Ladybug")
+        name = os.path.join(folder, "elevation.txt")
+        
+        with open(name, "w") as f:
+            pass
+    except:
+        folder = os.path.join(appdata[:3], "Ladybug")
+        name = os.path.join(folder, "elevation.txt")
+        
+        with open(name, "w") as f:
+            pass
+        
+    if not "elevation.txt" in os.listdir(folder):
+        return -1
+    
+    return name
+
+
+def main(name):
+    
     earth_radius = 6378137
     equator_circumference = 2 * pi * earth_radius
     initial_resolution = equator_circumference / 256.0
@@ -325,7 +362,7 @@ def main():
         imgResolution = 18
     else: imgResolution = int(_imgResolution_) # make sure that it is an integer number
     if _numDivision_ == None:
-        numDivision = 15
+        numDivision = 12
     else: numDivision = int(_numDivision_)
     if _radius_ == None:
         radius = 100
@@ -355,8 +392,9 @@ def main():
     else: factor = -1
     
     tilesTree = DataTree[System.Object]()
-    tiles = createTiles(basePoint, radius, numOfTiles)
-    for i, tile in enumerate(tiles):
+    tilesVisualization = createTiles(basePoint, radius/unitConversionFactor, numOfTiles)
+    tilesCalculation = createTiles(basePoint, radius, numOfTiles)
+    for i, tile in enumerate(tilesVisualization):
         path = GH_Path(0, i)
         tilesTree.Add(tile, path)
     
@@ -364,14 +402,17 @@ def main():
     elevations_for_srf = []
     URLs = []
     imagePath = DataTree[System.Object]()
+    
+    # make a folder for the images
+    directory = mdPath(folder_)
+    
     if _runIt:
         pointsGeo, pointsZ, pointsXY, imagePath  = DataTree[System.Object](), DataTree[System.Object](), DataTree[System.Object](), DataTree[System.Object]()
-        
-        for i in range(len(tiles)):
-            points_srf = divideSrf(tiles[i], numDivision)
+        for i in range(len(tilesCalculation)):
+            points_srf = divideSrf(tilesCalculation[i], numDivision)
             try:
-                points, elevations = terrainGen(points_srf, xf, _runIt)
-                ptCenter = centerPtsGeo(tiles[i])
+                points, elevations = terrainGen(points_srf, xf, _runIt, name)
+                ptCenter = centerPtsGeo(tilesCalculation[i])
                 pointGeo = xf * ptCenter
                 points_for_srf.extend(points_srf)
                 elevations_for_srf.extend(elevations)
@@ -381,28 +422,25 @@ def main():
                 
                 path = GH_Path(0, i)
                 pointsGeo.AddRange(points, path)
-                pointsZ.AddRange(elevations, path)
-                pointsXY.AddRange(points_srf, path)
+                pointsZ.AddRange([elev/unitConversionFactor for elev in elevations], path)
+                pointsXY.AddRange([Rhino.Geometry.Point3d(pt.X/unitConversionFactor, pt.Y/unitConversionFactor, pt.Z/unitConversionFactor) for pt in points_srf], path)
                 
-            except TypeError: return None, None, None, None, None, None, None, None
+            except TypeError: return -1
+            except: return -1
         
         # make 3D points
-        # thanks to djordje for this advice
         cull_pts = cullAndSortPoints(points_for_srf, elevations_for_srf)
+        
         num = (numDivision + 1) * numOfTiles - (numOfTiles - 1)
         if type == 0:
             lb_meshpreparation = sc.sticky["ladybug_Mesh"]()
             terrain = lb_meshpreparation.meshFromPoints(num, num, cull_pts)
             origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToMeshes([terrain], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
         elif type == 1:
-             uDegree = min(3, num - 1)
-             vDegree = min(3, num - 1)
-             terrain = Rhino.Geometry.NurbsSurface.CreateThroughPoints(cull_pts, num, num, uDegree, vDegree, False, False)
-             origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToBreps([terrain.ToBrep()], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
-        
-        
-        # make a folder for the images
-        directory = mdPath(folder_)
+            uDegree = min(3, num - 1)
+            vDegree = min(3, num - 1)
+            terrain = Rhino.Geometry.NurbsSurface.CreateThroughPoints(cull_pts, num, num, uDegree, vDegree, False, False)
+            origin = Rhino.Geometry.Intersect.Intersection.ProjectPointsToBreps([terrain.ToBrep()], [basePoint], Rhino.Geometry.Vector3d.ZAxis * factor, sc.doc.ModelAbsoluteTolerance)
         
         try:
             for i, u in enumerate(URLs):
@@ -418,10 +456,19 @@ def main():
     else:
         # check the grid size
         dimension = round(((radius * 2) / numOfTiles) / numDivision, 3)
-        print("Size of the grid = {0} x {0}".format(dimension))
+        print("Size of the grid = {0} x {0}".format(dimension/unitConversionFactor))
+        
+        # delete image from the folder
+        try:
+            folderDataList = os.listdir(directory)
+            if len(folderDataList) != 0:
+                for image in folderDataList:
+                    os.remove(os.path.join(directory, image))
+        except: pass
+        
         return None, None, None, None, None, tilesTree, None, None
     
-    return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree, origin, elevation
+    return pointsGeo, pointsZ, pointsXY, imagePath, terrain, tilesTree, origin, origin[0].Z
 
 
 initCheck = False
@@ -446,11 +493,20 @@ else:
 
 
 check = checkInputs(_location)
+
+# write elevation.txt
+name = writeFile()
+
 if check and initCheck:
     if checkInternetConnection():
-        result = main()
-        if result != -1:
-            pointsGeo, pointsZ, pointsXY, imagePath, terrain, tiles, origin, elevation = result
+        unitConversionFactor = lb_preparation.checkUnits()
+        if name != -1:
+            result = main(name)
+            if result != -1:
+                pointsGeo, pointsZ, pointsXY, imagePath, terrain, tiles, origin, elevation = result
+        else:
+            warning = "Something went wrong with IO permission."
+            ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         warning = "Please enable your internet connection."
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)

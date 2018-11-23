@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -24,7 +24,7 @@
 """
 Use this component to generate the PVsurface or SWHsurface for "Photovoltaics surface" or "Solar Water Heating surface" components, based on initial PV or SWH system sizes.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     input:
         _location: The output from the "importEPW" or "constructLocation" component.  This is essentially a list of text summarizing a location on the earth.
@@ -77,6 +77,8 @@ Provided by Ladybug 0.0.63
                                -
                                It requires the "numberOfRows_" to be larger than 1 in order visualize the minimal spacing between rows.
                                -
+                               Use Ladybug "Analysis Period" component to define this input.
+                               -
                                If not supplied, it will be calculated based on upper mentioned criteria.
         baseSurface_: Surface on which PV/SWH array will be laid onto.
                       This can be a surface of an angled or flat roof. Or an angled or flat terrain. A facade of a building etc.
@@ -103,7 +105,7 @@ Provided by Ladybug 0.0.63
                                Use Honeybee "Read EP Result" component or any other one to generate it.
                                -
                             2) In case of SWH array: Thermal heating energy (or electrical energy) required to heat domestic hot water and/or space heating load and/or space cooling load.
-                               Use Ladybug "Domestic hot water" or "Hot water" components to calculate it.
+                               Use Ladybug "Residential Hot Water" or "Commercial Public Apartment Hot Water" components to calculate it (simply plugin their "heatingLoadPerHour" outputs).
                                -
                                The purpose of this input is to divide the energy loads to each PV/SWH array rows.
                             -
@@ -126,11 +128,11 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_PV SWH System Size"
 ghenv.Component.NickName = "PV_SWH_SystemSize"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
-#compatibleLBVersion = VER 0.0.62\nMAR_11_2016
+#compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"
 except: pass
 
@@ -146,7 +148,7 @@ def changeInputNamesAndDescriptions(inputIndex, inputtedOrNot):
     
     inputNickNames = [["_PVmoduleSettings", "-"], ["_SWHsystemSettings", "-"]]
     inputDescriptions = [ 
-     ["A list of PV module settings. Use the \"Photovoltaics Module\" component to generate them.", 
+     ["A list of PV module settings. Use the \"Simplified Photovoltaics Module\" or \"Import CEC Photovoltaics Module\" or \"Import Sandia Photovoltaics Module\" components to generate them.", 
       "This inputt is not necessary. If you would like to calculate SWH surface, only the data you inputted to _SWHsystemSettings is required (not to this _PVmoduleSettings also)."],
      ["A list of all SWH system settings. Use the \"Solar Water Heating System\" or \"Solar Water Heating System Detailed\" components to generate them.",
       "This inputt is not necessary. If you would like to calculate PV surface, only the data you inputted to _PVmoduleSettings is required (not to this _SWHsystemSettings also)."]
@@ -174,6 +176,12 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
         northDeg = 0
     else:
         northDeg = north
+        # check if north is valid
+        correctedSrfAzimuthD_dummy, northDeg, validNorth, printMsg = lb_photovoltaics.correctSrfAzimuthDforNorth(northDeg, 0)
+        if (validNorth == False):
+            locationName = latitude = longitude = timeZone = northDeg = systemSize = srfArea = arrayTiltR = arrayAzimuthR = arrayAzimuthVec = tiltedArrayHeight = numberOfRows = skewRowsDistance = days = months = hours = sunAltitudeR_L = sunAzimuthR_L = minimalSpacingPeriod1 = minimalSpacingPeriod2 = baseSurfaceUV = arrayOriginPt = groundTiltR = arrayOriginCorner = moduleEfficiency = moduleActiveAreaPercent = collectorOpticalEfficiency = collectorThermalLoss = collectorActiveAreaPercent = energyLoadPerRowPerHourDataTree = None
+            validInputData = False
+            return locationName, latitude, longitude, timeZone, northDeg, systemSize, srfArea, arrayTiltR, arrayAzimuthR, arrayAzimuthVec, tiltedArrayHeight, numberOfRows, skewRowsDistance, days, months, hours, sunAltitudeR_L, sunAzimuthR_L, minimalSpacingPeriod1, minimalSpacingPeriod2, baseSurfaceUV, arrayOriginPt, groundTiltR, arrayOriginCorner, moduleEfficiency, moduleActiveAreaPercent, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, energyLoadPerRowPerHourDataTree, validInputData, printMsg
     
     if (systemSize == None) or (systemSize <= 0):
         systemSize = 4  # default value in kw
@@ -185,19 +193,24 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
     
     if (arrayAzimuthD == None):
         if latitude >= 0:
-            arrayAzimuthD = 180  # northern hemisphere
+            # northern hemisphere
+            arrayAzimuthD = 180  # due south, not explicitly 180 degrees (it can be changed according to north_ input)
         elif latitude < 0:
-            arrayAzimuthD = 0  # southern hemisphere
+            # southern hemisphere
+            arrayAzimuthD = 0  # due north, not explicitly 0 degrees (it can be changed according to north_ input)
     if arrayAzimuthD > 360: arrayAzimuthD = arrayAzimuthD - 360
     if arrayAzimuthD < 0: arrayAzimuthD = 360 - abs(arrayAzimuthD)
-    correctedSrfAzimuthD, northDeg, validNorth, printMsg = lb_photovoltaics.correctSrfAzimuthDforNorth(northDeg, arrayAzimuthD)
-    if validNorth:
-        arrayAzimuthRdummy, arrayAzimuthVec = lb_photovoltaics.angle2northClockwise(correctedSrfAzimuthD)
-        arrayAzimuthR = math.radians(correctedSrfAzimuthD)
-    else:
-        locationName = latitude = longitude = timeZone = northDeg = systemSize = srfArea = arrayTiltR = arrayAzimuthR = arrayAzimuthVec = tiltedArrayHeight = numberOfRows = skewRowsDistance = days = months = hours = sunAltitudeR_L = sunAzimuthR_L = minimalSpacingPeriod1 = minimalSpacingPeriod2 = baseSurfaceUV = arrayOriginPt = groundTiltR = arrayOriginCorner = moduleEfficiency = moduleActiveAreaPercent = collectorOpticalEfficiency = collectorThermalLoss = collectorActiveAreaPercent = energyLoadPerRowPerHourDataTree = None
-        validInputData = False
-        return locationName, latitude, longitude, timeZone, northDeg, systemSize, srfArea, arrayTiltR, arrayAzimuthR, arrayAzimuthVec, tiltedArrayHeight, numberOfRows, skewRowsDistance, days, months, hours, sunAltitudeR_L, sunAzimuthR_L, minimalSpacingPeriod1, minimalSpacingPeriod2, baseSurfaceUV, arrayOriginPt, groundTiltR, arrayOriginCorner, moduleEfficiency, moduleActiveAreaPercent, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, energyLoadPerRowPerHourDataTree, validInputData, printMsg
+    
+    if (arrayAzimuthAngle_ == None):
+        # arrayAzimuthAngle_ NOT inputted
+        correctedSrfAzimuthD, northDeg_dummy, validNorth, printMsg = lb_photovoltaics.correctSrfAzimuthDforNorth(northDeg, arrayAzimuthD)
+    elif (arrayAzimuthAngle_ != None):
+        # arrayAzimuthAngle_ inputted. Never correct the final "PV_SWHsurface" surface for north (northDeg = 0)
+        correctedSrfAzimuthD, northDeg_dummy, validNorth, printMsg = lb_photovoltaics.correctSrfAzimuthDforNorth(0, arrayAzimuthD)
+    
+    arrayAzimuthRdummy, arrayAzimuthVec = lb_photovoltaics.angle2northClockwise(correctedSrfAzimuthD)
+    arrayAzimuthR = math.radians(correctedSrfAzimuthD)
+    
     
     if (tiltedArrayHeight == None) or (tiltedArrayHeight <= 0):
         tiltedArrayHeight = 1.6  # default, in meters
@@ -229,7 +242,7 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
     groundTiltD = lb_photovoltaics.srfTiltAngle(PVsurfaceTiltAngle, surfaceTiltDCalculated, PVsurfaceInputType, baseBrep, latitude)
     groundTiltR = math.radians(groundTiltD)
     
-    if (len(minimalSpacingPeriod) !=0 ) and (minimalSpacingPeriod[0] != None):
+    if (len(minimalSpacingPeriod) != 0) and (minimalSpacingPeriod[0] != None):
         minimalSpacingPeriodHOYs, months, days = lb_preparation.getHOYsBasedOnPeriod(minimalSpacingPeriod, 1)
         minimalSpacingPeriodStartHOY = minimalSpacingPeriodHOYs[0]
         minimalSpacingPeriodEndHOY = minimalSpacingPeriodHOYs[-1]
@@ -320,21 +333,32 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
     
     if (len_PVmoduleSettings != 0) and (len_SWHsystemSettings == 0):  # data inputted to PVmoduleSettings_ but not to SWHsystemSettings_ input
         changeInputNamesAndDescriptions(2, 1)
-        if (len_PVmoduleSettings == 4):
+        if (len_PVmoduleSettings == 9):
             # 4 items inputted into "PVmoduleSettings_"
-            moduleType = PVmoduleSettings[0]
-            moduleEfficiency = PVmoduleSettings[1]
-            temperatureCoefficientPercent = PVmoduleSettings[2]
-            moduleActiveAreaPercent = PVmoduleSettings[3]
+            moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientFraction, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
             collectorOpticalEfficiency = collectorThermalLoss = collectorActiveAreaPercent = None
             
             activeArea = systemSize / (1 * (moduleEfficiency/100))  # area in m2
             srfArea = activeArea * (100/moduleActiveAreaPercent) / (unitConversionFactor*unitConversionFactor)  # area in Rhino document units, PV system srfArea
-        elif (len_PVmoduleSettings != 4):
+        elif (len_PVmoduleSettings == 23):
+            moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, IL_ref, Io_ref, Rs_ref, Rsh_ref, A_ref, n_s, adjust, gamma_r_ref, ws_adjusted_factor, Tnoct_adj = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
+            collectorOpticalEfficiency = collectorThermalLoss = collectorActiveAreaPercent = None
+            
+            moduleEfficiency = round( (Imp_ref * Vmp_ref) / (1000 * moduleAreaM * (moduleActiveAreaPercent/100))  * 100 ,2) # in percent (formula from SAM Technical Reference equation (9.33))
+            activeArea = systemSize / (1 * (moduleEfficiency/100))  # area in m2
+            srfArea = activeArea * (100/moduleActiveAreaPercent) / (unitConversionFactor*unitConversionFactor)  # area in Rhino document units, PV system srfArea
+        elif (len_PVmoduleSettings == 36):
+            moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, beta_mp_ref, mu_betamp, s, n, Fd, a0, a1, a2, a3, a4, b0, b1, b2, b3, b4, b5, C0, C1, C2, C3, a, b, deltaT = lb_photovoltaics.deconstruct_PVmoduleSettings(PVmoduleSettings)
+            collectorOpticalEfficiency = collectorThermalLoss = collectorActiveAreaPercent = None
+            
+            moduleEfficiency = round( (Imp_ref * Vmp_ref) / (1000 * moduleAreaM * (moduleActiveAreaPercent/100))  * 100 ,2) # in percent (formula from SAM Technical Reference equation (9.33))
+            activeArea = systemSize / (1 * (moduleEfficiency/100))  # area in m2
+            srfArea = activeArea * (100/moduleActiveAreaPercent) / (unitConversionFactor*unitConversionFactor)  # area in Rhino document units, PV system srfArea
+        elif (len_PVmoduleSettings != 9) and (len_PVmoduleSettings != 23) and (len_PVmoduleSettings != 36):
             # not 4 items inputted into "PVmoduleSettings_"
             locationName = latitude = longitude = timeZone = northDeg = systemSize = srfArea = arrayTiltR = arrayAzimuthR = arrayAzimuthVec = tiltedArrayHeight = numberOfRows = skewRowsDistance = days = months = hours = sunAltitudeR_L = sunAzimuthR_L = minimalSpacingPeriod1 = minimalSpacingPeriod2 = baseSurfaceUV = arrayOriginPt = groundTiltR = arrayOriginCorner = moduleEfficiency = moduleActiveAreaPercent = collectorOpticalEfficiency = collectorThermalLoss = collectorActiveAreaPercent = energyLoadPerRowPerHourDataTree = None
             validInputData = False
-            printMsg = "Your \"_PVmoduleSettings\" input is incorrect. Please use \"PVmoduleSettings\" output from \"Photovoltaics module\" component."
+            printMsg = "Your \"_PVmoduleSettings\" input is incorrect. Please use \"PVmoduleSettings\" output from \"Simplified Photovoltaics Module\" or \"Import CEC Photovoltaics Module\" or \"Import Sandia Photovoltaics Module\" component."
             return locationName, latitude, longitude, timeZone, northDeg, systemSize, srfArea, arrayTiltR, arrayAzimuthR, arrayAzimuthVec, tiltedArrayHeight, numberOfRows, skewRowsDistance, days, months, hours, sunAltitudeR_L, sunAzimuthR_L, minimalSpacingPeriod1, minimalSpacingPeriod2, baseSurfaceUV, arrayOriginPt, groundTiltR, arrayOriginCorner, moduleEfficiency, moduleActiveAreaPercent, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent, energyLoadPerRowPerHourDataTree, validInputData, printMsg
     
     elif (len_PVmoduleSettings == 0) and (len_SWHsystemSettings != 0):  # data not inputted to PVmoduleSettings_ but inputted to SWHsystemSettings_ input
@@ -400,7 +424,10 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
     minimalSpacingPeriodHOYs2, monthsDummy, daysDummy = lb_preparation.getHOYsBasedOnPeriod(minimalSpacingPeriod2, 1)
     
     # clockwise sunAzimuthD
-    northRad = math.radians(northDeg)
+    #northRad = math.radians(northDeg)
+    northRad, northVec = lb_photovoltaics.angle2northClockwise(northDeg)
+    northVec.Unitize()
+    
     scale = 1
     lb_sunpath.initTheClass(latitude, northRad, arrayOriginPt, scale, longitude, timeZone)
     
@@ -416,8 +443,13 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
         lb_sunpath.solInitOutput(m1+1, d1, h1, solarTime)
         sunAltitudeR1 = lb_sunpath.solAlt
         sunAzimuthR1 = lb_sunpath.solAz
+        # correct "sunAzimuthR1" for north_
+        correctedSunAzimuthD = northDeg + math.degrees(sunAzimuthR1)
+        if correctedSunAzimuthD > 360:
+            correctedSunAzimuthD = correctedSunAzimuthD - 360
+        correctedSunAzimuthR1 = math.radians(correctedSunAzimuthD)
         sunAltitudeR_L.append(sunAltitudeR1)
-        sunAzimuthR_L.append(sunAzimuthR1)
+        sunAzimuthR_L.append(correctedSunAzimuthR1)
     
     for i,hoy in enumerate(minimalSpacingPeriodHOYs2):
         d2, m2, h2 = lb_preparation.hour2Date(minimalSpacingPeriodHOYs2[i], True)
@@ -427,9 +459,13 @@ def checkInputData(location, PVmoduleSettings, SWHsystemSettings, systemSize, ar
         lb_sunpath.solInitOutput(m2+1, d2, h2, solarTime)
         sunAltitudeR2 = lb_sunpath.solAlt
         sunAzimuthR2 = lb_sunpath.solAz
+        # correct "sunAzimuthR2" for north_
+        correctedSunAzimuthD = northDeg + math.degrees(sunAzimuthR2)
+        if correctedSunAzimuthD > 360:
+            correctedSunAzimuthD = correctedSunAzimuthD - 360
+        correctedSunAzimuthR2 = math.radians(correctedSunAzimuthD)
         sunAltitudeR_L.append(sunAltitudeR2)
-        sunAzimuthR_L.append(sunAzimuthR2)
-    
+        sunAzimuthR_L.append(correctedSunAzimuthR2)
     
     # split the energyLoadPerHour_ according to numberOfRows_
     energyLoadPerRowPerHourDataTree = grass.DataTree[object]()
@@ -541,9 +577,9 @@ def printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea
     resultsCompletedMsg = "PV SWH system size component results successfully completed!"
     arrayOriginCornerDescription = ["center bottom", "left bottom", "right bottom", "center top"][arrayOriginCorner]
     if moduleEfficiency != None:  # _PVmoduleSettings inputted:
-        PVSWHmoduleSystemSettings = "Data taken from _PVmoduleSettings:\nModule efficiency: %s\nModule active area percent: %s" % (moduleEfficiency, moduleActiveAreaPercent)
+        PVSWHmoduleSystemSettings = "Data taken from _PVmoduleSettings:\nModule efficiency (perc.):  %s\nModule active area percent (perc.):  %s" % (moduleEfficiency, moduleActiveAreaPercent)
     else:  # _SWHsystemSettings inputted:
-        PVSWHmoduleSystemSettings = "Data taken from _SWHsystemSettings:\nCollector optical efficiency (-): %s\nCollector thermal loss (W/m2/C): %s\nCollector active area percent: %s" % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
+        PVSWHmoduleSystemSettings = "Data taken from _SWHsystemSettings:\nCollector optical efficiency (-):  %s,\nCollector thermal loss (W/m2/C):  %s,\nCollector active area percent (perc.):  %s," % (collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
     if minimalSpacingPeriod1 == minimalSpacingPeriod2:
         minimalSpacingPeriodString = "%s" % (minimalSpacingPeriod1)
     else:
@@ -552,23 +588,22 @@ def printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea
     """
 Input data:
 
-Location: %s
-Latitude (): %s
-Longitude (): %s
-North (): %s
+Location:  %s,
+Latitude (deg.):  %s,
+Longitude (deg.):  %s,
+North (deg.):  %s,
 
-System size (kW): %0.2f
-Surface area (m2): %0.2f
-Surface active area (m2):
-Array tilt angle (): %0.2f
-Array azimuth angle (): %0.2f
-Tilted array height (m): %0.2f
-Number of rows: %0.2f
-Skew rows distance (m): %0.2f
-Minimal spacing period: %s
-Base surface tilt angle(): %0.2f
-Array origin point: %0.2f, %0.2f
-Array origin corner: %s (%s)
+System size (kW):  %0.2f,
+Surface area (m2):  %0.2f,
+Array tilt angle (deg.):  %0.2f,
+Array azimuth angle (deg.):  %0.2f,
+Tilted array height (m):  %0.2f,
+Number of rows:  %0.2f,
+Skew rows distance (m):  %0.2f,
+Minimal spacing period:  %s,
+Base surface tilt angle(deg.):  %0.2f,
+Array origin point:  %0.2f, %0.2f,
+Array origin corner:  %s (%s),
 
 %s
     """ % (locationName, latitude, longitude, northDeg, systemSize, srfArea, math.degrees(arrayTiltR), math.degrees(arrayAzimuthR), tiltedArrayHeight, numberOfRows, skewRowsDistance, minimalSpacingPeriodString, math.degrees(groundTiltR), baseSurfaceUV[0], baseSurfaceUV[1], arrayOriginCorner, arrayOriginCornerDescription, PVSWHmoduleSystemSettings)
@@ -599,7 +634,7 @@ if sc.sticky.has_key("ladybug_release"):
             if validInputData:
                 PV_SWHsurface, minimalSpacing, minimalSpacingDate = main(srfArea, arrayTiltR, arrayAzimuthR, arrayAzimuthVec, tiltedArrayHeight, numberOfRows, days, months, hours, sunAltitudeR_L, sunAzimuthR_L, skewRowsDistance, arrayOriginPt, groundTiltR, arrayOriginCorner)
                 printOutput(locationName, latitude, longitude, northDeg, systemSize, srfArea, arrayTiltR, arrayAzimuthR, tiltedArrayHeight, numberOfRows, skewRowsDistance, minimalSpacingPeriod1, minimalSpacingPeriod2, groundTiltR, baseSurfaceUV, arrayOriginCorner, moduleEfficiency, moduleActiveAreaPercent, collectorOpticalEfficiency, collectorThermalLoss, collectorActiveAreaPercent)
-                PV_SWHsurfacesArea = srfArea
+                PV_SWHsurfacesArea = srfArea; energyLoadPerRowPerHour = energyLoadPerRowPerHourDataTree
             else:
                 print printMsg
                 ghenv.Component.AddRuntimeMessage(level, printMsg)

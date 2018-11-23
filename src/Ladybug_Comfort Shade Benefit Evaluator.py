@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com; Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2018, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com; mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -22,23 +22,19 @@
 
 
 """
-This is a component for visualizing the desirability of shade in terms of comfort temperature by using solar vectors, a series of hourly temperatures (usually outdoor temperatures), and an assumed balance temperature.  The balance temperature represents the median temperture that people find comfortable, which can vary from climate to climate but is usually somewhere around 20C.
+This is a component for visualizing the desirability of shade in terms of thermal comfort by using solar vectors, a series of hourly temperatures (usually outdoor temperatures), and an assumed "balance" temperature (or comfort temperature).  The balance temperature represents the median temperture that people find comfortable, which is usually around 17.5C in outdoor conditions.
 _
 Solar vectors for hours when the temperature is above the balance point contribute positively to shade desirability while solar vectors for hours when the temperature is below the balance point contribute negatively.
 _
-The component outputs a colored mesh of the shade illustrating the net effect of shading each mesh face.  A higher saturation of blue indicates that shading the cell is very desirable.  A higher saturation of red indicates that shading the cell is harmful (blocking more winter sun than summer sun). Desaturated cells indicate that shading the cell will have relatively little effect on outdoor comfort or building performance.
+The component outputs a colored mesh of the shade illustrating the net effect of shading each mesh face.  A higher saturation of blue indicates that shading the cell is very desirable.  A higher saturation of red indicates that shading the cell is harmful (blocking more helpful winter sun than harmful summer sun). Desaturated cells indicate that shading the cell will have relatively little effect on thermal comfort.
 _
-The units for shade desirability are net temperture degree-days helped per unit area of shade if the test cell is blue.  If the test cell is red, the units are net heating degree-days harmed per unit area of shade.
+The units for shade desirability are degree-days, which are essentially the amount of time in days that sun is blocked by a given cell multiplied by the degrees above (or below) the _balanceTemperature during that time.  So, if a given square meter of _testShade has a shade desirability of 10 degree-days, this means that a shade in this location provides roughly 1 day of sun protection from conditions 10 degrees celcius warmer than the balanceTemperature_ to 1 square meter of _testRegion.
 _
-The method used by this component is based off of the Shaderade method developed by Christoph Reinhart, Jon Sargent, Jeffrey Niemasz.  This component uses Shaderade's method for evaluating shade and window geometry in terms of solar vectors but substitutes Shaderade's energy simulation for an evaluation of heating and temperture degree-days about a balance temperature. 
-_
-A special thanks goes to them and their research.  A paper detailing the Shaderade method is available at:
-http://web.mit.edu/tito_/www/Publications/BS2011_Shaderade.pdf
-_
-The heating/temperture degree-day calculation used here works by first getting the percentage of sun blocked by the test cell for each hour of the year using the Shaderade method.  Next, this percentage for each hour is multiplied by the temperature above or below the balance point for each hour to get a "degree-hour" for each hour of the year for a cell.  Then, all the temperture-degree hours (above the balance point) and heating degree-hours (below the balance point) are summed to give the total heating or temperture degree-hours helped or harmed respectively.  This number is divided by 24 hours of a day to give degree-days.  These degree days are normalized by the area of the cell to make the metric consistent across cells of different area.  Lastly, the negative heating degree-days are added to the positive temperture degree-days to give a net effect for the cell.
-
+More information on the methods sued by this component can be found in the following publication:
+Mackey, Christopher; Sadeghipour Roudsari, Mostapha; Samaras, Panagiotis. ComfortCover: A Novel Method for the Design of Outdoor Shades. In Proceedings of Symposium on Simulation for Archoitecture and Urban Design. Washington, DC, United States, Apr 12-15 2015.
+https://drive.google.com/file/d/0Bz2PwDvkjovJQVRTRHhMSXZWZjQ/view?usp=sharing
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _location: The location output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -68,14 +64,14 @@ Provided by Ladybug 0.0.63
         shadeMesh: A colored mesh of the _testShades showing where shading is helpful (in satuated blue), harmful (in saturated red), or does not make much of a difference (white or desaturated colors).
         legend: Legend showing the numeric values of degree-days that correspond to the colors in the shade mesh.
         ==========: ...
-        shadeHelpfulness: The cumulative temperture degree-days/square Rhino model unit helped by shading the given cell. (C-day/m2)*if your model units are meters.
-        shadeHarmfulness: The cumulative heating degree-days/square Rhino model unit harmed by shading the given cell. (C-day/m2)*if your model units are meters. Note that these values are all negative due to the fact that the shade is harmful. 
+        shadeHelpfulness: The cumulative degree-days helped by shading the given cell. If a given square meter of _testShade has a shade helpfulness of 10 degree-days, this means that a shade in this location provides roughly 1 day of sun protection from conditions 10 degrees celcius warmer than the balanceTemperature_ to 1 square meter of _testRegion.
+        shadeHarmfulness: The cumulative degree-days harmed by shading the given cell.  If a given square meter of _testShade has a shade harmfulness of -10 degree-days, this means that a shade in this location blocks roughly 1 day of sun duirng conditions that are 10 degrees celcius colder than the balanceTemperature_ to 1 square meter of _testRegion.
         shadeNetEffect: The sum of the helpfulness and harmfulness for each cell.  This will be negative if shading the cell has a net harmful effect and positive if the shade has a net helpful effect.
 """
 
 ghenv.Component.Name = "Ladybug_Comfort Shade Benefit Evaluator"
 ghenv.Component.NickName = 'ComfortShadeBenefit'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_28_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -569,7 +565,7 @@ def parallel_projection(analysisMesh, sunLines, regionTestPts):
     return faceInt
 
 
-def valCalc(percentBlocked, deltaBal, cellArea, numDaySteps):
+def valCalc(percentBlocked, deltaBal, cellArea, numDaySteps, regionArea):
     #Multiply the percentBlocked by the deltaBal to get a measure of how helpful or harmful the shade is in each hour of the year
     hourlyEffect = [a*b for a,b in zip(percentBlocked,deltaBal)]
     
@@ -588,9 +584,9 @@ def valCalc(percentBlocked, deltaBal, cellArea, numDaySteps):
     netEffectInit = coolEffectInit + heatEffectInit
     
     #Normalize the effects by the area of the cell such that there is a consistent metric between cells of different areas.  Also, divide the value by 24 such that the final unit is in degree-days/model unit instead of degree-hours/model unit.
-    coolEffect = ((coolEffectInit)/cellArea)/numDaySteps
-    heatEffect = ((heatEffectInit)/cellArea)/numDaySteps
-    netEffect = ((netEffectInit)/cellArea)/numDaySteps
+    coolEffect = (((coolEffectInit)/cellArea)/numDaySteps)*regionArea
+    heatEffect = (((heatEffectInit)/cellArea)/numDaySteps)*regionArea
+    netEffect = (((netEffectInit)/cellArea)/numDaySteps)*regionArea
     
     return coolEffect, heatEffect, netEffect
 
@@ -672,6 +668,7 @@ def evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, analysis
                 deltaBal.append(0)
     
     #Compare the percent blocked for each hour with the temperatre at that hour in relation to the balance point in order to determine the net value of shading.
+    regionArea = rc.Geometry.AreaMassProperties.Compute(regionMesh).Area
     if skyResolution == 4: numDaySteps = 24
     elif skyResolution == 0: numDaySteps = 8
     elif skyResolution == 1: numDaySteps = 10
@@ -682,7 +679,7 @@ def evaluateShade(temperatures, balanceTemp, temperatureOffest, numHrs, analysis
     shadeHarmfulness = []
     shadeNetEffect = []
     for cellCount, cell in enumerate(percentBlocked):
-        shadeHelp, shadeHarm, shadeNet = valCalc(cell, deltaBal, analysisAreas[cellCount], numDaySteps)
+        shadeHelp, shadeHarm, shadeNet = valCalc(cell, deltaBal, analysisAreas[cellCount], numDaySteps, regionArea)
         shadeHelpfulness.append(shadeHelp)
         shadeHarmfulness.append(shadeHarm)
         shadeNetEffect.append(shadeNet)
@@ -805,7 +802,7 @@ def main(allDataDict, balanceTemp, temperatureOffest, sunVectors, skyResolution,
         lb_visualization.calculateBB(totalShadeGeo, True)
         
         units = sc.doc.ModelUnitSystem
-        legendTitle = 'Degree-Day/(' + str(units) + ')2'
+        legendTitle = 'Degree-Days'
         analysisTitle = '\nShade Benefit Analysis'
         if legendBasePoint == None: legendBasePoint = lb_visualization.BoundingBoxPar[0]
         

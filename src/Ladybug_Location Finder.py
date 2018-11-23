@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2018, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -30,7 +30,7 @@ https://developers.google.com/maps/pricing-and-plans/#details
 -
 Special thanks goes to Google Maps.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _address: Write a location address. For example,
@@ -38,6 +38,8 @@ Provided by Ladybug 0.0.63
         'Colosseum, Rome'    OR
         .
         'Colosseum, Piazza del Colosseo, 1, 00184 Roma, Italy'
+        
+        APIKey: Your Google PLACES API KEY. Generate one from: https://developers.google.com/maps/documentation/geocoding/get-api-key
     Returns:
         readMe!: ...
         location: A list of text summarizing the location data in the weather file (use this to construct the sun path).
@@ -45,12 +47,12 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Location Finder"
 ghenv.Component.NickName = 'LocationFinder'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_31_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
-try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
 except: pass
 
 
@@ -62,20 +64,29 @@ import System
 import os
 import re
 
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
+
 
 class GoogleToolsLocation:
     
-    def __init__(self, address):
+    def __init__(self, address, _APIKey):
         self.address = address
+        self.key = _APIKey
     
     
     def findLatLonName(self):
         try:
-            urlPart1 = "http://maps.googleapis.com/maps/api/geocode/json?address="
+            urlPart1 = "https://maps.googleapis.com/maps/api/geocode/json?address="
             urlPart2 = self.address
-            open_file = urllib.urlopen(urlPart1 + urlPart2 + '&sensor=false')
-            
+            open_file = urllib.urlopen(urlPart1 + urlPart2 + '&key=' + self.key)
+            print self.address
             read_file = open_file.read()
+            
+            
             withoutSymbol_line = re.sub('[{}\]\[]', '', read_file)
             lines = withoutSymbol_line.split('\n')
             start_index = [i for i, elem in enumerate(lines) if 'location' in elem][0]
@@ -98,8 +109,8 @@ class GoogleToolsLocation:
     
     def timeZoneLocation(self, latitude, longitude):
         urlPart1 = "https://maps.googleapis.com/maps/api/timezone/json?location="
-        uslPart3 = "&timestamp=1"
-        url = urlPart1 + str(latitude) + ',' + str(longitude) + uslPart3 + '&sensor=false'
+        uslPart3 = "&timestamp=1331161200"
+        url = urlPart1 + str(latitude) + ',' + str(longitude) + uslPart3 + '&key='+ self.key
         
         # The Google Maps Time Zone API must be over SSL
         appdata = os.getenv("APPDATA")
@@ -121,8 +132,8 @@ class GoogleToolsLocation:
     
     def elevationLocation(self, latitude, longitude):
         
-        urlPart1 = "http://maps.googleapis.com/maps/api/elevation/json?locations="
-        url = urlPart1 + str(latitude) + ',' + str(longitude) + '&sensor=false'
+        urlPart1 = "https://maps.googleapis.com/maps/api/elevation/json?locations="
+        url = urlPart1 + str(latitude) + ',' + str(longitude) + '&key='+ self.key
         open_file = urllib.urlopen(url)
         read_file = open_file.read()
         
@@ -158,10 +169,13 @@ def checkInternetConnection():
 
 
 def main():
-    if _address:
-        address = urllib.quote(_address.encode('utf8'), ':/')
-        location = GoogleToolsLocation(address)
+    if _address and _APIKey:
+        address = urllib.quote(_address.encode('utf8'), '%')
+        
+        location = GoogleToolsLocation(address, _APIKey)
+        
         latitude, longitude, completeAddress = location.findLatLonName()
+        
         if latitude != None and longitude != None and completeAddress != None:
             print("complete address: {}".format(completeAddress))
             locationName = completeAddress.split(',')[0]
@@ -171,7 +185,7 @@ def main():
             location = createLocation(locationName, latitude, longitude, timeZone, elevation)
         else:
             w = gh.GH_RuntimeMessageLevel.Warning
-            ghenv.Component.AddRuntimeMessage(w, "location not found, please try to change the address.")
+            ghenv.Component.AddRuntimeMessage(w, "Location not found, please try to change the address or connect the correct API Key.")
             return -1
         return location
 
@@ -197,9 +211,12 @@ else:
 
 if initCheck:
     if checkInternetConnection():
+        
         result = main()
         if result != -1:
+            
             location = result
+            
     else:
         warning = "Please enable your internet connection."
         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)

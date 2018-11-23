@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Mostapha Sadeghipour Roudsari <Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -31,7 +31,7 @@ along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
 @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 Source code is available at: https://github.com/mostaphaRoudsari/ladybug
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     Args:
         defaultFolder_: Optional input for Ladybug default folder.
                        If empty default folder will be set to C:\ladybug or C:\Users\%USERNAME%\AppData\Roaming\Ladybug\
@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.63\nOCT_03_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -64,6 +64,12 @@ import time
 from itertools import chain
 import datetime
 
+try:
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12
+except AttributeError:
+    # TLS 1.2 not provided by MacOS .NET Core; revert to using TLS 1.0
+    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls
+
 PI = math.pi
 rc.Runtime.HostUtils.DisplayOleAlerts(False)
 
@@ -83,7 +89,7 @@ class CheckIn():
             if (" " in defaultFolder):
                 msg = "Default file path can't have white space. Please set the path to another folder." + \
                       "\nLadybug failed to fly! :("
-                print msg
+                print(msg)
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
                 sc.sticky["Ladybug_DefaultFolder"] = ""
                 self.letItFly = False
@@ -95,7 +101,7 @@ class CheckIn():
                     except:
                         msg = "Cannot create default folder! Try a different filepath" + \
                               "\nLadybug failed to fly! :("
-                        print msg
+                        print(msg)
                         ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
                         sc.sticky["Ladybug_DefaultFolder"] = ""
                         self.letItFly = False
@@ -107,25 +113,57 @@ class CheckIn():
         
         #set up default pass
         if not self.folderIsSetByUser:
-            if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
-                # folder already exists so it is all fine
-                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-            elif os.access(os.path.dirname("c:\\"), os.F_OK):
-                #the folder does not exists but write privileges are given so it is fine
-                sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
-            else:
-                # let's use the user folder
-                appdata = False
-                try:
-                    appdata = rc.RhinoApp.GetDataDirectory(True, False)
-                except AttributeError:
-                    appdata = os.getenv("APPDATA")
-                    
-                # make sure appdata doesn't have space
-                assert appdata, 'Failed to set up the folder.\n' \
-                    'Try to set it up manually using defaultFolder_ input.'
+            # Differenciate on platform used
+            # If windows
+            # Normally would use sys.platform but it will return 'cli' since
+            # this is IronPython.
+            # The shortcoming of os.name is that it returns "posix" for both
+            # Mac and Linux, here we don't care (and anyways, rhino isn't on linux)
+            if os.name =='nt':
+                if os.path.exists("c:\\ladybug\\") and os.access(os.path.dirname("c:\\ladybug\\"), os.F_OK):
+                    # folder already exists so it is all fine
+                    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+                elif os.access(os.path.dirname("c:\\"), os.F_OK):
+                    #the folder does not exists but write privileges are given so it is fine
+                    sc.sticky["Ladybug_DefaultFolder"] = "c:\\ladybug\\"
+                else:
+                    # let's use the user folder
+                    appdata = False
+                    try:
+                        appdata = rc.RhinoApp.GetDataDirectory(True, False)
+                    except AttributeError:
+                        appdata = os.getenv("APPDATA")
+                        
+                    # make sure appdata doesn't have space
+                    assert appdata, 'Failed to set up the folder.\n' \
+                        'Try to set it up manually using defaultFolder_ input.'
 
-                sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
+                    sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "Ladybug\\")
+
+            # If macOS
+            elif os.name == 'posix':
+                default_path = os.path.expanduser('~/ladybug/')
+                # folder already exists and there is write privileges, or
+                # there's write privileges for the parent folder
+                if (os.path.exists(default_path) and  os.access(os.path.dirname(default_path), os.F_OK)) or (os.access(os.path.expanduser('~'), os.F_OK)):
+                    sc.sticky["Ladybug_DefaultFolder"] = default_path
+                else:
+                     # let's use the Rhino AppData folder
+                    try:
+                        appdata = rc.RhinoApp.GetDataDirectory(True, False)
+                    except AttributeError:
+                        appdata = False
+
+                    assert appdata, 'Failed to set up the folder.\n' \
+                        'Try to set it up manually using defaultFolder_ input.'
+
+                    sc.sticky["Ladybug_DefaultFolder"] = os.path.join(appdata, "ladybug/")
+
+            else:
+                raise PlatformError("Unsupported platform {}. Isn't Rhino only available for Windows and Mac?".format(sys.platform))
+
+
+
         
         self.updateCategoryIcon()
     
@@ -168,7 +206,7 @@ class CheckIn():
         versionFile = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "versions.txt")
         client = System.Net.WebClient()
         client.DownloadFile(url, versionFile)
-        with open("c:/ladybug/versions.txt", "r")as vf:
+        with open(versionFile, "r")as vf:
             versions= eval("\n".join(vf.readlines()))
 
         if LB:
@@ -178,7 +216,7 @@ class CheckIn():
                 msg = "There is a newer version of Ladybug available to download! " + \
                       "We strongly recommend you to download the newer version from Food4Rhino: " + \
                       "http://www.food4rhino.com/project/ladybug-honeybee"
-                print msg
+                print(msg)
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
         if HB:
             honeybeeVersion = versions['Honeybee']
@@ -187,7 +225,7 @@ class CheckIn():
                 msg = "There is a newer version of Honeybee available to download! " + \
                       "We strongly recommend you to download the newer version from Food4Rhino: " + \
                       "http://www.food4rhino.com/project/ladybug-honeybee"
-                print msg
+                print(msg)
                 ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
             
         if OpenStudio:
@@ -229,7 +267,6 @@ class CheckIn():
             currentTemplateVersion = versions['Template']
             
             return self.isNewerVersionAvailable(currentTemplateVersion, templateVersion)
-            
 
 checkIn = CheckIn(defaultFolder_)
 
@@ -287,7 +324,6 @@ class versionCheck(object):
                     isInputMissing = True
         
         return isInputMissing
-
 
 class Preparation(object):
     """ Set of functions to prepare the environment for running the studies"""
@@ -814,7 +850,7 @@ class Preparation(object):
             lngt+',     !Longitude\n' + \
             timeZone+',     !Time Zone\n' + \
             elev + ';       !Elevation'
-        epwfile.close
+        epwfile.close()
         return locName, lat, lngt, timeZone, elev, locationString
 
     def decomposeLocation(self, location):
@@ -1441,7 +1477,6 @@ class Preparation(object):
     def fahrenheitToCelsius(self, F):
         return (5/9)*(F-32)
 
-
 class Sunpath(object):
     """
     The sun-path Class is a Python version of RADIANCE sun-path script by Greg Ward. RADIANCE source code can be accessed at:
@@ -1463,7 +1498,7 @@ class Sunpath(object):
     
     #This part is written by Trygve Wastvedt (Trygve.Wastvedt@gmail.com).
     def solInitOutput(self, month, day, hour, solarTime = False):
-        year = 2016
+        year = 2018
         self.time = hour
         
         a = 1 if (month < 3) else 0
@@ -1551,11 +1586,8 @@ class Sunpath(object):
         sunVector = rc.Geometry.Vector3d(self.cenPt - basePoint.Location)
         sunVector.Unitize()
         
-        raduis = 3 * sunScale
-        sunSphere = rc.Geometry.Sphere(basePoint.Location, raduis)
-        sunSphereMesh = rc.Geometry.Mesh.CreateFromSphere(sunSphere, 10, 10)
-        return sunSphereMesh, sunVector, basePoint.Location
-
+        return None, sunVector, basePoint.Location
+    
     def drawDailyPath(self, month, day):
         # find the sun position for midnight, noon - 10 min, noon + 10 min!
         hours = [0, 11.9, 12.1]
@@ -1664,7 +1696,6 @@ class Sunpath(object):
         
         return lines
 
-
 class Vector:
     
     def __init__(self, items):
@@ -1706,10 +1737,8 @@ class Vector:
             self.v = [i * other for i in self.v]
         return self
 
-
 class Sun:
     pass
-
 
 class Coeff:
     A = None
@@ -1717,7 +1746,6 @@ class Coeff:
     C = None
     D = None
     E = None
-
 
 class Sky:
     def __init__(self):
@@ -1733,13 +1761,9 @@ class Sky:
         self.turbidity = turbidity
         
         self.sun = Sun()
-        
         self.setTime()
-        
         self.setSunPosition()
-        
         self.setZenitalAbsolutes()
-        
         self.setCoefficents()
     
     def info(self):
@@ -1977,7 +2001,6 @@ class Sky:
         
         return self.colorAvg
 
-
 class MeshPreparation(object):
     
     def joinMesh(self, meshList):
@@ -1985,12 +2008,12 @@ class MeshPreparation(object):
         for m in meshList: joinedMesh.Append(m)
         return joinedMesh
     
-    def parallel_makeSurfaceMesh(self, brep, gridSize):
+    def parallel_makeSurfaceMesh(self, brep, gridSize, parallel = False):
         ## mesh breps
-        def makeMeshFromSrf(i, inputBrep):
+        def makeMeshFromSrf(i):
             try:
-                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(inputBrep, meshParam)
-                inputBrep.Dispose()
+                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
+                brep[i].Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
                 pass
@@ -2006,22 +2029,20 @@ class MeshPreparation(object):
         rc.Geometry.MeshingParameters.GridAspectRatio.__set__(meshParam, aspectRatio)
     
         ## Call the mesh function
-        if 1 < 0: #parallel: # for some reason parallel meshing gives error
+        if parallel:
             tasks.Parallel.ForEach(xrange(len(brep)),makeMeshFromSrf)
         else:
             for i in range(len(mesh)):
-                makeMeshFromSrf(i, brep[i])
-
-        meshGeometries = mesh
+                makeMeshFromSrf(i)
         
-        return meshGeometries
+        return mesh
     
-    def parallel_makeContextMesh(self, brep):
+    def parallel_makeContextMesh(self, brep, parallel = False):
         ## mesh breps
-        def makeMeshFromSrf(i, inputBrep):
+        def makeMeshFromSrf(i):
             try:
-                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(inputBrep, meshParam)
-                inputBrep.Dispose()
+                mesh[i] = rc.Geometry.Mesh.CreateFromBrep(brep[i], meshParam)
+                brep[i].Dispose()
             except:
                 print 'Error in converting Brep to Mesh...'
                 pass
@@ -2036,14 +2057,13 @@ class MeshPreparation(object):
         rc.Geometry.MeshingParameters.GridAmplification.__set__(meshParam, 1.5)
     
         ## Call the mesh function
-        if 1 < 0: #parallel: # for some reason parallel meshing gives error
+        if parallel:
             tasks.Parallel.ForEach(xrange(len(brep)),makeMeshFromSrf)
         else:
             for i in range(len(mesh)):
-                makeMeshFromSrf(i, brep[i])
-
-        meshGeometries = mesh
-        return meshGeometries
+                makeMeshFromSrf(i)
+        
+        return mesh
 
     def parallel_testPointCalculator(self, analysisSrfs, disFromBase, parallel = True):
         # Mesh functions should be modified and be written interrelated as a class
@@ -2150,7 +2170,6 @@ class MeshPreparation(object):
         
         return mesh
 
-
 class RunAnalysisInsideGH(object):
     #
     def calRadRoseRes(self, tiltedRoseVectors, TregenzaPatchesNormalVectors, genCumSkyResult, testPoint = rc.Geometry.Point3d.Origin, bldgMesh = [], groundRef = 0):
@@ -2180,7 +2199,7 @@ class RunAnalysisInsideGH(object):
     def parallel_radCalculator(self, testPts, testVec, meshSrfArea, bldgMesh,
                                 contextMesh, parallel, cumSkyResult, TregenzaPatches,
                                 conversionFac, contextHeight = 2200000000000000,
-                                northVector = rc.Geometry.Vector3d.YAxis):
+                                northVector = rc.Geometry.Vector3d.YAxis, transmittance=None):
         # preparing bulk lists
         # create an empty dictionary for each point
         intersectionMtx = {}
@@ -2226,20 +2245,29 @@ class RunAnalysisInsideGH(object):
                             if rc.Geometry.Intersect.Intersection.MeshRay(bldgMesh, ray) >= 0.0: check = 0;
                         
                         if check != 0 and contextMesh!=None: #and testPts[i].Z < contextHeight:
-                            #for bldg in contextMesh:
-                            if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh,ray) >= 0.0: check = 0;
+                            try:
+                                # There is only one context mesh and it is assumed to be opaque.
+                                if rc.Geometry.Intersect.Intersection.MeshRay(contextMesh,ray) >= 0.0:
+                                    check = 0
+                            except:
+                                # There are several context meshes and eachhas a different transmittance.
+                                for meshCount, contMesh in enumerate(contextMesh):
+                                    if rc.Geometry.Intersect.Intersection.MeshRay(contMesh,ray) >= 0.0:
+                                        check = check*transmittance[meshCount]
                         
-                        if check != 0:
+                        if check == 1:
                             radiation[i] = radiation[i] + (cumSkyResult[patchNum] * math.cos(vecAngle))
                             intersectionMtx[i][patchNum] =  {'isIntersect' : 1, 'vecAngle' : vecAngle}
-                            # print groundRadiation
-                            groundRadiation[i] = 0 #groundRadiation[i] + cumSkyResult[patchNum] * math.cos(vecAngle) * (groundRef/100) * 0.5
+                            groundRadiation[i] = 0
+                        elif check != 0:
+                            radiation[i] = radiation[i] + ((cumSkyResult[patchNum] * math.cos(vecAngle))*check)
+                            intersectionMtx[i][patchNum] =  {'isIntersect' : check, 'vecAngle' : vecAngle}
+                            groundRadiation[i] = 0
                     patchNum += 1
                 
                 radResult[i] = (groundRadiation[i] + radiation[i]) #/sunUpHours
         
         except:
-            #print 'Error in Radiation calculation...'
             print "The calculation is terminated by user!"
             assert False
         
@@ -2363,7 +2391,7 @@ class RunAnalysisInsideGH(object):
         vecImportance = []
         if viewType == 0:
             for vec in viewPoints:
-                vecImportance.append(1)
+                vecImportance.append(100/len(viewPoints))
         else:
             totalArea = sum(patchAreas)
             for area in patchAreas:
@@ -2458,13 +2486,11 @@ class RunAnalysisInsideGH(object):
         
         # Calculate average view
         averageView = sum(viewResult)/len(viewResult)
-            
-        return viewResult, averageView, ptVisibility
         
+        return viewResult, averageView, ptVisibility
 
 class ExportAnalysis2Radiance(object):
     pass
-        
 
 class ResultVisualization(object):
     # This wasn't agood idea since multiple studies have different Bounding boxes
@@ -2494,7 +2520,7 @@ class ResultVisualization(object):
         19: [System.Drawing.Color.FromArgb(138,17,0), System.Drawing.Color.FromArgb(239,39,0), System.Drawing.Color.FromArgb(255,121,0), System.Drawing.Color.FromArgb(254,244,1), System.Drawing.Color.FromArgb(166,249,86), System.Drawing.Color.FromArgb(97,246,156), System.Drawing.Color.FromArgb(1,232,255), System.Drawing.Color.FromArgb(7,88,255), System.Drawing.Color.FromArgb(4,25,145), System.Drawing.Color.FromArgb(128,102,64)],
         20: [System.Drawing.Color.FromArgb(0,0,0), System.Drawing.Color.FromArgb(137,0,139), System.Drawing.Color.FromArgb(218,0,218), System.Drawing.Color.FromArgb(196,0,255), System.Drawing.Color.FromArgb(0,92,255), System.Drawing.Color.FromArgb(0,198,252), System.Drawing.Color.FromArgb(0,244,215), System.Drawing.Color.FromArgb(0,220,101), System.Drawing.Color.FromArgb(7,193,0), System.Drawing.Color.FromArgb(115,220,0), System.Drawing.Color.FromArgb(249,251,0), System.Drawing.Color.FromArgb(254,178,0), System.Drawing.Color.FromArgb(253,77,0), System.Drawing.Color.FromArgb(255,15,15), System.Drawing.Color.FromArgb(255,135,135), System.Drawing.Color.FromArgb(255,255,255)],
         21: [System.Drawing.Color.FromArgb(0,251,255), System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(217,217,217), System.Drawing.Color.FromArgb(83,114,115)],
-        22: [System.Drawing.Color.FromArgb(255,255,255), System.Drawing.Color.FromArgb(255,243,77), System.Drawing.Color.FromArgb(255,115,0), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(0,0,0)],
+        22: [System.Drawing.Color.FromArgb(156,217,255), System.Drawing.Color.FromArgb(255,243,77), System.Drawing.Color.FromArgb(255,115,0), System.Drawing.Color.FromArgb(255,0,0), System.Drawing.Color.FromArgb(0,0,0)],
         23: [System.Drawing.Color.FromArgb(0,191,48), System.Drawing.Color.FromArgb(255,238,184), System.Drawing.Color.FromArgb(255,0,0)]
         }
     
@@ -2522,50 +2548,156 @@ class ResultVisualization(object):
              
         return stMonth, stDay, stHour, endMonth, endDay, endHour
     
-    
-    def colorMesh(self, colors, meshList, unweld = True):
-        
+    def colorMesh(self, colors, meshList, unweld = True, meshStruct=0):
         joinedMesh = rc.Geometry.Mesh()
-        try:
-            for face in range(meshList[0].Faces.Count):
-                joinedMesh.Append(meshList[0].Faces[face]) #join the mesh
-        except:
+        
+        if meshStruct == 0:
             try:
-                for face in meshList: joinedMesh.Append(face)
+                for face in range(meshList[0].Faces.Count):
+                    joinedMesh.Append(meshList[0].Faces[face]) #join the mesh
+            except:
+                try:
+                    for face in meshList: joinedMesh.Append(face)
+                except:
+                    joinedMesh.Append(meshList)
+            if unweld: joinedMesh.Unweld(0, False)
+        elif meshStruct == 1:
+            try:
+                for mesh in meshList:
+                    joinedMesh.Append(meshList)
             except:
                 joinedMesh.Append(meshList)
-        
-        if unweld: joinedMesh.Unweld(0, False)
-        
         
         if joinedMesh.Faces.Count == 0:
             print "Invalid Mesh!"
             return -1
-            
-        try:
-            assert joinedMesh.Faces.Count == len(colors)
-        except:
-            print 'number of mesh:' + `joinedMesh.Faces.Count` + ' != number of values:' + `len(colors)`
-            return -1
-            
+        
+        if meshStruct == 0:
+            try:
+                assert joinedMesh.Faces.Count == len(colors)
+            except:
+                print 'number of mesh:' + `joinedMesh.Faces.Count` + ' != number of values:' + `len(colors)`
+                return -1
+        elif meshStruct == 1:
+            try:
+                assert joinedMesh.Vertices.Count == len(colors)
+            except:
+                print 'number of mesh:' + `joinedMesh.Vertices.Count` + ' != number of values:' + `len(colors)`
+                return -1
+        
         # make a monotonemesh
         joinedMesh.VertexColors.CreateMonotoneMesh(System.Drawing.Color.White)
         #color the mesh based on the results
-        for srfCount in range (joinedMesh.Faces.Count):
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].A] = colors[srfCount]
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].B] = colors[srfCount]
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].C] = colors[srfCount]
-            joinedMesh.VertexColors[joinedMesh.Faces[srfCount].D] = colors[srfCount]
+        if meshStruct == 0:
+            for srfCount in range (joinedMesh.Faces.Count):
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].A] = colors[srfCount]
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].B] = colors[srfCount]
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].C] = colors[srfCount]
+                joinedMesh.VertexColors[joinedMesh.Faces[srfCount].D] = colors[srfCount]
+        elif meshStruct == 1:
+            for count, color in enumerate(colors):
+                joinedMesh.VertexColors[count] = color
+        
         return joinedMesh
     
-    def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
-    
-        # make a deep copy of colors so colors isn't popped twice once for legend colors and once for mesh colors
-        
-        copyColors = list(colors)
-        
-        if highB == 'max': highB = max(values)
+    def create3DColoredMesh(self, inputMesh, analysisResult, domain, colors, meshStruct=0, meshNormals=[]):
+        """
+        Creates a new 3D mesh based on input values
+        Thanks to David Mans for providing the VB example of the code
+        """
+        mappedValues = []
+        def remapValues():
+            tmin = domain.T0
+            tmax = domain.T1
+            omin = min(analysisResult)
+            omax = max(analysisResult)
             
+            for v in analysisResult:
+                try: mappedValues.append( (v-omin) * (tmax-tmin) /(omax-omin) + tmin)
+                except: mappedValues.append(tmin)
+        
+        remapValues()
+        
+        inputMesh.Normals.ComputeNormals()
+        inputMesh.FaceNormals.UnitizeFaceNormals()
+        if meshStruct == 0:
+            mtv = inputMesh.TopologyVertices
+            inputMesh.FaceNormals.ComputeFaceNormals()
+        values = []
+        
+        if meshStruct == 0:
+            # collect the values and average  them for each vertices
+            for i in range(mtv.Count):
+                faceIds = mtv.ConnectedFaces(i) #always an array of 4
+                
+                v = 0
+                for j in range(faceIds.Count):
+                    v += mappedValues[faceIds[j]]
+                v/=(faceIds.Count) #average the value
+                values.append(v)
+            
+            vo = []
+            fo = []
+            vc = []
+            
+            k = 0
+            for i in range(inputMesh.Faces.Count):
+                tv = inputMesh.Faces.GetTopologicalVertices(i)
+                
+                if tv[2] == tv[3]: count=3
+                else: count = 4
+                
+                for j in range(count):
+                    ti = mtv.MeshVertexIndices(tv[j])
+                    
+                    #average normals
+                    if meshNormals == []:
+                        n = inputMesh.Normals[ti[0]]
+                        for t in ti[1:]:
+                            n = rc.Geometry.Vector3d.Add(n ,inputMesh.Normals[t])
+                    else:
+                        n = meshNormals[ti[0]]
+                        for t in ti[1:]:
+                            n = rc.Geometry.Vector3d.Add(n ,meshNormals[t])
+                    
+                    n.Unitize()
+                    
+                    v = values[tv[j]]
+                    n = rc.Geometry.Vector3d(v * n.X, v * n.Y, v * n.Z)
+                    vo.append(rc.Geometry.Point3d.Add(inputMesh.Vertices[ti[0]], n))
+                    vc.append(colors[i])
+                
+                if count == 3:
+                    fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2))    
+                else:
+                    fo.append(rc.Geometry.MeshFace(k, k + 1, k + 2, k + 3))
+                k += count
+            
+            # construct mesh using vertices and faces
+            mo = rc.Geometry.Mesh()
+            for ver in vo: mo.Vertices.Add(ver)
+            for c in vc: mo.VertexColors.Add(c)
+            mo.Faces.AddFaces(fo)
+            
+            return mo
+        
+        elif meshStruct == 1:
+            for count, ver in enumerate(inputMesh.Vertices):
+                if meshNormals == []:
+                    n = inputMesh.Normals[count]
+                else:
+                    n = meshNormals[count]
+                scn = rc.Geometry.Vector3d.Multiply(mappedValues[count], n)
+                newPt = rc.Geometry.Point3d.Add(ver, scn)
+                newVer = rc.Geometry.Point3f(newPt.X, newPt.Y, newPt.Z)
+                inputMesh.Vertices[count] = newVer
+            
+            return inputMesh
+    
+    def gradientColor(self, values, lowB, highB, colors,lowBoundColor = None,highBoundColor = None):
+        # make a deep copy of colors so colors isn't popped twice once for legend colors and once for mesh colors
+        copyColors = list(colors)
+        if highB == 'max': highB = max(values)
         if lowB == 'min': lowB = min(values)
         
         # this function inputs values, and custom colors and outputs gradient colors
@@ -2587,17 +2719,12 @@ class ResultVisualization(object):
             return color
         
         # Calculate num of colors
-        
         if (highBoundColor != None):
-            
             # Subtract a color to make room for the highBoundColor
-            
             copyColors.pop()
     
         if (lowBoundColor != None):
-            
             # Subtract a color to make room for the lowBoundColor
-            
             copyColors.pop()
         
         numofColors = len(colors)
@@ -2613,24 +2740,16 @@ class ResultVisualization(object):
         
         for num in numP:
             for i in range(numofColors):
-                
                 if  colorBounds[i] <= num <= colorBounds[i + 1]:
-    
                     if (num == 1) and (highBoundColor != None) :
-                        
                         colorTemp.append(highBoundColor)
                         break
-                        
                     elif (num == 0) and (lowBoundColor != None):
-                        
                         colorTemp.append(lowBoundColor)
                         break
-                        
                     else:
-                        
                         colorTemp.append(calColor(num, colorBounds[i], colorBounds[i+1], colors[i], colors[i+1]))
                         break
-                            
         color = colorTemp
         
         return color
@@ -2667,7 +2786,7 @@ class ResultVisualization(object):
         
         return minZPt, CENTERPoint, maxZPt
     
-    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False):
+    def createLegend(self, results, lowB, highB, numOfSeg, legendTitle, BoundingBoxP, legendBasePoint, legendScale = 1, font = None, textSize = None, fontBold = False, decimalPlaces = 2, greaterLessThan = False, contourLegend=False):
         if numOfSeg: numOfSeg = int(numOfSeg)
         if highB == 'max': highB = max(results)
         if lowB == 'min': lowB = min(results)
@@ -2675,6 +2794,9 @@ class ResultVisualization(object):
         else: basePt = legendBasePoint
             
         BBYlength = BoundingBoxP[2]
+        # Following variable is defined to get the maximum dimension of geometry
+        # This variable is used later on in this function to assign the width of the legend in case analysis geometry is a planar surface
+        maxBoundingValue = max([item if type(item) == float else 0.0 for item in BoundingBoxP])
         
         def legend(basePt, legendHeight, legendWidth, numofSeg):
             basePt = rc.Geometry.Point3d.Add(basePt, rc.Geometry.Vector3f(legendWidth, 0, 0))
@@ -2705,30 +2827,67 @@ class ResultVisualization(object):
             return legendSrf, textPt
         
         # check for user input
+        if BBYlength < 1:
+            BBYlength = int(maxBoundingValue) 
         if font == None:
             font = 'Verdana'
         legendHeight = legendWidth = (BBYlength/10) * legendScale
         if  textSize == None:
             textSize = (legendHeight/3) * legendScale
-        
-        try:
-            numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
-        except:
-            if highB - lowB < 10**(-12):
-                numbers = [lowB]; numOfSeg = 1
-            else:
-                numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
         if decimalPlaces == None: decimalPlaces = 2
         
-        ### Create the numbers in the legend.
-        if len(numbers) < numOfSeg: numbers.append(highB)
-        elif len(numbers) > numOfSeg: numbers = numbers[:-1]
-        formatString = "%."+str(decimalPlaces)+"f"
-        numbersStr = [(formatString % x) for x in numbers]
-        if greaterLessThan: pass
+        if contourLegend == False:
+            #Generate the numbers.
+            try:
+                numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
+            except:
+                if highB - lowB < 10**(-12):
+                    numbers = [lowB]; numOfSeg = 1
+                else:
+                    numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
+            
+            ### Create the numbers in the legend.
+            if len(numbers) < numOfSeg: numbers.append(highB)
+            elif len(numbers) > numOfSeg: numbers = numbers[:-1]
+            formatString = "%."+str(decimalPlaces)+"f"
+            numbersStr = [(formatString % x) for x in numbers]
+            if greaterLessThan: pass
+            else:
+                numbersStr[0] = "<" + numbersStr[0]
+                numbersStr[-1] = numbersStr[-1] + "<"
         else:
-            numbersStr[0] = "<=" + numbersStr[0]
-            numbersStr[-1] = numbersStr[-1] + "<="
+            #Generate the numbers.
+            try:
+                numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -2), 6))
+            except:
+                if highB - lowB < 10**(-12):
+                    numbers = [lowB]; numOfSeg = 1
+                else:
+                    numbers = [lowB, lowB + ((highB-lowB)/4), lowB + ((highB-lowB)/2), lowB + (3*(highB-lowB)/4), highB]; numOfSeg = 5
+            
+            ### Create the numbers in the legend.
+            numbers.insert(0,lowB)
+            formatString = "%."+str(decimalPlaces)+"f"
+            numbersStr = [(formatString % x) for x in numbers]
+            finalStr = []
+            if greaterLessThan: pass
+            else:
+                for count, num in enumerate(numbersStr):
+                    if count == 0:
+                        finalStr.append("<" + numbersStr[0])
+                    elif count == len(numbersStr)-1:
+                        finalStr.append(numbersStr[-1] + "<")
+                    else:
+                        finalStr.append(numbersStr[count] + "<x<" + numbersStr[count+1])
+                numbersStr = finalStr
+            try:
+                numbers = rs.frange(lowB, highB, round((highB - lowB) / (numOfSeg -1), 6))
+                if len(numbers) < numOfSeg: numbers.append(highB)
+            except:
+                pass
+            if numOfSeg == 1:
+                numbersStr = [numbersStr[0]]
+        
         numbersStr.append(legendTitle)
         numbers.append(legendTitle)
         
@@ -2746,7 +2905,7 @@ class ResultVisualization(object):
             [meshAndCrv.append(c) for c in legendRes[1]]
             return meshAndCrv
         else: return -1
-        
+    
     def textJustificationEnumeration(self, justificationIndex):
         #justificationIndices:
         # 0 - bottom left (default)
@@ -2771,6 +2930,16 @@ class ResultVisualization(object):
         # Thanks to Giulio Piacentino for his version of text to curve
         textCrvs = []
         textJustification = self.textJustificationEnumeration(justificationIndex)
+        try:
+            # exposed only in Rhino 6
+            scale = rc.RhinoDoc.ActiveDoc.DimStyles.CurrentDimensionStyle.DimensionScale
+        except AttributeError:
+            # Rhino 5
+            pass
+        else:
+            scale = scale or 1  # ensure it is not 0
+            textHeight = textHeight / scale
+
         for n in range(len(text)):
             plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
             if type(text[n]) is not str:
@@ -2790,6 +2959,17 @@ class ResultVisualization(object):
         textSrfs = []
         textJustification = self.textJustificationEnumeration(justificationIndex)
         planeCheck = False
+
+        try:
+            # exposed only in Rhino 6
+            scale = rc.RhinoDoc.ActiveDoc.DimStyles.CurrentDimensionStyle.DimensionScale
+        except AttributeError:
+            # Rhino 5
+            pass
+        else:
+            scale = scale or 1  # ensure it is not 0
+            textHeight = textHeight / scale
+
         for n in range(len(text)):
             if plane == None or planeCheck == True:
                 plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
@@ -2828,32 +3008,29 @@ class ResultVisualization(object):
                 meshSrfs = []
                 for srf in srfs:
                     srf.Flip()
-                    meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
-                    meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
-                    meshSrfs.append(meshSrf)
+                    try:
+                        meshSrf = rc.Geometry.Mesh.CreateFromBrep(srf, rc.Geometry.MeshingParameters.Coarse)[0]
+                    except TypeError:
+                        # pass very small surfaces
+                        continue
+                    else:
+                        meshSrf.VertexColors.CreateMonotoneMesh(System.Drawing.Color.Black)
+                        meshSrfs.append(meshSrf)
                 
                 textSrfs.append(meshSrfs)
             
-            #if len(text[n].strip()) == len(srfs)+ extraSrfCount:
-            #    textSrfs.append(srfs)
-            #else:
-            #print len(text[n])
-            #print len(text[n].strip())
-            #print len(srfs)+ extraSrfCount
-            #print extraSrfCount
-            #textSrfs.append(projectedCrvs)
-                
             rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
             
         return textSrfs
     
     def createTitle(self, listInfo, boundingBoxPar, legendScale = 1, Heading = None, shortVersion = False, font = None, fontSize = None, fontBold = False):
         #Define a function to create surfaces from input curves.
-        
-        if Heading==None: Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
-        
+        if Heading==None:
+            if listInfo[0][3].startswith('(') or listInfo[0][3].startswith('['):
+                Heading = listInfo[0][2] + ' ' + listInfo[0][3] + ' - ' + listInfo[0][4]
+            else:
+                Heading = listInfo[0][2] + ' (' + listInfo[0][3] + ')' + ' - ' + listInfo[0][4]
         stMonth, stDay, stHour, endMonth, endDay, endHour = self.readRunPeriod((listInfo[0][5], listInfo[0][6]), False)
-        
         period = `stDay`+ ' ' + self.monthList[stMonth-1] + ' ' + `stHour` + ':00' + \
                  " - " + `endDay`+ ' ' + self.monthList[endMonth-1] + ' ' + `endHour` + ':00'
         
@@ -2861,15 +3038,12 @@ class ResultVisualization(object):
         else: titleStr = '\n' + Heading + '\n' + listInfo[0][1] + '\n' + period
         
         if font == None: font = 'Veranda'
-        
         if fontSize == None: fontSize = (boundingBoxPar[2]/30) * legendScale
-        
         titlebasePt = boundingBoxPar[-2]
-        
         titleTextSrf = self.text2srf([titleStr], [titlebasePt], font, fontSize, fontBold)
         
         return titleTextSrf, titleStr, titlebasePt
-
+    
     def compassCircle(self, cenPt = rc.Geometry.Point3d.Origin, northVector = rc.Geometry.Vector3d.YAxis, radius = 200, angles = range(0,360,30), xMove = 
                         10, centerLine = False):
         baseCircle = rc.Geometry.Circle(cenPt, radius).ToNurbsCurve()
@@ -2917,6 +3091,164 @@ class ResultVisualization(object):
         lines.append(baseCircle)
         lines.append(outerCircle)
         return lines, textBasePts, compassText
+    
+    def angleCircle(self, cenPt=rc.Geometry.Point3d.Origin, northVector=rc.Geometry.Vector3d.YAxis, radius=200, projection=1, zMove=0, angles=range(10,90,10)):
+        # List to hold all geometry.
+        angleCrvs = []
+        angleTextPts = []
+        angleText = []
+        
+        # Generate the axis lines.
+        south = rc.Geometry.Point3d(cenPt.X,(cenPt.Y)-radius,cenPt.Z)
+        north = rc.Geometry.Point3d(cenPt.X,cenPt.Y+radius,cenPt.Z)
+        east = rc.Geometry.Point3d(cenPt.X+radius,cenPt.Y,cenPt.Z)
+        west = rc.Geometry.Point3d(cenPt.X-radius,cenPt.Y,cenPt.Z)
+        ns = rc.Geometry.Line(south,north)
+        ew = rc.Geometry.Line(east,west)
+        angleCrvs.extend([rc.Geometry.LineCurve(ns), rc.Geometry.LineCurve(ew)])
+        
+        #Rotate the north if necessary.
+        if northVector != rc.Geometry.Vector3d.YAxis:
+            rotateTransform = rc.Geometry.Transform.Rotation(rc.Geometry.Vector3d.YAxis, northVector, cenPt)
+            ns.Transform(rotateTransform)
+            ew.Transform(rotateTransform)
+        
+        #Generate the angle circles.
+        for angle in angles:
+            if projection == 1:
+                angleCircle = rc.Geometry.Circle(cenPt, radius*math.cos(math.radians(angle)))
+            else:
+                angleCircle = rc.Geometry.Circle(cenPt, radius*(1/(math.tan(math.radians((90+angle)/2)))))
+            angleCrvs.append(angleCircle.ToNurbsCurve())
+            intPt = rc.Geometry.Intersect.Intersection.LineCircle(ns,angleCircle)
+            try:
+                angleTextPts.append(intPt[-1])
+                if projection == 1 or projection == 2:
+                    angleText.append(str(angle) + "")
+                else:
+                    angleText.append(str(90-angle) + "" )
+            except:
+                pass
+        
+        # Move the Z if necessary.
+        if zMove !=0:
+            zTrans = rc.Geometry.Transform.Translation(0,0,zMove)
+            for crv in angleCrvs:
+                crv.Transform(zTrans)
+            for pt in angleTextPts:
+                pt.Transform(zTrans)
+        
+        return angleCrvs, angleTextPts, angleText
+    
+    def projectPointToStereo(self, point):
+        newX = point.X / (1 - point.Z)
+        newY = point.Y / (1 - point.Z)
+        newPt = rc.Geometry.Point3d(newX, newY, 0)
+        return newPt
+    
+    def projectMeshPointToStereo(self, point):
+        newX = point.X / (1 - point.Z)
+        newY = point.Y / (1 - point.Z)
+        newPt = rc.Geometry.Point3f(newX, newY, 0)
+        return newPt
+    
+    def projectMeshToStereo(self, mesh):
+        for count, vert in enumerate(mesh.Vertices):
+            newVert = self.projectMeshPointToStereo(vert)
+            mesh.Vertices[count] = newVert
+    
+    def projectCurveToStereo(self, curve):
+        degree = curve.Degree
+        if degree > 2:
+            newCrvPts = []
+            for pt in curve.GrevillePoints():
+                newCrvPts.append(self.projectPointToStereo(pt))
+            if curve.IsClosed:
+                newCrvPts.pop(-1)
+                newCrvPts.pop(0)
+            newCrv = rc.Geometry.NurbsCurve.CreateInterpolatedCurve(newCrvPts,int(degree),rc.Geometry.CurveKnotStyle.UniformPeriodic)
+        elif degree == 2:
+            end = self.projectPointToStereo(curve.PointAtEnd)
+            start = self.projectPointToStereo(curve.PointAtStart)
+            mid = self.projectPointToStereo(curve.PointAtNormalizedLength(0.5))
+            newCrv = rc.Geometry.Arc(start, mid, end)
+            newCrv = newCrv.ToNurbsCurve()
+        else:
+            end = self.projectPointToStereo(curve.PointAtEnd)
+            start = self.projectPointToStereo(curve.PointAtStart)
+            newCrv = rc.Geometry.LineCurve(start, end)
+        
+        return newCrv
+    
+    def projectGeo(self, geometry, projType, centPt=None, scale=200):
+        if scale == None:
+            scale = 1
+        
+        projGeo = []
+        for geo in geometry:
+            if projType == 2:
+                # STEREOGRAPHIC PROJECTION
+                # Move the mesh to the Rhino origin.
+                if centPt != None:
+                    moveVec = rc.Geometry.Vector3d(-centPt.X, -centPt.Y, -centPt.Z)
+                    moveTrans = rc.Geometry.Transform.Translation(moveVec)
+                    geo.Transform(moveTrans)
+                
+                # Scale the geomtry down to the unit sphere and mirror it.
+                if scale != 1:
+                    scaleTrans = rc.Geometry.Transform.Scale(rc.Geometry.Point3d.Origin, 1/scale)
+                    geo.Transform(scaleTrans)
+                mirTrans = rc.Geometry.Transform.Mirror(rc.Geometry.Plane.WorldXY)
+                geo.Transform(mirTrans)
+                
+                # Test what type of geomtry it is and project it.
+                try:
+                    geo = self.projectPointToStereo(geo)
+                except:
+                    try:
+                        self.projectMeshToStereo(geo)
+                    except:
+                        geo = self.projectCurveToStereo(geo)
+                
+                # Scale the geometery back up
+                if scale != 1:
+                    scaleTrans = rc.Geometry.Transform.Scale(rc.Geometry.Point3d.Origin, scale)
+                    geo.Transform(scaleTrans)
+                
+                # Move the mesh back if necessary.
+                if centPt != None:
+                    moveVec = rc.Geometry.Vector3d(centPt.X, centPt.Y, centPt.Z)
+                    moveTrans = rc.Geometry.Transform.Translation(moveVec)
+                    geo.Transform(moveTrans)
+                
+                projGeo.append(geo)
+            
+            elif projType == 1:
+                # ORTHOGRAPHIC PROEJCTION
+                if centPt != None:
+                    projPlane = rc.Geometry.Plane(centPt, rc.Geometry.Vector3d.ZAxis)
+                else:
+                    projPlane = rc.Geometry.Plane.WorldXY
+                projTransform = rc.Geometry.Transform.PlanarProjection(projPlane)
+                geo.Transform(projTransform)
+                projGeo.append(geo)
+            
+            else:
+                # NO PROJECTION
+                projGeo.append(geo)
+        
+        return projGeo
+    
+    def sunSpherePt(self, sunScale, sunPoint, projection, cenPt, scale):
+        raduis = 3 * sunScale
+        if projection == 1 or projection == 2:
+            sunPoint = self.projectGeo([sunPoint], projection, cenPt, scale)[0]
+            sunSphere = rc.Geometry.Circle(sunPoint, raduis).ToNurbsCurve()
+            sunSphereMesh = rc.Geometry.Mesh.CreateFromPlanarBoundary(sunSphere, rc.Geometry.MeshingParameters.Coarse)
+        else:
+            sunSphere = rc.Geometry.Sphere(sunPoint, raduis)
+            sunSphereMesh = rc.Geometry.Mesh.CreateFromSphere(sunSphere, 10, 10)
+        return sunSphereMesh, sunPoint
     
     
     def setupLayers(self, result = 'No result', parentLayerName = 'LADYBUG', projectName = 'Option',
@@ -3038,6 +3370,16 @@ class ResultVisualization(object):
         
         #Write the text into the document
         formatString = "%." + str(decimalPlaces) + "f"
+        try:
+            # exposed only in Rhino 6
+            scale = rc.RhinoDoc.ActiveDoc.DimStyles.CurrentDimensionStyle.DimensionScale
+        except AttributeError:
+            # Rhino 5
+            pass
+        else:
+            scale = scale or 1  # ensure it is not 0
+            textSize = textSize / scale
+
         for text in range(len(legendText)):
             plane = rc.Geometry.Plane(textPt[text], rc.Geometry.Vector3d(0,0,1))
             if type(legendText[text]) is not str: legendText[text] = (formatString % legendText[text])
@@ -3152,6 +3494,8 @@ class ComfortModels(object):
             # root-finding only
             res = []
             def fn(t):
+                if t > 200: t = 200
+                if t < -200: t = 200
                 return (set - self.comfPierceSET(ta-t, tr-t, stillAirThreshold, rh, met, clo, wme));
             f1 = fn(a)
             if abs(f1) <= epsilon: res.append(a)
@@ -3489,9 +3833,7 @@ class ComfortModels(object):
         return balTemper
     
     
-    def calcComfRange(self, initialGuessUp, initialGuessDown, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD):
-        upTemper = initialGuessUp
-        upDelta = 3
+    def calcComfRange(self, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork, targetPPD, opTemp=False):
         if targetPPD == 10.0: targetPMV = 0.5
         elif targetPPD == 6.0: targetPMV = 0.220
         elif targetPPD == 15.0: targetPMV = 0.690
@@ -3512,19 +3854,64 @@ class ComfortModels(object):
             intersectPts = rc.Geometry.Intersect.Intersection.CurveCurve(distribCrv, testLine, sc.doc.ModelAbsoluteTolerance, sc.doc.ModelAbsoluteTolerance)
             targetPMV = intersectPts[0].PointA.X
         
-        while abs(upDelta) > 0.01:
-            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            upDelta = targetPMV - pmv
-            upTemper = upTemper + upDelta
+        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilSecant function definition.
+        def utilSecant(a, b, epsilon, target):
+            # root-finding only
+            res = []
+            def fn(upTemper):
+                if opTemp == True:
+                    return self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+                else:
+                    return self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+            f1 = fn(a)
+            if abs(f1) <= epsilon: res.append(a)
+            else:
+                f2 = fn(b)
+                if abs(f2) <= epsilon: res.append(b)
+                else:
+                    count = range(100)
+                    for i in count:
+                        if (b - a) != 0 and (f2 - f1) != 0:
+                            slope = (f2 - f1) / (b - a)
+                            c = b - f2/slope
+                            f3 = fn(c)
+                            if abs(f3) < epsilon:
+                                res.append(c)
+                            a = b
+                            b = c
+                            f1 = f2
+                            f2 = f3
+                res.append('NaN')
+            
+            return res[0]
         
-        if initialGuessDown == None:
-            downTemper = upTemper - 6
-        else: downTemper = initialGuessDown
-        downDelta = 3
-        while abs(downDelta) > 0.01:
-            pmv, ppd, set, taAdj, coolingEffect = self.comfPMVElevatedAirspeed(downTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)
-            downDelta = -targetPMV - pmv
-            downTemper = downTemper + downDelta
+        #This function is taken from the util.js script of the CBE comfort tool page and has been modified to include the fn inside the utilBisect function definition.
+        def utilBisect(a, b, epsilon, target):
+            def fn(t):
+                if opTemp == True:
+                    return self.comfPMVElevatedAirspeed(upTemper, upTemper, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+                else:
+                    return self.comfPMVElevatedAirspeed(upTemper, radTemp, windSpeed, relHumid, metRate, cloLevel, exWork)[0] - target
+            while abs(b - a) > (2 * epsilon):
+                midpoint = (b + a) / 2
+                a_T = fn(a)
+                b_T = fn(b)
+                midpoint_T = fn(midpoint)
+                if (a_T - target) * (midpoint_T - target) < 0: b = midpoint
+                elif (b_T - target) * (midpoint_T - target) < 0: a = midpoint
+                else: return -999
+            return midpoint
+        
+        # Calculate the lower limit of comfort.
+        epsilon = 0.001
+        a = -50
+        b = 50
+        upTemper = utilSecant(a, b, epsilon, targetPMV)
+        if upTemper == 'NaN':
+            upTemper = utilBisect(a, b, epsilon, targetPMV)
+        downTemper = utilSecant(a, b, epsilon, -targetPMV)
+        if downTemper == 'NaN':
+            downTemper = utilBisect(a, b, epsilon, -targetPMV)
         
         return upTemper, downTemper
     
@@ -3744,7 +4131,7 @@ class ComfortModels(object):
             es = 2.7150305 * math.log(tk)
             for count, i in enumerate(g):
                 es = es + (i * (tk**(count-2)))
-            es = math.exp(es)*0.01	# convert Pa to hPa
+            es = math.exp(es)*0.01  # convert Pa to hPa
             return es
         
         #Do a series of checks to be sure that the input values are within the bounds accepted by the model.
@@ -4923,6 +5310,7 @@ class ComfortModels(object):
             self.age = age  # in years
             if sex == "male": sex = 1
             elif sex == "female": sex = 2
+            elif sex == "average sex": sex = 3
             self.sex = sex
             self.ht = heightM  # in meters
             self.mbody = weight  # in kg
@@ -4960,6 +5348,8 @@ class ComfortModels(object):
                 he = eswpot
             elif self.sex == 2:
                 he = fec
+            elif self.sex == 3:
+                he = (eswpot + fec)/2
             self.h = he * (1.0 - self.eta)
             # sensible respiratory energy
             self.cair = 1010.0
@@ -5050,6 +5440,8 @@ class ComfortModels(object):
                             sw = swm
                         if self.sex == 2:
                             sw = swf
+                        if self.sex == 3:
+                            sw = (swm + swf)/2
                         eswphy = -sw * self.evap
                         he = 0.633 * self.hc / (self.p * self.cair)
                         fec = 1.0 / (1.0 + 0.92 * self.hc * rcl)
@@ -5332,6 +5724,124 @@ class WindSpeed(object):
 
 class Photovoltaics(object):
     """ Set of methods for Photovoltaics and Solar Water Heating analysis """
+    def deconstruct_PVmoduleSettings(self, PVmoduleSettings):
+        # deconstruct "PVmoduleSettings" input
+        
+        if (len(PVmoduleSettings) == 36):
+            # "PVmoduleSettings" generated by "Import Sandia Photovoltaics Module" component
+            moduleModelName = "Sandia"
+            moduleName = PVmoduleSettings[0]
+            material = PVmoduleSettings[1]
+            moduleMountType = PVmoduleSettings[2]
+            moduleAreaM = PVmoduleSettings[3]
+            moduleActiveAreaPercent = PVmoduleSettings[4]
+            nameplateDCpowerRating_m = PVmoduleSettings[5]
+            moduleEfficiency = PVmoduleSettings[6]
+            Vmp_ref = PVmoduleSettings[7]
+            Imp_ref = PVmoduleSettings[8]
+            Voc_ref = PVmoduleSettings[9]
+            Isc_ref = PVmoduleSettings[10]
+            alpha_sc_ref = PVmoduleSettings[11]
+            beta_oc_ref = PVmoduleSettings[12]
+            beta_mp_ref = PVmoduleSettings[13]
+            mu_betamp = PVmoduleSettings[14]
+            s = PVmoduleSettings[15]
+            n = PVmoduleSettings[16]
+            Fd = PVmoduleSettings[17]
+            a0 = PVmoduleSettings[18]
+            a1 = PVmoduleSettings[19]
+            a2 = PVmoduleSettings[20]
+            a3 = PVmoduleSettings[21]
+            a4 = PVmoduleSettings[22]
+            b0 = PVmoduleSettings[23]
+            b1 = PVmoduleSettings[24]
+            b2 = PVmoduleSettings[25]
+            b3 = PVmoduleSettings[26]
+            b4 = PVmoduleSettings[27]
+            b5 = PVmoduleSettings[28]
+            C0 = PVmoduleSettings[29]
+            C1 = PVmoduleSettings[30]
+            C2 = PVmoduleSettings[31]
+            C3 = PVmoduleSettings[32]
+            a = PVmoduleSettings[33]
+            b = PVmoduleSettings[34]
+            deltaT = PVmoduleSettings[35]
+            
+            return moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, beta_mp_ref, mu_betamp, s, n, Fd, a0, a1, a2, a3, a4, b0, b1, b2, b3, b4, b5, C0, C1, C2, C3, a, b, deltaT
+        
+        elif (len(PVmoduleSettings) == 23):
+            # "PVmoduleSettings" generated by "Import CEC Photovoltaics Module" component
+            moduleModelName = "CEC"
+            moduleName = PVmoduleSettings[0]
+            material = PVmoduleSettings[1]
+            moduleMountType = PVmoduleSettings[2]
+            moduleAreaM = PVmoduleSettings[3]
+            moduleActiveAreaPercent = PVmoduleSettings[4]
+            nameplateDCpowerRating_m = PVmoduleSettings[5]
+            moduleEfficiency = PVmoduleSettings[6]
+            Vmp_ref = PVmoduleSettings[7]
+            Imp_ref = PVmoduleSettings[8]
+            Voc_ref = PVmoduleSettings[9]
+            Isc_ref = PVmoduleSettings[10]
+            alpha_sc_ref = PVmoduleSettings[11]
+            beta_oc_ref = PVmoduleSettings[12]
+            IL_ref = PVmoduleSettings[13]
+            Io_ref = PVmoduleSettings[14]
+            Rs_ref = PVmoduleSettings[15]
+            Rsh_ref = PVmoduleSettings[16]
+            A_ref = PVmoduleSettings[17]
+            n_s = PVmoduleSettings[18]
+            adjust = PVmoduleSettings[19]
+            gamma_r_ref = PVmoduleSettings[20]
+            ws_adjusted_factor = PVmoduleSettings[21]
+            Tnoct_adj = PVmoduleSettings[22]
+            
+            return moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, IL_ref, Io_ref, Rs_ref, Rsh_ref, A_ref, n_s, adjust, gamma_r_ref, ws_adjusted_factor, Tnoct_adj
+        
+        elif (len(PVmoduleSettings) == 9):
+            # "PVmoduleSettings" generated by "Simplified Photovoltaics Module" component
+            moduleModelName = "PVFORM"
+            mountTypeName = PVmoduleSettings[0]
+            moduleMaterial = PVmoduleSettings[1]
+            mountType = PVmoduleSettings[2]
+            moduleActiveAreaPercent = PVmoduleSettings[3]  # in percent
+            moduleEfficiency = PVmoduleSettings[4]  # in percent
+            temperatureCoefficientPercent = PVmoduleSettings[5]  # in percent
+            temperatureCoefficientFraction = temperatureCoefficientPercent/100  # unitless
+            a = PVmoduleSettings[6]
+            b = PVmoduleSettings[7]
+            deltaT = PVmoduleSettings[8]
+            
+            return moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientFraction, a, b, deltaT
+        
+        elif (len(PVmoduleSettings) == 0):
+            # "PVmoduleSettings_" input in any component is empty
+            # use the following default values:
+            moduleModelName = "PVFORM"
+            mountTypeName = "close roof mount"  # Glass/cell/glass (moduleType_ = 1)
+            moduleMaterial = "c-Si"  # mono and poly crystalline silicon
+            mountType = 1
+            moduleActiveAreaPercent = 90  # default value in %
+            moduleEfficiency = 15  # for crystalline silicon
+            temperatureCoefficientPercent = -0.5  # in %, for crystalline silicon
+            temperatureCoefficientFraction = temperatureCoefficientPercent/100  # unitless
+            # temperature and wind coefficients for moduleType_ = 1:
+            a = -2.98
+            b = -0.0471
+            deltaT = 1
+            
+            return moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, temperatureCoefficientFraction, a, b, deltaT
+    
+    def w0(self, z):
+        # Lambert W function using Newton's method
+        w = z
+        while True:
+            ew = math.exp(w)
+            wNew = w - (w * math.exp(w) - z) / (ew + (w * ew))
+            if abs(w - wNew) <= 0.00000001: break
+            w = wNew
+        return w
+    
     def noLeavesPeriod(self, criteria, latitude, sunWindowQuadrantIndex, leaflessStartHOY=None, leaflessEndHOY=None):
         if criteria == "perQuadrant":
             if latitude > 0:  # northern hemisphere
@@ -5591,7 +6101,7 @@ class Photovoltaics(object):
                     correctedSrfAzimuthD = northDeg = None
                     validNorth = False
                     printMsg = "Please input north angle value from 0 to 360."
-                    return correctedSrfAzimuthD, validNorth, printMsg
+                    return correctedSrfAzimuthD, northDeg, validNorth, printMsg
             except Exception, e:  # check if it's a vector
                 north.Unitize()
             
@@ -5605,7 +6115,7 @@ class Photovoltaics(object):
         
         return correctedSrfAzimuthD, northDeg, validNorth, printMsg
     
-    def NRELsunPosition(self, latitude , longitude, timeZone, year, month, day, hour):
+    def NRELsunPosition(self, latitude, longitude, timeZone, year, month, day, hour):
         # sunZenith, sunAzimuth, sunAltitude angles
         # based on Michalsky (1988), modified to calculate sun azimuth angles for locations south of the equator using the approach described in (Iqbal, 1983)
         min = 30
@@ -5635,7 +6145,7 @@ class Photovoltaics(object):
         
         julian = 32916.5 + 365*(year-1949) + int((year-1949)/4) + jdoy + (tutc/24) - 51545
         
-        mnlong = 280.46 + 0.9856474*julian   # in degrees
+        mnlong = 280.46 + 0.9856474*julian  # in degrees
         mnlong = mnlong - 360*int(mnlong/360)
         
         if (mnlong < 0):
@@ -5646,7 +6156,7 @@ class Photovoltaics(object):
         
         if (mnanom < 0):
             mnanom = (mnanom+360)
-        mnanom = mnanom*(math.pi/180)   # in radians
+        mnanom = mnanom*(math.pi/180)  # in radians
         
         eclong = (mnlong + 1.915*math.sin(mnanom) + 0.02 * math.sin(2*mnanom))
         eclong = eclong - 360*int(eclong/360)
@@ -5666,6 +6176,35 @@ class Photovoltaics(object):
         
         beta = math.asin(math.sin(obleq)*math.sin(eclong))   # in radians
         
+        
+        # perform check and adjustment for sunrise or sunset
+        sunrise_a = -math.tan((math.pi/180)*latitude)*math.tan(beta)
+        if sunrise_a >= 1:
+            sunrise_HAR = 0
+        elif sunrise_a <=-1:
+            sunrise_HAR = math.pi
+        else:
+            sunrise_HAR = math.acos(sunrise_a)
+        
+        sunrise_a = (1/15.0)*(mnlong - (180/math.pi)*ra)
+        if sunrise_a < -0.33:
+            sunrise_EOT = sunrise_a+24
+        elif sunrise_a > 0.33:
+            sunrise_EOT = sunrise_a-24
+        else:
+            sunrise_EOT = sunrise_a
+        
+        t_sunrise = 12 - (1/15.0)*(180/math.pi)*sunrise_HAR - (longitude/15 - timeZone) - sunrise_EOT
+        t_sunset = 12 + (1/15.0)*(180/math.pi)*sunrise_HAR - (longitude/15 - timeZone) - sunrise_EOT
+        
+        if int(t_sunrise) == hour:
+            min=(((t_sunrise - int(t_sunrise))*60)+60)/2
+            tutc = hour + min/60.0 - timeZone
+        elif int(t_sunset) == hour:
+            min=((t_sunset - int(t_sunset))*60)/2
+            tutc = hour + min/60.0 - timeZone
+        
+        
         gmst = 6.697375 + 0.0657098242*julian + tutc
         gmst = gmst - 24*int(gmst/24)
         
@@ -5681,9 +6220,9 @@ class Photovoltaics(object):
         b = 15*(math.pi/180) * lmst - ra
         
         if (b < -math.pi):
-            HA = b + 2*math.pi   # in radians
+            HA = b + 2*math.pi  # in radians
         elif (b > math.pi):
-            HA = b - 2*math.pi   # in radians
+            HA = b - 2*math.pi  # in radians
         else:
             HA = b
         
@@ -5801,6 +6340,8 @@ class Photovoltaics(object):
         
         # Eb beam irradiance
         Eb = DNIshaded * math.cos(AOI_R)
+        if Eb < 0:
+            Eb = 0
         
         # Ed_sky (Perez 1990 modified model diffuse sky irradiance)
         a = max(0, math.cos(AOI_R))
@@ -5898,21 +6439,27 @@ class Photovoltaics(object):
         Ed_sky = Di + Dc + Dh
         
         # Eg ground reflected irradiance by Liu, Jordan, (1963).
-        Eground = ((DNIshaded * math.cos(sunZenithR)) + Ed_sky) * albedo * ((1-math.cos(srfTiltR))/2)
+        Eground = ((DNIshaded * math.cos(sunZenithR)) + DHI) * albedo * ((1-math.cos(srfTiltR))/2)
         
         Epoa = Eb + Eground + Ed_sky  # in Wh/m2
+        if Epoa < 0:
+           Epoa = 0
         
-        if Eb < 0: Eb = 0
-        if Eground < 0: Eground = 0
-        if Ed_sky < 0: Ed_sky = 0
-        
-        if Epoa < 0 or ((DNIshaded<=0) and (DHI<=0)):
-            Epoa = Eb = Ed_sky = Eground = 0
+        if ((DNI<=0) and (DHI<=0))  or  (sunZenithD > 90):
+            Epoa = 0; Eb = 0; Ed_sky = 0; Eground = 0
         
         return Epoa, Eb, Ed_sky, Eground, AOI_R
     
-    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, AOI_R, Epoa, Eb, Ed_sky, Eground, moduleType, gamma, Ta, ws10, DNI, DHI):
+    def pvwatts(self, nameplateDCpowerRating, DCtoACderateFactor, srfTiltD, sunZenithD, AOI_R, Epoa, Eb, Ed_sky, Eground, Ta, ws10, DNI, DHI, PVmoduleSettings, elevationM):
         # PVWatts v1 Thermal, Module Temperature, Cell Temperature Module and Inverter models
+        
+        # deconstruct PVmoduleSettings
+        if (len(PVmoduleSettings) == 36):
+            moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, beta_mp_ref, mu_betamp, s, n, Fd, a0, a1, a2, a3, a4, b0, b1, b2, b3, b4, b5, C0, C1, C2, C3, a, b, deltaT = self.deconstruct_PVmoduleSettings(PVmoduleSettings)
+        elif (len(PVmoduleSettings) == 23):
+            moduleModelName, moduleName, material, moduleMountType, moduleAreaM, moduleActiveAreaPercent, nameplateDCpowerRating_m, moduleEfficiency, Vmp_ref, Imp_ref, Voc_ref, Isc_ref, alpha_sc_ref, beta_oc_ref, IL_ref, Io_ref, Rs_ref, Rsh_ref, A_ref, n_s, adjust, gamma_r_ref, ws_adjusted_factor, Tnoct_adj = self.deconstruct_PVmoduleSettings(PVmoduleSettings)
+        elif (len(PVmoduleSettings) == 9):
+            moduleModelName, mountTypeName, moduleMaterial, mountType, moduleActiveAreaPercent, moduleEfficiency, gamma, a, b, deltaT = self.deconstruct_PVmoduleSettings(PVmoduleSettings)
         
         # Sandia PV Array Performance Module Cover
         # Module Cover Polynomial Coefficients
@@ -5926,41 +6473,247 @@ class Photovoltaics(object):
         f = b0 + b1*AOI_R + b2*(AOI_R**2) + b3*(AOI_R**3) + b4*(AOI_R**4) + b5*(AOI_R**5)
         Etr = Epoa - (1-f)*Eb*math.cos(AOI_R)
         
-        # Thermal Model by Fuentes (1987)
-        if moduleType == 0:   # glass/cell/polymer sheet   insulated back
-            a = -2.81
-            b = -0.0455
-            deltaT = 0
-        elif moduleType == 1:   # glass/cell/glass   close roof mount
-            a = -2.98
-            b = -0.0471
-            deltaT = 1
-        elif moduleType == 2:   # glass/cell/polymer sheet   open rack
-            a = -3.56
-            b = -0.0750
-            deltaT = 3
-        elif moduleType == 3:   # for glass/cell/glass   open rack
-            a = -3.47
-            b = -0.0594
-            deltaT = 3
+        if (moduleModelName == "PVFORM") or (moduleModelName == "Sandia"):
+            # module back temperature
+            Tm = Epoa * (math.exp(a+(b*ws10))) + Ta  # in C degrees
+            
+            # cell temperature
+            Tcell = Tm + (Epoa/1000)*deltaT  # in C degrees
+            
+            if ((DNI<=0) and (DHI<=0)):
+                Pdc_ = Pac = 0
+                return Tcell, Pdc_, Pac
         
-        # Sandia Module Temperature Model
-        Tm = Epoa * (math.exp(a+(b*ws10))) + Ta  # in C degrees
-        
-        # Sandia Cell Temperature Model
-        Tcell = Tm + (Epoa/1000)*deltaT  # in C degrees
-        
-        if ((DNI<=0) and (DHI<=0)):
-            Pdc_ = Pac = 0
-            return Tm, Tcell, Pdc_, Pac
-        
-        # PVFORM version 3.3 adapted Module Model
         Pdc0 = nameplateDCpowerRating   # in kWatts
+        if (moduleModelName == "PVFORM"):
+            # a) PVFORM version 3.3 adapted Module Model
+            if Etr > 125:
+                Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))  # in KWatts
+            if Etr <= 125:
+                Pdc = ((0.008*(Etr**2))/1000)*Pdc0*(1+gamma*(Tcell-25))  # in KWatts
         
-        if Etr > 125:
-            Pdc = (Etr/1000)*Pdc0*(1+gamma*(Tcell-25))
-        if Etr <= 125:
-            Pdc = ((0.008*(Etr**2))/1000)*Pdc0*(1+gamma*(Tcell-25))
+        elif (moduleModelName == "CEC"):
+            # b) CEC Module Model
+            # temperature coefficient of short circuit current, corrected using adjust parameter.
+            mu_i_sc = alpha_sc_ref*(1-adjust/100)
+            
+            # temperature coefficient of open circuit voltage, corrected using adjust parameter
+            beta_v_oc = beta_oc_ref*(1+adjust/100)
+            
+            # global effective irradiance
+            G = Eb + Ed_sky + Eground
+            
+            # constants
+            n = 1.526  # refractive index of glass
+            L = 0.002  # thickness of glass cover in meters
+            K = 4  # proportionality constant in meters ^-1
+            
+            # incidence angle for the sky diffuse component of the effective irradiance
+            AOId_D = 59.7 - 0.1388*srfTiltD + 0.001497*(srfTiltD**2)
+            # incidence angle for the ground-reflected component of the effective irradiance
+            AOIg_D = 90 - 0.5788*srfTiltD + 0.002693*(srfTiltD**2)
+            
+            # transmittance
+            theta_i_L = [1*math.pi/180, AOI_R, AOId_D*math.pi/180, AOIg_D*math.pi/180]  # in radians
+            
+            transmittanceL = []
+            for theta_i in theta_i_L:
+                theta_r = math.asin((1/n)*math.sin(theta_i)) # angle of refraction calculated for each incidence angle of interest
+                transmittance = (math.e**(-K*L/math.cos(theta_r))) * (1-0.5*( (((math.sin(theta_r-theta_i))**2)/((math.sin(theta_r+theta_i))**2)) + (((math.tan(theta_r-theta_i))**2)/((math.tan(theta_r+theta_i))**2)) ))
+                transmittanceL.append(transmittance)
+            transmittance_n, transmittance_b, transmittance_d, transmittance_g  =  transmittanceL[0], transmittanceL[1], transmittanceL[2], transmittanceL[3]
+            
+            # incidence angle modifier
+            AOIM_b = transmittance_b/transmittance_n
+            AOIM_d = transmittance_d/transmittance_n
+            AOIM_g = transmittance_g/transmittance_n
+            
+            # irradiance absorbed by the photovoltaic cell
+            G0 = Eb*AOIM_b + Ed_sky*AOIM_d + Eground*AOIM_g
+            
+            # correcting sun zenith angle
+            if sunZenithD < 0:
+                sunZenithD = 0
+                sunZenithR = 0
+            elif sunZenithD > 86:
+                sunZenithD = 86
+                sunZenithR = math.radians(86)
+            else:
+                sunZenithR = math.radians(sunZenithD)
+            
+            # air mass
+            AM = (math.e**(-0.0001184*elevationM))  /  (math.cos(sunZenithR) + ( 0.5057*((96.08 -sunZenithD)**(-1.634)) ))
+            
+            # air mass coefficients for crystalline silicon modules
+            a0 = 0.918093
+            a1 = 0.086257
+            a2 = -0.024459
+            a3 = 0.002816
+            a4 = -0.000126
+            
+            # air mass modifier M
+            M = a0 +a1*AM +a2*(AM**2) +a3*(AM**3) +a4*(AM**4)
+            
+            # air mass adjusted transmittance-absorptance product
+            if G == 0:  # fix when G == 0:
+                transmittance_absorptance = 0
+            else:
+                transmittance_absorptance = 0.9 * (M*G0 / G)
+            
+            # NOCT thermal model, if G > 0
+            nu_ref = Imp_ref * Vmp_ref / (1000 * moduleAreaM)
+            
+            # wind speed adjusted for height above the ground
+            ws_adj = ws_adjusted_factor * ws10                                           
+            
+            # fix when G == 0:
+            if G == 0:
+                Tcell = Ta + (G/800) * (Tnoct_adj - 20) * (1 - 0) * (9.5/(5.7+3.8*ws_adj))
+            else:
+                Tcell = Ta + (G/800) * (Tnoct_adj - 20) * (1 - nu_ref/transmittance_absorptance) * (9.5/(5.7+3.8*ws_adj))
+            
+            if G <= 1:
+                Pdc_m = 0
+            else:
+                # cell temperature in kelvins
+                Tcell_K = Tcell + 273.15
+                
+                # temp and irradiance adjusted light current Il
+                Il = M*G0/1000*(IL_ref + mu_i_sc * (Tcell_K - 298.15)) # Jason fixed
+                
+                # Boltzmann constant
+                k = 8.618 *(10**(-5))
+                
+                # cell material band-gap energy
+                Tcell_ref = 25  # in degrees, Tcell in STC
+                Tcell_ref_K = Tcell_ref + 273.15
+                Ebg = 1.12 * (1 - 0.0002677*(Tcell_K - Tcell_ref_K))
+                
+                # temp adjusted diode reverse saturation current Io
+                Io = Io_ref * ((Tcell_K/Tcell_ref_K)**3) * math.exp((1/k) * ((1.12/Tcell_ref_K) - (Ebg/Tcell_K)))
+                
+                # temp adjusted ideality factor a
+                a = A_ref * Tcell_K/Tcell_ref_K
+                
+                # irradiance adjusted Rsh
+                Rsh = Rsh_ref*1000/(G0*M)
+                # Rs is not adjusted from reference value
+                Rs = Rs_ref
+                
+                # short circuit current
+                Isc = Il / (1+(Rs_ref / Rsh))
+                
+                # equation to solve for Voc
+                # 0 = Il - Io *(math.exp(Voc/a)-1) - Voc/Rsh
+                # solve for Voc using bisection method
+                
+                iterations = 0 
+                solved = 0
+                
+                Voc = Voc_ref
+                bisect_a = Voc_ref * 1.5
+                bisect_b = 0
+                bisect_c = 0
+                
+                f_a = Il - Io *(math.exp(bisect_a/a)-1) - bisect_a/Rsh
+                f_b = Il - Io *(math.exp(bisect_b/a)-1) - bisect_b/Rsh
+                
+                if ((f_a > 0 and f_b < 0) or (f_a < 0 and f_b > 0)):    
+                    while ((iterations <= 50) and (solved == 0)):
+                        bisect_c = (bisect_a+bisect_b)/2
+                        f_c = Il - Io *(math.exp(bisect_c/a)-1) - bisect_c/Rsh
+                        iterations += 1
+                        if ((f_c == 0) or ((abs(bisect_b-bisect_a)/2) < 0.0001)):
+                            solved = 1
+                        elif ((f_c>0 and f_a>0) or (f_c<0 and f_a<0)):
+                            bisect_a = bisect_c
+                            f_a = Il - Io *(math.exp(bisect_a/a)-1) - bisect_a/Rsh
+                        else:
+                            bisect_b = bisect_c
+                            f_b = Il - Io *(math.exp(bisect_b/a)-1) - bisect_b/Rsh
+                
+                Voc = bisect_c
+                
+                # Vmp and Imp are found together, by maximizing Pmp
+                # Pmp = Vmp * Imp. Guess Vmp. Calculate Imp using Lambert W function. Use golden section search to improve guess of Vmp, iterate until Pmp is found.
+                
+                phi = (1 + math.sqrt(5))/2
+                VH = 1.5 * Voc
+                VL = 0
+                
+                err = VH - VL
+                solved = 0
+                iterations = 0
+                
+                while ((iterations <= 50) and (solved == 0)):
+                    V1 = VL + err / phi
+                    V2 = VH - err / phi
+                    # calculate I for V1 Eqn. 4 in Jain and Kapoor, 2004
+                    argW = (Rs*Io*Rsh * math.exp(Rsh*(Rs*(Il+Io)+V1) / (a*(Rs+Rsh))) /(a*(Rs + Rsh)))
+                    lambertwterm = self.w0(argW)     
+                    I_V1 = -V1/(Rs + Rsh) - (a/Rs)*lambertwterm + Rsh*(Il + Io)/(Rs + Rsh)
+                    # calculate P for V1
+                    P_V1 = V1 * I_V1
+                    # calculate I for V2 Eqn. 4 in Jain and Kapoor, 2004
+                    argW = (Rs*Io*Rsh * math.exp(Rsh*(Rs*(Il+Io)+V2) / (a*(Rs+Rsh))) /(a*(Rs + Rsh)))
+                    lambertwterm = self.w0(argW)
+                    I_V2 = -V2/(Rs + Rsh) - (a/Rs)*lambertwterm + Rsh*(Il + Io)/(Rs + Rsh)
+                    # calculate P for V1
+                    P_V2 = V2 * I_V2
+                    # check for convergence on maximum
+                    if (P_V1 < P_V2):
+                        VH = V1
+                    else:
+                        VL = V2
+                    err = abs(VH-VL)
+                    if err < 0.0001:
+                        solved = 1
+                    iterations += 1
+                
+                Vmp = V1
+                Imp = I_V1
+                Pmp = P_V1
+                
+                # module's DC power output at the maximum power point
+                Pdc_m = Vmp * Imp  # in Watts
+            
+            Pdc_array = (Pdc_m/1000) * nameplateDCpowerRating/(nameplateDCpowerRating_m/1000)  # in KWatts
+            if (Pdc_array < 0) or (Pdc_array == -0.0): Pdc_array = 0
+            Pdc = Pdc_array
+        
+        elif (moduleModelName == "Sandia"):
+            # c) Sandia Module Model
+            # air mass
+            sunZenithR = math.radians(sunZenithD)
+            AM = ( (math.e**(-0.0001184*elevationM))  /  math.cos(sunZenithR) )  + ( 0.5057*((96.08-sunZenithD)**(-1.634)) )
+            # F1 polynomial relates the spectral effects on Isc to the variation of air mass over the day
+            F1 = a0 + a1*AM +a2*(AM**2) +a3*(AM**3) +a4*(AM**4)
+            # F2 polynomial relates the optical effects on Isc to the angle of incidence AOI
+            F2 = b0 + b1*AOI_R + b2*(AOI_R**2) + b3*(AOI_R**3) + b4*(AOI_R**4) + b5*(AOI_R**5)
+            
+            # short circuit current
+            Isc = Isc_ref * F1 * ((Eb*F2 + Fd*(Ed_sky+Eground))/1000) * (1 + alpha_sc_ref * (Tcell-25))
+            # effective irradiance on the module surface
+            Ee = Isc / ( Isc_ref * (1+alpha_sc_ref *(Tcell-25)) )
+            # current at the maximum power point
+            Imp = Imp_ref * (C0*Ee+C1*(Ee**2)) * (1+alpha_sc_ref * (Tcell-25))
+            
+            if Ee <= 0:
+                # happens in the early morning and before the night fall
+                Vmp = 0  # voltage at maximum power
+            else:
+                deltaTc = n * (1.38066 *(10**(-23)) * (Tcell +273.15))  /  (1.60218 *(10**(-19)))
+                beta_mp = beta_mp_ref + mu_betamp * (1 - Ee)
+                # open circuit voltage
+                Voc = Voc_ref + s*deltaTc*math.log(Ee) + beta_oc_ref*(Tcell-25)
+                # voltage at maximum power
+                Vmp = Vmp_ref + C2*s*deltaTc*math.log(Ee) + C3*s*((deltaTc*math.log(Ee))**2) + beta_mp*(Tcell-25)
+            
+            # module's DC power output at the maximum power point
+            Pdc_m = Vmp * Imp  # in Watts
+            Pdc_array = (Pdc_m/1000) * nameplateDCpowerRating/(nameplateDCpowerRating_m/1000)  # in KWatts
+            if (Pdc_array < 0) or (Pdc_array == -0.0): Pdc_array = 0
+            Pdc = Pdc_array
         
         # System Derates
         Eta_inv = 0.92  # default
@@ -5983,7 +6736,7 @@ class Photovoltaics(object):
         
         if Pac < 0: Pac = 0
         
-        return Tm, Tcell, Pdc_, Pac
+        return Tcell, Pdc_, Pac
     
     def inletWaterTemperature(self, dryBulbTemperature_C, method=0, minimalTemperature_C=1, depth_m=2, soilThermalDiffusivity_m2_s=2.5):
         # calculate cold (inlet) water temperature
@@ -6573,14 +7326,46 @@ if checkIn.letItFly:
     sc.sticky["ladybug_Photovoltaics"] = Photovoltaics
         
     if sc.sticky.has_key("ladybug_release") and sc.sticky["ladybug_release"]:
-        greeting = "Hi{}!\n" \
-                   "Ladybug is Flying! Vviiiiiiizzz...\n\n" \
-                   "Default path is set to: " + sc.sticky["Ladybug_DefaultFolder"]
-        
-        try:
-            print greeting.format(' ' + os.getenv('USERNAME'))
-        except:
-            print greeting.format('')
+        now = time.localtime()
+        hour = now[3]
+        day = time.strftime("%A")
+        if hour in range(0,6):
+            comment = "Looks like you're burning the midnight oil. Be sure to reset your circadian rhythm later!"
+            greeting = "Hi {}! \n\n" + "{} \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username, comment ,sc.sticky["Ladybug_DefaultFolder"] )
+        else:
+            greeting = "Hi {}! \n\n" + \
+                "The default path is set to: {} \n\n" + \
+                "Ladybug is Flying! Vviiiiiiizzz..."
+            # Try to infer the username
+            # If windows
+            username = ''
+            if os.name == 'nt':
+                try:
+                    username = ' ' + os.getenv('USERNAME')
+                except:
+                    pass
+            elif os.name == 'posix':
+                try:
+                    username = ' ' + os.path.basename(os.path.basename(os.path.expanduser('~')))
+                except:
+                    pass           
+            print greeting.format(username,sc.sticky["Ladybug_DefaultFolder"] )
             
         # push ladybug component to back
         ghenv.Component.OnPingDocument().SelectAll()

@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and Sadeghipour@gmail.com> 
+# Copyright (c) 2013-2018, Chris Mackey and Mostapha Sadeghipour Roudsari <Chris@MackeyArchitecture.com and mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ Use this component to make a bar chart in the Rhino scene of any monhtly or avrM
 _
 This component can also plot daily or hourly data but, for visualizing this type of data, it is recommended that you use the "Ladybug_3D Chart" component.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _inputData: A list of input data to plot.  This should usually be data out of the "Ladybug_Average Data" component or monthly data from an energy simulation but can also be hourly or daily data from the "Ladybug_Import EPW."  However, it is recommended that you use the "Ladybug_3D Chart" component for daily or hourly data as this is usually a bit clearer.
@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.63
                         2 - Adaptive confort range (naturally ventilated)
                         3 - UTCI Comfort (outdoor)
                         Note that this option is only available when temperature is connected so, by default, it is set to 0 for no comfort range.
-        bldgBalancePt_: An optional float value to represent the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C for fully outdoor conditions.
+        bldgBalancePt_: An optional float value that moves the comfort polygon to account for the difference between indoor and outdoor temperature.  This input only has an effect when a comfortModel_ is selected from above.  The balance temperature represents the outdoor temperature at which the energy passively flowing into a building is equal to that flowing out of the building.  This is usually a number that is well below the comfort temperture (~ 12C - 18C) since the internal heat of a building and its insulation keep the interior warmer then the exterior.  However, by default, this is set to 23.5C, which essentially assumes that indoor and outdoor temperature are equal.
         stackValues_: Set to 'True' if you have multiple connected monthly or daily _inputData with the same units and want them to be drawn as bars stacked on top of each other.  Otherwise, all bars for monthly/daily data will be placed next to each other.  The default is set to 'False' to have these bars placed next to each other.
         plotFromZero_: Set to 'True' to have the component plot all bar values starting from zero (as opposed from the bottom of the chart, which might be a negative number).  This is useful when you are plotting the terms of an energy balance where you want gains to be above zero and losses to be below.  It can be detrimental if you are plotting temperatures in degrees celcius and do not want negative values to go below zero.  As such, the default is set to 'False' to not plot from zero.
         altTitle_: An optional text string to replace the default title of the chart of the chart.  The default is set to pick out the location of the data connected to 'inputData.'
@@ -63,11 +63,12 @@ Provided by Ladybug 0.0.63
         legendBasePt: The legend base point, which can be used to move the legend in relation to the chart with the grasshopper "move" component.
         dataLabelPts: A series of points that mark where each of the bars or lines of the chart lie.  You can use this to label the bars or lines with numerical values using a native grasshopper "text tag" component and the data that you have connected to the _inputData of this component.
         comfortBand: A series of meshes that represent the comfort range in each month according to the input comfortModel_.
+        comfortLegend: A legend for the comfort model. This legend will only be provided if temperature is fed to this component and the value provided to the comfortModel_ is either 1, 2, or 3.
 """
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -124,7 +125,6 @@ def checkTheInputs():
         else:
             # separate the data
             indexList, listInfo = lb_preparation.separateList(_inputData, lb_preparation.strToBeFound)
-            
             #separate the lists of data
             separatedLists = []
             for i in range(len(indexList)-1):
@@ -261,7 +261,6 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
     #Read legend parameters
     lowBNotImp, highBNotImp, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPs[0], False)
     numSeg = int(numSeg)
-    
     #Set some defaults.
     if legendFontSize == None: legendFontSize = 1
     allText = []
@@ -612,7 +611,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
             if unit2 == 'C' or unit2 == 'C' or unit2 == 'F' or unit2 == 'F':
                 tempVals.append(lowVal2)
                 tempScale.append(valRange2)
-                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
+                if 'Dry Bulb Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
             for count, valText in enumerate(finalValues):
                 axesTextSrf = lb_visualization.text2srf([valText], [yAxisRightPts[count]], legendFont, legendFontSize, legendBold)
                 textSrfs.extend(axesTextSrf[0])
@@ -625,7 +624,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
             if unit1 == 'C' or unit1 == 'C' or unit1 == 'F' or unit1 == 'F':
                 tempVals.append(lowVal1)
                 tempScale.append(valRange1)
-                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
+                if 'Dry Bulb Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
         elif unit.strip('') == unit2.strip(''):
             startVals.append(lowVal2)
             scaleFacs.append(valRange2/height)
@@ -636,7 +635,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
             if unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'C' or unitsList[uCount+1] == 'F' or unitsList[uCount+1] == 'F':
                 tempVals.append(lowVal1)
                 tempScale.append(valRange1)
-                if 'Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
+                if 'Dry Bulb Temperature' in dataTypeList[uCount+1][0] or 'Universal Thermal Climate Index' in dataTypeList[uCount+1][0]: avgMonthTemp = dataList[uCount+1]
     
     #Create a title.
     if altTitle_ == None: newlistInfo = str(listInfo[0][1])
@@ -665,7 +664,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
     BBYlength = lb_visualization.BoundingBoxPar[2]
     legendHeight = legendWidth = (BBYlength/10) * legendScale
     
-    def legend(basePt, legendHeight, legendWidth, numOfSeg):
+    def legend(basePt, legendHeight, legendWidth, numOfSeg, tempInlist, comfortModel):
         basePt = rc.Geometry.Point3d.Add(basePt, rc.Geometry.Vector3f(legendWidth, 0, 0))
         numPt = int(4 + 2 * (numOfSeg - 1))
         # make the point list
@@ -673,26 +672,65 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
         for pt in range(numPt):
             point = rc.Geometry.Point3d(basePt[0] + (pt%2) * legendWidth, basePt[1] + int(pt/2) * legendHeight, basePt[2])
             ptList.append(point)
-
-        meshVertices = ptList; textPt = []
-        legendSrf = rc.Geometry.Mesh()
-        for segNum in  range(numOfSeg):
-            # generate the surface
-            mesh = rc.Geometry.Mesh()
-            mesh.Vertices.Add(meshVertices[segNum * 2]) #0
-            mesh.Vertices.Add(meshVertices[segNum * 2 + 1]) #1
-            mesh.Vertices.Add(meshVertices[segNum * 2 + 2]) #2
-            mesh.Vertices.Add(meshVertices[segNum * 2 + 3]) #3
-            mesh.Faces.AddFace(0, 1, 3, 2)
-            legendSrf.Append(mesh)
-            
-            txtPt = meshVertices[segNum * 2 + 1]
-            textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.5), txtPt.Z))
         
-        return legendSrf, textPt
+        #If comfort model is called, make legend mesh for the comfort model as well
+        if tempInList == True and comfortModel != 0:
+            meshVertices = ptList; textPt = []; comfortTextPt = []
+            legendSrf = rc.Geometry.Mesh()
+            for segNum in  range(numOfSeg):
+                #Generate the legend mesh for the _inputdata
+                mesh = rc.Geometry.Mesh()
+                mesh.Vertices.Add(meshVertices[segNum * 2]) #0
+                mesh.Vertices.Add(meshVertices[segNum * 2 + 1]) #1
+                mesh.Vertices.Add(meshVertices[segNum * 2 + 2]) #2
+                mesh.Vertices.Add(meshVertices[segNum * 2 + 3]) #3
+                mesh.Faces.AddFace(0, 1, 3, 2)
+                legendSrf.Append(mesh)
+                #Generate legend mesh for the comfort model
+                base = basePt[0]
+                #Following variable sets the location of the comfort legend. So if more than one lists are provided to the _annualHourlyData, this variabke
+                # will shift the comfort legend upwards
+                comfortLegendShiftingFactor = len(listInfo)
+                point01 = rc.Geometry.Point3d(base, legendHeight*comfortLegendShiftingFactor, 0)
+                point02 = rc.Geometry.Point3d(base+legendWidth, legendHeight*comfortLegendShiftingFactor,0)
+                point03 = rc.Geometry.Point3d(base, (legendHeight*comfortLegendShiftingFactor+legendHeight), 0)
+                point04 = rc.Geometry.Point3d(base+legendWidth, (legendHeight*comfortLegendShiftingFactor+ legendHeight),0)
+                additionalPts = [point01, point02, point03, point04]
+                additionalSrf = rc.Geometry.Mesh()
+                mesh = rc.Geometry.Mesh()
+                mesh.Vertices.Add(point01)
+                mesh.Vertices.Add(point02)
+                mesh.Vertices.Add(point03)
+                mesh.Vertices.Add(point04)
+                mesh.Faces.AddFace(0, 1, 3, 2)
+                additionalSrf.Append(mesh)
+                # Text Points
+                txtPt = meshVertices[segNum * 2 + 1]
+                textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.5), txtPt.Z))
+                comfortTextPt.append(rc.Geometry.Point3d(txtPt.X + (legendFontSize), txtPt.Y+legendHeight*comfortLegendShiftingFactor+(legendFontSize/0.5),txtPt.Z))
+        #Else only make legend mesh for values fed to _inputData
+        else:
+            meshVertices = ptList; textPt = []
+            legendSrf = rc.Geometry.Mesh()
+            for segNum in  range(numOfSeg):
+                #Generate the legend mesh for the _inputdata
+                mesh = rc.Geometry.Mesh()
+                mesh.Vertices.Add(meshVertices[segNum * 2]) #0
+                mesh.Vertices.Add(meshVertices[segNum * 2 + 1]) #1
+                mesh.Vertices.Add(meshVertices[segNum * 2 + 2]) #2
+                mesh.Vertices.Add(meshVertices[segNum * 2 + 3]) #3
+                mesh.Faces.AddFace(0, 1, 3, 2)
+                legendSrf.Append(mesh)
+                # Text Points
+                txtPt = meshVertices[segNum * 2 + 1]
+                textPt.append(rc.Geometry.Point3d(txtPt.X+(legendFontSize), txtPt.Y+(legendFontSize/0.5), txtPt.Z))
+            additionalSrf = None
+            comfortTextPt = None
+        
+        return legendSrf, textPt, additionalSrf, comfortTextPt
     
     #Make Legend Text
-    legendSrf, textPt = legend(basePt, legendHeight, legendWidth, len(separatedLists))
+    legendSrf, textPt, additionalSrf, comfortTextPt = legend(basePt, legendHeight, legendWidth, len(separatedLists), tempInList, comfortModel)
     dataTypeListFlat = []
     for lst in dataTypeList: dataTypeListFlat.extend(lst)
     
@@ -702,18 +740,48 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
         if methodsList[legCount] == 2: dataTypeListFlat[legCount] = legItem + ' \n(Hourly)'
         if methodsList[legCount] == 3: dataTypeListFlat[legCount] = legItem + ' \n(Daily)'
     
-    legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize, legendBold)
-    allTextPt.extend(textPt)
-    allText.extend(dataTypeListFlat)
+    #If comfort model is called, make legend for the comfort model as well
+    if tempInList == True and comfortModel != 0:
+        #Generate the legend for the _inputdata
+        legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize, legendBold)
+        allTextPt.extend(textPt)
+        allText.extend(dataTypeListFlat)
+        #Create legend.
+        legend = []
+        #color legend surfaces
+        legendSrf = lb_visualization.colorMesh(colors, legendSrf)
+        legend.append(legendSrf)
+        fullLegTxt = lb_preparation.flattenList(legendTextSrfs)   
+        legend.extend(fullLegTxt)
+        #Generate legend for the comfort model
+        if comfortModel == 1:
+            comfortStr = "PMV comfort range" + "\n(indoor)"
+        if comfortModel == 2:
+            comfortStr = "Adaptive comfort range" + "\n(Naturally ventilated)"
+        if comfortModel == 3:
+            comfortStr = "UTCI" + "\n(outdoor)"
+        comfortText = [comfortStr]
+        comfortTextSrfs = lb_visualization.text2srf(comfortText, comfortTextPt, legendFont, legendFontSize, legendBold)
+        #Create Comfort Legend
+        comfortLegend = [] 
+        comfortLegend.append(additionalSrf)
+        comfortLegendText = lb_preparation.flattenList(comfortTextSrfs)
+        comfortLegend.extend(comfortLegendText)
     
-    #Create legend.
-    legend = []
-    #color legend surfaces
-    legendSrf = lb_visualization.colorMesh(colors, legendSrf)
-    legend.append(legendSrf)
-    fullLegTxt = lb_preparation.flattenList(legendTextSrfs)
-    legend.extend(fullLegTxt)
-    
+    #Else only make legend mesh for values fed to _inputData
+    else:
+        legendTextSrfs = lb_visualization.text2srf(dataTypeListFlat, textPt, legendFont, legendFontSize, legendBold)
+        allTextPt.extend(textPt)
+        allText.extend(dataTypeListFlat)
+        #Create legend.
+        legend = []
+        #color legend surfaces
+        legendSrf = lb_visualization.colorMesh(colors, legendSrf)
+        legend.append(legendSrf)
+        fullLegTxt = lb_preparation.flattenList(legendTextSrfs)   
+        legend.extend(fullLegTxt) 
+        comfortLegend = None
+        
     #Reorder the list of colors to align with the dataList.
     newColors = []
     colorCount = 0
@@ -723,7 +791,7 @@ def makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZe
             newColors[listCount].append(colors[colorCount])
             colorCount += 1
     
-    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, totMons, newDataMethodsList, startVals, scaleFacs, newColors, width/(len(totMons)), tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, legendFontSize, legendFont, decimalPlaces
+    return chartAxes, textSrfs, titleTextSrfs, titleTxtPt, legend, basePt, dataList, totMons, newDataMethodsList, startVals, scaleFacs, newColors, width/(len(totMons)), tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, legendFontSize, legendFont, decimalPlaces, comfortLegend
 
 
 def plotData(dataList, dataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger, dataPtOffset):
@@ -1064,7 +1132,7 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, monthsInChart
 
 def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, plotFromZero, tempInList, farenheitCheck, xS, yS, dataPtOffset, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels):
     #Make the chart curves.
-    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, monthsInChart, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, textSize, legendFont, decimalPlaces = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZero, xS, yS, legendPs, lb_preparation, lb_visualization)
+    graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataList, monthsInChart, newDataMethodsList, startVals, scaleFacs, colors, xWidth, tempVals, tempScale, avgMonthTemp, negativeTrigger, allText, allTextPt, textSize, legendFont, decimalPlaces, comfortLegend = makeChartCrvs(separatedLists, listInfo, methodsList, stackValues, plotFromZero, xS, yS, legendPs, lb_preparation, lb_visualization)
     
     #Plot the data on the chart.
     dataMesh, dataCurves, curveColors, dataLabelPts = plotData(dataList, newDataMethodsList, startVals, scaleFacs, colors, xWidth, yS, conversionFac, negativeTrigger, dataPtOffset)
@@ -1081,18 +1149,21 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
         for geo in graphAxes: geo.Transform(moveTransform)
         for geo in graphLabels: geo.Transform(moveTransform)
         for geo in legend: geo.Transform(moveTransform)
+        if comfortLegend != None:
+            for geo in comfortLegend: geo.Transform(moveTransform)
         try:
             for geo in comfortBand: geo.Transform(moveTransform)
         except: pass
         legendBasePt.Transform(moveTransform)
         for geo in titleTxt:geo.Transform(moveTransform)
-        titleTxtPt.Transform(moveTransform)
         for lst in dataMesh:
             for geo in lst: geo.Transform(moveTransform)
         for lst in dataCurves:
             for geo in lst: geo.Transform(moveTransform)
         for lst in dataLabelPts:
             for geo in lst: geo.Transform(moveTransform)
+        for pt in allTextPt:
+            pt.Transform(moveTransform)
     
     if bakeIt_ > 0:
         #Make a single mesh for all data.
@@ -1113,7 +1184,7 @@ def main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bld
         if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legend[-1], allText, allTextPt, textSize, legendFont, graphAxes+allDataCurves, decimalPlaces, 2)
         else: lb_visualization.bakeObjects(newLayerIndex, finalJoinedMesh, legend[-1], allText, allTextPt, textSize, legendFont, graphAxes+allDataCurves, decimalPlaces, 2, False)
     
-    return dataMesh, dataCurves, curveColors, graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataLabelPts, comfortBand
+    return dataMesh, dataCurves, curveColors, graphAxes, graphLabels, titleTxt, titleTxtPt, legend, legendBasePt, dataLabelPts, comfortBand, comfortLegend
 
 
 #Check the inputs.
@@ -1131,7 +1202,7 @@ else: restoreInput()
 if checkData == True:
     result = main(separatedLists, listInfo, methodsList, hourCheckList, comfortModel, bldgBalPt, stackValues, plotFromZero, tempInList, farenheitCheck, xS, yS, _labelPtsOffset_, conversionFac, legendPs, lb_preparation, lb_visualization, lb_comfortModels)
     if result != -1:
-        dataMeshInit, dataCurvesInit, dataCrvColorsInit, graphAxes, graphLabels, title, titleBasePt, legend, legendBasePt, dataLabelPtsPy, comfortBand = result
+        dataMeshInit, dataCurvesInit, dataCrvColorsInit, graphAxes, graphLabels, title, titleBasePt, legend, legendBasePt, dataLabelPtsPy, comfortBand, comfortLegend = result
         
         dataMesh = DataTree[Object]()
         dataCurves = DataTree[Object]()
@@ -1153,7 +1224,6 @@ if checkData == True:
         for listCount, lst in enumerate(dataLabelPtsPy):
             for item in lst:
                 dataLabelPts.Add(item, GH_Path(listCount))
-
 
 ghenv.Component.Params.Output[7].Hidden = True
 ghenv.Component.Params.Output[9].Hidden = True

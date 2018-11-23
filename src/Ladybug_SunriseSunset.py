@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
+# Copyright (c) 2013-2018, Antonello Di Nunzio <antonellodinunzio@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -33,7 +33,7 @@ This component calculates sunrise and sunset per hourly data. The approximation 
 -
 Despite this component does not consider the leap day (FEB 29th), results are accurate enough.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _location: The output from the importEPW or constructLocation component.  This is essentially a list of text summarizing a location on the earth.
@@ -72,9 +72,9 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_SunriseSunset"
 ghenv.Component.NickName = 'Sunrise Sunset'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.Category = "Ladybug"
-ghenv.Component.SubCategory = "7 | WIP"
+ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
@@ -100,8 +100,8 @@ def sunVectorCalc(azimut, zenit):
     y = 100 * math.sin(math.radians(90 - zenit)) * math.sin(math.radians(90 - azimut))
     z = 100 * math.cos(math.radians(90 - zenit))
     
-    refPoint = rs.AddPoint(x,y,z)
-    vector = rs.VectorCreate([0,0,0] , refPoint)
+    #refPoint = rs.AddPoint(x,y,z)
+    vector = rs.VectorCreate([0,0,0] , [x,y,z])
     vector = rs.VectorUnitize(vector)
     return vector
 

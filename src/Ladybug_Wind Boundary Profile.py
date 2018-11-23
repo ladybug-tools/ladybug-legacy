@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic and Chris Mackey <djordjedspasic@gmail.com and chris@mackeyarchitecture.com> 
+# Copyright (c) 2013-2018, Djordje Spasic and Chris Mackey <djordjedspasic@gmail.com and chris@mackeyarchitecture.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -22,11 +22,13 @@
 
 
 """
-Use this component to visualize a wind profile curve for a given terrain type.  Wind speed increases as one leaves the ground and wind profiles are a means of visualizing this change in wind speed with height.
+Use this component to visualize a wind profile curve for a given terrain type.  Wind speed increases as one leaves the ground and wind profiles are a means of visualizing this change in wind speed with height. 
+-
+The wind profile will point you in the direction of prevailing wind if EPW data is connected to _windSpeed_tenMeters and windDirections_. In case you are trying to orient your building to take advantage of natural ventilation, as a good rule of thumb, it always a good strategy to align the shorter axis of your building parellel to the prevailing wind directions.
 -
 More information on the power law of the wind profile can be found here: http://en.wikipedia.org/wiki/Wind_profile_power_law
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -81,7 +83,7 @@ Provided by Ladybug 0.0.63
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_30_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -341,7 +343,7 @@ def checkConditionalStatement(annualHourlyData, conditionalStatement, analysisPe
         letters = [chr(i) for i in xrange(ord('a'), ord('z')+1)]
         # remove 'and' and 'or' from conditional statements
         csCleaned = conditionalStatement.replace('and', '',20000)
-        csCleaned = csCleaned.replace('or', '',20000)
+        csCleaned = csCleaned.replace('or', '',20000).replace('not', '',20000)
         
         # find the number of the lists that have assigned conditional statements
         listNum = []
@@ -1212,7 +1214,7 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
         
         # Create the axes text lables
         axesText, axesTextStr, axesTextPt = makeChartText(xAxisPts, yAxisPts, xAxisText, yAxisText, scaleFactor, windDir, windVec, legendFont, textSize, legendBold, lb_visualization)
-        
+   
         #i love rosi.
         #Create the units labels of the axes.
         unitsTextLabels, untisTxt, unitsTxtPts = makeUnitsText(heightsAboveGround, maxSpeed, scaleFactor, windDir, windVec, windVectorScale, axesLines, epwStr, terrainType, analysisPeriod, titleStatement, legendFont, textSize, legendBold, lb_visualization, lb_preparation)
@@ -1234,9 +1236,17 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
                 geo.Transform(transformMtx)
             for geo in profileAxes:
                 geo.Transform(transformMtx)
+            for geo in axesTextPt:
+                geo.Transform(transformMtx)
             for geo in axesText:
                 geo.Transform(transformMtx)
-        
+            for geo in unitsTxtPts:
+                geo.Transform(transformMtx)
+            for geo in unitsTextLabels:
+                geo.Transform(transformMtx)
+            for geo in textPt:
+                geo.Transform(transformMtx)
+
         # If bakeIt is set to true, then bake all of the geometry.
         if bakeIt_ > 0:
             #Group all of the curves together.
@@ -1254,7 +1264,9 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
                     try: finalMesh.Append(mesh)
                     except: finalCrvs.append(rc.Geometry.LineCurve(mesh))
             except: finalMesh = None
-            
+            #Adding axes arrows to the final mesh
+            for arrow in axesArrows:
+                finalMesh.Append(arrow)
             #Group all of the Text together.
             allText = []
             allTextPt = []
@@ -1273,8 +1285,8 @@ def main(heightsAboveGround, analysisPeriod, d, a, rl, terrainType, epwTerr, met
                 else: placeName = 'alternateLayerName'
             except: placeName = 'alternateLayerName'
             studyLayerName = 'WIND_BOUNDARY_PROFILE'
-            newLayerIndex, l = lb_visualization.setupLayers(str(analysisPeriod), 'LADYBUG', placeName, studyLayerName, False, False, 0, 0)
-            
+            dataType = 'Wind Boundary Profile'
+            newLayerIndex, l = lb_visualization.setupLayers(dataType, 'LADYBUG', placeName, studyLayerName)
             if bakeIt_ == 1: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, True)
             else: lb_visualization.bakeObjects(newLayerIndex, finalMesh, legendSrfs, allText, allTextPt, textSize,  legendFont, finalCrvs, decimalPlaces, False)
         

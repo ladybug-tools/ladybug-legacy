@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -26,7 +26,7 @@ Use this component to calculate domestic hot water consumption for each hour dur
 Component based on paper: "Modeling patterns of hot water use in households", Ernest Orlando Lawrence Berkeley National Laboratory; Lutz, Liu, McMahon, Dunham, Shown, McGrue; Nov 1996:
 http://ees.lbl.gov/sites/all/files/modeling_patterns_of_hot_water_use_in_households_lbl-37805_rev.pdf
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -114,7 +114,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Residential Hot Water"
 ghenv.Component.NickName = "ResidentialHotWater"
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

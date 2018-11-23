@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2016, Abraham Yezioro <ayez@ar.technion.ac.il> 
+# Copyright (c) 2013-2018, Abraham Yezioro <ayez@ar.technion.ac.il> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -32,7 +32,7 @@ References:
     5. Brown G.Z. and DeKay M., 2001. Sun, WInd & Light. Architectural Design Strategies (2nd edition). John WIley  & Sons, Inc.
 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius. This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.
@@ -76,12 +76,12 @@ Provided by Ladybug 0.0.63
 """
 ghenv.Component.Name = "Ladybug_Bioclimatic Chart"
 ghenv.Component.NickName = 'Bioclimatic Chart'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 #ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
-ghenv.Component.SubCategory = "7 | WIP"
-try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
+ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
+try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
 except: pass
 
 
@@ -206,14 +206,15 @@ def outlineCurve(curve):
     return finalBrep
 
 
-def createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLineValue, location, strategyNames, strategyPercent, strategyHours, lb_preparation, legendFontSize, legendFont, strategiesColors):
+def createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLineValue, location, strategyNames, strategyPercent, strategyHours, lb_preparation, legendFontSize, legendBold, legendFont, strategiesColors):
     if legendFontSize == None: legendFontSize = 2
     
     #Make axis labels for the chart.
     xAxisLabels = []
     xAxisTxt = ["Comfort Strategies"]
     xAxisPt = [rc.Geometry.Point3d(orgX + 0., orgY - 5.0, 0)]
-    xAxisLabels.extend(text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25)[0])
+    xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, legendBold)[0])
+
         
     # Make the percentage text for the chart Y axis.
     percentText = []
@@ -224,14 +225,14 @@ def createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLine
         percentLabelBasePts.append(rc.Geometry.Point3d(orgX - 8, orgY + (percent)-0.75, 0))
         percentText.append(str(percent)+"%")
     for count, text in enumerate(percentText):
-        percentLabels.extend(text2srf([text], [percentLabelBasePts[count]], legendFont, legendFontSize*.75)[0])
+        percentLabels.extend(lb_visualization.text2srf([text], [percentLabelBasePts[count]], legendFont, legendFontSize*.75, legendBold)[0])
 
     # Make the Title at top.
     titleLabels = []
     titleTxt = "Year Results"
     titlePt = [rc.Geometry.Point3d(orgX + 0., (100 + orgY + 1), 0)]
 
-    titleLabels.extend(text2srf([titleTxt], [titlePt[0]], legendFont, legendFontSize*1.5)[0])
+    titleLabels.extend(lb_visualization.text2srf([titleTxt], [titlePt[0]], legendFont, legendFontSize*1.5, True)[0])
     
     #Months titles loop
     step = monthStep
@@ -240,7 +241,7 @@ def createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLine
         titleTxt = MonthNames[m]
         titlePt = [rc.Geometry.Point3d(orgX + step, (100 + orgY + 1), 0)]
         step += monthStep
-        titleLabels.extend(text2srf([titleTxt], [titlePt[0]], legendFont, legendFontSize*1.5)[0])
+        titleLabels.extend(lb_visualization.text2srf([titleTxt], [titlePt[0]], legendFont, legendFontSize*1.5, legendBold)[0])
     
     
     # Create legend with Strategies Names, at bottom right.
@@ -263,7 +264,7 @@ def createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLine
         combString = '%.1f%% - %d hours' % (strategyPercent[count], strategyHours[count])
         legResultstText.append(combString) #strategyPercent, strategyHours
     for count, text in enumerate(legResultstText):
-        legLabels1.extend(text2srf([text], [legColorLabelBasePts1[count]], legendFont, legendFontSize*.75)[0])
+        legLabels1.extend(lb_visualization.text2srf([text], [legColorLabelBasePts1[count]], legendFont, legendFontSize*.75, legendBold)[0])
         
     for count, text in enumerate(strategyNames):
         if   count == 0: colorP = strategiesColors[0]    # CZ
@@ -273,7 +274,7 @@ def createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLine
         elif count == 4: colorP = strategiesColors[4]    # NV
         else           : colorP = System.Drawing.Color.FromArgb(255, 255, 255, 255)
         
-        legLabels.extend(text2srf([text], [legLabelBasePts[count]], legendFont, legendFontSize*0.75)[0])
+        legLabels.extend(lb_visualization.text2srf([text], [legLabelBasePts[count]], legendFont, legendFontSize*0.75, legendBold)[0])
         legPol = drawPolygon(legColorLabelBasePts[count], radius, segments, colorP)
         legPolygon.append(legPol)
     
@@ -298,7 +299,7 @@ def createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLine
     
     return restText
 
-def createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize):
+def createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize, legendBold):
     if legendFontSize == None: legendFontSize = 2
     
     #Make axis labels for the chart.
@@ -306,13 +307,13 @@ def createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize):
     xAxisTxt = ["Humidity Ratio"]
     #xAxisPt = [rc.Geometry.Point3d(orgX + 35., orgY - 10.0, 0)]
     xAxisPt = [rc.Geometry.Point3d(orgX, orgY - 10.0, 0)]
-    xAxisLabels.extend(text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25)[0])
+    xAxisLabels.extend(lb_visualization.text2srf(xAxisTxt, xAxisPt, legendFont, legendFontSize*1.25, True)[0])
         
     yAxisLabels = []
     yAxisTxt = ["Dry Bulb Temperature"]
     #yAxisPt = [rc.Geometry.Point3d(orgX - 10.0, orgY + 35., 0)]
     yAxisPt = [rc.Geometry.Point3d(orgX - 10.0, orgY, 0)]
-    yAxisLabels.extend(text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25)[0])
+    yAxisLabels.extend(lb_visualization.text2srf(yAxisTxt, yAxisPt, legendFont, legendFontSize*1.25, True)[0])
     #rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(orgX - 10.0, orgY + 35., 0))
     rotateTransf = rc.Geometry.Transform.Rotation(1.57079633, rc.Geometry.Point3d(orgX - 10.0, orgY, 0))
     for geo in yAxisLabels:
@@ -331,7 +332,7 @@ def createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize):
         relHumidBasePts.append(rc.Geometry.Point3d(humid - 2, orgY - 3, 0))
         relHumidTxt.append(str(humid)+"%")
     for count, text in enumerate(relHumidTxt):
-        relHumidLabels.extend(text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75)[0])
+        relHumidLabels.extend(lb_visualization.text2srf([text], [relHumidBasePts[count]], legendFont, legendFontSize*.75, legendBold)[0])
     
     # Make the temperature text for the chart.
     tempText = []
@@ -342,14 +343,14 @@ def createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize):
         tempLabelBasePts.append(rc.Geometry.Point3d(-5, (temp * 2)-0.75, 0))
         tempText.append(str(temp))
     for count, text in enumerate(tempText):
-        tempLabels.extend(text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize*.75)[0])
+        tempLabels.extend(lb_visualization.text2srf([text], [tempLabelBasePts[count]], legendFont, legendFontSize*.75, legendBold)[0])
     
     titleLabels = []
     titleTxt = ["Bio Climatic Chart", location]
     titlePt = [rc.Geometry.Point3d(orgX, 108, 0), 
     rc.Geometry.Point3d(orgX, 103, 0)]
     for count, text in enumerate(titleTxt):
-        titleLabels.extend(text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5)[0])
+        titleLabels.extend(lb_visualization.text2srf([text], [titlePt[count]], legendFont, legendFontSize*1.5, legendBold)[0])
     
     #Bring all text and curves together in one list.
     chartLayout = []
@@ -366,7 +367,7 @@ def createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize):
     
     return chartLayout
 
-def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendScale, legendFont, legendFontSize, lb_visualization, strategiesColors, monthColors, comfortNOcomfortColors, customColors, totalComfortOrNot):
+def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendScale, legendFont, legendFontSize, legendBold, lb_visualization, strategiesColors, monthColors, comfortNOcomfortColors, customColors, totalComfortOrNot):
     if legendFontSize == None: legendFontSize = 2
     
     # ************** Generate a legend for strategies ***********
@@ -411,7 +412,7 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
         legStrategyPolygons.append(legMesh)
         
         # Draw the strategies names
-        legStrategyLabels.extend(text2srf([text], [legLabelBasePts[count]], legendFont, legendFontSize*0.75)[0])
+        legStrategyLabels.extend(lb_visualization.text2srf([text], [legLabelBasePts[count]], legendFont, legendFontSize*0.75, legendBold)[0])
     # ************** End Legend of strategies ***********
     
     """
@@ -459,7 +460,7 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
         legMesh.VertexColors.CreateMonotoneMesh(comfortNOcomfortColors[m])
         
         legComfCircle.append(legMesh)
-        legComfLabels.extend(text2srf([text], [legComfLabelBasePts[m]], legendFont, legendFontSize*0.75)[0])
+        legComfLabels.extend(lb_visualization.text2srf([text], [legComfLabelBasePts[m]], legendFont, legendFontSize*0.75, legendBold)[0])
     # ************** End Legend of comfortOrNot ***********
     
     # ************** Generate a legend for Month colored ***********
@@ -480,7 +481,7 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
         legMesh.VertexColors.CreateMonotoneMesh(monthColors[count])
         
         legMonthsCircle.append(legMesh)
-        legMonthLabels.extend(text2srf([text], [legMonthLabelBasePts[count]], legendFont, legendFontSize*0.75)[0])
+        legMonthLabels.extend(lb_visualization.text2srf([text], [legMonthLabelBasePts[count]], legendFont, legendFontSize*0.75, legendBold)[0])
     # ************** End Legend of Month colors ***********
     
     #Bring all text and curves together in one list.
@@ -506,45 +507,6 @@ def createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendSca
         chartLegend.append(item)
     
     return chartLegend
-
-def text2srf(text, textPt, font, textHeight):
-    # Thanks to Giulio Piacentino for his version of text to curve
-    textSrfs = []
-    for n in range(len(text)):
-        plane = rc.Geometry.Plane(textPt[n], rc.Geometry.Vector3d(0,0,1))
-        if type(text[n]) is not str:
-            preText = rc.RhinoDoc.ActiveDoc.Objects.AddText(`text[n]`, plane, textHeight, font, True, False)
-        else:
-            preText = rc.RhinoDoc.ActiveDoc.Objects.AddText( text[n], plane, textHeight, font, True, False)
-            
-        postText = rc.RhinoDoc.ActiveDoc.Objects.Find(preText)
-        TG = postText.Geometry
-        crvs = TG.Explode()
-        
-        # join the curves
-        joindCrvs = rc.Geometry.Curve.JoinCurves(crvs)
-        
-        # create the surface
-        srfs = rc.Geometry.Brep.CreatePlanarBreps(joindCrvs)
-        
-        extraSrfCount = 0
-        # = generate 2 surfaces
-        if "=" in text[n]: extraSrfCount += -1
-        if ":" in text[n]: extraSrfCount += -1
-        
-        if len(text[n].strip()) != len(srfs) + extraSrfCount:
-            # project the curves to the place in case number of surfaces
-            # doesn't match the text
-            projectedCrvs = []
-            for crv in joindCrvs:
-                projectedCrvs.append(rc.Geometry.Curve.ProjectToPlane(crv, plane))
-            srfs = rc.Geometry.Brep.CreatePlanarBreps(projectedCrvs)
-        
-        textSrfs.append(srfs)
-        
-        rc.RhinoDoc.ActiveDoc.Objects.Delete(postText, True) # find and delete the text
-        
-    return textSrfs
 
 #def strategyDraw_Calc(name, shiftFactor, *points): # The x is for a list of points passed one by one
 def strategyDraw_Calc(name, shiftFactor, points, hourPoints, tol, dryBulbTemperature, totalHrs, cR, cG, cB):
@@ -790,7 +752,7 @@ def graphResultsMonth(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLineVa
 
     
 def showResults(basePoint_, mainLegHeight, strategyNames, strategyPercent, strategyHours, strategyMonth, \
-    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_preparation, lb_visualization, strategiesColors):
+    lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_preparation, lb_visualization, strategiesColors):
     gridLines = []
     resultsChart = []
     
@@ -826,7 +788,7 @@ def showResults(basePoint_, mainLegHeight, strategyNames, strategyPercent, strat
     # End Grid Lines ****************************
     # Print Title and legends in grid: X/Y axis ****************************
     location = 'Results'
-    resText = createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLineValue, location, strategyNames, strategyPercent, strategyHours, lb_preparation, legendFontSize, legendFont, strategiesColors)
+    resText = createResultsLegend(orgX, orgY, orgZ, gridStep, monthStep, xLineValue, yLineValue, location, strategyNames, strategyPercent, strategyHours, lb_preparation, legendFontSize, legendBold, legendFont, strategiesColors)
     
     # This is for Year results --- in the future this and the monthly results should be unified in one single routine
     seeChartResults = graphResults(orgX, orgY, orgZ, gridStep, xLineValue, yLineValue, location, strategyNames, strategyPercent, strategyHours, lb_preparation, legendFontSize, legendFont, strategiesColors)
@@ -1435,7 +1397,7 @@ def main(epwData, epwStr):
         # End Grid Lines ****************************
         # Print Title and legends in grid: X/Y axis ****************************
 
-        chartLayout = createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize)
+        chartLayout = createChartLayout(orgX, orgY, orgZ, location, legendFont, legendFontSize, legendBold)
         
         xPointValue = []
         rhValue = []
@@ -1527,7 +1489,8 @@ def main(epwData, epwStr):
         #legendFontSize = 2
         #lb_visualization.calculateBB(chartText, True)
         lb_visualization.calculateBB(chartLayout[0:90], True) 
-        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, decimalPlaces, removeLessThan)
+
+        legendSrfs, legendText, legendTextCrv, textPt, textSize = lb_visualization.createLegend(meshFaceValues, lowB, highB, numSeg, legendTitle, lb_visualization.BoundingBoxPar, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan)
         ##legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendColors = lb_visualization.gradientColor(legendText[:-1], lowB, highB, customColors)
         legendSrfs = lb_visualization.colorMesh(legendColors, legendSrfs)
@@ -1657,11 +1620,11 @@ def main(epwData, epwStr):
         
         totalComfortOrNot, strategyOrNotList = checkComfortOrNot(strategyNames, totalHrs, comfID, pshID, ecID, htmID, nvID, epwData, epwStr)
         
-        chartLegend = createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendScale, legendFont, legendFontSize, lb_visualization, strategiesColors, monthColors, comfortNOcomfortColors, customColors, totalComfortOrNot)
+        chartLegend = createChartLegend(orgX, orgY, orgZ, strategyNames, lb_preparation, legendScale, legendFont, legendFontSize, legendBold, lb_visualization, strategiesColors, monthColors, comfortNOcomfortColors, customColors, totalComfortOrNot)
         
         if calculateCharts_ == True:
             resultsChart = showResults(basePoint_, mainLegHeight, strategyNames, strategyPercent, strategyHours, strategyMonth, \
-            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, lb_preparation, lb_visualization, strategiesColors)
+            lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, lb_preparation, lb_visualization, strategiesColors)
         else:
             resultsChart = None
              

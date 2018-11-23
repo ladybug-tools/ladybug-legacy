@@ -2,7 +2,7 @@
 #
 # This file is part of Ladybug.
 #
-# Copyright (c) 2013-2015, ....(YOUR NAME).... <....(YOUR EMAIL)....>
+# Copyright (c) 2013-2018, ....(YOUR NAME).... <....(YOUR EMAIL)....>
 # Ladybug is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; either version 3 of the License,
@@ -24,7 +24,7 @@ Use this component to calculate discomfort from radiant assymetry.
 _
 The comfort functions in this function come from Figure 5.2.4.1 of ASHRAE 55 2010.
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
 
     Args:
         _radTempDifference: The temperature difference between one side of a pla
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Radiant Asymmetry Discomfort"
 ghenv.Component.NickName = 'radAsymmetry'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_10_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -110,7 +110,7 @@ def clacRadAsymmDiscomf(radTempDif, asymmType, PPDThresh = 5):
 
 
 
-if len(_radTempDifference) and _radAsymmType:
+if len(_radTempDifference) and _radAsymmType != None:
     if PPDThreshold_ == None: PPDThreshold = 5
     else: PPDThreshold = PPDThreshold_
     PPD, comfOrNot = clacRadAsymmDiscomf(_radTempDifference, _radAsymmType, PPDThreshold)

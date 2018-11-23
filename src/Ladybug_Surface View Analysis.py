@@ -2,7 +2,7 @@
 #
 # This file is part of Ladybug.
 #
-# Copyright (c) 2013-2015, ....(YOUR NAME).... <....(YOUR EMAIL)....>
+# Copyright (c) 2013-2018, ....(YOUR NAME).... <....(YOUR EMAIL)....>
 # Ladybug is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; either version 3 of the License,
@@ -22,13 +22,13 @@
 """
 Use this component to calculate view factors from a point or plane to a set of surfaces.  View factors are used in many thermal comfort calculations such as mean radiant temperture (MRT) or discomfort from radiant assymetry. 
 -
-Provided by Ladybug 0.0.63
+Provided by Ladybug 0.0.67
 
     Args:
         _testPtsOrPlanes: A point or plane from which view vectors will be pojected.  Note that, if a point is connected, all view vectors will be weighted evenly (assuming no directional bias).  However, if a plane is connected, vectors will be weighted based on their angle to the plane normal, producing view factors for a surface in the connected plane.  The first is useful for MRT calculations while the latter is needed for radiant assymetry calculations.  This input can also be a list of points or planes.
         _testSrfs: A list of breps, surfaces, or meshes to which you want to compute view factors.  Note that by meshing and joining several goemtries together, you can calculate the combined view factor to these geometries.
         context_: Optional context geometry as breps, surfaces, or meshes that can block the view to the _testSrfs.
-        _viewResolution_: An interger, which sets the number of times that the tergenza skyview patches are split.  A higher number will ensure a greater accuracy but will take longer.  The default is set to 1 for a quick calculation.
+        _viewResolution_: An interger, which sets the number of times that the tergenza skyview patches are split.  A higher number will ensure a greater accuracy but will take longer.  The default is set to 0 for a quick calculation.
         parallel_: Set to "True" to run the calculation in parallel and set to "False" to run it with a single core.  The default is set to "False."
         _runIt: Set to 'True' to run the component and claculate view factors.
     Returns:
@@ -42,7 +42,7 @@ Provided by Ladybug 0.0.63
 
 ghenv.Component.Name = "Ladybug_Surface View Analysis"
 ghenv.Component.NickName = 'srfViewFactors'
-ghenv.Component.Message = 'VER 0.0.63\nAUG_12_2016'
+ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -66,7 +66,7 @@ w = gh.GH_RuntimeMessageLevel.Warning
 
 def checkInputs():
     #Set a default view resolution.
-    if _viewResolution_ == None: viewRes = 1
+    if _viewResolution_ == None: viewRes = 0
     else: viewRes = _viewResolution_
     
     #Set a default parallel.
@@ -90,7 +90,10 @@ def checkInputs():
                 viewPoints.append(rc.Geometry.Point3d(point))
                 if viewMethod ==  1: checkData = False
             except:
-                viewPoints.append(rc.Geometry.Point3d(rs.coerce3dpoint(point)))
+                try:
+                    viewPoints.append(rc.Geometry.Point3d(rs.coerce3dpoint(point)))
+                except:
+                    checkData = False
     
     if checkData == False:
         warning = "_testPtsOrPlanes can be either points or planes but not both."
@@ -185,7 +188,10 @@ def main(zoneSrfsMesh, context, viewVectors, patchAreaFacs, testPts, viewPtNorma
                     else:
                         # calculate the angle between the surface and the vector to project the view into the plane.
                         vecAngle = rc.Geometry.Vector3d.VectorAngle(viewVectors[rayCount], viewPtNormals[i])
-                        srfHits[minIndex].append(patchAreaFacs[rayCount]* 2 * abs(math.cos(vecAngle)))
+                        if math.degrees(vecAngle) > 90:
+                            srfHits[minIndex].append(0)
+                        else:
+                            srfHits[minIndex].append(patchAreaFacs[rayCount]* 4 * abs(math.cos(vecAngle)))
             else:
                 vecSrfIndices[i].append(-1)
         
@@ -229,8 +235,8 @@ else:
 
 if initCheck == True:
     checkData, viewRes, viewMethod, viewPoints, viewPtNormals, parallel = checkInputs()
-    viewPatchBasePt = viewPoints[0]
     if checkData == True and _runIt == True:
+        viewPatchBasePt = viewPoints[0]
         viewVectors, viewPatches, patchAreaFacs = checkViewResolution(viewRes, viewPatchBasePt, lb_preparation)
         srfViewFactorsInit, viewVecSrfIndexInit = main(_testSrfs, context_, viewVectors, patchAreaFacs, viewPoints, viewPtNormals, viewMethod, parallel)
         
