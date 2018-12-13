@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Line Chart"
 ghenv.Component.NickName = 'LineChart'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nDEC_13_2018'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -424,11 +424,14 @@ def plotData(dataLists, startVals, scaleFacs, dataWidth, width, colors, stackInd
             
             # create the mesh from the curve
             joinedMesh = rc.Geometry.Mesh()
-            for br in joinedBrep:
-                mesh = rc.Geometry.Mesh.CreateFromBrep(br)[0]
-                joinedMesh.Append(mesh)
-            joinedMesh.VertexColors.CreateMonotoneMesh(colors[dataCount])
-            dataMeshes.append(joinedMesh)
+            if joinedBrep is not None:
+                for br in joinedBrep:
+                    mesh = rc.Geometry.Mesh.CreateFromBrep(br)[0]
+                    joinedMesh.Append(mesh)
+                joinedMesh.VertexColors.CreateMonotoneMesh(colors[dataCount])
+                dataMeshes.append(joinedMesh)
+            else:
+                dataMeshes.append(None)
     
     return dataMeshes, dataCurves
 
