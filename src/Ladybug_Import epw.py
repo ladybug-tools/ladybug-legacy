@@ -114,7 +114,7 @@ initCheck = True
 if not sc.sticky.has_key('ladybug_release') == True:
     initCheck = False
     print "You should first let Ladybug fly..."
-    ghenv.Component.AddRuntimeMessage(w, "You should first let Ladybug fly...")
+    ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, "You should first let Ladybug fly...")
 else:
     try:
         if not sc.sticky['ladybug_release'].isCompatible(ghenv.Component): initCheck = False
@@ -126,7 +126,7 @@ else:
         "Use updateLadybug component to update userObjects.\n" + \
         "If you have already updated userObjects drag Ladybug_Ladybug component " + \
         "into canvas and try again."
-        ghenv.Component.AddRuntimeMessage(w, warning)
+        ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
 
 if initCheck == True and _epwFile and _epwFile.lower().endswith('.epw'):
     result = main(_epwFile)
