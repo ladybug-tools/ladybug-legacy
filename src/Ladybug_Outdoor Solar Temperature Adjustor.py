@@ -76,7 +76,7 @@ Provided by Ladybug 0.0.67
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nMAR_05_2019'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -482,8 +482,8 @@ def checkTheInputs():
             winTrans.append(1)
         print 'No value found for windowTransmissivity_.  The window transmissivity will be set to 1.0 for a fully outdoor calculation.'
     
-    #Set the default parallel to true.
-    if parallel_ == None: parallel = True
+    #Set the default parallel to False.
+    if parallel_ == None: parallel = False
     else: parallel = parallel_
     
     #Make the default analyisis period for the whole year if the user has not input one.
@@ -1323,21 +1323,20 @@ def mainSimple(baseTempType, radTemp, infraredRad, mannequinMesh, context, groun
                             dirNormRad = directSolarRad[hour-1]
                             globHorizRad = float(dirNormRad)*(math.sin(altitudes[count])) + diffRad
                             
-                            #Define the Azimuth as the SolarCal function understands it.
-                            azInit = math.degrees(azimuths[count])
-                            #Change the azimuth based on the north angle and the rotation angle of the mannequin.
-                            if northAngle != 0.0: azInit = azInit + northAngle
-                            if rotationAngle != 0.0: azInit = azInit + rotationAngle
-                            
-                            #Compute a final Azimuth that can be put through the spline function.
-                            azFinal = azInit
-                            if azInit > 180:
-                                while azFinal > 180:
-                                    azFinal = azFinal-180
-                            elif azInit < 0:
-                                while azFinal < 0:
-                                    azFinal = azFinal+180
-                            azFinal = int(azFinal)
+                            #Calculate solar horizontal angle relative to front of person (SHARP).
+                            solarAz = math.degrees(azimuths[count])
+                            bodyAz = rotationAngle
+                            if bodyAz > 360:
+                                while bodyAz > 360:
+                                    bodyAz = bodyAz-360
+                            elif bodyAz < -360:
+                                while bodyAz > 360:
+                                    bodyAz = bodyAz-360
+                            angle_diff = abs(solarAz - bodyAz)
+                            if angle_diff <= 180:
+                                azFinal = int(angle_diff)
+                            else:
+                                azFinal = int(360 - angle_diff)
                             
                             #Define the Altitude as the SolarCal function understands it.
                             altInit = int(math.degrees(altitudes[count]))
@@ -1417,21 +1416,20 @@ def mainSimple(baseTempType, radTemp, infraredRad, mannequinMesh, context, groun
                         dirNormRad = directSolarRad[HOYS[count]-1]
                         globHorizRad = dirNormRad*(math.sin(altitudes[count])) + diffRad
                         
-                        #Define the Azimuth as the SolarCal function understands it.
-                        azInit = math.degrees(azimuths[count])
-                        #Change the azimuth based on the north angle and the rotation angle of the mannequin.
-                        if northAngle != 0.0: azInit = azInit + northAngle
-                        if rotationAngle != 0.0: azInit = azInit + rotationAngle
-                        
-                        #Compute a final Azimuth that can be put through the spline function.
-                        azFinal = azInit
-                        if azInit > 180:
-                            while azFinal > 180:
-                                azFinal = azFinal-180
-                        elif azInit < 0:
-                            while azFinal < 0:
-                                azFinal = azFinal+180
-                        azFinal = int(azFinal)
+                        #Calculate solar horizontal angle relative to front of person (SHARP).
+                        solarAz = math.degrees(azimuths[count])
+                        bodyAz = rotationAngle
+                        if bodyAz > 360:
+                            while bodyAz > 360:
+                                bodyAz = bodyAz-360
+                        elif bodyAz < -360:
+                            while bodyAz > 360:
+                                bodyAz = bodyAz-360
+                        angle_diff = abs(solarAz - bodyAz)
+                        if angle_diff <= 180:
+                            azFinal = int(angle_diff)
+                        else:
+                            azFinal = int(360 - angle_diff)
                         
                         #Define the Altitude as the SolarCal function understands it.
                         altInit = int(math.degrees(altitudes[count]))
