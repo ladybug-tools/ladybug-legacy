@@ -1028,7 +1028,8 @@ class Preparation(object):
         sunModes = ['+s1']
         batchStr = workingDir[0:2] + "\ncd " + subWorkingDir + "\n"
         for sunMode in sunModes:
-            calFileName = subWorkingDir + "\\" + newLocName + '_' + sunMode[-1] + '.cal'
+            calFileName = subWorkingDir + "\\" + newLocName + '_' + sunMode[-1] + '_%s.cal' \
+                          % "_".join([str(stMonth), str(stDay), str(stHour), str(endMonth), str(endDay), str(endHour)])
             reportFileName = subWorkingDir + "\\" + newLocName + '_' + sunMode[-1] + '_report.txt' 
             newLine = workingDir + "\GenCumulativeSky " + sunMode + \
                 " -a " + lat + \
