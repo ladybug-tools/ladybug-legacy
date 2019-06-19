@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nJUN_19_2019'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1539,6 +1539,8 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         polyStart = bldgBalPt
                     else:
                         polyStart = minComfortPolyTemp
+                    polyStart = F2C([polyStart])[0] if IPTrigger else polyStart
+                    
                     for hourCt, hourPt in enumerate(globHorizRad):
                         if airTemp[hourCt] < polyStart:
                             tempDelta = polyStart - airTemp[hourCt]
@@ -1558,6 +1560,9 @@ def calcComfAndStrategyPolygons(radTemp, windSpeed, metRate, cloLevel, exWork, h
                         elif maxDelta < 1:
                             maxDelta = 1
                     
+                    if IPTrigger:
+                        polyStart = C2F([polyStart])[0]
+                        maxDelta = maxDelta * (9 / 5)
                     solarBoundary = rc.Geometry.LineCurve(rc.Geometry.Point3d(polyStart-maxDelta, 0, 0), rc.Geometry.Point3d(polyStart-maxDelta, scaleFactor*0.03, 0))
                     solarBoundary = solarBoundary.Split(chartBoundaryBrep, sc.doc.ModelAbsoluteTolerance)[0]
                     
@@ -1777,9 +1782,10 @@ def statisticallyAnalyzePolygons(hourPts, comfortPolyline, strategyPolylines, un
                 for hourCt, hourPt in enumerate(hourPts):
                     if str(comfortPolygon.Contains(hourPt, rc.Geometry.Plane.WorldXY, sc.doc.ModelAbsoluteTolerance)) == "Inside" or hourPt.DistanceTo(comfortPolygon.PointAt(comfortPolygon.ClosestPoint(hourPt)[1])) < curveTolerance:
                         if "Internal Heat Gain" in strategyTextNames:
-                            tempDelta = bldgBalPt - airTemp[hourCt]
+                            pStart = F2C([bldgBalPt])[0] if IPTrigger is True else bldgBalPt
                         else:
-                            tempDelta = polyStart - airTemp[hourCt]
+                            pStart = F2C([polyStart])[0] if IPTrigger is True else polyStart
+                        tempDelta = pStart - airTemp[hourCt]
                         comfFound = 0
                         solarHeatContribs = []
                         for pastRad in range(int(solarTimeConst)):
