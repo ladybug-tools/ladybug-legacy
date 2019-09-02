@@ -179,13 +179,13 @@ def main(percent, operator):
         totalEnergyList = []
         for count, area in enumerate(areaList):
             totalEnergyList.append(shadeNetFinal[count]*area)
-        totalEnergy = sum(totalEnergyList)
-    else:
-        totalArea = rc.Geometry.AreaMassProperties.Compute(newMesh).Area
         if totalArea>0:
             totalEnergy = (sum(shadeNetFinal)/len(shadeNetFinal))*totalArea
         else:
             totalEnergy=0
+    else:
+        totalArea = rc.Geometry.AreaMassProperties.Compute(newMesh).Area
+        totalEnergy = (sum(shadeNetFinal)/len(shadeNetFinal))*totalArea
     
     return totalEnergy, totalArea, newMesh, joinedCrv
 
