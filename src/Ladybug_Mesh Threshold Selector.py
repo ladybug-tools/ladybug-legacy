@@ -182,7 +182,10 @@ def main(percent, operator):
         totalEnergy = sum(totalEnergyList)
     else:
         totalArea = rc.Geometry.AreaMassProperties.Compute(newMesh).Area
-        totalEnergy = (sum(shadeNetFinal)/len(shadeNetFinal))*totalArea
+        if totalArea>0:
+            totalEnergy = (sum(shadeNetFinal)/len(shadeNetFinal))*totalArea
+        else:
+            totalEnergy=0
     
     return totalEnergy, totalArea, newMesh, joinedCrv
 
