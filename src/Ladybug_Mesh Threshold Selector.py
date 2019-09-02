@@ -48,7 +48,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nSEP_02_2019'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -182,7 +182,10 @@ def main(percent, operator):
         totalEnergy = sum(totalEnergyList)
     else:
         totalArea = rc.Geometry.AreaMassProperties.Compute(newMesh).Area
-        totalEnergy = (sum(shadeNetFinal)/len(shadeNetFinal))*totalArea
+        if totalArea>0:
+            totalEnergy = (sum(shadeNetFinal)/len(shadeNetFinal))*totalArea
+        else:
+            totalEnergy=0
     
     return totalEnergy, totalArea, newMesh, joinedCrv
 
