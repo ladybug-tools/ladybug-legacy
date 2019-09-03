@@ -35,7 +35,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Mesh-To-Hatch"
 ghenv.Component.NickName = 'Mesh2Hatch'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nSEP_03_2019'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
@@ -62,11 +62,23 @@ def main():
     else:
         parentLayer.IsVisible = True
     parentLayer.Color =  System.Drawing.Color.Pink
-    # Add Parent layer if it's not already created
-    parentLayerIndex = rc.DocObjects.Tables.LayerTable.Find(layerT, parentLayerName, True)
-    if parentLayerIndex < 0: parentLayerIndex = layerT.Add(parentLayer)
-    
-    
+    # Add Layerstructure if they don't exist
+    parentLayerIndex = rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, parentLayerName, True)
+    if parentLayerIndex < 0: 
+        newLayer = rc.DocObjects.Layer()
+        li = parentLayerName.split("::")
+        for i in range(1,len(li)+len(li)-1, 2): li[i:i]=["::"]      #insert :: in list
+        for i in range(1,len(li)+1,2):                              #get each partital fulllayer
+            fullpath=''.join(li[0:i])
+            layerIndex=rc.DocObjects.Tables.LayerTable.FindByFullPath(layerT, fullpath, True)
+            if layerIndex<0:                                    #if sublayer doesn't exist create it
+                newLayer.Name=li[i-1]
+                if not parentLayerIndex<0:
+                    newLayer.ParentLayerId=layerT[parentLayerIndex].Id 
+                parentLayerIndex=layerT.Add(newLayer)
+            else:
+                parentLayerIndex=layerIndex
+
     #Convert the mesh to a colored hatch.
     lb_visualization = sc.sticky["ladybug_ResultVisualization"]()
     lb_visualization.mesh2Hatch(_mesh, parentLayerIndex)
