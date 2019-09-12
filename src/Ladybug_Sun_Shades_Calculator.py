@@ -15,7 +15,7 @@
 # @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 
 """
-Use this component to generate shading devices, either surface or pergola, for any glazed surface or list of glazed surfaces.  
+Use this component to generate shading devices, either surface or pergola, for any glazed surfmyPlaneace or list of glazed surfaces.  
 The component first culls all sun vectors obstructed by the context, if provided.
 By default it calculates the device as a "new brand" one but it also can calculate the cut profile for a given surface.
 The default it will generate an overhang over the window (or multiple overhangs if the _numOfShds is increased).  
@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.67
 ##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nJAN_06_2019'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -507,20 +507,27 @@ def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShif
 def finalSurfStuff(cullPts, delaunayHeight, offsetFactor, shadeSurface):
     
     worldPlane = rc.Geometry.Plane.WorldXY
+    
     if shadeSurface == None:    # In case no shading surface was provided
+        #$print 'None'
         planeFromPoints = rc.Geometry.Plane.FitPlaneToPoints(cullPts)
     else:    # In case shading surface was provided
+        #$print 'WITH'
         points_surface = ghc.SurfacePoints(shadeSurface).points
         
-        planeFromPoints = rc.Geometry.Plane.FitPlaneToPoints(points_surface)[1]##
+        planeFromPoints = rc.Geometry.Plane.FitPlaneToPoints(points_surface)##
         #planeFromPoints = rc.Geometry.Plane.FitPlaneToPoints(points_surface)[1]##
 
     if planeFromPoints:
         wp  = worldPlane.Normal
         if shadeSurface == None:    # In case no shading surface was provided
-            pfp = rc.Geometry.Plane.Normal.GetValue(planeFromPoints[1])
+            myPlane = planeFromPoints [1] # extract plane from FitPlaneToPoints
         else:    # In case shading surface was provided
-            pfp = rc.Geometry.Plane.Normal.GetValue(planeFromPoints)
+            myPlane = planeFromPoints[1] # extract plane from FitPlaneToPoints###########################################????????????????????????
+            ##myPlane = planeFromPoints # extract plane from FitPlaneToPoints
+        
+        #print type(myPlane), planeFromPoints
+        pfp = rc.Geometry.Plane.Normal.GetValue(myPlane)
         
         vectorAngle = rc.Geometry.Vector3d.VectorAngle(pfp, wp)
         tolAngle = 70       # Tolerance angle. Right now I set it to 70 but this should be followed up
@@ -625,8 +632,9 @@ def finalSurfStuff(cullPts, delaunayHeight, offsetFactor, shadeSurface):
     projectedCrv = ghc.Project(trimCurve, patch, directionPlane)
     splitSrf = ghc.SurfaceSplit(patch, projectedCrv)
     
-
-    H1, Hz1, I1 = ghc.ConvexHull(cullPts, planeFromPoints)
+    
+    
+    H1, Hz1, I1 = ghc.ConvexHull(cullPts, myPlane) #planeFromPoints
     cen = rc.Geometry.AreaMassProperties.Compute(H1).Centroid
     centerH = rc.Geometry.Point3d(cen)
     #print centerH
