@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nSEP_26_2019'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
@@ -65,7 +65,7 @@ def downloadSourceAndUnzip(lb_preparation):
     """
     Download the source code from github and unzip it in temp folder
     """
-    url = "https://github.com/mostaphaRoudsari/ladybug/archive/master.zip"
+    url = "https://github.com/ladybug-tools/ladybug-legacy/archive/master.zip"
     targetDirectory = os.path.join(sc.sticky["Ladybug_DefaultFolder"], "ladybugSrc")
     
     # download the zip file
@@ -104,7 +104,7 @@ def downloadSourceAndUnzip(lb_preparation):
             else:
                 zf.extract(f, targetDirectory)
     
-    userObjectsFolder = os.path.join(targetDirectory, r"ladybug-master\userObjects")
+    userObjectsFolder = os.path.join(targetDirectory, r"ladybug-legacy-master\userObjects")
     
     return userObjectsFolder
 
