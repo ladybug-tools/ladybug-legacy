@@ -9,6 +9,23 @@ Ladybug imports standard EnergyPlus Weather files (.EPW) in Grasshopper and prov
 
 [Here is Ladybug in a less than 5-minute video](http://www.youtube.com/watch?v=OEjwAyC2l_0)
 
+You can download Ladybug example files from here. (Getting started, Wind, Radiation, SunPath, Environmental Analysis, Real-time Radiation Analysis, Ray-tracing, View Rose, Shadow Study)
+
+### Video tutorials:
+
+- How to use sunpath in Ladybug: [Part I](https://www.youtube.com/watch?v=9_u0dnyq2QI), [Part II](https://www.youtube.com/watch?v=id5Ll1p2NYM), [Part III](https://www.youtube.com/watch?v=gqcOmWLUDYw)
+
+- [How to use "set the view" component in Ladybug](https://www.youtube.com/watch?v=rj-g7-H5xyE) by Abraham Yezioro.
+
+- More tutorials for Ladybug on (Performance + Form).
+
+"Performance+FORM is a platform to learn, SHARE, and collaborate on projects and WORKFLOWS for environmentally responsive design." The project is started by faculty and students at USC but is open to all. 
+
+### Other tutorials:
+
+- [A pdf tutorial](https://docs.google.com/file/d/0Bz2PwDvkjovJclJDMHJVMHJWaFU/edit) by Anna Kaertner and Chantal Jahn prepared for the [Building Technology Laboratory Class](http://architecture.mit.edu/subject/fall-2013-4411) at MIT taught by Les Norford. This tutorial goes through almost all of the Ladybug components except the sun-path.
+
+- ["Tutorial on the Use of Daysim Simulations for Sustainable Design"](https://www.dropbox.com/s/ril32ukfzgu2ci2/Daysim3.0.Tutorial.pdf) is written by Christoph F. Reinhart. From the document: " No matter what your level of expertise with daylight simulations is
 
 Licence
 ========================================
