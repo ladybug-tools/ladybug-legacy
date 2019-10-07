@@ -14,24 +14,24 @@ Licence
 ========================================
 Ladybug: A Plugin for Environmental Analysis (GPL) started by Mostapha Sadeghipour Roudsari
  
-Copyright (c) 2013-2015, Mostapha Sadeghipour Roudsari
+Copyright (c) 2013-2019, Mostapha Sadeghipour Roudsari
 
 Ladybug is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version. 
  
 Ladybug is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  
-You should have received a copy of the GNU General Public License along with Ladybug; If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with Ladybug. <br/>If not, see <http://www.gnu.org/licenses/>.
  
 @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
 
 
 Useful links
 ========================================
-[Ladybug group page on Grasshopper](http://www.grasshopper3d.com/group/ladybug)
+* [Ladybug group page on Grasshopper](http://www.grasshopper3d.com/group/ladybug)
 
-[Facebook page](https://www.facebook.com/LadybugAnalysisTools)
+* [Facebook page](https://www.facebook.com/LadybugAnalysisTools)
 
-[Ladybug on Twitter](https://www.twitter.com/ladybug_tool)
+* [Ladybug on Twitter](https://www.twitter.com/ladybug_tool)
 
 [Contributors](https://github.com/mostaphaRoudsari/ladybug/graphs/contributors)
 ========================================
