@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.67
 """
 ghenv.Component.Name = "Ladybug_Open EPW And STAT Weather Files"
 ghenv.Component.NickName = 'EPW+STAT'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.67\nDEC_03_2019'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -97,12 +97,11 @@ def checkTheInputs(_weatherFileURL):
         
         #If no working directory is specified, default to C:\ladybug.
         if workingDir_ != None and checkData == True:
-            workingDir = workingDir_
+            workingDir = os.path.join(workingDir_, folderName)
         elif workingDir_ == None and checkData == True:
-            workingDir = lb_defaultFolder + folderName + '\\'
+            workingDir = os.path.join(lb_defaultFolder, folderName)
         else:
             workingDir = None
-        
         return checkData, workingDir, _weatherFileURL
     else:
         print "You should first let the Ladybug fly..."
@@ -142,17 +141,15 @@ def unzip(source_filename, dest_dir):
 
 def addresses(directory):
     epw, stat = None, None
-    try:
-        keyText = directory.split('\\')[-2].replace('.','_')
-    except:
-        keyText = ''
-    for file in os.listdir(directory):
-        if file.endswith('.epw') and keyText in file.replace('.','_'):
-            epw = directory + file
-        elif file.endswith('.stat')and keyText in file.replace('.','_'):
-            stat = directory + file
+
+    keyText = os.path.split(directory)[-1]
+    for fileName in os.listdir(directory):
+        if fileName.endswith('.epw') and keyText in fileName:
+            epw = os.path.join(directory, fileName)
+        elif fileName.endswith('.stat') and keyText in fileName:
+            stat = os.path.join(directory, fileName)
     
-    return epw, stat
+    return os.path.normpath(epw), os.path.normpath(stat)
 
 def checkIfAlreadyDownloaded(workingDir, url):
     try:
@@ -179,15 +176,15 @@ if res!= -1:
 #Check to see if the file has already been downloaded to the C:\ladybug drive.
 if checkData == True:
     checkData2, epwFile, statFile = checkIfAlreadyDownloaded(workingDir, _weatherFileURL)
-else: checkData2 = True
+else:
+    checkData2 = True
 
 #Download the zip file to the directory.
 if checkData == True and checkData2 == False:
     zipFileAddress = download(_weatherFileURL, workingDir)
-else: pass
 
 #Unzip the file and load it into Grasshopper!!!!
 if checkData == True and checkData2 == False and zipFileAddress:
     unzip(zipFileAddress, workingDir)
     epwFile, statFile = addresses(workingDir)
-else: pass
+    
