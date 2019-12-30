@@ -367,22 +367,3 @@ if _export and len(_components)!=0 and _targetFolder!=None:
     ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, msg)
 else:
     print "At the minimum one of the components are missing!"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
