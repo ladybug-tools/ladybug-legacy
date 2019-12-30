@@ -37,7 +37,7 @@ _
 The information for the polygons representing passive strategies comes from the climate consultant psychrometric chart.  Further information on how these polygons are calculated can be found here:
 http://apps1.eere.energy.gov/buildings/tools_directory/software.cfm/ID=123/pagename=alpha_list
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.  Indoor temperatures from Honeybee energy simulations are also possible inputs.  Finally, this component can also acccept temperatures in Farenheit in order to draw a chart with IP units but, in order for this component to sense that the values are Farenheit, there must be at least one 'F' or 'F' in the stream of connected data.
@@ -90,7 +90,7 @@ Returns:
 """
 ghenv.Component.Name = "Ladybug_Psychrometric Chart"
 ghenv.Component.NickName = 'PsychChart'
-ghenv.Component.Message = 'VER 0.0.67\nJUN_19_2019'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"

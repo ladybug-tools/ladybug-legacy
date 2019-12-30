@@ -31,7 +31,7 @@ This component outputs a percentage of viewpoints seen by the input _geometry.  
 This component will evaluate view from the test points objectively in all directions. 
 
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         _geometry: Geometry for which visibility analysis will be conducted.  Geometry must be either a Brep, a Mesh, or a list of Breps or Meshes.
@@ -73,7 +73,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_View Analysis"
 ghenv.Component.NickName = 'viewAnalysis'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

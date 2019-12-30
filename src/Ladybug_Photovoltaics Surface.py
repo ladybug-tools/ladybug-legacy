@@ -30,7 +30,7 @@ Sources:
 http://www.nrel.gov/docs/fy14osti/60272.pdf
 https://pvpmc.sandia.gov
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     input:
         _epwFile: Input .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -109,7 +109,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Surface"
 ghenv.Component.NickName = "PhotovoltaicsSurface"
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

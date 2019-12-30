@@ -27,7 +27,7 @@ _
 This component is particularly useful if you are trying to create animations of Grasshopper geometry and want to automate the capturing of views.
 
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
 
     Args:
         _fileName: The file name that you would like the image to be saved as.  Note that, for animations, you want to make sure that each saved images has a different filename otherwise the previous image will be overwritten by each successive image.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.67
 """
 ghenv.Component.Name = "Ladybug_Render View"
 ghenv.Component.NickName = 'renderView'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"

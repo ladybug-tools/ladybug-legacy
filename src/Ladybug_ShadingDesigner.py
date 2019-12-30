@@ -25,7 +25,7 @@
 Use this component to generate shading breps for any glazed surface or list of glazed surfaces.  The component supports two methods for shading generation.  The first is a simple depth method, which will generate an overhang of the speficied depth (or multiple overhangs if the _numOfShds is increased).  The second method is to input a set of solar vectors from the Sunpath component that should be blocked by the shade.
 
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         _glzSrf: A Surface or Brep representing a window to be used for shading design.  This can also be a list of Surfaces of Breps.
@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.67
 """
 ghenv.Component.Name = 'Ladybug_ShadingDesigner'
 ghenv.Component.NickName = 'SHDDesigner'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

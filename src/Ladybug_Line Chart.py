@@ -25,7 +25,7 @@
 Use this component to make a line chart in the Rhino scene of any data with a ladybug header on it.
 
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         _inputData: A list of input data to plot.  This should usually be data out of the "Ladybug_Average Data" component or monthly data from an energy simulation but can also be hourly or daily data from the "Ladybug_Import EPW."  However, it is recommended that you use the "Ladybug_3D Chart" component for daily or hourly data as this is usually a bit clearer.
@@ -58,7 +58,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Line Chart"
 ghenv.Component.NickName = 'LineChart'
-ghenv.Component.Message = 'VER 0.0.67\nDEC_13_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"

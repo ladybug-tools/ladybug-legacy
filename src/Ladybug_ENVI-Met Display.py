@@ -24,7 +24,7 @@
 """
 Use this component to visualize ENVI-Met v4.0 3D geometry models.
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         basePoint_: Input a point here to move ENVI-Met grid. If no input is provided it will be origin point.
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_ENVI-Met Display"
 ghenv.Component.NickName = 'ENVI-MetDisplay'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "7 | WIP"

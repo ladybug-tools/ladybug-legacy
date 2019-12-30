@@ -26,7 +26,7 @@ Use this component to separate the text strings from the numbers in the climate 
 You can then perform mathamatical functions on the numerical climate data using the Grasshopper math components or quickly preview the numerical data stream using the Grasshopper "Quick Graph" component.
 This component can also be used generally to separate any data stream that contains both numbers and text strings.
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         _inputList: A list of data that contains both text srtings and numbers.  For example, a data stream output from the Import EPW component.
@@ -37,7 +37,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Separate data"
 ghenv.Component.NickName = 'strNum'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"

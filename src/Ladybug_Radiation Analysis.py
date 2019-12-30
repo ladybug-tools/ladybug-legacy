@@ -32,7 +32,7 @@ For these situations where the relfection of light is important, the Honeybee da
 
 
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -70,7 +70,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Radiation Analysis"
 ghenv.Component.NickName = 'radiationAnalysis'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

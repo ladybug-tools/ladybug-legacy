@@ -24,7 +24,7 @@
 """
 Use this component to open the epwmap page in your default web browser and download an .epw weather file.
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
 
     Args:
         _download: Set Boolean to True to open the epw map page
@@ -33,7 +33,7 @@ Provided by Ladybug 0.0.67
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "0 | Ladybug"

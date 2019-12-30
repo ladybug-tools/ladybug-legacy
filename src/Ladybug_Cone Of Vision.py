@@ -33,7 +33,7 @@ Human, Color Recognition, Sign Recognition, Word Recognition (horizontal angle)
 Human, Color Recognition, Optimal Video Display Area (vertical angle)
 Source: INO - CNR Istituto Nazionale di Ottica www.ino.it Titolo: Il processo della Visione e Stereoscopia Relatore: Luca Mercatelli 16 aprile 2010 Polo viale.
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         type_ : This input sets the cone of vision, the cone is defined by four values that are vertical angle+, vertical angle-, horizontal angle+, horizontal angle-, distance limits.
@@ -80,7 +80,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Cone Of Vision"
 ghenv.Component.NickName = 'ConeOfVision'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"

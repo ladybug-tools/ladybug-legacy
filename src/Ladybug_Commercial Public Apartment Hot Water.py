@@ -40,7 +40,7 @@ The following types of buildings are supported:
 Component based on paper: ASHRAE 2003 Applications Handbook (SI), Chapter 49, Service water heating:
 https://cours.etsmtl.ca/mec735/Documents/Notes_de_cours/2012/Hiver_2012/Service_Water_heating_ASHRAE.pdf
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     input:
         _epwFile: Input .epw file path by using grasshopper's "File Path" component.
@@ -185,7 +185,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Commercial Public Apartment Hot Water"
 ghenv.Component.NickName = "CommercialPublicApartmentHotWater"
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"

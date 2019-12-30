@@ -27,7 +27,7 @@ _
 For an image of each of the gardients in the library, check here:
 https://github.com/mostaphaRoudsari/ladybug/blob/master/resources/gradients.jpg
 -
-Provided by Ladybug 0.0.67
+Provided by Ladybug 0.0.68
     
     Args:
         _gradIndex: An index refering to one of the following possible gradients:
@@ -61,7 +61,7 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Gradient Library"
 ghenv.Component.NickName = 'GradientLibrary'
-ghenv.Component.Message = 'VER 0.0.67\nNOV_20_2018'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "5 | Extra"
