@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Wind Rose"
 ghenv.Component.NickName = 'windRose'
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
+ghenv.Component.Message = 'VER 0.0.68\nJAN_29_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -702,8 +702,9 @@ def main(north, hourlyWindDirection, hourlyWindSpeed, annualHourlyData,
 
             # initiate legend parameters
             overwriteScale = False
+
             if legendPar == []: overwriteScale = True
-            elif legendPar[-1] == None: overwriteScale = True
+            elif legendPar[5] == None: overwriteScale = True
             lowB, highB, numSeg, customColors, legendBasePoint, legendScale, legendFont, legendFontSize, legendBold, decimalPlaces, removeLessThan = lb_preparation.readLegendParameters(legendPar, False)
 
             numberCrvs = lb_visualization.text2srf(compassText, compassTextPts, 'Times New Romans', textSize/1.5, legendBold)
