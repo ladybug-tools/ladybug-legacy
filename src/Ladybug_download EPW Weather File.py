@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2018, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
+# Copyright (c) 2013-2020, Mostapha Sadeghipour Roudsari <mostapha@ladybug.tools> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -33,9 +33,9 @@ Provided by Ladybug 0.0.68
 """
 ghenv.Component.Name = "Ladybug_download EPW Weather File"
 ghenv.Component.NickName = 'DownloadEPW'
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
+ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = "Ladybug"
+ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

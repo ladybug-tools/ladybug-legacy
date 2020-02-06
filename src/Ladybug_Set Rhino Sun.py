@@ -2,7 +2,7 @@
 #
 # This file is part of Ladybug.
 #
-# Copyright (c) 2013-2018, Byron Mardas <byronmardas@gmail.com>
+# Copyright (c) 2013-2020, Byron Mardas <byronmardas@gmail.com>
 # Ladybug is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; either version 3 of the License,
@@ -36,8 +36,8 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Set Rhino Sun"
 ghenv.Component.NickName = 'rhinoSun'
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
-ghenv.Component.Category = "Ladybug"
+ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 #compatibleHBVersion = VER 0.0.56\nFEB_01_2015

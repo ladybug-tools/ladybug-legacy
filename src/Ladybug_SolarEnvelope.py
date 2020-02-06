@@ -7,7 +7,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2018, Boris Plotnikov <pborisp@gmail.com> and with the assistance and guidance of Prof. Guedi Capeluto, based on SustArc model
+# Copyright (c) 2013-2020, Boris Plotnikov <pborisp@gmail.com> and with the assistance and guidance of Prof. Guedi Capeluto, based on SustArc model
 # For further reading it might be worth taking a look at Ralph Knowles's work, e.g - http://www.fau.usp.br/aut5823/Acesso_ao_Sol/Knowles_2003_Solar_Envelope.pdf
 # and G. Capeluto and E. Shaviv's, e.g - http://www.ibpsa.org/proceedings/BS1999/BS99_C-22.pdf
 # the component relies to a great extend on the concepts described there
@@ -38,9 +38,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = 'Ladybug_SolarEnvelope'
 ghenv.Component.NickName = 'SolarEnvelope'
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
+ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = "Ladybug"
+ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

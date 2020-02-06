@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2018, Anton Szilasi with help from Chris Mackey <ajszilasi@gmail.com> 
+# Copyright (c) 2013-2020, Anton Szilasi with help from Chris Mackey <ajszilasi@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -45,9 +45,9 @@ Provided by Ladybug 0.0.68
 """
 ghenv.Component.Name = "Ladybug_Import Ground Temp"
 ghenv.Component.NickName = 'Importgroundtemp'
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
+ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = "Ladybug"
+ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.58\nJAN_10_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

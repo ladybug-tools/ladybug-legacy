@@ -4,7 +4,7 @@
 # 
 # This file is part of Ladybug.
 # 
-# Copyright (c) 2013-2018, Djordje Spasic <djordjedspasic@gmail.com> 
+# Copyright (c) 2013-2020, Djordje Spasic <djordjedspasic@gmail.com> 
 # Ladybug is free software; you can redistribute it and/or modify 
 # it under the terms of the GNU General Public License as published 
 # by the Free Software Foundation; either version 3 of the License, 
@@ -165,9 +165,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
+ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = "Ladybug"
+ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

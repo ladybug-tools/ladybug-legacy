@@ -2,7 +2,7 @@
 #
 # This file is part of Ladybug.
 #
-# Copyright (c) 2013-2018, ....(YOUR NAME).... <....(YOUR EMAIL)....>
+# Copyright (c) 2013-2020, ....(YOUR NAME).... <....(YOUR EMAIL)....>
 # Ladybug is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; either version 3 of the License,
@@ -42,8 +42,8 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Radiant Asymmetry Discomfort"
 ghenv.Component.NickName = 'radAsymmetry'
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
-ghenv.Component.Category = "Ladybug"
+ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 #compatibleHBVersion = VER 0.0.56\nFEB_01_2015

@@ -2,7 +2,7 @@
 #
 # This file is part of Ladybug.
 #
-# Copyright (c) 2013-2018, Devang Chauhan <devang@outlook.in>
+# Copyright (c) 2013-2020, Devang Chauhan <devang@outlook.in>
 # Ladybug is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; either version 3 of the License,
@@ -42,8 +42,8 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Search"
 ghenv.Component.NickName = 'Search'
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
-ghenv.Component.Category = "Ladybug"
+ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "7 | WIP"
 #Change the following date to be that of the LB version during your commit or pull request:
 #compatibleLBVersion = VER 0.0.66\nMAR_04_2018
