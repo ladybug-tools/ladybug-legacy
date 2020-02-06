@@ -243,7 +243,7 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
         userObjectsFolder = sourceDirectory
     
     destinationDirectory = folders.ClusterFolders[0]
-    final_destination = os.path.join(destinationDirectory, 'Ladybug')
+    final_destination = os.path.join(destinationDirectory, 'LB-Legacy')
     
     if not os.path.isdir(final_destination):
         os.mkdir(final_destination)

@@ -213,6 +213,18 @@ def updateComponent(component, uofolder):
         fp = os.path.join(uofolder, 'LadybugPlus', '%s.ghuser' % component.Name)
     elif str(component.Name).startswith('DF'):
         fp = os.path.join(uofolder, 'Dragonfly', '%s.ghuser' % component.Name)
+    elif str(component.Name).startswith('Ladybug'):
+        # first time an older version is getting updated
+        if os.path.isdir(os.path.join(uofolder, 'LB-Legacy')):
+            fp = os.path.join(uofolder, 'LB-Legacy', '%s.ghuser' % component.Name)
+        else:
+            fp = os.path.join(uofolder, 'Ladybug', '%s.ghuser' % component.Name)
+    elif str(component.Name).startswith('Honeybee'):
+        # first time an older version is getting updated
+        if os.path.isdir(os.path.join(uofolder, 'HB-Legacy')):
+            fp = os.path.join(uofolder, 'HB-Legacy', '%s.ghuser' % component.Name)
+        else:
+            fp = os.path.join(uofolder, 'Honeybee', '%s.ghuser' % component.Name)
     else:
         fp = os.path.join(uofolder, '%s.ghuser' % component.Name)
         if not os.path.isfile(fp):
