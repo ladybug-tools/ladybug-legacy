@@ -90,7 +90,7 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Import CEC Photovoltaics Module"
 ghenv.Component.NickName = "ImportCECPhotovoltaicsModule"
-ghenv.Component.Message = 'VER 0.0.68\nJAN_01_2020'
+ghenv.Component.Message = 'VER 0.0.68\nFEB_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "4 | Renewables"
@@ -201,14 +201,20 @@ def main(modulesLibraryFile_filePath, moduleIndex, newModuleMountType, moduleHei
                 date = itemsPerLine[2]  # "Date" from .csv file
                 version = itemsPerLine[19]  # "Version" from .csv file
                 moduleAreaM = float(itemsPerLine[4])  # "Area"("cec_area") from .csv file. The total area of the module, including spaces between cells and the frame!!
-                BIPVorNot = itemsPerLine[1].strip()  # "BIPV" from .csv file
+                BIPVorNot = itemsPerLine[23].strip()  # "BIPV" from .csv file
                 #if material in ["c-Si", "mono-Si", "mc-Si", "multi-Si", "EFG mc-Si",   "Si-Film", "HIT Si"]:  # only use mono and multi crystalline photovoltaics
                 #if True:
                 if not "Concentrator" in moduleName:
                     Vmp_ref = float(itemsPerLine[9])  # "cec_v_mp_ref" from .csv
                     Imp_ref = float(itemsPerLine[8])  # "cec_i_mp_ref" from .csv
-                    Voc_ref = float(itemsPerLine[7])  # "cec_v_oc_ref" from .csv
-                    Isc_ref = float(itemsPerLine[6])  # "cec_i_sc_ref" from .csv
+                    if len(itemsPerLine[7]) != 0:
+                        Voc_ref = float(itemsPerLine[7])  # "cec_v_oc_ref" from .csv
+                    elif len(itemsPerLine[7]) == 0:
+                        Voc_ref = 0
+                    if len(itemsPerLine[6]) != 0:
+                        Isc_ref = float(itemsPerLine[6])  # "cec_i_sc_ref" from .csv
+                    if len(itemsPerLine[6]) != 0:
+                        Isc_ref = 0
                     alpha_sc_ref = float(itemsPerLine[10])  # "cec_alpha_sc" from .csv
                     beta_oc_ref = float(itemsPerLine[11])  # "cec_beta_oc" from .csv
                     IL_ref = float(itemsPerLine[13])  # "cec_i_l_ref" from .csv
@@ -220,7 +226,6 @@ def main(modulesLibraryFile_filePath, moduleIndex, newModuleMountType, moduleHei
                     adjust = float(itemsPerLine[17])  # "cec_adjust" from .csv
                     gamma_r_ref = float(itemsPerLine[18])  # "cec_gamma_r" from .csv
                     Tnoct = float(itemsPerLine[3])  # "cec_t_noct" from .csv
-                    
                     if (BIPVorNot == "Y"): mountType_library = 0  # (insulated back)
                     elif (BIPVorNot == "N"): mountType_library = 2  #(open rack)
                     
