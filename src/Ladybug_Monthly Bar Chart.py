@@ -68,7 +68,7 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Monthly Bar Chart"
 ghenv.Component.NickName = 'BarChart'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.68\nMAY_22_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
@@ -1071,7 +1071,7 @@ def drawComfRange(comfortModel, bldgBalPt, farenheitCheck, xWidth, monthsInChart
                 #if avgTemp > 50:
                 cTemp = (float(avgTemp)-32) * 5 / 9
                 cComfTemp, distFromTarget, lowTemp, upTemp, comf, condition = lb_comfortModels.comfAdaptiveComfortASH55(cTemp, cTemp, cTemp, 0, None)
-                comfTemp = (float(cComfTemp)-32) * 5 / 9
+                comfTemp = (float(cComfTemp) * (9 / 5)) + 32
                 avgTemps.append(comfTemp+distToShift)
                 #else: avgTemps.append(None)
         
