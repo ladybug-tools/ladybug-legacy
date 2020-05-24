@@ -41,7 +41,7 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Ladybug"
 ghenv.Component.NickName = 'Ladybug'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.68\nMAY_23_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.icon
 ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "0 | Ladybug"
@@ -1562,11 +1562,11 @@ class Sunpath(object):
             if self.solDec < self.solLat: self.solAz = math.pi
             else: self.solAz = 0.0
         else:
-            self.solAz = ((math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
-                - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith))) + math.pi) % (2*math.pi)) \
+            self.solAz = ((math.acos(((math.sin(round(self.solLat, 5)) * math.cos(round(self.zenith, 5))) \
+                - math.sin(self.solDec)) / (math.cos(self.solLat) * math.sin(self.zenith))) + math.pi) % (2 * math.pi)) \
                 if (hourAngle > 0) else \
-                    ((3*math.pi - math.acos(((math.sin(self.solLat)*math.cos(self.zenith)) \
-                    - math.sin(self.solDec))/(math.cos(self.solLat)*math.sin(self.zenith)))) % (2*math.pi))
+                    ((3 * math.pi - math.acos(((math.sin(self.solLat) * math.cos(self.zenith)) \
+                    - math.sin(self.solDec)) / (math.cos(self.solLat) * math.sin(self.zenith)))) % (2 * math.pi))
     
     def sunReverseVectorCalc(self):
         basePoint = rc.Geometry.Point3d.Add(rc.Geometry.Point3d.Origin,rc.Geometry.Vector3f(0,1,0))
