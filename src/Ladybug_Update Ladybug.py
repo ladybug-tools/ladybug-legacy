@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.68\nMAY_28_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "6 | Developers"
@@ -272,12 +272,10 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
                 if not os.path.isfile(dstFullPath): shutil.copy2(srcFullPath, dstFullPath)
                 # or is older than the new file
                 elif os.stat(srcFullPath).st_mtime - os.stat(dstFullPath).st_mtime > 1: shutil.copy2(srcFullPath, dstFullPath)
-        
-        # if item selector is not already copied, copy it to component folder
-        srcFullPath = os.path.join(userObjectsFolder, "Ladybug_ImageViewer.gha")
-        dstFullPath = os.path.join(folders.DefaultAssemblyFolder, "Ladybug_ImageViewer.gha")
-        if not os.path.isfile(dstFullPath):
-            shutil.copy2(srcFullPath, dstFullPath)
+            if srcFileName.endswith('.gha'):  #copy it to component folder
+                srcFullPath = os.path.join(userObjectsFolder, srcFileName)
+                dstFullPath = os.path.join(folders.DefaultAssemblyFolder, srcFileName)
+                shutil.copy2(srcFullPath, dstFullPath)
         
         
         return "Done!" , True
