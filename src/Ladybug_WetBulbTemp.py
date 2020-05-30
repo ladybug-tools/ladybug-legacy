@@ -44,7 +44,7 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_WetBulbTemp"
 ghenv.Component.NickName = 'WetBulbTemp & DewPointTemp'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.68\nMAY_30_2020'
 ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
@@ -101,7 +101,6 @@ def checkTheData():
                 relHumid = _relativeHumidity[7:]
                 checkData4 = True
                 epwData = True
-                epwStr = _relativeHumidity[0:7]
         except: pass
         if checkData4 == False:
             for item in _relativeHumidity:
@@ -131,7 +130,6 @@ def checkTheData():
                 barPress = _barometricPressure_[7:]
                 checkData3 = True
                 epwData = True
-                epwStr = _barometricPressure_[0:7]
         except: pass
         if checkData3 == False:
             for item in _barometricPressure_:
@@ -247,10 +245,10 @@ def main(dryBulbTemperature, relativeHumidity, barometricPressure, epwStr):
         wetBulbTemp =[]
         dewPointTemp =[]
     else:
-        epwStr[2] = "Wet Bulb Temperature"
         wetBulbTemp = epwStr[:]
-        epwStr[2] = "Dew Point Temperature"
+        wetBulbTemp[2] = "Wet Bulb Temperature"
         dewPointTemp = epwStr[:]
+        dewPointTemp[2] = "Dew Point Temperature"
     
     for i in range(0, len(dryBulbTemperature)):
         wbTemp = WBFUNC(dryBulbTemperature[i], relativeHumidity[i], barometricPressure[i])
