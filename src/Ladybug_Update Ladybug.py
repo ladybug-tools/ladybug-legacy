@@ -36,7 +36,7 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Update Ladybug"
 ghenv.Component.NickName = 'updateLadybug'
-ghenv.Component.Message = 'VER 0.0.68\nMAY_28_2020'
+ghenv.Component.Message = 'VER 0.0.68\nJUL_06_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = 'LB-Legacy'
 ghenv.Component.SubCategory = "6 | Developers"
@@ -275,7 +275,10 @@ def main(sourceDirectory, updateThisFile, updateAllUObjects):
             if srcFileName.endswith('.gha'):  #copy it to component folder
                 srcFullPath = os.path.join(userObjectsFolder, srcFileName)
                 dstFullPath = os.path.join(folders.DefaultAssemblyFolder, srcFileName)
-                shutil.copy2(srcFullPath, dstFullPath)
+                try:
+                    shutil.copy2(srcFullPath, dstFullPath)
+                except:
+                    pass  # Rhino has locked the file and we can't overwrite it
         
         
         return "Done!" , True
