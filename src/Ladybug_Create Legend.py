@@ -24,7 +24,7 @@
 """
 Use this component to create a custom legend for any set of data or to create a more flexible legend for any ladybug component with a legend.  Specifically, this component outputs data that can be plugged into the grasshopper "Text Tag 3D" component so that the legend text can be baked into the Rhino scene as actual text instead of surfaces representing text.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
 
     Args:
         _valuesOrRange: The list of numerical data that the legend refers to (or just the minimum and maximum numerical values of this data).  If the original numerical data is hooked up, the legend's maximum and minimum values will be set by the max and min of the data set.
@@ -45,9 +45,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Create Legend"
 ghenv.Component.NickName = 'createLegend'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nNOV_20_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

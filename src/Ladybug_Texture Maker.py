@@ -34,7 +34,7 @@ Special thanks goes to the author of the function, Vincente Soler.
 .
 http://www.grasshopper3d.com/forum/topics/how-to-render-mesh-colors
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _analysisMesh: A list of colored Meshes that comes from Grasshopper OR
@@ -58,9 +58,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Texture Maker"
 ghenv.Component.NickName = 'Texture Maker'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"

@@ -26,7 +26,7 @@ Use this component to generate a plane that is oriented perpendicular to the act
 This is useful for orienting geometry Grasshopper to the Rhino viewport camera, which may help in presenting certain Ladybug visualizations in Rhino.
 Connect a Grasshopper "Timer" component to the refresh_ input of this component in order to get a real time update of the oriented plane based on the Rhino viewport camera direction.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _initPosition: A point or list of points that will act as the origin9s0 of the plane(s) that will be generated.
@@ -37,9 +37,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Orient to Camera"
 ghenv.Component.NickName = 'Orient2Camera'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

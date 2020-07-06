@@ -24,7 +24,7 @@ Shaviv E., 1975. "A Method for the Design of Fixed External Sun-Shades". "Build 
 Shaviv E., 1984. "A Design Tool for Determining the Form of Fixed & Movable Sun-Shades".  "ASHRAE Trans." Vol. 90, AT-84-18 No. 4, Atlanta (pp.1-14).
 
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _SurfaceOrPergola_: 0= Device optimised for period, will give the horizontal or tilted surface over the top of the window, or the cut profile device on a provided shading surface. 1= Pergola with fins. Default is 0.
@@ -54,9 +54,9 @@ Provided by Ladybug 0.0.68
 ##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

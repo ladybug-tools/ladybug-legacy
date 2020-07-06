@@ -44,7 +44,7 @@ Use this component to calculate various thermal comfort indices:
 - THI (Temperature Humidity Index)
 - PHS (Predicted Heat Strain)
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         _comfortIndex: Choose one of the comfort indices:
@@ -151,9 +151,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Thermal Comfort Indices"
 ghenv.Component.NickName = "ThermalComfortIndices"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.64\nFEB_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

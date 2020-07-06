@@ -28,7 +28,7 @@ The wind profile will point you in the direction of prevailing wind if EPW data 
 -
 More information on the power law of the wind profile can be found here: http://en.wikipedia.org/wiki/Wind_profile_power_law
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         north_: Input a vector to be used as a true North direction for the sun path or a number between 0 and 360 that represents the degrees off from the y-axis to make North.  The default North direction is set to the Y-axis (0 degrees).
@@ -83,9 +83,9 @@ Provided by Ladybug 0.0.68
 """
 ghenv.Component.Name = "Ladybug_Wind Boundary Profile"
 ghenv.Component.NickName = 'WindBoundaryProfile'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nAPR_12_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"

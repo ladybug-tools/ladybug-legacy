@@ -25,7 +25,7 @@
 Use this component to select out the part of a colored mesh that meets a certain conditional statement.  This has multiple uses: The generation of a custom shade from a shade benefit analysis, Quantifying the daylight area from a daylight analysis, Selecting out the portion of a roof with enough solar radiation for PV panels, and much more.
 
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _inputMesh: The mesh for which you would like to highlight the portion that meets a threshold.
@@ -48,9 +48,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Mesh Threshold Selector"
 ghenv.Component.NickName = 'MeshSelector'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "5"

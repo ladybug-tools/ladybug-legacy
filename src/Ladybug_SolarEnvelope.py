@@ -33,14 +33,14 @@ illustrate the volume that can be built within in order to ensure that a new dev
 shade the surrounding properties for a given set of sun vectors.
 
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
 """
 
 ghenv.Component.Name = 'Ladybug_SolarEnvelope'
 ghenv.Component.NickName = 'SolarEnvelope'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

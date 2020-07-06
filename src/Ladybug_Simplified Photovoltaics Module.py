@@ -37,7 +37,7 @@ Also for choosing a specific module, not a simplified one, use one of those two 
 Sources:
 http://prod.sandia.gov/techlib/access-control.cgi/2004/043535.pdf
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         mountType_: Mounting type (configuration) of a module. There are three of them:
@@ -73,9 +73,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Simplified Photovoltaics Module"
 ghenv.Component.NickName = "SimplifiedPhotovoltaicsModule"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

@@ -29,7 +29,7 @@ All descriptions of importaed data are borrowed from this document.
 The document is available online at this address:
 http://bigladdersoftware.com/epx/docs/8-3/auxiliary-programs/energyplus-weather-file-epw-data-dictionary.html
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _epwFile: An .epw file path on your system as a string.
@@ -56,9 +56,9 @@ Provided by Ladybug 0.0.68
 """
 ghenv.Component.Name = "Ladybug_Import epw"
 ghenv.Component.NickName = 'importEPW'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nJUN_07_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

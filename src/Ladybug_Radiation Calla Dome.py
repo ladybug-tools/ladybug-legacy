@@ -31,7 +31,7 @@ _
 2) The Calla Dome is the reciprocal of the Tergenza Sky Dome since the Cala Dome essentially shows you how the radiation from the sky will fall onto a hemispherical object.
 3) The Calla Dome is a smart radiation analysis of a hemisphere.  Your results would effectively be the same if you made a hemisphere in Rhino and ran it through the "Radiation Analysis" component but, with this component, you will get a smoother color gradient and the component will automatically output the point (or vector) with the most radiation.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _selectedSkyMtx: The output from the selectSkyMtx component.
@@ -70,9 +70,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Radiation Calla Dome"
 ghenv.Component.NickName = 'radiationCallaDome'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nJAN_29_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

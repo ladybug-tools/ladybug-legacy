@@ -24,7 +24,7 @@
 """
 Use this component to set an analysis period, which can be used as input for a variety of other Ladybug and Honeybee components.  Default analysis period without any inputs is set to the entire year.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _fromMonth_: A number between 1 and 12 that represents the month of the year for the start of the analysis.  Default starting month is set to 1 (January).
@@ -41,9 +41,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Analysis Period"
 ghenv.Component.NickName = 'analysisPeriod'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"

@@ -31,7 +31,7 @@ https://developers.google.com/maps/pricing-and-plans/#details
 -
 Special thanks goes to Google Maps and the authors of gHowl.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _location: It accepts two type of inputs.
@@ -83,9 +83,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Terrain Generator"
 ghenv.Component.NickName = 'TerrainGenerator'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.62\nJUN_07_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

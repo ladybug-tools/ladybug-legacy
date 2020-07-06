@@ -30,7 +30,7 @@ NOAA - National Oceanic and Atmospheric Administration
 Special thanks goes to the authors of the online wet-bulb temperature calculator 
 http://www.srh.noaa.gov/epz/?n=wxcalc_rh
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _dryBulbTemperature: The dry bulb temperature [C] from Import epw component and Ladybug_Average Data or generic lists of numbers.
@@ -44,8 +44,8 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_WetBulbTemp"
 ghenv.Component.NickName = 'WetBulbTemp & DewPointTemp'
-ghenv.Component.Message = 'VER 0.0.68\nMAY_30_2020'
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

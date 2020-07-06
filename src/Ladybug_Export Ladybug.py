@@ -37,8 +37,8 @@ Provided by Ladybug 0.0.67
 
 ghenv.Component.Name = "Ladybug_Export Ladybug"
 ghenv.Component.NickName = 'exportLadybug'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
-ghenv.Component.Category = "LB-Legacy"
+ghenv.Component.Message = 'VER 0.0.67\nDEC_25_2019'
+ghenv.Component.Category = "Ladybug"
 ghenv.Component.SubCategory = "6 | Developers"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "1"
@@ -187,7 +187,7 @@ def exportToUserObject(component, targetFolder, lb_preparation):
     # if user hasn't identified the category then put it
     # into honeybee as an unknown!
     if component.Category == "Maths":
-        uo.Description.Category = "HB-Legacy"
+        uo.Description.Category = "Honeybee"
     else:
         uo.Description.Category = component.Category
         
@@ -208,9 +208,6 @@ def exportToUserObject(component, targetFolder, lb_preparation):
     # move under the folder for the plugin
     uoPluginFullPath = os.path.join(UOFolder, component.Category,
                                     component.Name + ".ghuser")
-    
-    if not os.path.isdir(os.path.join(UOFolder, component.Category)):
-        os.mkdir(os.path.join(UOFolder, component.Category))
     try:
         os.remove(uoPluginFullPath)
     except:

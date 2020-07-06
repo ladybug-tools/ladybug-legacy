@@ -32,7 +32,7 @@ Lastly, the formulas to translate this radiation into an effective radiant field
 Arens, Edward; Huang, Li; Hoyt, Tyler; Zhou, Xin; Shiavon, Stefano. (2014). Modeling the comfort effects of short-wave solar radiation indoors.  Indoor Environmental Quality (IEQ).
 http://escholarship.org/uc/item/89m1h2dg#page-4
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _location: The location output from the "Ladybug_Import epw" component. This is used to determine the position of the sun.
@@ -76,9 +76,9 @@ Provided by Ladybug 0.0.68
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nJUN_07_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

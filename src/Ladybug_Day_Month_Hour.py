@@ -23,7 +23,7 @@
 """
 Use this component to calculate date information from an hour of the year.  Date information includes the day of the month, the month of the year and the hour of the day.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         HOY: A number between 1 and 8760 that represents an hour of the year.
@@ -38,9 +38,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Day_Month_Hour"
 ghenv.Component.NickName = 'Day_Month_Hour_Calculator'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "4"

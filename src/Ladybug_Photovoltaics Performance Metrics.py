@@ -24,7 +24,7 @@
 Use this component to calculate various Photovoltaics performance metrics
 
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         _PVsurface: - Input planar Grasshopper/Rhino Surface (not a polysurface) on which the PV modules will be applied. If you have a polysurface, explode it (using "Deconstruct Brep" component) and then feed its Faces(F) output to _PVsurface. Surface normal should be faced towards the sun.
@@ -165,9 +165,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Photovoltaics Performance Metrics"
 ghenv.Component.NickName = "PhotovoltaicsPerformanceMetrics"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

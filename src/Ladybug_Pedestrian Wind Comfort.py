@@ -28,7 +28,7 @@ Construction of a new building changes the wind microclimate in its vicinity. Th
 Based on Lawsons Pedestrian Comfort Criteria (1990)
 https://www.dropbox.com/s/t9pxhr45vwg2xd2/Wind_Microclimate.pdf?dl=0
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         _epwFile: Input an .epw file path by using the "File Path" parameter, or Ladybug's "Open EPW And STAT Weather Files" component.
@@ -138,9 +138,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Pedestrian Wind Comfort"
 ghenv.Component.NickName = "PedestrianWindComfort"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "7 | WIP"
 #compatibleLBVersion = VER 0.0.63\nJUN_09_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

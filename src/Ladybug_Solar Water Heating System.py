@@ -30,7 +30,7 @@ If nothing inputed, the following swh system will be used by default:
 - 1 story
 - unshaded
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         collectorType_: Type of the collector. The following ones can be used:
@@ -122,9 +122,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Solar Water Heating System"
 ghenv.Component.NickName = "SolarWaterHeatingSystem"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

@@ -28,7 +28,7 @@ http://www.energy.ca.gov/2013publications/CEC-400-2013-003/CEC-400-2013-003-CMF-
 http://www.nrel.gov/docs/fy04osti/35917.pdf
 http://www.solarthermalworld.org/sites/gstec/files/story/2015-05-31/textbook_swh.pdf
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         method_: A method by which the cold water temperature will be calculated:
@@ -91,9 +91,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Cold Water Temperature"
 ghenv.Component.NickName = "ColdWaterTemperature"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.61\nDEC_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

@@ -26,7 +26,7 @@ This model used to be the standard endorsed by ASHRAE 55 and EN-12521 for all dr
 _
 Fanger, P.O., Melikov, A.K., Hanzawa, H., Ring, J. Air Turbulence and Sensation of Draught. Energy and Buildings 12, no. 1 (1988): 2139.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _draftAirTemp: The air temperature of the draft in degrees Celcius.
@@ -37,9 +37,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_Draft Discomfort"
 ghenv.Component.NickName = 'draftComf'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

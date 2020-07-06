@@ -24,7 +24,7 @@
 """
 Use this component to generate the PVsurface or SWHsurface for "Photovoltaics surface" or "Solar Water Heating surface" components, based on initial PV or SWH system sizes.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         _location: The output from the "importEPW" or "constructLocation" component.  This is essentially a list of text summarizing a location on the earth.
@@ -128,9 +128,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_PV SWH System Size"
 ghenv.Component.NickName = "PV_SWH_SystemSize"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.64\nAPR_12_2017
 try: ghenv.Component.AdditionalHelpFromDocStrings = "2"

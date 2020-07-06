@@ -31,7 +31,7 @@ Based on PVWatts v5 Manual: http://www.nrel.gov/docs/fy14osti/62641.pdf
 If nothing supplied to the inputs, default value of 0.85 will be used.
 
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     input:
         annualShading_: Losses due to buildings, structures, trees, mountains or other objects that prevent solar radiation from reaching the cells.
@@ -85,9 +85,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_DC to AC derate factor"
 ghenv.Component.NickName = "DCtoACderateFactor"
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "4 | Renewables"
 #compatibleLBVersion = VER 0.0.62\nMAR_11_2016
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"

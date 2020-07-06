@@ -25,7 +25,7 @@
 Use this component to import location data from a standard .epw file.
 You can use the output to draw a sunpath.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     
     Args:
         _epwFile: An .epw file path on your system as a string.
@@ -34,9 +34,9 @@ Provided by Ladybug 0.0.68
 """
 ghenv.Component.Name = "Ladybug_Import Location"
 ghenv.Component.NickName = 'importLocation'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "0 | Ladybug"
 #compatibleLBVersion = VER 0.0.59\nMAR_15_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "3"

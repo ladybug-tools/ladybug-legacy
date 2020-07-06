@@ -24,7 +24,7 @@ Use this component calculate Mean Radiant Temperature (MRT) given a set of tempe
 MRT = (V1*T1^4 + V2*T2^4 + ...) ^ (1/4)
 Where V corresponds to a view factor and T corresponds to a temperature.
 -
-Provided by Ladybug 0.0.68
+Provided by Ladybug 0.0.69
     Args:
         _temperatures: A list of radiant temperatures in Celcius that correspond to view factors below.
         _viewFactors: A list of viewFactors that correspond to the temperatures above.  These should sum to 1.
@@ -34,9 +34,9 @@ Provided by Ladybug 0.0.68
 
 ghenv.Component.Name = "Ladybug_MRT Calculator"
 ghenv.Component.NickName = 'MRT'
-ghenv.Component.Message = 'VER 0.0.68\nFEB_06_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
-ghenv.Component.Category = 'LB-Legacy'
+ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "5 | Extra"
 #compatibleLBVersion = VER 0.0.59\nFEB_01_2015
 try: ghenv.Component.AdditionalHelpFromDocStrings = "0"
