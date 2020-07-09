@@ -24,11 +24,12 @@
 """
 Use this component to adjust an existing Mean Radiant Temperature for shortwave solar radiation.  This adjusted mean radiant temperature can then be used in comfort studies.
 _
-Note that this component assumes that you have already accounted for longwave radiation in the form of the _baseTemperature input.  If you do not hook up a _baseTemperature, this component will assume that the surrounding radiant temperature is the same as the air temperature, which is a decent assumption for someone standing in an unobstructed field.  However, the more obstacles that surround the person (and the more "context" that you add), the more important it is to derive a starting mean radiant temperature from a Honeybee Energy simulation.  Also note that this component is not meant to account for shortwave radiation passing through glass.
+In the case that _baseDryBulbOrMRT_ is "True" or None, this component will also account for long wave radiant heat loss to the sky.
 _
-This component uses Radiance functions in order to determine the amount of direct and diffuse solar radiation falling on a comfort mannequin.  The portion reflected off of the ground to the comfort mannequin is derived from these values of direct and diffuse radiation.
+This component uses either Radiance functions or the SolarCal method in order to determine the amount of direct and diffuse solar radiation falling on a comfort mannequin.
+The portion reflected off of the ground to the comfort mannequin is derived from these values of direct and diffuse radiation.
 
-Lastly, the formulas to translate this radiation into an effective radiant field and into a solar-adjusted mean radiant temperature come from this paper:
+Both the SolarCal method and the formulas to translate radiation into an effective radiant field and into a solar-adjusted mean radiant temperature come from this paper:
 Arens, Edward; Huang, Li; Hoyt, Tyler; Zhou, Xin; Shiavon, Stefano. (2014). Modeling the comfort effects of short-wave solar radiation indoors.  Indoor Environmental Quality (IEQ).
 http://escholarship.org/uc/item/89m1h2dg#page-4
 -
@@ -76,7 +77,7 @@ Provided by Ladybug 0.0.69
 """
 ghenv.Component.Name = "Ladybug_Outdoor Solar Temperature Adjustor"
 ghenv.Component.NickName = 'SolarAdjustTemperature'
-ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJUL_09_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "2 | VisualizeWeatherData"
