@@ -45,7 +45,7 @@ Provided by Ladybug 0.0.69
     Args:
         _dryBulbTemperature: A number representing the dry bulb temperature of the air in degrees Celcius.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
         meanRadiantTemperature_: A number representing the mean radiant temperature of the surrounding surfaces in degrees Celcius.  If no value is plugged in here, this component will assume that the mean radiant temperature is equal to air temperature value above.  This input can also accept a list of temperatures representing conditions at different times or the direct output of dryBulbTemperature from the Import EPW component.
-        windSpeed_tenMeters: A number representing the wind speed of the air in meters per second at 10 meters off the ground (note that all wind readings for EPW data are 10m off the ground).  If no value is plugged in here, this component will assume a very low wind speed of 0.05 m/s, characteristic of most indoor conditions.  This input can also accept a list of wind speeds representing conditions at different times or the direct output of windSpeed from of the Import EPW component.
+        windSpeed_tenMeters: A number representing the wind speed of the air in meters per second at 10 meters off the ground (note that nearly all wind readings for EPW data are 10m off the ground).  If no value is plugged in here, this component will assume a low wind speed of 0.5 m/s, which is the lowest input speed that is recommended for the UTCI model.  This input can also accept a list of wind speeds representing conditions at different times or the direct output of windSpeed from of the Import EPW component.
         _relativeHumidity: A number between 0 and 100 representing the relative humidity of the air in percentage.  This input can also accept a list of relative humidity values representing conditions at different times or the direct output of relativeHumidity from of the Import EPW component.
         ------------------------------: ...
         analysisPeriod_: An optional analysis period from the Analysis Period component.  If no Analysis period is given and epw data from the ImportEPW component has been connected, the analysis will be run for the enitre year.
@@ -75,7 +75,7 @@ Provided by Ladybug 0.0.69
 """
 ghenv.Component.Name = "Ladybug_Outdoor Comfort Calculator"
 ghenv.Component.NickName = 'OutdoorComfortCalculator'
-ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
+ghenv.Component.Message = 'VER 0.0.69\nSEP_08_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "1 | AnalyzeWeatherData"
@@ -187,8 +187,8 @@ def checkTheInputs():
             ghenv.Component.AddRuntimeMessage(gh.GH_RuntimeMessageLevel.Warning, warning)
     else:
         checkData3 = True
-        windSpeed = [0.05]
-        print 'No value connected for windSpeed_tenMeters_.  It will be assumed that the wind speed is a low 0.05 m/s.'
+        windSpeed = [0.5]
+        print 'No value connected for windSpeed_tenMeters_.  It will be assumed that the wind speed is a low 0.5 m/s.'
     
     #Check lenth of the _relativeHumidity list and evaluate the contents.
     checkData4 = False
