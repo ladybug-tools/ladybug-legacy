@@ -54,7 +54,7 @@ Provided by Ladybug 0.0.69
 ##print 'In sunShades'
 ghenv.Component.Name = "Ladybug_Sun_Shades_Calculator"
 ghenv.Component.NickName = 'SunShades_Calc'
-ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
+ghenv.Component.Message = 'VER 0.0.69\nDEC_30_2020'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -471,7 +471,7 @@ def calcIntersections(shadeSurface, pointsOnWindow, grPt, sunVectors, shdSrfShif
         # intersection
         for i, ray in enumerate(sun_rays):
             intersection = rc.Geometry.Intersect.Intersection.RayShoot(ray, context, 1)
-            if intersection == None:
+            if intersection == None or len(intersection) == 0:
                 noContextVectors.append(sun_lines[i])
                 rays.append(sun_rays[i])
             else:
