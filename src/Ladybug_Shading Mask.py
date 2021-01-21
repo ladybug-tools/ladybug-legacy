@@ -55,7 +55,7 @@ Provided by Ladybug 0.0.69
 
 ghenv.Component.Name = "Ladybug_Shading Mask"
 ghenv.Component.NickName = 'shadingMask'
-ghenv.Component.Message = 'VER 0.0.69\nJUL_07_2020'
+ghenv.Component.Message = 'VER 0.0.69\nJAN_20_2021'
 ghenv.Component.IconDisplayMode = ghenv.Component.IconDisplayMode.application
 ghenv.Component.Category = "LB-Legacy"
 ghenv.Component.SubCategory = "3 | EnvironmentalAnalysis"
@@ -284,7 +284,8 @@ def parallelIntersection(rays, joinedContext):
         try:
             ray = rays[i]
             # run the intersection
-            if rc.Geometry.Intersect.Intersection.MeshRay(joinedContext, ray) >= 0.0:
+            if joinedContext.IsValid and \
+                    rc.Geometry.Intersect.Intersection.MeshRay(joinedContext, ray) >= 0.0:
                 masked[i] = -1
                 unmasked[i] = i
             else:
@@ -325,7 +326,9 @@ def main(viewMethod, testPt, viewPlane, skyDensity, contextMesh, scale, projecti
     sphere = rc.Geometry.Sphere(testPt,scale)
     meshSphere = rc.Geometry.Mesh.CreateFromSphere(sphere,int(skyDensity),int(skyDensity))
     groundPlane = rc.Geometry.Plane(testPt, rc.Geometry.Vector3d.ZAxis)
-    hemisphere = rc.Geometry.Mesh.Split(meshSphere,groundPlane)[0]
+    hemisphere = rc.Geometry.Mesh.Split(meshSphere,groundPlane)[-1] \
+        if str(rc.RhinoApp.Version).startswith('7') else \
+        rc.Geometry.Mesh.Split(meshSphere,groundPlane)[0]
     
     # Generate the rays and take out those that are not within the viewPlane.
     fullRays = Rays(testPt, hemisphere)
